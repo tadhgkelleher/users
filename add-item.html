@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Connections</title>
+  <title>Object Graph</title>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, serverTimestamp, doc, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
     import cytoscape from 'https://cdn.jsdelivr.net/npm/cytoscape@3.23.0/dist/cytoscape.min.js'; // Import Cytoscape.js
 
     // Firebase Configuration
@@ -25,150 +24,83 @@
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Check if user is logged in
-    auth.onAuthStateChanged((user) => {
-      const messageDiv = document.getElementById("message");
-      if (user) {
-        messageDiv.textContent = 'You are logged in as ' + user.displayName;
-        messageDiv.className = 'success';
-        loadItems(user.displayName);
-      } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
-        messageDiv.className = 'error';
-      }
-    });
-
-    // Add Connection to Firestore
-    document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
+    // Add Object to Firestore
+    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const itemName = document.getElementById("connection-name").value;
-      const previousItemId = document.getElementById("previous-item").value;
+      const objectName = document.getElementById("object-name").value;
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = ''; // Clear previous messages
 
-      const user = auth.currentUser ? auth.currentUser : null;
-
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add connections.";
+      if (!objectName) {
+        messageDiv.textContent = "Please enter an object name.";
         messageDiv.className = "error";
         return;
       }
 
       try {
-        if (previousItemId) {
-          // Fetch the previous item's connections first
-          const previousItemConnections = await getPreviousItemConnections(previousItemId);
+        // Add the object to the Firestore collection
+        await addDoc(collection(db, "objects"), {
+          name: objectName,
+          timestamp: serverTimestamp(),
+        });
 
-          // Add the current connection (with the previous connections included)
-          const newConnectionChain = previousItemConnections ? previousItemConnections + ' -> ' + itemName : itemName;
+        // Success message
+        messageDiv.textContent = "Object added successfully!";
+        messageDiv.className = "success"; // Add success class
 
-          // Add this new connection to the connections collection
-          await addDoc(collection(db, "connections"), {
-            itemName: itemName,
-            user: user.displayName,
-            timestamp: serverTimestamp(),
-            previousItem: previousItemId,
-            connectionChain: newConnectionChain // Store the full connection chain
-          });
-
-          // Success message
-          messageDiv.textContent = "Connection added successfully!";
-          messageDiv.className = "success"; // Add success class
-
-          document.getElementById("add-connection-form").reset();
-          loadItems(user.displayName); // Reload the list of items after adding one
-        } else {
-          messageDiv.textContent = "Please select a previous item to connect to.";
-          messageDiv.className = "error"; // Add error class
-        }
+        // Reload the objects to update the visualization
+        loadObjects();
+        document.getElementById("add-object-form").reset();
       } catch (error) {
-        console.error("Error adding connection: ", error);
-        messageDiv.textContent = "There was an error adding the connection: " + error.message;
+        console.error("Error adding object: ", error);
+        messageDiv.textContent = "There was an error adding the object: " + error.message;
         messageDiv.className = "error"; // Add error class
       }
     });
 
-    // Load Items from Firestore and prepare the graph data
-    async function loadItems(username) {
-      const itemsList = document.getElementById("items-list");
-      itemsList.innerHTML = ''; // Clear the list before adding new items
-
-      const previousItemSelect = document.getElementById("previous-item");
-      previousItemSelect.innerHTML = ''; // Clear previous item dropdown
+    // Load Objects from Firestore and Prepare the Graph Data
+    async function loadObjects() {
+      const objectsList = document.getElementById("objects-list");
+      objectsList.innerHTML = ''; // Clear the list before adding new objects
 
       const nodes = []; // Array to store nodes
-      const edges = []; // Array to store edges
 
       try {
-        const q = query(
-          collection(db, "items"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+        // Fetch objects from Firestore
+        const querySnapshot = await getDocs(collection(db, "objects"));
 
         querySnapshot.forEach((doc) => {
-          const item = doc.data();
+          const object = doc.data();
           const li = document.createElement("li");
-          li.className = "item-with-connections"; // Adding class for styling
 
-          // Create the list item with the name
-          const itemName = document.createElement("span");
-          itemName.textContent = item.itemName;
+          // Create the list item with the object name
+          li.textContent = object.name;
+          objectsList.appendChild(li);
 
-          // Create the connections display area
-          const connectionsContainer = document.createElement("span");
-          connectionsContainer.className = "connections"; // Create a container for connections
-
-          // Load connections and show them as a chain
-          loadConnections(doc.id, connectionsContainer);
-
-          li.appendChild(itemName);
-          li.appendChild(connectionsContainer); // Append the connections beside the item
-          itemsList.appendChild(li);
-
-          // Add each item to the previous item select dropdown
-          const option = document.createElement("option");
-          option.value = doc.id; // Store the document ID
-          option.textContent = item.itemName;
-          previousItemSelect.appendChild(option);
-
-          // Add the item as a node for Cytoscape
-          nodes.push({ data: { id: doc.id, label: item.itemName } });
-
-          // Add edges for connections
-          if (item.connectionChain) {
-            const connectionIds = item.connectionChain.split(' -> ');
-            connectionIds.forEach((connectedItem) => {
-              const connectionEdge = {
-                data: { source: doc.id, target: connectedItem }
-              };
-              edges.push(connectionEdge);
-            });
-          }
+          // Add each object as a node for Cytoscape
+          nodes.push({ data: { id: doc.id, label: object.name } });
         });
 
-        // Initialize Cytoscape to visualize the nodes and edges
-        initializeCytoscape(nodes, edges);
+        // Initialize Cytoscape to visualize the nodes
+        initializeCytoscape(nodes);
 
       } catch (error) {
-        console.error("Error loading items: ", error);
+        console.error("Error loading objects: ", error);
         const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "There was an error loading items: " + error.message;
+        messageDiv.textContent = "There was an error loading objects: " + error.message;
         messageDiv.className = "error"; // Add error class
       }
     }
 
-    // Initialize Cytoscape graph
-    function initializeCytoscape(nodes, edges) {
+    // Initialize Cytoscape Graph
+    function initializeCytoscape(nodes) {
       cytoscape({
         container: document.getElementById('cy'),
 
-        elements: nodes.concat(edges),
+        elements: nodes,
 
         style: [
           {
@@ -181,15 +113,6 @@
               'width': '20px',
               'height': '20px'
             }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 2,
-              'line-color': '#ccc',
-              'target-arrow-color': '#ccc',
-              'target-arrow-shape': 'triangle'
-            }
           }
         ],
 
@@ -200,69 +123,50 @@
       });
     }
 
-    // Load the chain of connections for an item
-    async function getPreviousItemConnections(itemId) {
-      const itemDocRef = doc(db, "items", itemId);
-      const itemDoc = await getDoc(itemDocRef);
-      const itemData = itemDoc.data();
-
-      console.log('Fetched item data for connections:', itemData); // Debugging line
-
-      let previousConnections = itemData.connectionChain || "";
-      return previousConnections; // Return the existing chain of connections
-    }
-
-    // Load Connections for an Item (Chain) and Display Beside Item
-    async function loadConnections(itemId, connectionsContainer) {
-      let connectionChain = [];
-      let currentItemId = itemId;
-
-      try {
-        // Fetch the entire connection chain for the item
-        while (currentItemId) {
-          const q = query(
-            collection(db, "connections"),
-            where("previousItem", "==", currentItemId)
-          );
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            querySnapshot.forEach((doc) => {
-              const connection = doc.data();
-              console.log('Connection found:', connection); // Debugging line
-              connectionChain.push(connection.itemName);
-            });
-          }
-
-          break; // Prevent infinite loop (ensure you only load direct connections)
-        }
-
-        connectionsContainer.textContent = connectionChain.join(' -> ') || 'No connections';
-      } catch (error) {
-        console.error("Error loading connections:", error);
-      }
-    }
+    // On page load, fetch objects to display
+    loadObjects();
   </script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    #message {
+      margin: 10px 0;
+    }
+    .error {
+      color: red;
+    }
+    .success {
+      color: green;
+    }
+    #objects-list {
+      margin-top: 20px;
+    }
+    #cy {
+      width: 600px;
+      height: 600px;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
 
-  <h1>Manage Connections</h1>
+  <h1>Add Object</h1>
   <p id="message"></p>
 
-  <!-- Form to add a connection -->
-  <form id="add-connection-form">
-    <input type="text" id="connection-name" placeholder="Connection Name" required>
-    <select id="previous-item" required>
-      <option value="">Select Previous Item</option>
-    </select>
-    <button type="submit">Add Connection</button>
+  <!-- Form to add objects -->
+  <form id="add-object-form">
+    <input type="text" id="object-name" placeholder="Object Name" required>
+    <button type="submit">Add Object</button>
   </form>
 
-  <h2>Items List</h2>
-  <ul id="items-list"></ul>
+  <h2>Objects List</h2>
+  <ul id="objects-list"></ul>
 
   <!-- Cytoscape Visualization -->
-  <div id="cy" style="width: 600px; height: 600px; border: 1px solid #ccc;"></div>
+  <div id="cy"></div>
 
 </body>
 </html>
