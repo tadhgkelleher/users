@@ -59,12 +59,20 @@
 
       try {
         if (previousItemId) {
-          // Add connection to previous item
-          const connectionRef = await addDoc(collection(db, "connections"), {
+          // Add connection as a new item
+          const connectionRef = await addDoc(collection(db, "items"), {
             itemName: itemName,
             user: user.displayName,
             timestamp: serverTimestamp(),
             previousItem: previousItemId, // Link to the previous item
+          });
+
+          // Add this connection to the connections collection
+          await addDoc(collection(db, "connections"), {
+            itemName: itemName,
+            user: user.displayName,
+            timestamp: serverTimestamp(),
+            previousItem: previousItemId,
           });
 
           // Success message
@@ -103,13 +111,13 @@
         querySnapshot.forEach((doc) => {
           const item = doc.data();
           const li = document.createElement("li");
-          li.textContent = item.name;
+          li.textContent = item.itemName;
           itemsList.appendChild(li);
 
           // Add each item to the previous item select dropdown
           const option = document.createElement("option");
           option.value = doc.id; // Store the document ID
-          option.textContent = item.name;
+          option.textContent = item.itemName;
           previousItemSelect.appendChild(option);
         });
       } catch (error) {
@@ -120,13 +128,13 @@
       }
     }
 
-    // Load Connections for Previous Item (Chain)
-    async function loadConnections(previousItemId) {
+    // Load Connections for an Item (Chain)
+    async function loadConnections(itemId) {
       const connectionsList = document.getElementById("connections-list");
       connectionsList.innerHTML = ''; // Clear the list before adding new connections
 
       try {
-        let currentItemId = previousItemId;
+        let currentItemId = itemId;
         let connectionChain = [];
 
         // Loop to get the entire connection chain
