@@ -21,6 +21,9 @@
     <button type="submit">Add Item</button>
   </form>
 
+  <h3>Previous Items</h3>
+  <div id="item-list"></div> <!-- Section to display saved items -->
+
   <script type="module">
     // Firebase Configuration
     const firebaseConfig = {
@@ -58,11 +61,38 @@
         // Show success message and reset form
         alert("Item added successfully!");
         document.getElementById("add-item-form").reset();
+        loadItems(); // Reload items after successful addition
       } catch (error) {
         console.error("Error adding item: ", error);
         alert("There was an error adding the item.");
       }
     });
+
+    // Retrieve and display items from Firestore
+    async function loadItems() {
+      const itemsContainer = document.getElementById("item-list");
+      itemsContainer.innerHTML = ""; // Clear current items
+
+      try {
+        const querySnapshot = await db.collection("items").orderBy("timestamp", "desc").get();
+        querySnapshot.forEach((doc) => {
+          const item = doc.data();
+          const itemElement = document.createElement("div");
+          itemElement.innerHTML = `
+            <strong>${item.name}</strong>
+            <p>${item.description}</p>
+            <small>By: ${item.user} on ${new Date(item.timestamp.seconds * 1000).toLocaleString()}</small>
+            <hr>
+          `;
+          itemsContainer.appendChild(itemElement);
+        });
+      } catch (error) {
+        console.error("Error retrieving items: ", error);
+      }
+    }
+
+    // Load items when the page loads
+    window.onload = loadItems;
   </script>
 </body>
 </html>
