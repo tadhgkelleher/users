@@ -206,6 +206,8 @@
       const itemDoc = await getDoc(itemDocRef);
       const itemData = itemDoc.data();
 
+      console.log('Fetched item data for connections:', itemData); // Debugging line
+
       let previousConnections = itemData.connectionChain || "";
       return previousConnections; // Return the existing chain of connections
     }
@@ -227,136 +229,40 @@
           if (!querySnapshot.empty) {
             querySnapshot.forEach((doc) => {
               const connection = doc.data();
-              connectionChain.push(connection.itemName); // Append the next item in the chain
-              currentItemId = doc.id; // Update to the next item in the chain
+              console.log('Connection found:', connection); // Debugging line
+              connectionChain.push(connection.itemName);
             });
-          } else {
-            currentItemId = null; // End the loop if no more connections
           }
+
+          break; // Prevent infinite loop (ensure you only load direct connections)
         }
 
-        // Display the connection chain inline beside the item
-        if (connectionChain.length > 0) {
-          const connectionText = connectionChain.join(" -> ");
-          const connectionSpan = document.createElement("span");
-          connectionSpan.textContent = " (" + connectionText + ")";
-          connectionsContainer.appendChild(connectionSpan);
-        }
+        connectionsContainer.textContent = connectionChain.join(' -> ') || 'No connections';
       } catch (error) {
-        console.error("Error loading connections: ", error);
+        console.error("Error loading connections:", error);
       }
     }
   </script>
-
-  <!-- Custom Styles -->
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    h2 {
-      color: #333;
-    }
-
-    form {
-      margin-bottom: 20px;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    select {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-    }
-
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-    }
-
-    #items-list {
-      list-style-type: none;
-      padding: 0;
-    }
-
-    .item-with-connections {
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .connections {
-      font-size: 14px;
-      color: #888;
-    }
-
-    span {
-      padding: 5px;
-    }
-
-    #cy {
-      height: 400px;
-      width: 100%;
-      border: 1px solid #ccc;
-      margin-top: 20px;
-    }
-  </style>
 </head>
 <body>
 
-  <h2>Manage Item Connections</h2>
+  <h1>Manage Connections</h1>
+  <p id="message"></p>
 
-  <div id="message"></div>
-
-  <!-- Add Connection Form -->
+  <!-- Form to add a connection -->
   <form id="add-connection-form">
-    <input type="text" id="connection-name" placeholder="Enter item name" required />
+    <input type="text" id="connection-name" placeholder="Connection Name" required>
     <select id="previous-item" required>
-      <option value="">Select previous item</option>
+      <option value="">Select Previous Item</option>
     </select>
     <button type="submit">Add Connection</button>
   </form>
 
-  <!-- Item List -->
-  <h3>Items</h3>
+  <h2>Items List</h2>
   <ul id="items-list"></ul>
 
-  <!-- Cytoscape Container -->
-  <div id="cy"></div>
+  <!-- Cytoscape Visualization -->
+  <div id="cy" style="width: 600px; height: 600px; border: 1px solid #ccc;"></div>
 
 </body>
 </html>
