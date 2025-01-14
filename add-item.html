@@ -9,7 +9,7 @@
     body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; }
     .section { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; }
     #cy { height: 400px; border: 1px solid #ccc; }
-    select, input, button { margin: 10px 0; padding: 8px; }
+    select, input, button { margin: 10px 0; padding: 8px; width: 100%; }
     .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
     .error { background: #fee; color: #c00; }
     .success { background: #efe; color: #0c0; }
@@ -19,7 +19,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } 
+    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } 
     from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -37,93 +37,193 @@
     const db = getFirestore(app);
 
     let cy = null;
-    let selectedNode = null;
 
+    // Initialize Cytoscape with specific label settings
+    function initCytoscape() {
+      return cytoscape({
+        container: document.getElementById('cy'),
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#6272a4',
+              'label': 'data(objectName)', // Using objectName for consistency
+              'color': '#000000',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'text-outline-width': 2,
+              'text-outline-color': '#ffffff'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': '#8be9fd',
+              'curve-style': 'bezier'
+            }
+          }
+        ]
+      });
+    }
+
+    // Show message function
     function showMessage(text, type = 'success') {
       const msg = document.getElementById('message');
       msg.textContent = text;
       msg.className = `message ${type}`;
     }
 
-    // Initialize Cytoscape
-    cy = cytoscape({
-      container: document.getElementById('cy'),
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'label': 'data(name)',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            'background-color': '#6272a4'
-          }
-        },
-        {
-          selector: 'edge',
-          style: {
-            'width': 2,
-            'line-color': '#8be9fd'
-          }
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', () => {
+      cy = initCytoscape();
+      
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          showMessage(`Logged in as ${user.displayName}`);
+          loadData(user.displayName);
+        } else {
+          showMessage('Please log in', 'error');
         }
-      ]
+      });
     });
 
-    // Handle auth state
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        showMessage(`Logged in as ${user.displayName}`);
-        loadData(user.displayName);
-      } else {
-        showMessage('Please log in', 'error');
+    // Load data function
+    async function loadData(username) {
+      try {
+        // Clear existing elements
+        cy.elements().remove();
+        
+        // Get all objects
+        const objectsQuery = query(
+          collection(db, 'objects'),
+          where('user', '==', username),
+          orderBy('timestamp', 'desc')
+        );
+        
+        const objectsSnapshot = await getDocs(objectsQuery);
+        const objects = [];
+        
+        // First pass: collect all objects
+        objectsSnapshot.forEach(doc => {
+          const data = doc.data();
+          objects.push({
+            id: doc.id,
+            objectName: data.objectName
+          });
+        });
+
+        // Add nodes to cytoscape
+        objects.forEach(obj => {
+          cy.add({
+            group: 'nodes',
+            data: {
+              id: obj.id,
+              objectName: obj.objectName
+            }
+          });
+        });
+
+        // Update dropdowns
+        updateDropdowns(objects);
+
+        // Get connections
+        const connectionsQuery = query(
+          collection(db, 'connections'),
+          where('user', '==', username)
+        );
+        
+        const connectionsSnapshot = await getDocs(connectionsQuery);
+        
+        // Add edges
+        connectionsSnapshot.forEach(doc => {
+          const connection = doc.data();
+          cy.add({
+            group: 'edges',
+            data: {
+              source: connection.source,
+              target: connection.target
+            }
+          });
+        });
+
+        // Apply layout
+        cy.layout({ name: 'circle', padding: 50 }).run();
+        
+      } catch (error) {
+        console.error('Error loading data:', error);
+        showMessage('Error loading data: ' + error.message, 'error');
       }
-    });
+    }
+
+    // Update dropdowns function
+    function updateDropdowns(objects) {
+      const sourceSelect = document.getElementById('sourceSelect');
+      const targetSelect = document.getElementById('targetSelect');
+      
+      // Clear existing options
+      sourceSelect.innerHTML = '<option value="">Select source</option>';
+      targetSelect.innerHTML = '<option value="">Select target</option>';
+      
+      // Add new options
+      objects.forEach(obj => {
+        const sourceOption = new Option(obj.objectName, obj.id);
+        const targetOption = new Option(obj.objectName, obj.id);
+        
+        sourceSelect.add(sourceOption);
+        targetSelect.add(targetOption);
+      });
+    }
 
     // Add new object
-    document.getElementById('addForm').onsubmit = async (e) => {
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('objectName').value.trim();
       
-      if (!name) return;
       if (!auth.currentUser) {
         showMessage('Please log in first', 'error');
         return;
       }
 
+      const objectName = document.getElementById('objectName').value.trim();
+      if (!objectName) {
+        showMessage('Please enter an object name', 'error');
+        return;
+      }
+
       try {
-        const docRef = await addDoc(collection(db, 'objects'), {
-          name: name,
+        await addDoc(collection(db, 'objects'), {
+          objectName: objectName,
           user: auth.currentUser.displayName,
-          created: serverTimestamp()
+          timestamp: serverTimestamp()
         });
 
-        // Add to graph
-        cy.add({ data: { id: docRef.id, name: name } });
-        cy.layout({ name: 'circle' }).run();
-        
-        // Update dropdowns
-        updateDropdowns();
-        
         document.getElementById('objectName').value = '';
-        showMessage('Object added');
-      } catch (err) {
-        showMessage(err.message, 'error');
+        showMessage('Object added successfully');
+        
+        // Reload data to update everything
+        await loadData(auth.currentUser.displayName);
+        
+      } catch (error) {
+        console.error('Error adding object:', error);
+        showMessage('Error adding object: ' + error.message, 'error');
       }
-    };
-
-    // Handle source selection
-    document.getElementById('sourceSelect').onchange = (e) => {
-      selectedNode = e.target.value;
-      document.getElementById('targetSelect').disabled = !selectedNode;
-    };
+    });
 
     // Create connection
-    document.getElementById('connectForm').onsubmit = async (e) => {
+    document.getElementById('connectForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const source = selectedNode;
+      
+      const source = document.getElementById('sourceSelect').value;
       const target = document.getElementById('targetSelect').value;
 
-      if (!source || !target || source === target) {
-        showMessage('Please select different objects', 'error');
+      if (!source || !target) {
+        showMessage('Please select both source and target objects', 'error');
+        return;
+      }
+
+      if (source === target) {
+        showMessage('Cannot connect an object to itself', 'error');
         return;
       }
 
@@ -132,95 +232,19 @@
           source: source,
           target: target,
           user: auth.currentUser.displayName,
-          created: serverTimestamp()
+          timestamp: serverTimestamp()
         });
 
-        // Add to graph
-        cy.add({ data: { source: source, target: target } });
-        cy.layout({ name: 'circle' }).run();
-
-        // Reset selections
-        document.getElementById('sourceSelect').value = '';
-        document.getElementById('targetSelect').value = '';
-        document.getElementById('targetSelect').disabled = true;
-        selectedNode = null;
-
-        showMessage('Connection created');
-      } catch (err) {
-        showMessage(err.message, 'error');
-      }
-    };
-
-    // Load all data
-    async function loadData(username) {
-      try {
-        // Clear existing data
-        cy.elements().remove();
+        showMessage('Connection created successfully');
         
-        // Load objects
-        const objectsSnap = await getDocs(
-          query(collection(db, 'objects'), 
-          where('user', '==', username))
-        );
-
-        // Add nodes
-        objectsSnap.forEach(doc => {
-          cy.add({
-            data: {
-              id: doc.id,
-              name: doc.data().name
-            }
-          });
-        });
-
-        // Load connections
-        const connectionsSnap = await getDocs(
-          query(collection(db, 'connections'),
-          where('user', '==', username))
-        );
-
-        // Add edges
-        connectionsSnap.forEach(doc => {
-          const data = doc.data();
-          cy.add({
-            data: {
-              source: data.source,
-              target: data.target
-            }
-          });
-        });
-
-        // Update dropdowns and layout
-        updateDropdowns();
-        cy.layout({ name: 'circle' }).run();
-
-      } catch (err) {
-        showMessage(err.message, 'error');
+        // Reload data to update everything
+        await loadData(auth.currentUser.displayName);
+        
+      } catch (error) {
+        console.error('Error creating connection:', error);
+        showMessage('Error creating connection: ' + error.message, 'error');
       }
-    }
-
-    // Update dropdown options
-    function updateDropdowns() {
-      const nodes = cy.nodes().map(node => ({
-        id: node.id(),
-        name: node.data('name')
-      }));
-
-      const sourceSelect = document.getElementById('sourceSelect');
-      const targetSelect = document.getElementById('targetSelect');
-
-      // Clear existing options
-      sourceSelect.innerHTML = '<option value="">Select source</option>';
-      targetSelect.innerHTML = '<option value="">Select target</option>';
-
-      // Add new options
-      nodes.forEach(node => {
-        sourceSelect.add(new Option(node.name, node.id));
-        targetSelect.add(new Option(node.name, node.id));
-      });
-
-      targetSelect.disabled = !selectedNode;
-    }
+    });
   </script>
 </head>
 <body>
@@ -229,25 +253,25 @@
     <div id="message"></div>
     <form id="addForm">
       <input type="text" id="objectName" placeholder="Enter object name" required>
-      <button type="submit">Add</button>
+      <button type="submit">Add Object</button>
     </form>
   </div>
 
   <div class="section">
     <h2>Create Connection</h2>
     <form id="connectForm">
-      <select id="sourceSelect">
-        <option value="">Select source</option>
+      <select id="sourceSelect" required>
+        <option value="">Select source object</option>
       </select>
-      <select id="targetSelect" disabled>
-        <option value="">Select target</option>
+      <select id="targetSelect" required>
+        <option value="">Select target object</option>
       </select>
-      <button type="submit">Connect</button>
+      <button type="submit">Create Connection</button>
     </form>
   </div>
 
   <div class="section">
-    <h2>Graph</h2>
+    <h2>Graph View</h2>
     <div id="cy"></div>
   </div>
 </body>
