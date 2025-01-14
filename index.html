@@ -3,13 +3,72 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Sign Up</title>
-  <script type="module">
-    // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+  <title>Firebase Authentication</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      width: 300px;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .message {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
 
-    // Firebase configuration
+  <div class="container">
+    <h2>Firebase Authentication</h2>
+
+    <!-- Email/Password Sign Up Form -->
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="signUp()">Sign Up with Email</button>
+
+    <!-- Google Sign Up -->
+    <button onclick="googleSignUp()">Sign Up with Google</button>
+
+    <p id="message" class="message"></p>
+  </div>
+
+  <script>
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
+
+    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
       authDomain: "mandala-5165e.firebaseapp.com",
@@ -23,93 +82,43 @@
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const analytics = getAnalytics(app);
 
-    // Sign-up with Email and Password
-    async function signUp() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const message = document.getElementById("message");
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("User created successfully:", userCredential.user);
-        message.style.color = "green";
-        message.textContent = "Account created successfully!";
-      } catch (error) {
-        console.error("Error creating account:", error.message);
-        message.style.color = "red";
-        message.textContent = error.message;
-      }
+    // Regular Sign Up with Email & Password
+    function signUp() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
+      
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          message.style.color = 'green';
+          message.textContent = `Account created! Welcome ${user.email}`;
+        })
+        .catch((error) => {
+          message.style.color = 'red';
+          message.textContent = `Error: ${error.message}`;
+        });
     }
 
-    // Sign-up with Google
-    async function googleSignUp() {
+    // Google Sign-Up
+    function googleSignUp() {
       const provider = new GoogleAuthProvider();
-      const message = document.getElementById("message");
+      const message = document.getElementById('message');
 
-      try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        console.log("User signed up with Google:", user);
-        message.style.color = "green";
-        message.textContent = `Account created with Google! Welcome ${user.displayName}`;
-      } catch (error) {
-        console.error("Error with Google Sign-in:", error.message);
-        message.style.color = "red";
-        message.textContent = error.message;
-      }
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          const user = result.user;
+          message.style.color = 'green';
+          message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
+        })
+        .catch((error) => {
+          message.style.color = 'red';
+          message.textContent = `Error: ${error.message}`;
+          console.error("Error during Google sign-in:", error.message);
+        });
     }
   </script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f0f0f0;
-    }
-    .auth-container {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-    input, button {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button {
-      background: #007BFF;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .google-signin {
-      background: #4285F4;
-      color: white;
-    }
-    .google-signin:hover {
-      background: #3367D6;
-    }
-  </style>
-</head>
-<body>
-  <div class="auth-container">
-    <h2>Sign Up</h2>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="signUp()">Sign Up with Email</button>
-    <p>or</p>
-    <button class="google-signin" onclick="googleSignUp()">Sign Up with Google</button>
-    <p id="message"></p>
-  </div>
 </body>
 </html>
