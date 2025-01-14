@@ -67,12 +67,6 @@
             previousItem: previousItemId, // Link to the previous item
           });
 
-          // Add connection info to the previous item
-          const previousItemRef = doc(db, "items", previousItemId);
-          await updateDoc(previousItemRef, {
-            connections: [...(previousItemRef.connections || []), connectionRef.id], // Append the connection
-          });
-
           // Success message
           messageDiv.textContent = "Connection added successfully!";
           messageDiv.className = "success"; // Add success class
@@ -126,24 +120,35 @@
       }
     }
 
-    // Load Connections for Previous Item
+    // Load Connections for Previous Item (Chain)
     async function loadConnections(previousItemId) {
       const connectionsList = document.getElementById("connections-list");
       connectionsList.innerHTML = ''; // Clear the list before adding new connections
 
       try {
-        const q = query(
-          collection(db, "connections"),
-          where("previousItem", "==", previousItemId)
-        );
-        const querySnapshot = await getDocs(q);
+        let currentItemId = previousItemId;
+        let connectionChain = [];
 
-        querySnapshot.forEach((doc) => {
-          const connection = doc.data();
-          const li = document.createElement("li");
-          li.textContent = connection.itemName;
-          connectionsList.appendChild(li);
-        });
+        // Loop to get the entire connection chain
+        while (currentItemId) {
+          const q = query(
+            collection(db, "connections"),
+            where("previousItem", "==", currentItemId)
+          );
+          const querySnapshot = await getDocs(q);
+
+          querySnapshot.forEach((doc) => {
+            const connection = doc.data();
+            connectionChain.push(connection.itemName);
+            currentItemId = doc.id; // Update to the next item in the chain
+          });
+        }
+
+        // Display the connection chain as a list
+        const connectionText = connectionChain.join(" - ");
+        const li = document.createElement("li");
+        li.textContent = connectionText;
+        connectionsList.appendChild(li);
       } catch (error) {
         console.error("Error loading connections: ", error);
       }
