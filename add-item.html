@@ -52,6 +52,7 @@
     }
     .item-list {
       margin-top: 20px;
+      width: 100%;
     }
     .item {
       background-color: #e9f7ef;
@@ -143,8 +144,9 @@
         return;
       }
 
+      // Fetch items only for the current user
       db.collection("items")
-        .where("user", "==", user.displayName)
+        .where("user", "==", user.displayName)  // Filter by user
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
@@ -173,6 +175,8 @@
     auth.onAuthStateChanged((user) => {
       if (user) {
         loadItems(); // Load items when the user is logged in
+      } else {
+        console.log("User is not logged in.");
       }
     });
   </script>
