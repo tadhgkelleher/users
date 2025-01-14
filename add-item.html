@@ -26,6 +26,7 @@
   const db = getFirestore(app);
 
   let selectedObject = null;
+  let cy = null; // Declare Cytoscape variable globally
 
   auth.onAuthStateChanged((user) => {
     const messageDiv = document.getElementById("message");
@@ -87,30 +88,33 @@
       );
       const querySnapshot = await getDocs(q);
 
-      const cy = cytoscape({
-        container: document.getElementById('cy'),
-        elements: [],
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'background-color': '#0074D9',
-              'label': 'data(objectName)'
+      // Initialize Cytoscape graph if it's not initialized already
+      if (!cy) {
+        cy = cytoscape({
+          container: document.getElementById('cy'),
+          elements: [],
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'background-color': '#0074D9',
+                'label': 'data(objectName)'
+              }
+            },
+            {
+              selector: 'edge',
+              style: {
+                'width': 3,
+                'line-color': '#aaa'
+              }
             }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 3,
-              'line-color': '#aaa'
-            }
+          ],
+          layout: {
+            name: 'circle',
+            padding: 10
           }
-        ],
-        layout: {
-          name: 'circle',
-          padding: 10
-        }
-      });
+        });
+      }
 
       // Set to track object names to avoid duplicates
       const objectNames = new Set();
@@ -177,17 +181,21 @@
 
   // Create an edge between the selected object and the target object
   function createEdge(targetId) {
-    const cy = cytoscape({
-      container: document.getElementById('cy'),
-      elements: []
-    });
+    // Ensure target node exists before creating the edge
+    const targetNode = cy.getElementById(targetId);
+    const sourceNode = cy.nodes().filter(node => node.data('objectName') === selectedObject);
+    
+    if (sourceNode.length && targetNode.length) {
+      cy.add({
+        data: { source: sourceNode.id(), target: targetNode.id() }
+      });
 
-    cy.add({
-      data: { source: selectedObject, target: targetId }
-    });
-
-    cy.layout({ name: 'circle' }).run();
-    document.getElementById("connection-prompt").style.display = 'none';
+      // Optionally, layout the graph after adding the edge
+      cy.layout({ name: 'circle' }).run();
+      document.getElementById("connection-prompt").style.display = 'none';
+    } else {
+      alert("Both nodes must exist before connecting.");
+    }
   }
   </script>
 
