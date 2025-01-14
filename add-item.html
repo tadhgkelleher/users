@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Object Graph with Connections</title>
+  <title>Node Connection App</title>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, serverTimestamp, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-    import cytoscape from 'https://cdn.jsdelivr.net/npm/cytoscape@3.23.0/dist/cytoscape.min.js'; // Import Cytoscape.js
+    import { getFirestore, collection, addDoc, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -34,35 +33,29 @@
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = ''; // Clear previous messages
 
-      if (!objectName) {
-        messageDiv.textContent = "Please enter an object name.";
-        messageDiv.className = "error";
-        return;
-      }
-
       try {
-        // Add the object to the Firestore collection
+        // Add the object to Firestore
         await addDoc(collection(db, "objects"), {
           name: objectName,
           timestamp: serverTimestamp(),
-          connections: [] // Initialize connections array
+          connections: [] // Initial empty connections
         });
 
         // Success message
         messageDiv.textContent = "Object added successfully!";
-        messageDiv.className = "success"; // Add success class
+        messageDiv.className = "success";
 
-        // Reload the objects to update the visualization
-        loadObjects();
+        // Clear the input
         document.getElementById("add-object-form").reset();
+        loadObjects(); // Reload the list of objects
       } catch (error) {
         console.error("Error adding object: ", error);
         messageDiv.textContent = "There was an error adding the object: " + error.message;
-        messageDiv.className = "error"; // Add error class
+        messageDiv.className = "error";
       }
     });
 
-    // Load Objects from Firestore and Prepare the Graph Data
+    // Load Objects from Firestore
     async function loadObjects() {
       const objectsList = document.getElementById("objects-list");
       objectsList.innerHTML = ''; // Clear the list before adding new objects
@@ -71,7 +64,6 @@
       const edges = []; // Array to store edges
 
       try {
-        // Fetch objects from Firestore
         const querySnapshot = await getDocs(collection(db, "objects"));
 
         querySnapshot.forEach((doc) => {
@@ -96,166 +88,180 @@
         });
 
         // Initialize Cytoscape to visualize the nodes and edges
-        initializeCytoscape(nodes, edges);
-
+        renderGraph(nodes, edges);
       } catch (error) {
         console.error("Error loading objects: ", error);
         const messageDiv = document.getElementById("message");
         messageDiv.textContent = "There was an error loading objects: " + error.message;
-        messageDiv.className = "error"; // Add error class
+        messageDiv.className = "error";
       }
     }
 
-    // Select an existing node to connect a new object to
-    let selectedNodeId = null;
-    let selectedNodeLabel = null;
-
-    function selectNode(id, label) {
-      selectedNodeId = id;
-      selectedNodeLabel = label;
-      const selectedDiv = document.getElementById("selected-node");
-      selectedDiv.textContent = `Selected Node: ${label}`;
+    // Select Node for Connection
+    let selectedNode = null;
+    function selectNode(nodeId, nodeName) {
+      if (selectedNode) {
+        // If a node is already selected, add an edge between the nodes
+        addConnection(selectedNode, nodeId);
+      } else {
+        selectedNode = nodeId;
+        alert("Selected node: " + nodeName + ". Now, click another node to connect.");
+      }
     }
 
-    // Add New Node and Connect it to the Selected Node
-    document.getElementById("connect-node-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const objectName = document.getElementById("new-object-name").value;
+    // Add Connection between Nodes
+    async function addConnection(fromNodeId, toNodeId) {
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; // Clear previous messages
-
-      if (!objectName) {
-        messageDiv.textContent = "Please enter an object name.";
-        messageDiv.className = "error";
-        return;
-      }
-
-      if (!selectedNodeId) {
-        messageDiv.textContent = "Please select an existing node to connect to.";
-        messageDiv.className = "error";
-        return;
-      }
 
       try {
-        // Add the new object to Firestore
-        const newDocRef = await addDoc(collection(db, "objects"), {
-          name: objectName,
-          timestamp: serverTimestamp(),
-          connections: [selectedNodeId] // Initialize the connection to the selected node
-        });
+        // Get the existing connections of the "from" node
+        const objectRef = doc(db, "objects", fromNodeId);
+        const objectDoc = await getDoc(objectRef);
+        const objectData = objectDoc.data();
 
-        // Update the selected node with the new connection
-        const selectedNodeRef = doc(db, "objects", selectedNodeId);
-        await updateDoc(selectedNodeRef, {
-          connections: [...selectedNodeRef.data().connections, newDocRef.id] // Add the new node to the selected node's connections
-        });
+        // Add the "to" node to the connections array
+        objectData.connections.push(toNodeId);
+
+        // Update the connections in Firestore
+        await updateDoc(objectRef, { connections: objectData.connections });
 
         // Success message
-        messageDiv.textContent = "Object added and connected successfully!";
-        messageDiv.className = "success"; // Add success class
+        messageDiv.textContent = "Connection added successfully!";
+        messageDiv.className = "success";
 
-        // Reload the objects to update the visualization
+        // Reload the objects and reset the selected node
         loadObjects();
-        document.getElementById("connect-node-form").reset();
+        selectedNode = null;
       } catch (error) {
-        console.error("Error connecting nodes: ", error);
-        messageDiv.textContent = "There was an error connecting the nodes: " + error.message;
-        messageDiv.className = "error"; // Add error class
+        console.error("Error adding connection: ", error);
+        messageDiv.textContent = "There was an error adding the connection: " + error.message;
+        messageDiv.className = "error";
       }
-    });
+    }
 
-    // Initialize Cytoscape Graph with nodes and edges
-    function initializeCytoscape(nodes, edges) {
-      cytoscape({
+    // Render the Cytoscape Graph
+    function renderGraph(nodes, edges) {
+      const cy = cytoscape({
         container: document.getElementById('cy'),
 
-        elements: [...nodes, ...edges],
+        elements: [
+          ...nodes,
+          ...edges
+        ],
 
         style: [
           {
             selector: 'node',
             style: {
-              'background-color': '#666',
+              'background-color': '#0074d9',
               'label': 'data(label)',
-              'text-valign': 'center',
-              'text-halign': 'center',
-              'width': '20px',
-              'height': '20px'
+              'width': '40px',
+              'height': '40px',
             }
           },
           {
             selector: 'edge',
             style: {
-              'width': 2,
+              'width': 3,
               'line-color': '#ccc',
               'target-arrow-color': '#ccc',
-              'target-arrow-shape': 'triangle'
+              'target-arrow-shape': 'triangle',
             }
           }
         ],
 
         layout: {
           name: 'circle',
-          animate: true
+          padding: 10
         }
       });
     }
 
-    // On page load, fetch objects to display
+    // Initialize the app
     loadObjects();
   </script>
 
+  <!-- Firebase & Cytoscape CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.19.1/cytoscape.min.css">
   <style>
     body {
       font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    #message {
-      margin: 10px 0;
+
+    h2 {
+      color: #333;
     }
-    .error {
-      color: red;
+
+    form {
+      margin-bottom: 20px;
     }
-    .success {
-      color: green;
-    }
-    #objects-list {
-      margin-top: 20px;
-    }
-    #cy {
-      width: 600px;
-      height: 600px;
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
       border: 1px solid #ccc;
-      margin-top: 20px;
+      border-radius: 5px;
     }
-    #selected-node {
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    #objects-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #cy {
+      width: 100%;
+      height: 400px;
+      border: 1px solid #ccc;
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h1>Add and Connect Object</h1>
-  <p id="message"></p>
+  <h2>Node Connection App</h2>
 
-  <!-- Form to add objects -->
+  <div id="message"></div>
+
+  <!-- Add Object Form -->
   <form id="add-object-form">
-    <input type="text" id="object-name" placeholder="Object Name" required>
+    <input type="text" id="object-name" placeholder="Enter object name" required />
     <button type="submit">Add Object</button>
   </form>
 
-  <h2>Objects List</h2>
+  <!-- Object List -->
+  <h3>Objects</h3>
   <ul id="objects-list"></ul>
 
-  <h2 id="selected-node">Selected Node: None</h2>
-
-  <!-- Form to connect nodes -->
-  <form id="connect-node-form">
-    <input type="text" id="new-object-name" placeholder="New Object Name" required>
-    <button type="submit">Add and Connect</button>
-  </form>
-
-  <!-- Cytoscape Visualization -->
+  <!-- Cytoscape Graph -->
   <div id="cy"></div>
 
 </body>
