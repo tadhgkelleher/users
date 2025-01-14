@@ -5,13 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Connections</title>
 
-  <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, serverTimestamp, updateDoc, doc, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-    // Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
       authDomain: "mandala-5165e.firebaseapp.com",
@@ -22,12 +20,11 @@
       measurementId: "G-TER99X7NBT"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Check if user is logged in
+    // Check authentication state
     auth.onAuthStateChanged((user) => {
       const messageDiv = document.getElementById("message");
       if (user) {
@@ -40,17 +37,16 @@
       }
     });
 
-    // Add Connection to Firestore
+    // Add Connection
     document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const itemName = document.getElementById("connection-name").value;
       const previousItemId = document.getElementById("previous-item").value;
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; // Clear previous messages
+      messageDiv.textContent = '';
 
-      const user = auth.currentUser ? auth.currentUser : null;
-
+      const user = auth.currentUser;
       if (!user) {
         messageDiv.textContent = "You must be logged in to add connections.";
         messageDiv.className = "error";
@@ -58,142 +54,134 @@
       }
 
       try {
-        if (previousItemId) {
-          // Fetch the previous item's connections first
-          const previousItemConnections = await getPreviousItemConnections(previousItemId);
+        await addDoc(collection(db, "connections"), {
+          fromItem: previousItemId,
+          toItem: itemName,
+          user: user.displayName,
+          timestamp: serverTimestamp()
+        });
 
-          // Add the current connection (with the previous connections included)
-          const newConnectionChain = previousItemConnections ? previousItemConnections + ' -> ' + itemName : itemName;
-
-          // Add this new connection to the connections collection
-          await addDoc(collection(db, "connections"), {
-            itemName: itemName,
-            user: user.displayName,
-            timestamp: serverTimestamp(),
-            previousItem: previousItemId,
-            connectionChain: newConnectionChain // Store the full connection chain
-          });
-
-          // Success message
-          messageDiv.textContent = "Connection added successfully!";
-          messageDiv.className = "success"; // Add success class
-
-          document.getElementById("add-connection-form").reset();
-          loadItems(user.displayName); // Reload the list of items after adding one
-        } else {
-          messageDiv.textContent = "Please select a previous item to connect to.";
-          messageDiv.className = "error"; // Add error class
-        }
+        messageDiv.textContent = "Connection added successfully!";
+        messageDiv.className = "success";
+        document.getElementById("add-connection-form").reset();
+        loadItems(user.displayName);
       } catch (error) {
         console.error("Error adding connection: ", error);
-        messageDiv.textContent = "There was an error adding the connection: " + error.message;
-        messageDiv.className = "error"; // Add error class
+        messageDiv.textContent = "Error adding connection: " + error.message;
+        messageDiv.className = "error";
       }
     });
 
-    // Load Items from Firestore
+    // Find all possible chains for an item
+    async function findChains(itemName, visited = new Set(), chain = []) {
+      if (visited.has(itemName)) {
+        return [chain];
+      }
+
+      visited.add(itemName);
+      chain.push(itemName);
+
+      const chains = [];
+      
+      // Forward connections
+      const forwardQ = query(
+        collection(db, "connections"),
+        where("fromItem", "==", itemName)
+      );
+      const forwardDocs = await getDocs(forwardQ);
+
+      // Backward connections
+      const backwardQ = query(
+        collection(db, "connections"),
+        where("toItem", "==", itemName)
+      );
+      const backwardDocs = await getDocs(backwardQ);
+
+      // Process forward connections
+      for (const doc of forwardDocs.docs) {
+        const nextItem = doc.data().toItem;
+        if (!visited.has(nextItem)) {
+          const newChains = await findChains(nextItem, new Set(visited), [...chain]);
+          chains.push(...newChains);
+        }
+      }
+
+      // Process backward connections
+      for (const doc of backwardDocs.docs) {
+        const prevItem = doc.data().fromItem;
+        if (!visited.has(prevItem)) {
+          const newChains = await findChains(prevItem, new Set(visited), [...chain]);
+          chains.push(...newChains);
+        }
+      }
+
+      return chains.length > 0 ? chains : [chain];
+    }
+
+    // Load and display items with their chains
     async function loadItems(username) {
       const itemsList = document.getElementById("items-list");
-      itemsList.innerHTML = ''; // Clear the list before adding new items
-
       const previousItemSelect = document.getElementById("previous-item");
-      previousItemSelect.innerHTML = ''; // Clear previous item dropdown
+      itemsList.innerHTML = '';
+      previousItemSelect.innerHTML = '<option value="">Select previous item</option>';
 
       try {
-        const q = query(
-          collection(db, "items"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
+        const items = new Set();
+        const connectionsQ = query(
+          collection(db, "connections"),
+          where("user", "==", username)
         );
-        const querySnapshot = await getDocs(q);
+        const connectionsSnapshot = await getDocs(connectionsQ);
 
-        querySnapshot.forEach((doc) => {
-          const item = doc.data();
+        // Collect all unique items
+        connectionsSnapshot.forEach(doc => {
+          const data = doc.data();
+          items.add(data.fromItem);
+          items.add(data.toItem);
+        });
+
+        // Process each item
+        for (const item of items) {
+          const chains = await findChains(item);
+          
+          // Create list item
           const li = document.createElement("li");
-          li.className = "item-with-connections"; // Adding class for styling
+          li.className = "item-with-connections";
 
-          // Create the list item with the name
-          const itemName = document.createElement("span");
-          itemName.textContent = item.itemName;
+          // Display item and its chains
+          const itemSpan = document.createElement("span");
+          itemSpan.textContent = item;
 
-          // Create the connections display area
-          const connectionsContainer = document.createElement("span");
-          connectionsContainer.className = "connections"; // Create a container for connections
+          const chainsSpan = document.createElement("span");
+          chainsSpan.className = "connections";
+          
+          // Format and display each chain
+          const uniqueChains = new Set(chains.map(chain => chain.join(" - ")));
+          chainsSpan.textContent = Array.from(uniqueChains).join(" | ");
 
-          // Load connections and show them as a chain
-          loadConnections(doc.id, connectionsContainer); 
-
-          li.appendChild(itemName);
-          li.appendChild(connectionsContainer); // Append the connections beside the item
+          li.appendChild(itemSpan);
+          li.appendChild(chainsSpan);
           itemsList.appendChild(li);
 
-          // Add each item to the previous item select dropdown
+          // Add to previous item dropdown
           const option = document.createElement("option");
-          option.value = doc.id; // Store the document ID
-          option.textContent = item.itemName;
+          option.value = item;
+          option.textContent = item;
           previousItemSelect.appendChild(option);
-        });
+        }
       } catch (error) {
         console.error("Error loading items: ", error);
         const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "There was an error loading items: " + error.message;
-        messageDiv.className = "error"; // Add error class
-      }
-    }
-
-    // Load the chain of connections for an item
-    async function getPreviousItemConnections(itemId) {
-      const itemDocRef = doc(db, "items", itemId);
-      const itemDoc = await getDoc(itemDocRef);
-      const itemData = itemDoc.data();
-
-      let previousConnections = itemData.connectionChain || "";
-      return previousConnections; // Return the existing chain of connections
-    }
-
-    // Load Connections for an Item (Chain) and Display Beside Item
-    async function loadConnections(itemId, connectionsContainer) {
-      let connectionChain = [];
-      let currentItemId = itemId;
-
-      try {
-        // Fetch the entire connection chain for the item
-        while (currentItemId) {
-          const q = query(
-            collection(db, "connections"),
-            where("previousItem", "==", currentItemId)
-          );
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            querySnapshot.forEach((doc) => {
-              const connection = doc.data();
-              connectionChain.push(connection.itemName); // Append the next item in the chain
-              currentItemId = doc.id; // Update to the next item in the chain
-            });
-          } else {
-            currentItemId = null; // End the loop if no more connections
-          }
-        }
-
-        // Display the connection chain inline beside the item
-        if (connectionChain.length > 0) {
-          const connectionText = connectionChain.join(" -> ");
-          const connectionSpan = document.createElement("span");
-          connectionSpan.textContent = " (" + connectionText + ")";
-          connectionsContainer.appendChild(connectionSpan);
-        }
-      } catch (error) {
-        console.error("Error loading connections: ", error);
+        messageDiv.textContent = "Error loading items: " + error.message;
+        messageDiv.className = "error";
       }
     }
   </script>
 
-  <!-- Custom Styles -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -206,16 +194,7 @@
       margin-bottom: 20px;
     }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    select {
+    input[type="text"], select {
       width: 100%;
       padding: 10px;
       font-size: 16px;
@@ -241,11 +220,17 @@
     .error {
       background-color: #f8d7da;
       color: #721c24;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
     }
 
     .success {
       background-color: #d4edda;
       color: #155724;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
     }
 
     #items-list {
@@ -254,7 +239,10 @@
     }
 
     .item-with-connections {
-      margin-bottom: 10px;
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -262,21 +250,15 @@
 
     .connections {
       font-size: 14px;
-      color: #888;
-    }
-
-    span {
-      padding: 5px;
+      color: #666;
+      margin-left: 20px;
     }
   </style>
 </head>
 <body>
-
   <h2>Manage Item Connections</h2>
-
   <div id="message"></div>
 
-  <!-- Add Connection Form -->
   <form id="add-connection-form">
     <input type="text" id="connection-name" placeholder="Enter item name" required />
     <select id="previous-item" required>
@@ -285,9 +267,7 @@
     <button type="submit">Add Connection</button>
   </form>
 
-  <!-- Item List -->
-  <h3>Items</h3>
+  <h3>Items and Their Connections</h3>
   <ul id="items-list"></ul>
-
 </body>
 </html>
