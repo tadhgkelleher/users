@@ -40,7 +40,6 @@
       background: #0056b3;
     }
     .message {
-      color: red;
       font-size: 14px;
       margin-top: 10px;
     }
@@ -54,10 +53,10 @@
     <!-- Email/Password Sign Up Form -->
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
-    <button onclick="signUp()">Sign Up with Email</button>
+    <button id="emailSignUpBtn">Sign Up with Email</button>
 
     <!-- Google Sign Up -->
-    <button onclick="googleSignUp()">Sign Up with Google</button>
+    <button id="googleSignUpBtn">Sign Up with Google</button>
 
     <p id="message" class="message"></p>
   </div>
@@ -85,29 +84,33 @@
     const analytics = getAnalytics(app);
 
     // Regular Sign Up with Email & Password
-    function signUp() {
+    document.getElementById('emailSignUpBtn').addEventListener('click', function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       const message = document.getElementById('message');
+      
+      message.textContent = 'Attempting to sign up with email...';
       
       createUserWithEmailAndPassword(auth, email, password)
         .then((userCredential) => {
           const user = userCredential.user;
           message.style.color = 'green';
           message.textContent = `Account created! Welcome ${user.email}`;
+          console.log(`User created: ${user.email}`);
         })
         .catch((error) => {
           message.style.color = 'red';
           message.textContent = `Error: ${error.message}`;
+          console.error('Error creating user:', error);
         });
-    }
+    });
 
     // Google Sign-Up
-    function googleSignUp() {
+    document.getElementById('googleSignUpBtn').addEventListener('click', function() {
       const provider = new GoogleAuthProvider();
       const message = document.getElementById('message');
-
-      console.log("Google sign-in initiated...");
+      
+      message.textContent = 'Attempting Google sign-up...';
 
       signInWithPopup(auth, provider)
         .then((result) => {
@@ -124,7 +127,7 @@
           message.style.color = 'red';
           message.textContent = `Error: ${error.message}`; // Display the error message on the page
         });
-    }
+    });
   </script>
 </body>
 </html>
