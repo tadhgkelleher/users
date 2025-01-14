@@ -9,7 +9,7 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -58,10 +58,11 @@
 
       try {
         // Add new item to Firestore
-        await addDoc(collection(db, "items"), {
+        const docRef = await addDoc(collection(db, "items"), {
           name: itemName,
           user: user.displayName,
           timestamp: serverTimestamp(),
+          connections: [] // New field to store connected items
         });
 
         // Success message
@@ -95,6 +96,13 @@
           const item = doc.data();
           const li = document.createElement("li");
           li.textContent = item.name;
+
+          // Add a button to display connections
+          const connectButton = document.createElement("button");
+          connectButton.textContent = "Add Connection";
+          connectButton.addEventListener("click", () => showAddConnectionForm(doc.id, item.name));
+          li.appendChild(connectButton);
+          
           itemsList.appendChild(li);
         });
       } catch (error) {
@@ -102,6 +110,45 @@
         const messageDiv = document.getElementById("message");
         messageDiv.textContent = "There was an error loading items: " + error.message;
         messageDiv.className = "error"; // Add error class
+      }
+    }
+
+    // Show add connection form
+    function showAddConnectionForm(itemId, itemName) {
+      const connectionForm = document.getElementById("connection-form");
+      const connectionInput = document.getElementById("connection-item");
+      const messageDiv = document.getElementById("message");
+      
+      connectionForm.style.display = 'block';
+      connectionInput.value = itemName;
+      connectionForm.onsubmit = (e) => addConnection(e, itemId);
+    }
+
+    // Add connection to Firestore
+    async function addConnection(e, itemId) {
+      e.preventDefault();
+
+      const connectionItem = document.getElementById("connection-item").value;
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = ''; // Clear previous messages
+
+      try {
+        // Find the item to connect
+        const itemDocRef = doc(db, "items", itemId);
+        
+        // Update the item with the new connection
+        await updateDoc(itemDocRef, {
+          connections: [...(await getDoc(itemDocRef)).data().connections, connectionItem]
+        });
+
+        messageDiv.textContent = "Connection added successfully!";
+        messageDiv.className = "success";
+        document.getElementById("connection-form").style.display = 'none';
+        loadItems(auth.currentUser.displayName); // Reload items after adding connection
+      } catch (error) {
+        console.error("Error adding connection: ", error);
+        messageDiv.textContent = "There was an error adding the connection: " + error.message;
+        messageDiv.className = "error";
       }
     }
   </script>
@@ -175,6 +222,15 @@
       padding: 8px 0;
       border-bottom: 1px solid #ddd;
     }
+
+    #connection-form {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #connection-form input[type="text"] {
+      width: 80%;
+    }
   </style>
 </head>
 <body>
@@ -191,5 +247,13 @@
 
   <h2>Previous Items</h2>
   <ul id="items-list"></ul>
+
+  <!-- Add connection form -->
+  <div id="connection-form">
+    <h3>Connect to Previous Item</h3>
+    <label for="connection-item">Item Name to Connect:</label>
+    <input type="text" id="connection-item" readonly /><br /><br />
+    <button type="submit">Add Connection</button>
+  </div>
 </body>
 </html>
