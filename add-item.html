@@ -166,6 +166,11 @@ async function loadObjects(username) {
       connectionDropdown.appendChild(option);
     });
 
+    // Trigger reflow to ensure dropdown is updated
+    requestAnimationFrame(() => {
+      connectionDropdown.dispatchEvent(new Event('change')); // Force reflow and update
+    });
+
     // Handle connection creation
     document.getElementById("create-connection").addEventListener("click", () => {
       const selectedConnectionId = connectionDropdown.value;
