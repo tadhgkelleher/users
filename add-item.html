@@ -4,10 +4,107 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add Item</title>
+
   <!-- Firebase SDK Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.firebasestorage.app",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Check if user is logged in
+    auth.onAuthStateChanged((user) => {
+      const messageDiv = document.getElementById("message");
+      if (user) {
+        messageDiv.textContent = 'You are logged in as ' + user.displayName;
+        messageDiv.className = 'success';
+        loadItems(user.displayName);
+      } else {
+        messageDiv.textContent = 'You are not logged in. Please log in to add items.';
+        messageDiv.className = 'error';
+      }
+    });
+
+    // Add Item to Firestore
+    document.getElementById("add-item-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const itemName = document.getElementById("item-name").value;
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = ''; // Clear previous messages
+
+      const user = auth.currentUser ? auth.currentUser : null;
+
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to add items.";
+        messageDiv.className = "error";
+        return;
+      }
+
+      try {
+        // Add new item to Firestore
+        await addDoc(collection(db, "items"), {
+          name: itemName,
+          user: user.displayName,
+          timestamp: serverTimestamp(),
+        });
+
+        // Success message
+        messageDiv.textContent = "Item added successfully!";
+        messageDiv.className = "success"; // Add success class
+
+        document.getElementById("add-item-form").reset();
+        loadItems(user.displayName); // Reload the list of items after adding one
+      } catch (error) {
+        // Error message
+        console.error("Error adding item: ", error);
+        messageDiv.textContent = "There was an error adding the item: " + error.message;
+        messageDiv.className = "error"; // Add error class
+      }
+    });
+
+    // Load Items from Firestore
+    async function loadItems(username) {
+      const itemsList = document.getElementById("items-list");
+      itemsList.innerHTML = ''; // Clear the list before adding new items
+
+      try {
+        const q = query(
+          collection(db, "items"),
+          where("user", "==", username),
+          orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((doc) => {
+          const item = doc.data();
+          const li = document.createElement("li");
+          li.textContent = item.name;
+          itemsList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Error loading items: ", error);
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "There was an error loading items: " + error.message;
+        messageDiv.className = "error"; // Add error class
+      }
+    }
+  </script>
 
   <!-- Custom Styles -->
   <style>
@@ -94,110 +191,5 @@
 
   <h2>Previous Items</h2>
   <ul id="items-list"></ul>
-
-  <script type="module">
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebasestorage.app",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
-
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // Check if user is logged in
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        // Load items when user is logged in
-        loadItems(user.displayName);
-      } else {
-        alert("You must be logged in to add items.");
-      }
-    });
-
-    // Add Item to Firestore
-    document.getElementById("add-item-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const itemName = document.getElementById("item-name").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; // Clear previous messages
-
-      const user = auth.currentUser ? auth.currentUser : null;
-
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add items.";
-        messageDiv.className = "error";
-        return;
-      }
-
-      try {
-        await db.collection("items").add({
-          name: itemName,
-          user: user.displayName,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-
-        // Success message
-        messageDiv.textContent = "Item added successfully!";
-        messageDiv.className = "success"; // Add success class
-
-        document.getElementById("add-item-form").reset();
-        loadItems(user.displayName); // Reload the list of items after adding one
-      } catch (error) {
-        // Error message
-        console.error("Error adding item: ", error);
-        messageDiv.textContent = "There was an error adding the item. Please try again.";
-        messageDiv.className = "error"; // Add error class
-      }
-    });
-
-    // Load Items from Firestore
-    async function loadItems(username) {
-      const itemsList = document.getElementById("items-list");
-      itemsList.innerHTML = ''; // Clear the list before adding new items
-
-      try {
-        const querySnapshot = await db
-          .collection("items")
-          .where("user", "==", username)
-          .orderBy("timestamp", "desc")
-          .get();
-
-        if (querySnapshot.empty) {
-          const noItemsMessage = document.createElement("li");
-          noItemsMessage.textContent = "No items found.";
-          itemsList.appendChild(noItemsMessage);
-        }
-
-        querySnapshot.forEach((doc) => {
-          const item = doc.data();
-          const li = document.createElement("li");
-          li.textContent = item.name;
-          itemsList.appendChild(li);
-        });
-      } catch (error) {
-        console.error("Error loading items: ", error);
-        const li = document.createElement("li");
-        li.textContent = "There was an error loading items.";
-        itemsList.appendChild(li);
-      }
-    }
-
-    // Load items when the page is loaded
-    window.onload = () => {
-      const user = auth.currentUser ? auth.currentUser.displayName : null;
-      if (user) {
-        loadItems(user);
-      }
-    };
-  </script>
 </body>
 </html>
