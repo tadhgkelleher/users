@@ -171,16 +171,6 @@ async function loadObjects(username) {
       connectionDropdown.dispatchEvent(new Event('change')); // Force reflow and update
     });
 
-    // Handle connection creation
-    document.getElementById("create-connection").addEventListener("click", () => {
-      const selectedConnectionId = connectionDropdown.value;
-      if (selectedConnectionId) {
-        createEdge(selectedConnectionId);
-      } else {
-        alert("Please select a connection.");
-      }
-    });
-
   } catch (error) {
     console.error("Error loading objects: ", error);
     const messageDiv = document.getElementById("message");
@@ -188,6 +178,38 @@ async function loadObjects(username) {
     messageDiv.className = "error";
   }
 }
+
+// Handle the form submission
+async function handleSubmitForm(event) {
+  event.preventDefault();
+  
+  const formData = new FormData(event.target);
+  const newObject = {
+    objectName: formData.get("objectName"),
+    user: formData.get("user"),
+    timestamp: new Date(),
+  };
+
+  try {
+    // Add the new object to Firestore
+    await addDoc(collection(db, "objects"), newObject);
+
+    // After adding the object, refresh the list and dropdown
+    await loadObjects(newObject.user);
+
+    // Clear the form
+    event.target.reset();
+  } catch (error) {
+    console.error("Error adding new object: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "There was an error adding the object: " + error.message;
+    messageDiv.className = "error";
+  }
+}
+
+// Attach form submission listener
+document.getElementById("object-form").addEventListener("submit", handleSubmitForm);
+
 
 
     // Select an object from the list
