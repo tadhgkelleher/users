@@ -57,25 +57,57 @@
     }
 
     try {
-      // Add new object to Firestore
-      await addDoc(collection(db, "objects"), {
-        objectName: objectName,
-        user: user.displayName,
-        timestamp: serverTimestamp()
-      });
+     // Add Object to Firestore
+document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-      messageDiv.textContent = "Object added successfully!";
-      messageDiv.className = "success"; 
-      document.getElementById("add-object-form").reset();
-      loadObjects(user.displayName);
-    } catch (error) {
-      console.error("Error adding object: ", error);
-      messageDiv.textContent = "There was an error adding the object: " + error.message;
-      messageDiv.className = "error"; 
+  const objectName = document.getElementById("object-name").value;
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = ''; 
+
+  const user = auth.currentUser ? auth.currentUser : null;
+
+  if (!user) {
+    messageDiv.textContent = "You must be logged in to add objects.";
+    messageDiv.className = "error";
+    return;
+  }
+
+  try {
+    // Check if the object already exists in Firestore
+    const q = query(
+      collection(db, "objects"),
+      where("user", "==", user.displayName),
+      where("objectName", "==", objectName)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Object with the same name already exists
+      messageDiv.textContent = "This object already exists!";
+      messageDiv.className = "error";
+      return;
     }
-  });
 
- // Load Objects from Firestore
+    // Add new object to Firestore
+    await addDoc(collection(db, "objects"), {
+      objectName: objectName,
+      user: user.displayName,
+      timestamp: serverTimestamp()
+    });
+
+    messageDiv.textContent = "Object added successfully!";
+    messageDiv.className = "success"; 
+    document.getElementById("add-object-form").reset();
+    loadObjects(user.displayName);
+  } catch (error) {
+    console.error("Error adding object: ", error);
+    messageDiv.textContent = "There was an error adding the object: " + error.message;
+    messageDiv.className = "error"; 
+  }
+});
+
+// Load Objects from Firestore
 async function loadObjects(username) {
   const objectsList = document.getElementById("objects-list");
   objectsList.innerHTML = ''; // Clear the list
@@ -116,7 +148,7 @@ async function loadObjects(username) {
       });
     }
 
-    // Set to track object names to avoid duplicates
+    // Set to track object names to avoid duplicates in the UI
     const objectNames = new Set();
     const objects = [];
 
@@ -124,7 +156,7 @@ async function loadObjects(username) {
       const object = doc.data();
       
       // Check if the node already exists based on objectName (or use doc.id)
-      if (!cy.getElementById(doc.id).length) {
+      if (!cy.getElementById(doc.id).length && !objectNames.has(object.objectName)) {
         cy.add({ data: { id: doc.id, objectName: object.objectName } });
         objectNames.add(object.objectName);
         objects.push({ id: doc.id, name: object.objectName });
@@ -168,6 +200,7 @@ async function loadObjects(username) {
     messageDiv.className = "error";
   }
 }
+
 
 
   // Select an object from the list
