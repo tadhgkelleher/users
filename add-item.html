@@ -40,91 +40,153 @@
       }
     });
 
-   // Add Connection to Firestore
-document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
+    // Add Connection to Firestore
+    document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
 
-  const itemName = document.getElementById("connection-name").value;
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = ''; // Clear previous messages
+      const itemName = document.getElementById("connection-name").value;
+      const previousItemId = document.getElementById("previous-item").value;
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = ''; // Clear previous messages
 
-  const user = auth.currentUser ? auth.currentUser : null;
+      const user = auth.currentUser ? auth.currentUser : null;
 
-  if (!user) {
-    messageDiv.textContent = "You must be logged in to add connections.";
-    messageDiv.className = "error";
-    return;
-  }
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to add connections.";
+        messageDiv.className = "error";
+        return;
+      }
 
-  try {
-    // Add the new item as a direct connection (no previous item needed)
-    const newConnectionChain = itemName;
+      try {
+        if (previousItemId) {
+          // Fetch the previous item's connections first
+          const previousItemConnections = await getPreviousItemConnections(previousItemId);
 
-    // Add this new connection to the connections collection
-    await addDoc(collection(db, "connections"), {
-      itemName: itemName,
-      user: user.displayName,
-      timestamp: serverTimestamp(),
-      connectionChain: newConnectionChain // Store the full connection chain
+          // Add the current connection (with the previous connections included)
+          const newConnectionChain = previousItemConnections ? previousItemConnections + ' -> ' + itemName : itemName;
+
+          // Add this new connection to the connections collection
+          await addDoc(collection(db, "connections"), {
+            itemName: itemName,
+            user: user.displayName,
+            timestamp: serverTimestamp(),
+            previousItem: previousItemId,
+            connectionChain: newConnectionChain // Store the full connection chain
+          });
+
+          // Success message
+          messageDiv.textContent = "Connection added successfully!";
+          messageDiv.className = "success"; // Add success class
+
+          document.getElementById("add-connection-form").reset();
+          loadItems(user.displayName); // Reload the list of items after adding one
+        } else {
+          messageDiv.textContent = "Please select a previous item to connect to.";
+          messageDiv.className = "error"; // Add error class
+        }
+      } catch (error) {
+        console.error("Error adding connection: ", error);
+        messageDiv.textContent = "There was an error adding the connection: " + error.message;
+        messageDiv.className = "error"; // Add error class
+      }
     });
 
-    // Success message
-    messageDiv.textContent = "Connection added successfully!";
-    messageDiv.className = "success"; // Add success class
+    // Load Items from Firestore
+    async function loadItems(username) {
+      const itemsList = document.getElementById("items-list");
+      itemsList.innerHTML = ''; // Clear the list before adding new items
 
-    document.getElementById("add-connection-form").reset();
-    loadItems(user.displayName); // Reload the list of items after adding one
-  } catch (error) {
-    console.error("Error adding connection: ", error);
-    messageDiv.textContent = "There was an error adding the connection: " + error.message;
-    messageDiv.className = "error"; // Add error class
-  }
-});
+      const previousItemSelect = document.getElementById("previous-item");
+      previousItemSelect.innerHTML = ''; // Clear previous item dropdown
 
-// Load Items from Firestore
-async function loadItems(username) {
-  const itemsList = document.getElementById("items-list");
-  itemsList.innerHTML = ''; // Clear the list before adding new items
+      try {
+        const q = query(
+          collection(db, "items"),
+          where("user", "==", username),
+          orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
 
-  try {
-    const q = query(
-      collection(db, "items"),
-      where("user", "==", username),
-      orderBy("timestamp", "desc")
-    );
-    const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+          const item = doc.data();
+          const li = document.createElement("li");
+          li.className = "item-with-connections"; // Adding class for styling
 
-    querySnapshot.forEach((doc) => {
-      const item = doc.data();
-      const li = document.createElement("li");
-      li.className = "item-with-connections"; // Adding class for styling
+          // Create the list item with the name
+          const itemName = document.createElement("span");
+          itemName.textContent = item.itemName;
 
-      // Create the list item with the name
-      const itemName = document.createElement("span");
-      itemName.textContent = item.itemName;
+          // Create the connections display area
+          const connectionsContainer = document.createElement("span");
+          connectionsContainer.className = "connections"; // Create a container for connections
 
-      // Create the connections display area
-      const connectionsContainer = document.createElement("span");
-      connectionsContainer.className = "connections"; // Create a container for connections
+          // Load connections and show them as a chain
+          loadConnections(doc.id, connectionsContainer); 
 
-      // Display the connection chain
-      const connectionChain = item.connectionChain || ""; // Use the connection chain field
-      const connectionSpan = document.createElement("span");
-      connectionSpan.textContent = " (" + connectionChain + ")";
-      connectionsContainer.appendChild(connectionSpan);
+          li.appendChild(itemName);
+          li.appendChild(connectionsContainer); // Append the connections beside the item
+          itemsList.appendChild(li);
 
-      li.appendChild(itemName);
-      li.appendChild(connectionsContainer); // Append the connections beside the item
-      itemsList.appendChild(li);
-    });
-  } catch (error) {
-    console.error("Error loading items: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "There was an error loading items: " + error.message;
-    messageDiv.className = "error"; // Add error class
-  }
-}
+          // Add each item to the previous item select dropdown
+          const option = document.createElement("option");
+          option.value = doc.id; // Store the document ID
+          option.textContent = item.itemName;
+          previousItemSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error("Error loading items: ", error);
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "There was an error loading items: " + error.message;
+        messageDiv.className = "error"; // Add error class
+      }
+    }
 
+    // Load the chain of connections for an item
+    async function getPreviousItemConnections(itemId) {
+      const itemDocRef = doc(db, "items", itemId);
+      const itemDoc = await getDoc(itemDocRef);
+      const itemData = itemDoc.data();
+
+      let previousConnections = itemData.connectionChain || "";
+      return previousConnections; // Return the existing chain of connections
+    }
+
+    // Load Connections for an Item (Chain) and Display Beside Item
+    async function loadConnections(itemId, connectionsContainer) {
+      let connectionChain = [];
+      let currentItemId = itemId;
+
+      try {
+        // Fetch the entire connection chain for the item
+        while (currentItemId) {
+          const q = query(
+            collection(db, "connections"),
+            where("previousItem", "==", currentItemId)
+          );
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              const connection = doc.data();
+              connectionChain.push(connection.itemName); // Append the next item in the chain
+              currentItemId = doc.id; // Update to the next item in the chain
+            });
+          } else {
+            currentItemId = null; // End the loop if no more connections
+          }
+        }
+
+        // Display the connection chain inline beside the item
+        if (connectionChain.length > 0) {
+          const connectionText = connectionChain.join(" -> ");
+          const connectionSpan = document.createElement("span");
+          connectionSpan.textContent = " (" + connectionText + ")";
+          connectionsContainer.appendChild(connectionSpan);
+        }
+      } catch (error) {
+        console.error("Error loading connections: ", error);
+      }
+    }
   </script>
 
   <!-- Custom Styles -->
