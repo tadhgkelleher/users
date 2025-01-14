@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Integration</title>
+  <script type="module">
+    // Firebase configuration
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.firebasestorage.app",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Sign-up function
+    async function signUp() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const message = document.getElementById("message");
+
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        message.style.color = "green";
+        message.textContent = "Account created successfully!";
+      } catch (error) {
+        message.style.color = "red";
+        message.textContent = error.message;
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .auth-container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    input, button {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Sign Up</h2>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="signUp()">Sign Up</button>
+    <p id="message"></p>
+  </div>
+</body>
+</html>
