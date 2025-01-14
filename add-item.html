@@ -63,7 +63,7 @@
           const previousItemConnections = await getPreviousItemConnections(previousItemId);
 
           // Add the current connection (with the previous connections included)
-          const newConnectionChain = previousItemConnections + '-' + itemName;
+          const newConnectionChain = previousItemConnections ? previousItemConnections + '-' + itemName : itemName;
 
           // Add this new connection to the connections collection
           await addDoc(collection(db, "connections"), {
@@ -283,7 +283,6 @@
     }
   </style>
 </head>
-
 <body>
   <h2>Add Connection</h2>
   <form id="add-connection-form">
