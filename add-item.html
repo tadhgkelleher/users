@@ -111,7 +111,20 @@
         querySnapshot.forEach((doc) => {
           const item = doc.data();
           const li = document.createElement("li");
-          li.textContent = item.itemName;
+          li.className = "item-with-connections"; // Adding class for styling
+
+          // Create the list item with the name
+          const itemName = document.createElement("span");
+          itemName.textContent = item.itemName;
+
+          // Create the connections display area
+          const connectionsContainer = document.createElement("span");
+          connectionsContainer.className = "connections"; // Create a container for connections
+
+          loadConnections(doc.id, connectionsContainer); // Load the connections inline
+
+          li.appendChild(itemName);
+          li.appendChild(connectionsContainer); // Append the connections beside the item
           itemsList.appendChild(li);
 
           // Add each item to the previous item select dropdown
@@ -128,11 +141,8 @@
       }
     }
 
-    // Load Connections for an Item (Chain)
-    async function loadConnections(itemId) {
-      const connectionsList = document.getElementById("connections-list");
-      connectionsList.innerHTML = ''; // Clear the list before adding new connections
-
+    // Load Connections for an Item (Chain) and Display Beside Item
+    async function loadConnections(itemId, connectionsContainer) {
       let connectionChain = [];
       let currentItemId = itemId;
 
@@ -156,12 +166,12 @@
           }
         }
 
-        // Display the connection chain as a list
+        // Display the connection chain inline beside the item
         if (connectionChain.length > 0) {
           const connectionText = connectionChain.join(" - ");
-          const li = document.createElement("li");
-          li.textContent = connectionText;
-          connectionsList.appendChild(li);
+          const connectionSpan = document.createElement("span");
+          connectionSpan.textContent = " (" + connectionText + ")";
+          connectionsContainer.appendChild(connectionSpan);
         }
       } catch (error) {
         console.error("Error loading connections: ", error);
@@ -248,16 +258,28 @@
       border: 1px solid #f5c6cb;
     }
 
-    #items-list,
-    #connections-list {
+    #items-list {
       list-style-type: none;
       padding: 0;
     }
 
-    #items-list li,
-    #connections-list li {
-      padding: 8px 0;
-      border-bottom: 1px solid #ddd;
+    .item-with-connections {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .item-with-connections span {
+      margin-right: 10px;
+    }
+
+    .connections {
+      font-style: italic;
+      color: #666;
+    }
+
+    .connections span {
+      color: #007bff;
     }
   </style>
 </head>
@@ -275,13 +297,9 @@
     <button type="submit">Add Connection</button>
   </form>
 
-  <!-- Confirmation or Error message -->
   <div id="message"></div>
 
-  <h2>Previous Items</h2>
+  <h2>Existing Items and Connections</h2>
   <ul id="items-list"></ul>
-
-  <h2>Connections</h2>
-  <ul id="connections-list"></ul>
 </body>
 </html>
