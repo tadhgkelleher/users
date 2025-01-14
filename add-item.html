@@ -128,28 +128,27 @@
           objectNames.add(object.objectName);
           objects.push({ id: doc.id, name: object.objectName });
         }
-
-        // Display objects in the list
-        const option = document.createElement("option");
-        option.value = doc.id;
-        option.textContent = object.objectName;
-        objectsList.appendChild(option);
       });
 
-      cy.layout({ name: 'circle' }).run();
-
-      // Populate the dropdown with objects
-      const connectionDropdown = document.getElementById("connection-dropdown");
-      connectionDropdown.innerHTML = ''; // Clear existing options
+      // Populate the object dropdown
+      const objectDropdown = document.getElementById("object-dropdown");
+      objectDropdown.innerHTML = ''; // Clear existing options
       objects.forEach(object => {
         const option = document.createElement("option");
         option.value = object.id;
         option.textContent = object.name;
-        connectionDropdown.appendChild(option);
+        objectDropdown.appendChild(option);
+      });
+
+      // Handle object selection
+      objectDropdown.addEventListener("change", () => {
+        selectedObject = objectDropdown.value;
+        document.getElementById("connection-prompt").style.display = 'block';
       });
 
       // Handle connection creation
       document.getElementById("create-connection").addEventListener("click", () => {
+        const connectionDropdown = document.getElementById("connection-dropdown");
         const selectedConnectionId = connectionDropdown.value;
         if (selectedConnectionId) {
           createEdge(selectedConnectionId);
@@ -179,7 +178,6 @@
 
       // Optionally, layout the graph after adding the edge
       cy.layout({ name: 'circle' }).run();
-      document.getElementById("connection-prompt").style.display = 'none';
     } else {
       alert("Both nodes must exist before connecting.");
     }
@@ -197,7 +195,7 @@
       padding: 20px;
     }
 
-    h2 {
+    h2, h3 {
       color: #333;
     }
 
@@ -205,7 +203,7 @@
       margin-bottom: 20px;
     }
 
-    input[type="text"] {
+    input[type="text"], select {
       width: 100%;
       padding: 10px;
       font-size: 16px;
@@ -238,15 +236,6 @@
       color: #155724;
     }
 
-    select {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
     #cy {
       height: 500px;
       width: 100%;
@@ -259,6 +248,13 @@
       margin-top: 20px;
     }
 
+    #connection-prompt select {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
     #connection-prompt button {
       background-color: #0074D9;
       border: none;
@@ -268,10 +264,6 @@
 
     #connection-prompt button:hover {
       background-color: #006BB3;
-    }
-
-    .form-group {
-      margin-bottom: 20px;
     }
   </style>
 </head>
@@ -286,12 +278,12 @@
     <button type="submit">Add Object</button>
   </form>
 
-  <div class="form-group">
-    <h3>Your Objects:</h3>
-    <select id="objects-list"></select>
-  </div>
+  <h3>Your Objects:</h3>
+  <select id="object-dropdown">
+    <option value="">Select an Object</option>
+  </select>
 
-  <div class="form-group" id="connection-prompt">
+  <div id="connection-prompt">
     <h3>Add Connection</h3>
     <select id="connection-dropdown">
       <option value="">Select an Object</option>
