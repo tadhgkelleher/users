@@ -7,7 +7,7 @@
   <script type="module">
     // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
     // Firebase configuration
     const firebaseConfig = {
@@ -24,7 +24,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Sign-up function
+    // Sign-up with Email and Password
     async function signUp() {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -37,6 +37,24 @@
         message.textContent = "Account created successfully!";
       } catch (error) {
         console.error("Error creating account:", error.message);
+        message.style.color = "red";
+        message.textContent = error.message;
+      }
+    }
+
+    // Sign-up with Google
+    async function googleSignUp() {
+      const provider = new GoogleAuthProvider();
+      const message = document.getElementById("message");
+
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        console.log("User signed up with Google:", user);
+        message.style.color = "green";
+        message.textContent = `Account created with Google! Welcome ${user.displayName}`;
+      } catch (error) {
+        console.error("Error with Google Sign-in:", error.message);
         message.style.color = "red";
         message.textContent = error.message;
       }
@@ -74,6 +92,13 @@
     button:hover {
       background: #0056b3;
     }
+    .google-signin {
+      background: #4285F4;
+      color: white;
+    }
+    .google-signin:hover {
+      background: #3367D6;
+    }
   </style>
 </head>
 <body>
@@ -81,7 +106,9 @@
     <h2>Sign Up</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
-    <button onclick="signUp()">Sign Up</button>
+    <button onclick="signUp()">Sign Up with Email</button>
+    <p>or</p>
+    <button class="google-signin" onclick="googleSignUp()">Sign Up with Google</button>
     <p id="message"></p>
   </div>
 </body>
