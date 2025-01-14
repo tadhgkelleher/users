@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Integration</title>
+  <title>Firebase Sign Up</title>
   <script type="module">
-    // Firebase configuration
+    // Import Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
+    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
       authDomain: "mandala-5165e.firebaseapp.com",
@@ -30,10 +31,12 @@
       const message = document.getElementById("message");
 
       try {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("User created successfully:", userCredential.user);
         message.style.color = "green";
         message.textContent = "Account created successfully!";
       } catch (error) {
+        console.error("Error creating account:", error.message);
         message.style.color = "red";
         message.textContent = error.message;
       }
