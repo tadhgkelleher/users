@@ -3,119 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Connections</title>
+  <title>Connection Manager</title>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    .section {
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      color: #333;
-      margin-top: 0;
-    }
-
-    form {
-      margin-bottom: 20px;
-    }
-
-    input[type="text"], select {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-    }
-
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-      padding: 10px;
-      border-radius: 5px;
-      margin-bottom: 20px;
-    }
-
-    #cy {
-      height: 500px;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    #connection-prompt {
-      display: none;
-    }
-
-    #connection-prompt button {
-      background-color: #0074D9;
-    }
-
-    #connection-prompt button:hover {
-      background-color: #006BB3;
-    }
-
-    .dropdown-section {
-      margin-bottom: 15px;
-    }
-
-    .dropdown-section label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-      color: #333;
-    }
+    body { font-family: Arial; max-width: 800px; margin: 20px auto; padding: 20px; }
+    .section { background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    #cy { height: 400px; border: 1px solid #ccc; }
+    select, input, button { margin: 10px 0; padding: 8px; }
+    .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+    .error { background: #fee; color: #c00; }
+    .success { background: #efe; color: #0c0; }
   </style>
 
-  <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
-
-  <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } 
+    from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -131,261 +36,219 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let selectedObject = null;
     let cy = null;
+    let selectedNode = null;
 
-    auth.onAuthStateChanged((user) => {
-      const messageDiv = document.getElementById("message");
+    function showMessage(text, type = 'success') {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = `message ${type}`;
+    }
+
+    // Initialize Cytoscape
+    cy = cytoscape({
+      container: document.getElementById('cy'),
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(name)',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'background-color': '#6272a4'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 2,
+            'line-color': '#8be9fd'
+          }
+        }
+      ]
+    });
+
+    // Handle auth state
+    auth.onAuthStateChanged(user => {
       if (user) {
-        messageDiv.textContent = 'You are logged in as ' + user.displayName;
-        messageDiv.className = 'success';
-        loadObjects(user.displayName);
+        showMessage(`Logged in as ${user.displayName}`);
+        loadData(user.displayName);
       } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
-        messageDiv.className = 'error';
+        showMessage('Please log in', 'error');
       }
     });
 
-    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+    // Add new object
+    document.getElementById('addForm').onsubmit = async (e) => {
       e.preventDefault();
-      const objectName = document.getElementById("object-name").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = '';
-
-      const user = auth.currentUser;
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add objects.";
-        messageDiv.className = "error";
+      const name = document.getElementById('objectName').value.trim();
+      
+      if (!name) return;
+      if (!auth.currentUser) {
+        showMessage('Please log in first', 'error');
         return;
       }
 
       try {
-        await addDoc(collection(db, "objects"), {
-          objectName: objectName,
-          user: user.displayName,
-          timestamp: serverTimestamp()
+        const docRef = await addDoc(collection(db, 'objects'), {
+          name: name,
+          user: auth.currentUser.displayName,
+          created: serverTimestamp()
         });
 
-        messageDiv.textContent = "Object added successfully!";
-        messageDiv.className = "success";
-        document.getElementById("add-object-form").reset();
-        loadObjects(user.displayName);
-      } catch (error) {
-        console.error("Error adding object: ", error);
-        messageDiv.textContent = "There was an error adding the object: " + error.message;
-        messageDiv.className = "error";
+        // Add to graph
+        cy.add({ data: { id: docRef.id, name: name } });
+        cy.layout({ name: 'circle' }).run();
+        
+        // Update dropdowns
+        updateDropdowns();
+        
+        document.getElementById('objectName').value = '';
+        showMessage('Object added');
+      } catch (err) {
+        showMessage(err.message, 'error');
       }
-    });
+    };
 
- async function loadObjects(username) {
-      if (loading) return;
+    // Handle source selection
+    document.getElementById('sourceSelect').onchange = (e) => {
+      selectedNode = e.target.value;
+      document.getElementById('targetSelect').disabled = !selectedNode;
+    };
+
+    // Create connection
+    document.getElementById('connectForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const source = selectedNode;
+      const target = document.getElementById('targetSelect').value;
+
+      if (!source || !target || source === target) {
+        showMessage('Please select different objects', 'error');
+        return;
+      }
 
       try {
-        setLoading(true);
-        const objectsSelect = document.getElementById("objects-select");
-        const connectionDropdown = document.getElementById("connection-dropdown");
-        objectsSelect.innerHTML = '<option value="">Select an Object</option>';
-        connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
-
-        if (!cy) {
-          cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: [],
-            style: [
-              {
-                selector: 'node',
-                style: {
-                  'background-color': '#0074D9',
-                  'label': 'data(objectName)',
-                  'text-valign': 'center',
-                  'text-halign': 'center',
-                  'text-wrap': 'wrap'
-                }
-              },
-              {
-                selector: 'edge',
-                style: {
-                  'width': 3,
-                  'line-color': '#aaa',
-                  'curve-style': 'bezier'
-                }
-              }
-            ],
-            layout: {
-              name: 'circle',
-              padding: 50
-            }
-          });
-        } else {
-          cy.elements().remove();
-        }
-
-        // Get all objects for this user
-        const q = query(
-          collection(db, "objects"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-
-        // Track unique objects using a Map to maintain both ID and name
-        const uniqueObjects = new Map();
-
-        querySnapshot.forEach((doc) => {
-          const objectData = doc.data();
-          // Only add if we haven't seen this object name before
-          if (!uniqueObjects.has(objectData.objectName)) {
-            uniqueObjects.set(objectData.objectName, {
-              id: doc.id,
-              name: objectData.objectName
-            });
-          }
+        await addDoc(collection(db, 'connections'), {
+          source: source,
+          target: target,
+          user: auth.currentUser.displayName,
+          created: serverTimestamp()
         });
 
-        // Add nodes to cytoscape
-        uniqueObjects.forEach((obj) => {
+        // Add to graph
+        cy.add({ data: { source: source, target: target } });
+        cy.layout({ name: 'circle' }).run();
+
+        // Reset selections
+        document.getElementById('sourceSelect').value = '';
+        document.getElementById('targetSelect').value = '';
+        document.getElementById('targetSelect').disabled = true;
+        selectedNode = null;
+
+        showMessage('Connection created');
+      } catch (err) {
+        showMessage(err.message, 'error');
+      }
+    };
+
+    // Load all data
+    async function loadData(username) {
+      try {
+        // Clear existing data
+        cy.elements().remove();
+        
+        // Load objects
+        const objectsSnap = await getDocs(
+          query(collection(db, 'objects'), 
+          where('user', '==', username))
+        );
+
+        // Add nodes
+        objectsSnap.forEach(doc => {
           cy.add({
             data: {
-              id: obj.id,
-              objectName: obj.name
+              id: doc.id,
+              name: doc.data().name
             }
           });
-
-          // Add to object select dropdown
-          const objectOption = document.createElement("option");
-          objectOption.value = obj.name;
-          objectOption.textContent = obj.name;
-          objectsSelect.appendChild(objectOption);
-
-          // Add to connection dropdown
-          const connectionOption = document.createElement("option");
-          connectionOption.value = obj.id;
-          connectionOption.textContent = obj.name;
-          connectionDropdown.appendChild(connectionOption);
         });
 
         // Load connections
-        const connectionQuery = query(
-          collection(db, "connections"),
-          where("user", "==", username)
+        const connectionsSnap = await getDocs(
+          query(collection(db, 'connections'),
+          where('user', '==', username))
         );
-        const connectionSnapshot = await getDocs(connectionQuery);
 
-        connectionSnapshot.forEach((doc) => {
-          const connection = doc.data();
-          // Only add edge if both nodes exist
-          if (cy.getElementById(connection.source).length && cy.getElementById(connection.target).length) {
-            cy.add({
-              data: {
-                source: connection.source,
-                target: connection.target
-              }
-            });
-          }
+        // Add edges
+        connectionsSnap.forEach(doc => {
+          const data = doc.data();
+          cy.add({
+            data: {
+              source: data.source,
+              target: data.target
+            }
+          });
         });
 
+        // Update dropdowns and layout
+        updateDropdowns();
         cy.layout({ name: 'circle' }).run();
-      } catch (error) {
-        console.error("Error loading objects: ", error);
-        showMessage("There was an error loading objects: " + error.message, "error");
-      } finally {
-        setLoading(false);
+
+      } catch (err) {
+        showMessage(err.message, 'error');
       }
     }
-    document.getElementById("objects-select").addEventListener("change", (e) => {
-      selectObject(e.target.value);
-    });
 
-    document.getElementById("create-connection").addEventListener("click", () => {
-      const selectedConnectionId = document.getElementById("connection-dropdown").value;
-      if (selectedConnectionId) {
-        createEdge(selectedConnectionId);
-      } else {
-        alert("Please select a connection.");
-      }
-    });
+    // Update dropdown options
+    function updateDropdowns() {
+      const nodes = cy.nodes().map(node => ({
+        id: node.id(),
+        name: node.data('name')
+      }));
 
-    function selectObject(objectName) {
-      selectedObject = objectName;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
-      messageDiv.className = 'success';
-      document.getElementById("connection-prompt").style.display = 'block';
-    }
+      const sourceSelect = document.getElementById('sourceSelect');
+      const targetSelect = document.getElementById('targetSelect');
 
-   async function createEdge(targetId) {
-  const targetNode = cy.getElementById(targetId);
-  const sourceNode = cy.nodes().filter(node => node.data('objectName') === selectedObject);
-  
-  if (sourceNode.length && targetNode.length) {
-    // Add the edge to the Cytoscape graph
-    cy.add({
-      data: { source: sourceNode.id(), target: targetNode.id() }
-    });
-    cy.layout({ name: 'circle' }).run();
-    
-    // Save the connection (edge) to Firestore
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be logged in to create a connection.");
-      return;
-    }
+      // Clear existing options
+      sourceSelect.innerHTML = '<option value="">Select source</option>';
+      targetSelect.innerHTML = '<option value="">Select target</option>';
 
-    try {
-      // Save the edge data (connections)
-      await addDoc(collection(db, "connections"), {
-        source: sourceNode.id(),
-        target: targetNode.id(),
-        user: user.displayName,
-        timestamp: serverTimestamp()
+      // Add new options
+      nodes.forEach(node => {
+        sourceSelect.add(new Option(node.name, node.id));
+        targetSelect.add(new Option(node.name, node.id));
       });
-      document.getElementById("connection-prompt").style.display = 'none';
-    } catch (error) {
-      console.error("Error creating connection: ", error);
-      alert("There was an error creating the connection.");
-    }
-  } else {
-    alert("Both nodes must exist before connecting.");
-  }
-}
 
+      targetSelect.disabled = !selectedNode;
+    }
   </script>
 </head>
 <body>
-  <div class="container">
-    <div class="section">
-      <h2>Manage Objects</h2>
-      <div id="message"></div>
+  <div class="section">
+    <h2>Add Object</h2>
+    <div id="message"></div>
+    <form id="addForm">
+      <input type="text" id="objectName" placeholder="Enter object name" required>
+      <button type="submit">Add</button>
+    </form>
+  </div>
 
-      <form id="add-object-form">
-        <input type="text" id="object-name" placeholder="Enter Object Name" required />
-        <button type="submit">Add Object</button>
-      </form>
-    </div>
+  <div class="section">
+    <h2>Create Connection</h2>
+    <form id="connectForm">
+      <select id="sourceSelect">
+        <option value="">Select source</option>
+      </select>
+      <select id="targetSelect" disabled>
+        <option value="">Select target</option>
+      </select>
+      <button type="submit">Connect</button>
+    </form>
+  </div>
 
-    <div class="section">
-      <div class="dropdown-section">
-        <label for="objects-select">Select Object:</label>
-        <select id="objects-select">
-          <option value="">Select an Object</option>
-        </select>
-      </div>
-
-      <div id="connection-prompt">
-        <div class="dropdown-section">
-          <label for="connection-dropdown">Add Connection To:</label>
-          <select id="connection-dropdown">
-            <option value="">Select an Object</option>
-          </select>
-          <button id="create-connection">Create Connection</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Connection Graph</h2>
-      <div id="cy"></div>
-    </div>
+  <div class="section">
+    <h2>Graph</h2>
+    <div id="cy"></div>
   </div>
 </body>
 </html>
