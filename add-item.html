@@ -133,11 +133,11 @@
       const connectionsList = document.getElementById("connections-list");
       connectionsList.innerHTML = ''; // Clear the list before adding new connections
 
-      try {
-        let currentItemId = itemId;
-        let connectionChain = [];
+      let connectionChain = [];
+      let currentItemId = itemId;
 
-        // Loop to get the entire connection chain
+      try {
+        // Fetch the entire connection chain for the item
         while (currentItemId) {
           const q = query(
             collection(db, "connections"),
@@ -145,18 +145,24 @@
           );
           const querySnapshot = await getDocs(q);
 
-          querySnapshot.forEach((doc) => {
-            const connection = doc.data();
-            connectionChain.push(connection.itemName);
-            currentItemId = doc.id; // Update to the next item in the chain
-          });
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              const connection = doc.data();
+              connectionChain.push(connection.itemName);
+              currentItemId = doc.id; // Update to the next item in the chain
+            });
+          } else {
+            currentItemId = null; // End the loop if no more connections
+          }
         }
 
         // Display the connection chain as a list
-        const connectionText = connectionChain.join(" - ");
-        const li = document.createElement("li");
-        li.textContent = connectionText;
-        connectionsList.appendChild(li);
+        if (connectionChain.length > 0) {
+          const connectionText = connectionChain.join(" - ");
+          const li = document.createElement("li");
+          li.textContent = connectionText;
+          connectionsList.appendChild(li);
+        }
       } catch (error) {
         console.error("Error loading connections: ", error);
       }
