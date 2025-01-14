@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add or Connect Item</title>
+  <title>Manage Connections</title>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
@@ -35,16 +35,16 @@
         messageDiv.className = 'success';
         loadItems(user.displayName);
       } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to add items.';
+        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
         messageDiv.className = 'error';
       }
     });
 
-    // Add Item to Firestore
-    document.getElementById("add-item-form").addEventListener("submit", async (e) => {
+    // Add Connection to Firestore
+    document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const itemName = document.getElementById("item-name").value;
+      const itemName = document.getElementById("connection-name").value;
       const previousItemId = document.getElementById("previous-item").value;
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = ''; // Clear previous messages
@@ -52,41 +52,40 @@
       const user = auth.currentUser ? auth.currentUser : null;
 
       if (!user) {
-        messageDiv.textContent = "You must be logged in to add items.";
+        messageDiv.textContent = "You must be logged in to add connections.";
         messageDiv.className = "error";
         return;
       }
 
       try {
-        let newItemRef;
-
         if (previousItemId) {
-          // Add new item associated with the previous item
-          newItemRef = await addDoc(collection(db, "items"), {
-            name: itemName,
+          // Add connection to previous item
+          const connectionRef = await addDoc(collection(db, "connections"), {
+            itemName: itemName,
             user: user.displayName,
             timestamp: serverTimestamp(),
             previousItem: previousItemId, // Link to the previous item
           });
-        } else {
-          // Add standalone item
-          newItemRef = await addDoc(collection(db, "items"), {
-            name: itemName,
-            user: user.displayName,
-            timestamp: serverTimestamp(),
+
+          // Add connection info to the previous item
+          const previousItemRef = doc(db, "items", previousItemId);
+          await updateDoc(previousItemRef, {
+            connections: [...(previousItemRef.connections || []), connectionRef.id], // Append the connection
           });
+
+          // Success message
+          messageDiv.textContent = "Connection added successfully!";
+          messageDiv.className = "success"; // Add success class
+
+          document.getElementById("add-connection-form").reset();
+          loadItems(user.displayName); // Reload the list of items after adding one
+        } else {
+          messageDiv.textContent = "Please select a previous item to connect to.";
+          messageDiv.className = "error"; // Add error class
         }
-
-        // Success message
-        messageDiv.textContent = "Item added successfully!";
-        messageDiv.className = "success"; // Add success class
-
-        document.getElementById("add-item-form").reset();
-        loadItems(user.displayName); // Reload the list of items after adding one
       } catch (error) {
-        // Error message
-        console.error("Error adding item: ", error);
-        messageDiv.textContent = "There was an error adding the item: " + error.message;
+        console.error("Error adding connection: ", error);
+        messageDiv.textContent = "There was an error adding the connection: " + error.message;
         messageDiv.className = "error"; // Add error class
       }
     });
@@ -126,6 +125,39 @@
         messageDiv.className = "error"; // Add error class
       }
     }
+
+    // Load Connections for Previous Item
+    async function loadConnections(previousItemId) {
+      const connectionsList = document.getElementById("connections-list");
+      connectionsList.innerHTML = ''; // Clear the list before adding new connections
+
+      try {
+        const q = query(
+          collection(db, "connections"),
+          where("previousItem", "==", previousItemId)
+        );
+        const querySnapshot = await getDocs(q);
+
+        querySnapshot.forEach((doc) => {
+          const connection = doc.data();
+          const li = document.createElement("li");
+          li.textContent = connection.itemName;
+          connectionsList.appendChild(li);
+        });
+      } catch (error) {
+        console.error("Error loading connections: ", error);
+      }
+    }
+
+    // Show connections when a previous item is selected
+    document.getElementById("previous-item").addEventListener("change", (e) => {
+      const selectedItemId = e.target.value;
+      if (selectedItemId) {
+        loadConnections(selectedItemId); // Load the connections for the selected previous item
+      } else {
+        document.getElementById("connections-list").innerHTML = ''; // Clear if no item is selected
+      }
+    });
   </script>
 
   <!-- Custom Styles -->
@@ -197,12 +229,14 @@
       border: 1px solid #f5c6cb;
     }
 
-    #items-list {
+    #items-list,
+    #connections-list {
       list-style-type: none;
       padding: 0;
     }
 
-    #items-list li {
+    #items-list li,
+    #connections-list li {
       padding: 8px 0;
       border-bottom: 1px solid #ddd;
     }
@@ -210,16 +244,16 @@
 </head>
 <body>
   <h2>Add or Connect Item</h2>
-  <form id="add-item-form">
-    <label for="item-name">Item Name:</label>
-    <input type="text" id="item-name" placeholder="Enter item name" required /><br /><br />
+  <form id="add-connection-form">
+    <label for="connection-name">Connection Name:</label>
+    <input type="text" id="connection-name" placeholder="Enter connection name" required /><br /><br />
 
-    <label for="previous-item">Select a Previous Item (Optional):</label>
+    <label for="previous-item">Select Previous Item:</label>
     <select id="previous-item">
-      <option value="">None</option> <!-- Default value if no item is selected -->
+      <option value="">--Select--</option>
     </select><br /><br />
 
-    <button type="submit">Add Item or Connect</button>
+    <button type="submit">Add Connection</button>
   </form>
 
   <!-- Confirmation or Error message -->
@@ -227,5 +261,8 @@
 
   <h2>Previous Items</h2>
   <ul id="items-list"></ul>
+
+  <h2>Connections</h2>
+  <ul id="connections-list"></ul>
 </body>
 </html>
