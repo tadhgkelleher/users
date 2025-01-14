@@ -75,98 +75,100 @@
     }
   });
 
-  // Load Objects from Firestore
-  async function loadObjects(username) {
-    const objectsList = document.getElementById("objects-list");
-    objectsList.innerHTML = ''; // Clear the list
+// Load Objects from Firestore
+async function loadObjects(username) {
+  const objectsList = document.getElementById("objects-list");
+  objectsList.innerHTML = ''; // Clear the list
 
-    try {
-      const q = query(
-        collection(db, "objects"),
-        where("user", "==", username),
-        orderBy("timestamp", "desc")
-      );
-      const querySnapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, "objects"),
+      where("user", "==", username),
+      orderBy("timestamp", "desc")
+    );
+    const querySnapshot = await getDocs(q);
 
-      // Initialize Cytoscape graph if it's not initialized already
-      if (!cy) {
-        cy = cytoscape({
-          container: document.getElementById('cy'),
-          elements: [],
-          style: [
-            {
-              selector: 'node',
-              style: {
-                'background-color': '#0074D9',
-                'label': 'data(objectName)'
-              }
-            },
-            {
-              selector: 'edge',
-              style: {
-                'width': 3,
-                'line-color': '#aaa'
-              }
+    // Initialize Cytoscape graph if it's not initialized already
+    if (!cy) {
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [],
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#0074D9',
+              'label': 'data(objectName)'
             }
-          ],
-          layout: {
-            name: 'circle',
-            padding: 10
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 3,
+              'line-color': '#aaa'
+            }
           }
-        });
+        ],
+        layout: {
+          name: 'circle',
+          padding: 10
+        }
+      });
+    }
+
+    // Set to track object names to avoid duplicates
+    const objectNames = new Set();
+    const objects = [];
+
+    querySnapshot.forEach((doc) => {
+      const object = doc.data();
+      
+      // Check if the node already exists based on objectName (or use doc.id)
+      if (!cy.getElementById(doc.id).length) {
+        cy.add({ data: { id: doc.id, objectName: object.objectName } });
+        objectNames.add(object.objectName);
+        objects.push({ id: doc.id, name: object.objectName });
       }
 
-      // Set to track object names to avoid duplicates
-      const objectNames = new Set();
-      const objects = [];
-
-      querySnapshot.forEach((doc) => {
-        const object = doc.data();
-        // Check if the object is already in the graph
-        if (!objectNames.has(object.objectName)) {
-          cy.add({ data: { id: doc.id, objectName: object.objectName } });
-          objectNames.add(object.objectName);
-          objects.push({ id: doc.id, name: object.objectName });
-        }
-
-        // Display objects in the list
-        const li = document.createElement("li");
-        li.textContent = object.objectName;
-        li.addEventListener('click', () => {
-          selectObject(object.objectName);
-        });
-        objectsList.appendChild(li);
+      // Display objects in the list
+      const li = document.createElement("li");
+      li.textContent = object.objectName;
+      li.addEventListener('click', () => {
+        selectObject(object.objectName);
       });
+      objectsList.appendChild(li);
+    });
 
-      cy.layout({ name: 'circle' }).run();
+    cy.layout({ name: 'circle' }).run();
 
-      // Populate the dropdown with objects
-      const connectionDropdown = document.getElementById("connection-dropdown");
-      connectionDropdown.innerHTML = ''; // Clear existing options
-      objects.forEach(object => {
-        const option = document.createElement("option");
-        option.value = object.id;
-        option.textContent = object.name;
-        connectionDropdown.appendChild(option);
-      });
+    // Populate the dropdown with objects
+    const connectionDropdown = document.getElementById("connection-dropdown");
+    connectionDropdown.innerHTML = ''; // Clear existing options
+    objects.forEach(object => {
+      const option = document.createElement("option");
+      option.value = object.id;
+      option.textContent = object.name;
+      connectionDropdown.appendChild(option);
+    });
 
-      // Handle connection creation
-      document.getElementById("create-connection").addEventListener("click", () => {
-        const selectedConnectionId = connectionDropdown.value;
-        if (selectedConnectionId) {
-          createEdge(selectedConnectionId);
-        } else {
-          alert("Please select a connection.");
-        }
-      });
+    // Handle connection creation
+    document.getElementById("create-connection").addEventListener("click", () => {
+      const selectedConnectionId = connectionDropdown.value;
+      if (selectedConnectionId) {
+        createEdge(selectedConnectionId);
+      } else {
+        alert("Please select a connection.");
+      }
+    });
 
-    } catch (error) {
-      console.error("Error loading objects: ", error);
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = "There was an error loading objects: " + error.message;
-      messageDiv.className = "error";
-    }
+  } catch (error) {
+    console.error("Error loading objects: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "There was an error loading objects: " + error.message;
+    messageDiv.className = "error";
   }
+}
+
 
   // Select an object from the list
   function selectObject(objectName) {
