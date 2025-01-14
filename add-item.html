@@ -9,7 +9,7 @@
   <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
   import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-  import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -75,7 +75,7 @@
   // Load Objects from Firestore
   async function loadObjects(username) {
     const objectsList = document.getElementById("objects-list");
-    objectsList.innerHTML = '';
+    objectsList.innerHTML = ''; // Clear the list
 
     try {
       const q = query(
@@ -110,24 +110,22 @@
         }
       });
 
-      // Adding objects to graph and list
+      // Set to track object names to avoid duplicates
+      const objectNames = new Set();
+
       querySnapshot.forEach((doc) => {
         const object = doc.data();
-        const objectName = object.objectName;
+        // Check if the object is already in the graph
+        if (!objectNames.has(object.objectName)) {
+          cy.add({ data: { id: doc.id, objectName: object.objectName } });
+          objectNames.add(object.objectName);
 
-        // Add to Cytoscape graph
-        cy.add({ data: { id: doc.id, objectName: objectName } });
+          // Optionally, add edges if you have relationships
+        }
 
-        // Add to list of objects with 'Add Connection' button
+        // Display objects in the list
         const li = document.createElement("li");
-        li.textContent = objectName;
-        
-        // Add 'Add Connection' button next to each object
-        const addConnectionButton = document.createElement("button");
-        addConnectionButton.textContent = "Add Connection";
-        addConnectionButton.onclick = () => showConnectionForm(doc.id, objectName);
-        li.appendChild(addConnectionButton);
-
+        li.textContent = object.objectName;
         objectsList.appendChild(li);
       });
 
@@ -139,55 +137,88 @@
       messageDiv.className = "error";
     }
   }
-
- // Connect two objects
-async function connectObjects(fromObjectId, toObjectId) {
-  try {
-    // Create edge in Cytoscape graph
-    const cy = cytoscape({ container: document.getElementById('cy') });
-    cy.add({
-      data: { id: fromObjectId + "-" + toObjectId, source: fromObjectId, target: toObjectId },
-    });
-
-    // Update Firestore (optional: add a separate collection for edges if needed)
-    // Example of adding a connection in Firestore:
-    // await addDoc(collection(db, "connections"), {
-    //   from: fromObjectId,
-    //   to: toObjectId,
-    //   timestamp: serverTimestamp(),
-    // });
-
-    // Re-run graph layout
-    cy.layout({ name: "circle" }).run();
-
-    alert("Connection created successfully!");
-    loadObjects(auth.currentUser.displayName); // Reload objects
-  } catch (error) {
-    console.error("Error connecting objects: ", error);
-    alert("Failed to connect objects.");
-  }
-}
-
-  </script>
+</script>
 
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
 
   <style>
-    /* Add your CSS styles here */
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h2 {
+      color: #333;
+    }
+
+    form {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    #objects-list {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+
+    #cy {
+      height: 500px;
+      width: 100%;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
 
   <h2>Manage Objects</h2>
+
   <div id="message"></div>
+
   <form id="add-object-form">
     <input type="text" id="object-name" placeholder="Enter Object Name" required />
     <button type="submit">Add Object</button>
   </form>
+
   <h3>Your Objects:</h3>
   <ul id="objects-list"></ul>
-  <div id="connection-form"></div>
+
   <div id="cy"></div>
 
 </body>
