@@ -107,19 +107,22 @@
       const provider = new GoogleAuthProvider();
       const message = document.getElementById('message');
 
-      console.log("Initiating Google Sign-In..."); // Debugging log
+      console.log("Google sign-in initiated...");
 
       signInWithPopup(auth, provider)
         .then((result) => {
           const user = result.user;
-          console.log("User signed in: ", user); // Debugging log
+          console.log("User signed in:", user); // More detailed logging
           message.style.color = 'green';
           message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
         })
         .catch((error) => {
-          console.error("Error during Google sign-in:", error.message); // More detailed error logging
+          // Catch any specific errors related to Google sign-in
+          console.error("Error during Google sign-in:", error.code);
+          console.error("Error message:", error.message);
+          
           message.style.color = 'red';
-          message.textContent = `Error: ${error.message}`;
+          message.textContent = `Error: ${error.message}`; // Display the error message on the page
         });
     }
   </script>
