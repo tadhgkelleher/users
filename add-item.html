@@ -177,96 +177,121 @@
       }
     });
 
-async function loadObjects(username) {
-  const objectsSelect = document.getElementById("objects-select");
-  objectsSelect.innerHTML = '<option value="">Select an Object</option>';
+ async function loadObjects(username) {
+      if (loading) return;
 
-  try {
-    const q = query(
-      collection(db, "objects"),
-      where("user", "==", username),
-      orderBy("timestamp", "desc")
-    );
-    const querySnapshot = await getDocs(q);
+      try {
+        setLoading(true);
+        const objectsSelect = document.getElementById("objects-select");
+        const connectionDropdown = document.getElementById("connection-dropdown");
+        objectsSelect.innerHTML = '<option value="">Select an Object</option>';
+        connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
 
-    if (!cy) {
-      cy = cytoscape({
-        container: document.getElementById('cy'),
-        elements: [],
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'background-color': '#0074D9',
-              'label': 'data(objectName)'
+        if (!cy) {
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [],
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'background-color': '#0074D9',
+                  'label': 'data(objectName)',
+                  'text-valign': 'center',
+                  'text-halign': 'center',
+                  'text-wrap': 'wrap'
+                }
+              },
+              {
+                selector: 'edge',
+                style: {
+                  'width': 3,
+                  'line-color': '#aaa',
+                  'curve-style': 'bezier'
+                }
+              }
+            ],
+            layout: {
+              name: 'circle',
+              padding: 50
             }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 3,
-              'line-color': '#aaa'
-            }
-          }
-        ],
-        layout: {
-          name: 'circle',
-          padding: 10
+          });
+        } else {
+          cy.elements().remove();
         }
-      });
-    }
 
-    const objectNames = new Set();
-    const objects = [];
+        // Get all objects for this user
+        const q = query(
+          collection(db, "objects"),
+          where("user", "==", username),
+          orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
 
-    querySnapshot.forEach((doc) => {
-      const object = doc.data();
-      if (!objectNames.has(object.objectName)) {
-        cy.add({ data: { id: doc.id, objectName: object.objectName } });
-        objectNames.add(object.objectName);
-        objects.push({ id: doc.id, name: object.objectName });
+        // Track unique objects using a Map to maintain both ID and name
+        const uniqueObjects = new Map();
+
+        querySnapshot.forEach((doc) => {
+          const objectData = doc.data();
+          // Only add if we haven't seen this object name before
+          if (!uniqueObjects.has(objectData.objectName)) {
+            uniqueObjects.set(objectData.objectName, {
+              id: doc.id,
+              name: objectData.objectName
+            });
+          }
+        });
+
+        // Add nodes to cytoscape
+        uniqueObjects.forEach((obj) => {
+          cy.add({
+            data: {
+              id: obj.id,
+              objectName: obj.name
+            }
+          });
+
+          // Add to object select dropdown
+          const objectOption = document.createElement("option");
+          objectOption.value = obj.name;
+          objectOption.textContent = obj.name;
+          objectsSelect.appendChild(objectOption);
+
+          // Add to connection dropdown
+          const connectionOption = document.createElement("option");
+          connectionOption.value = obj.id;
+          connectionOption.textContent = obj.name;
+          connectionDropdown.appendChild(connectionOption);
+        });
+
+        // Load connections
+        const connectionQuery = query(
+          collection(db, "connections"),
+          where("user", "==", username)
+        );
+        const connectionSnapshot = await getDocs(connectionQuery);
+
+        connectionSnapshot.forEach((doc) => {
+          const connection = doc.data();
+          // Only add edge if both nodes exist
+          if (cy.getElementById(connection.source).length && cy.getElementById(connection.target).length) {
+            cy.add({
+              data: {
+                source: connection.source,
+                target: connection.target
+              }
+            });
+          }
+        });
+
+        cy.layout({ name: 'circle' }).run();
+      } catch (error) {
+        console.error("Error loading objects: ", error);
+        showMessage("There was an error loading objects: " + error.message, "error");
+      } finally {
+        setLoading(false);
       }
-
-      const option = document.createElement("option");
-      option.value = object.objectName;
-      option.textContent = object.objectName;
-      objectsSelect.appendChild(option);
-    });
-
-    cy.layout({ name: 'circle' }).run();
-
-    // Load the connections (edges) from Firestore
-    const connectionQuery = query(
-      collection(db, "connections"),
-      where("user", "==", username)
-    );
-    const connectionSnapshot = await getDocs(connectionQuery);
-
-    connectionSnapshot.forEach((doc) => {
-      const connection = doc.data();
-      cy.add({
-        data: { source: connection.source, target: connection.target }
-      });
-    });
-
-    const connectionDropdown = document.getElementById("connection-dropdown");
-    connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
-    objects.forEach(object => {
-      const option = document.createElement("option");
-      option.value = object.id;
-      option.textContent = object.name;
-      connectionDropdown.appendChild(option);
-    });
-
-  } catch (error) {
-    console.error("Error loading objects: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "There was an error loading objects: " + error.message;
-    messageDiv.className = "error";
-  }
-}
-
-
+    }
     document.getElementById("objects-select").addEventListener("change", (e) => {
       selectObject(e.target.value);
     });
