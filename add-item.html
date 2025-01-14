@@ -63,7 +63,7 @@
           const previousItemConnections = await getPreviousItemConnections(previousItemId);
 
           // Add the current connection (with the previous connections included)
-          const newConnectionChain = previousItemConnections ? previousItemConnections + '-' + itemName : itemName;
+          const newConnectionChain = previousItemConnections ? previousItemConnections + ' -> ' + itemName : itemName;
 
           // Add this new connection to the connections collection
           await addDoc(collection(db, "connections"), {
@@ -177,7 +177,7 @@
 
         // Display the connection chain inline beside the item
         if (connectionChain.length > 0) {
-          const connectionText = connectionChain.join(" - ");
+          const connectionText = connectionChain.join(" -> ");
           const connectionSpan = document.createElement("span");
           connectionSpan.textContent = " (" + connectionText + ")";
           connectionsContainer.appendChild(connectionSpan);
