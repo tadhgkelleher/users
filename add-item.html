@@ -118,10 +118,16 @@
         // Add to Cytoscape graph
         cy.add({ data: { id: doc.id, objectName: objectName } });
 
-        // Add to list of objects
+        // Add to list of objects with 'Add Connection' button
         const li = document.createElement("li");
         li.textContent = objectName;
-        li.setAttribute("data-id", doc.id);
+        
+        // Add 'Add Connection' button next to each object
+        const addConnectionButton = document.createElement("button");
+        addConnectionButton.textContent = "Add Connection";
+        addConnectionButton.onclick = () => showConnectionForm(doc.id, objectName);
+        li.appendChild(addConnectionButton);
+
         objectsList.appendChild(li);
       });
 
@@ -134,56 +140,93 @@
     }
   }
 
-  // Add Connection (Create Edge)
-  document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // Show connection form for selecting or creating an object
+  function showConnectionForm(fromObjectId, fromObjectName) {
+    const connectionFormDiv = document.getElementById("connection-form");
+    connectionFormDiv.innerHTML = `
+      <h4>Connect to: ${fromObjectName}</h4>
+      <label for="to-object">Select or Create Object:</label>
+      <input type="text" id="to-object-name" placeholder="Enter Object Name" />
+      <button id="select-existing-object" onclick="connectObjects('${fromObjectId}')">Connect to Existing Object</button>
+      <button id="create-new-object" onclick="createNewConnection('${fromObjectId}')">Create New Object</button>
+    `;
+    connectionFormDiv.style.display = "block";
+  }
 
-    const fromObjectId = document.getElementById("from-object").value;
-    const toObjectId = document.getElementById("to-object").value;
+  // Create a new object and connection
+  async function createNewConnection(fromObjectId) {
+    const newObjectName = document.getElementById("to-object-name").value;
 
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = '';
-
-    if (!fromObjectId || !toObjectId) {
-      messageDiv.textContent = "Both objects must be selected to create a connection.";
-      messageDiv.className = "error";
+    if (!newObjectName) {
+      alert("Please enter a name for the new object.");
       return;
     }
 
     try {
-      // Add edge between the selected objects
+      const newObjectDocRef = await addDoc(collection(db, "objects"), {
+        objectName: newObjectName,
+        user: auth.currentUser.displayName,
+        timestamp: serverTimestamp()
+      });
+
       const cy = cytoscape({ container: document.getElementById('cy') });
+      cy.add({ data: { id: newObjectDocRef.id, objectName: newObjectName } });
 
-      const fromNode = cy.getElementById(fromObjectId);
-      const toNode = cy.getElementById(toObjectId);
+      // Create edge between the new object and the existing object
+      cy.add({
+        data: { id: fromObjectId + "-" + newObjectDocRef.id, source: fromObjectId, target: newObjectDocRef.id }
+      });
 
-      if (!fromNode || !toNode) {
-        messageDiv.textContent = "One or both objects not found.";
-        messageDiv.className = "error";
+      // Update the graph layout
+      cy.layout({ name: 'circle' }).run();
+
+      alert("Connection created between " + fromObjectName + " and " + newObjectName);
+      loadObjects(auth.currentUser.displayName);
+    } catch (error) {
+      console.error("Error creating new object and connection: ", error);
+    }
+  }
+
+  // Connect two existing objects
+  async function connectObjects(fromObjectId) {
+    const toObjectName = document.getElementById("to-object-name").value;
+
+    if (!toObjectName) {
+      alert("Please enter the name of the object to connect.");
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, "objects"),
+        where("objectName", "==", toObjectName)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        alert("No existing object found with that name.");
         return;
       }
 
+      const toObjectDoc = querySnapshot.docs[0];
+      const toObjectId = toObjectDoc.id;
+
+      const cy = cytoscape({ container: document.getElementById('cy') });
+
+      // Create edge between the two objects
       cy.add({
         data: { id: fromObjectId + "-" + toObjectId, source: fromObjectId, target: toObjectId }
       });
 
+      // Update the graph layout
       cy.layout({ name: 'circle' }).run();
 
-      // Update Firestore to reflect the new connection
-      await addDoc(collection(db, "connections"), {
-        fromObject: fromObjectId,
-        toObject: toObjectId,
-        timestamp: serverTimestamp()
-      });
-
-      messageDiv.textContent = "Connection added successfully!";
-      messageDiv.className = "success";
+      alert("Connection created between " + fromObjectName + " and " + toObjectName);
+      loadObjects(auth.currentUser.displayName);
     } catch (error) {
-      console.error("Error adding connection: ", error);
-      messageDiv.textContent = "There was an error adding the connection: " + error.message;
-      messageDiv.className = "error";
+      console.error("Error connecting objects: ", error);
     }
-  });
+  }
   </script>
 
   <!-- Cytoscape Script -->
@@ -248,6 +291,15 @@
       width: 100%;
       border: 1px solid #ccc;
     }
+
+    #connection-form {
+      margin-top: 20px;
+      display: none;
+    }
+
+    #connection-form input {
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -264,16 +316,7 @@
   <h3>Your Objects:</h3>
   <ul id="objects-list"></ul>
 
-  <h3>Add Connection:</h3>
-  <form id="add-connection-form">
-    <select id="from-object">
-      <option value="">Select Object to Connect From</option>
-    </select>
-    <select id="to-object">
-      <option value="">Select Object to Connect To</option>
-    </select>
-    <button type="submit">Add Connection</button>
-  </form>
+  <div id="connection-form"></div>
 
   <div id="cy"></div>
 
