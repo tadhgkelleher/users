@@ -25,6 +25,8 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
+  let selectedObject = null;
+
   auth.onAuthStateChanged((user) => {
     const messageDiv = document.getElementById("message");
     if (user) {
@@ -112,6 +114,7 @@
 
       // Set to track object names to avoid duplicates
       const objectNames = new Set();
+      const objects = [];
 
       querySnapshot.forEach((doc) => {
         const object = doc.data();
@@ -119,17 +122,40 @@
         if (!objectNames.has(object.objectName)) {
           cy.add({ data: { id: doc.id, objectName: object.objectName } });
           objectNames.add(object.objectName);
-
-          // Optionally, add edges if you have relationships
+          objects.push({ id: doc.id, name: object.objectName });
         }
 
         // Display objects in the list
         const li = document.createElement("li");
         li.textContent = object.objectName;
+        li.addEventListener('click', () => {
+          selectObject(object.objectName);
+        });
         objectsList.appendChild(li);
       });
 
       cy.layout({ name: 'circle' }).run();
+
+      // Populate the dropdown with objects
+      const connectionDropdown = document.getElementById("connection-dropdown");
+      connectionDropdown.innerHTML = ''; // Clear existing options
+      objects.forEach(object => {
+        const option = document.createElement("option");
+        option.value = object.id;
+        option.textContent = object.name;
+        connectionDropdown.appendChild(option);
+      });
+
+      // Handle connection creation
+      document.getElementById("create-connection").addEventListener("click", () => {
+        const selectedConnectionId = connectionDropdown.value;
+        if (selectedConnectionId) {
+          createEdge(selectedConnectionId);
+        } else {
+          alert("Please select a connection.");
+        }
+      });
+
     } catch (error) {
       console.error("Error loading objects: ", error);
       const messageDiv = document.getElementById("message");
@@ -137,7 +163,33 @@
       messageDiv.className = "error";
     }
   }
-</script>
+
+  // Select an object from the list
+  function selectObject(objectName) {
+    selectedObject = objectName;
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+    messageDiv.className = 'success';
+
+    // Show the connection prompt
+    document.getElementById("connection-prompt").style.display = 'block';
+  }
+
+  // Create an edge between the selected object and the target object
+  function createEdge(targetId) {
+    const cy = cytoscape({
+      container: document.getElementById('cy'),
+      elements: []
+    });
+
+    cy.add({
+      data: { source: selectedObject, target: targetId }
+    });
+
+    cy.layout({ name: 'circle' }).run();
+    document.getElementById("connection-prompt").style.display = 'none';
+  }
+  </script>
 
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
@@ -203,6 +255,29 @@
       border: 1px solid #ccc;
       margin-top: 20px;
     }
+
+    #connection-prompt {
+      display: none;
+      margin-top: 20px;
+    }
+
+    select {
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    #connection-prompt button {
+      background-color: #0074D9;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+    }
+
+    #connection-prompt button:hover {
+      background-color: #006BB3;
+    }
   </style>
 </head>
 <body>
@@ -220,6 +295,14 @@
   <ul id="objects-list"></ul>
 
   <div id="cy"></div>
+
+  <div id="connection-prompt">
+    <h3>Add Connection</h3>
+    <select id="connection-dropdown">
+      <option value="">Select an Object</option>
+    </select>
+    <button id="create-connection">Create Connection</button>
+  </div>
 
 </body>
 </html>
