@@ -7,125 +7,126 @@
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+  import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+  import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebasestorage.app",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+    authDomain: "mandala-5165e.firebaseapp.com",
+    projectId: "mandala-5165e",
+    storageBucket: "mandala-5165e.firebasestorage.app",
+    messagingSenderId: "569537405023",
+    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+    measurementId: "G-TER99X7NBT"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    auth.onAuthStateChanged((user) => {
-      const messageDiv = document.getElementById("message");
-      if (user) {
-        messageDiv.textContent = 'You are logged in as ' + user.displayName;
-        messageDiv.className = 'success';
-        loadItems(user.displayName);
-      } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
-        messageDiv.className = 'error';
-      }
-    });
-
-    // Add Object to Firestore
-    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const objectName = document.getElementById("object-name").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; 
-
-      const user = auth.currentUser ? auth.currentUser : null;
-
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add objects.";
-        messageDiv.className = "error";
-        return;
-      }
-
-      try {
-        // Add new object to Firestore
-        await addDoc(collection(db, "objects"), {
-          objectName: objectName,
-          user: user.displayName,
-          timestamp: serverTimestamp()
-        });
-
-        messageDiv.textContent = "Object added successfully!";
-        messageDiv.className = "success"; 
-        document.getElementById("add-object-form").reset();
-        loadObjects(user.displayName);
-      } catch (error) {
-        console.error("Error adding object: ", error);
-        messageDiv.textContent = "There was an error adding the object: " + error.message;
-        messageDiv.className = "error"; 
-      }
-    });
-
-    // Load Objects from Firestore
-    async function loadObjects(username) {
-      const objectsList = document.getElementById("objects-list");
-      objectsList.innerHTML = '';
-
-      try {
-        const q = query(
-          collection(db, "objects"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-
-        const cy = cytoscape({
-          container: document.getElementById('cy'),
-          elements: [],
-          style: [
-            {
-              selector: 'node',
-              style: {
-                'background-color': '#0074D9',
-                'label': 'data(objectName)'
-              }
-            },
-            {
-              selector: 'edge',
-              style: {
-                'width': 3,
-                'line-color': '#aaa'
-              }
-            }
-          ],
-          layout: {
-            name: 'circle',
-            padding: 10
-          }
-        });
-
-        querySnapshot.forEach((doc) => {
-          const object = doc.data();
-          cy.add({ data: { id: doc.id, objectName: object.objectName } });
-
-          // Optionally, add edges if you have relationships
-        });
-
-        cy.layout({ name: 'circle' }).run();
-      } catch (error) {
-        console.error("Error loading objects: ", error);
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "There was an error loading objects: " + error.message;
-        messageDiv.className = "error";
-      }
+  auth.onAuthStateChanged((user) => {
+    const messageDiv = document.getElementById("message");
+    if (user) {
+      messageDiv.textContent = 'You are logged in as ' + user.displayName;
+      messageDiv.className = 'success';
+      loadItems(user.displayName);
+    } else {
+      messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
+      messageDiv.className = 'error';
     }
-  </script>
+  });
+
+  // Add Object to Firestore
+  document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const objectName = document.getElementById("object-name").value;
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = ''; 
+
+    const user = auth.currentUser ? auth.currentUser : null;
+
+    if (!user) {
+      messageDiv.textContent = "You must be logged in to add objects.";
+      messageDiv.className = "error";
+      return;
+    }
+
+    try {
+      // Add new object to Firestore
+      await addDoc(collection(db, "objects"), {
+        objectName: objectName,
+        user: user.displayName,
+        timestamp: serverTimestamp()
+      });
+
+      messageDiv.textContent = "Object added successfully!";
+      messageDiv.className = "success"; 
+      document.getElementById("add-object-form").reset();
+      loadObjects(user.displayName);
+    } catch (error) {
+      console.error("Error adding object: ", error);
+      messageDiv.textContent = "There was an error adding the object: " + error.message;
+      messageDiv.className = "error"; 
+    }
+  });
+
+  // Load Objects from Firestore
+  async function loadObjects(username) {
+    const objectsList = document.getElementById("objects-list");
+    objectsList.innerHTML = '';
+
+    try {
+      const q = query(
+        collection(db, "objects"),
+        where("user", "==", username),
+        orderBy("timestamp", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+
+      const cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [],
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#0074D9',
+              'label': 'data(objectName)'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 3,
+              'line-color': '#aaa'
+            }
+          }
+        ],
+        layout: {
+          name: 'circle',
+          padding: 10
+        }
+      });
+
+      querySnapshot.forEach((doc) => {
+        const object = doc.data();
+        cy.add({ data: { id: doc.id, objectName: object.objectName } });
+
+        // Optionally, add edges if you have relationships
+      });
+
+      cy.layout({ name: 'circle' }).run();
+    } catch (error) {
+      console.error("Error loading objects: ", error);
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "There was an error loading objects: " + error.message;
+      messageDiv.className = "error";
+    }
+  }
+</script>
+
 
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
