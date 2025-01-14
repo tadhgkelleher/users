@@ -91,101 +91,93 @@
       }
     });
 
-    // Load Items from Firestore
-    async function loadItems(username) {
-      const itemsList = document.getElementById("items-list");
-      itemsList.innerHTML = ''; // Clear the list before adding new items
+ // Load Items from Firestore
+async function loadItems(username) {
+  const itemsList = document.getElementById("items-list");
+  itemsList.innerHTML = ''; // Clear the list before adding new items
 
-      const previousItemSelect = document.getElementById("previous-item");
-      previousItemSelect.innerHTML = ''; // Clear previous item dropdown
+  const previousItemSelect = document.getElementById("previous-item");
+  previousItemSelect.innerHTML = ''; // Clear previous item dropdown
 
-      try {
-        const q = query(
-          collection(db, "items"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
+  try {
+    const q = query(
+      collection(db, "items"),
+      where("user", "==", username),
+      orderBy("timestamp", "desc")
+    );
+    const querySnapshot = await getDocs(q);
 
+    querySnapshot.forEach((doc) => {
+      const item = doc.data();
+      const li = document.createElement("li");
+      li.className = "item-with-connections"; // Adding class for styling
+
+      // Create the list item with the name
+      const itemName = document.createElement("span");
+      itemName.textContent = item.itemName;
+
+      // Create the connections display area
+      const connectionsContainer = document.createElement("span");
+      connectionsContainer.className = "connections"; // Create a container for connections
+
+      // Build the full chain of connections for the item
+      loadFullConnectionChain(doc.id, connectionsContainer); // Load and display the full chain
+
+      li.appendChild(itemName);
+      li.appendChild(connectionsContainer); // Append the connections beside the item
+      itemsList.appendChild(li);
+
+      // Add each item to the previous item select dropdown
+      const option = document.createElement("option");
+      option.value = doc.id; // Store the document ID
+      option.textContent = item.itemName;
+      previousItemSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error loading items: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "There was an error loading items: " + error.message;
+    messageDiv.className = "error"; // Add error class
+  }
+}
+
+// Load the full chain of connections for an item
+async function loadFullConnectionChain(itemId, connectionsContainer) {
+  let connectionChain = [];
+  let currentItemId = itemId;
+
+  try {
+    // Fetch the entire connection chain for the item
+    while (currentItemId) {
+      const q = query(
+        collection(db, "connections"),
+        where("previousItem", "==", currentItemId)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
         querySnapshot.forEach((doc) => {
-          const item = doc.data();
-          const li = document.createElement("li");
-          li.className = "item-with-connections"; // Adding class for styling
-
-          // Create the list item with the name
-          const itemName = document.createElement("span");
-          itemName.textContent = item.itemName;
-
-          // Create the connections display area
-          const connectionsContainer = document.createElement("span");
-          connectionsContainer.className = "connections"; // Create a container for connections
-
-          loadConnections(doc.id, connectionsContainer); // Load the connections inline
-
-          li.appendChild(itemName);
-          li.appendChild(connectionsContainer); // Append the connections beside the item
-          itemsList.appendChild(li);
-
-          // Add each item to the previous item select dropdown
-          const option = document.createElement("option");
-          option.value = doc.id; // Store the document ID
-          option.textContent = item.itemName;
-          previousItemSelect.appendChild(option);
+          const connection = doc.data();
+          connectionChain.push(connection.itemName); // Append the next item in the chain
+          currentItemId = doc.id; // Update to the next item in the chain
         });
-      } catch (error) {
-        console.error("Error loading items: ", error);
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "There was an error loading items: " + error.message;
-        messageDiv.className = "error"; // Add error class
+      } else {
+        currentItemId = null; // End the loop if no more connections
       }
     }
 
-    // Load the chain of connections for an item
-    async function getPreviousItemConnections(itemId) {
-      const itemDocRef = doc(db, "items", itemId);
-      const itemDoc = await getDoc(itemDocRef);
-      const itemData = itemDoc.data();
-
-      let previousConnections = itemData.connectionChain || "";
-      return previousConnections; // Return the existing chain of connections
+    // Display the connection chain inline beside the item
+    if (connectionChain.length > 0) {
+      const connectionText = connectionChain.join(" - ");
+      const connectionSpan = document.createElement("span");
+      connectionSpan.textContent = " (" + connectionText + ")";
+      connectionsContainer.appendChild(connectionSpan);
     }
+  } catch (error) {
+    console.error("Error loading connections: ", error);
+  }
+}
 
-    // Load Connections for an Item (Chain) and Display Beside Item
-    async function loadConnections(itemId, connectionsContainer) {
-      let connectionChain = [];
-      let currentItemId = itemId;
-
-      try {
-        // Fetch the entire connection chain for the item
-        while (currentItemId) {
-          const q = query(
-            collection(db, "connections"),
-            where("previousItem", "==", currentItemId)
-          );
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            querySnapshot.forEach((doc) => {
-              const connection = doc.data();
-              connectionChain.push(connection.itemName); // Append the next item in the chain
-              currentItemId = doc.id; // Update to the next item in the chain
-            });
-          } else {
-            currentItemId = null; // End the loop if no more connections
-          }
-        }
-
-        // Display the connection chain inline beside the item
-        if (connectionChain.length > 0) {
-          const connectionText = connectionChain.join(" -> ");
-          const connectionSpan = document.createElement("span");
-          connectionSpan.textContent = " (" + connectionText + ")";
-          connectionsContainer.appendChild(connectionSpan);
-        }
-      } catch (error) {
-        console.error("Error loading connections: ", error);
-      }
-    }
 
     // Show connections when a previous item is selected
     document.getElementById("previous-item").addEventListener("change", (e) => {
