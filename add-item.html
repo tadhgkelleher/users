@@ -130,12 +130,10 @@
         }
 
         // Display objects in the list
-        const li = document.createElement("li");
-        li.textContent = object.objectName;
-        li.addEventListener('click', () => {
-          selectObject(object.objectName);
-        });
-        objectsList.appendChild(li);
+        const option = document.createElement("option");
+        option.value = doc.id;
+        option.textContent = object.objectName;
+        objectsList.appendChild(option);
       });
 
       cy.layout({ name: 'circle' }).run();
@@ -168,17 +166,6 @@
     }
   }
 
-  // Select an object from the list
-  function selectObject(objectName) {
-    selectedObject = objectName;
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
-    messageDiv.className = 'success';
-
-    // Show the connection prompt
-    document.getElementById("connection-prompt").style.display = 'block';
-  }
-
   // Create an edge between the selected object and the target object
   function createEdge(targetId) {
     // Ensure target node exists before creating the edge
@@ -205,7 +192,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -251,10 +238,13 @@
       color: #155724;
     }
 
-    #objects-list {
-      list-style-type: none;
-      padding: 0;
-      margin-top: 20px;
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
     #cy {
@@ -269,13 +259,6 @@
       margin-top: 20px;
     }
 
-    select {
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      width: 100%;
-    }
-
     #connection-prompt button {
       background-color: #0074D9;
       border: none;
@@ -285,6 +268,10 @@
 
     #connection-prompt button:hover {
       background-color: #006BB3;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
     }
   </style>
 </head>
@@ -299,18 +286,20 @@
     <button type="submit">Add Object</button>
   </form>
 
-  <h3>Your Objects:</h3>
-  <ul id="objects-list"></ul>
+  <div class="form-group">
+    <h3>Your Objects:</h3>
+    <select id="objects-list"></select>
+  </div>
 
-  <div id="cy"></div>
-
-  <div id="connection-prompt">
+  <div class="form-group" id="connection-prompt">
     <h3>Add Connection</h3>
     <select id="connection-dropdown">
       <option value="">Select an Object</option>
     </select>
     <button id="create-connection">Create Connection</button>
   </div>
+
+  <div id="cy"></div>
 
 </body>
 </html>
