@@ -75,6 +75,9 @@
     }
   });
 
+// Initialize a set to track the unique object IDs or names that have been added
+const addedObjects = new Set();
+
 // Load Objects from Firestore
 async function loadObjects(username) {
   const objectsList = document.getElementById("objects-list");
@@ -116,29 +119,33 @@ async function loadObjects(username) {
       });
     }
 
-    // Set to track object names to avoid duplicates
-    const objectNames = new Set();
     const objects = [];
 
     querySnapshot.forEach((doc) => {
       const object = doc.data();
-      
-      // Check if the node already exists based on objectName (or use doc.id)
-      if (!cy.getElementById(doc.id).length) {
-        cy.add({ data: { id: doc.id, objectName: object.objectName } });
-        objectNames.add(object.objectName);
-        objects.push({ id: doc.id, name: object.objectName });
-      }
 
-      // Display objects in the list
-      const li = document.createElement("li");
-      li.textContent = object.objectName;
-      li.addEventListener('click', () => {
-        selectObject(object.objectName);
-      });
-      objectsList.appendChild(li);
+      // Check if this object has already been added using its unique ID or name
+      if (!addedObjects.has(doc.id)) {
+        // Add the object to the Cytoscape graph
+        cy.add({ data: { id: doc.id, objectName: object.objectName } });
+
+        // Mark this object as added
+        addedObjects.add(doc.id);
+
+        // Store object info for the list and dropdown
+        objects.push({ id: doc.id, name: object.objectName });
+
+        // Display object in the list
+        const li = document.createElement("li");
+        li.textContent = object.objectName;
+        li.addEventListener('click', () => {
+          selectObject(object.objectName);
+        });
+        objectsList.appendChild(li);
+      }
     });
 
+    // Run the layout on Cytoscape after adding all objects
     cy.layout({ name: 'circle' }).run();
 
     // Populate the dropdown with objects
@@ -168,6 +175,7 @@ async function loadObjects(username) {
     messageDiv.className = "error";
   }
 }
+
 
 
   // Select an object from the list
