@@ -9,8 +9,8 @@
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, serverTimestamp, updateDoc, doc, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-    import cytoscape from 'https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, getDoc, serverTimestamp, doc, orderBy } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import cytoscape from 'https://cdn.jsdelivr.net/npm/cytoscape@3.23.0/dist/cytoscape.min.js'; // Import Cytoscape.js
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -92,13 +92,16 @@
       }
     });
 
-    // Load Items from Firestore
+    // Load Items from Firestore and prepare the graph data
     async function loadItems(username) {
       const itemsList = document.getElementById("items-list");
       itemsList.innerHTML = ''; // Clear the list before adding new items
 
       const previousItemSelect = document.getElementById("previous-item");
       previousItemSelect.innerHTML = ''; // Clear previous item dropdown
+
+      const nodes = []; // Array to store nodes
+      const edges = []; // Array to store edges
 
       try {
         const q = query(
@@ -107,9 +110,6 @@
           orderBy("timestamp", "desc")
         );
         const querySnapshot = await getDocs(q);
-
-        const nodes = []; // To store nodes for the graph
-        const edges = []; // To store connections between items
 
         querySnapshot.forEach((doc) => {
           const item = doc.data();
@@ -125,7 +125,7 @@
           connectionsContainer.className = "connections"; // Create a container for connections
 
           // Load connections and show them as a chain
-          loadConnections(doc.id, connectionsContainer); 
+          loadConnections(doc.id, connectionsContainer);
 
           li.appendChild(itemName);
           li.appendChild(connectionsContainer); // Append the connections beside the item
@@ -137,49 +137,23 @@
           option.textContent = item.itemName;
           previousItemSelect.appendChild(option);
 
-          // Add the node for the Cytoscape graph
-          nodes.push({
-            data: { id: doc.id, label: item.itemName }
-          });
+          // Add the item as a node for Cytoscape
+          nodes.push({ data: { id: doc.id, label: item.itemName } });
 
-          // Add edges (connections between items)
-          // Assuming each item has connections stored in a way that allows us to track connections
-          loadConnectionsEdges(doc.id, edges);
-        });
-
-        // Now initialize the Cytoscape graph with nodes and edges
-        const cy = cytoscape({
-          container: document.getElementById('graph-container'),
-          elements: [
-            ...nodes,
-            ...edges
-          ],
-          style: [
-            {
-              selector: 'node',
-              style: {
-                'background-color': '#4CAF50',
-                'label': 'data(label)',
-                'color': '#fff',
-                'text-valign': 'center',
-                'text-halign': 'center'
-              }
-            },
-            {
-              selector: 'edge',
-              style: {
-                'width': 3,
-                'line-color': '#ccc',
-                'target-arrow-color': '#ccc',
-                'target-arrow-shape': 'triangle'
-              }
-            }
-          ],
-          layout: {
-            name: 'circle',
-            padding: 10
+          // Add edges for connections
+          if (item.connectionChain) {
+            const connectionIds = item.connectionChain.split(' -> ');
+            connectionIds.forEach((connectedItem) => {
+              const connectionEdge = {
+                data: { source: doc.id, target: connectedItem }
+              };
+              edges.push(connectionEdge);
+            });
           }
         });
+
+        // Initialize Cytoscape to visualize the nodes and edges
+        initializeCytoscape(nodes, edges);
 
       } catch (error) {
         console.error("Error loading items: ", error);
@@ -187,6 +161,43 @@
         messageDiv.textContent = "There was an error loading items: " + error.message;
         messageDiv.className = "error"; // Add error class
       }
+    }
+
+    // Initialize Cytoscape graph
+    function initializeCytoscape(nodes, edges) {
+      cytoscape({
+        container: document.getElementById('cy'),
+
+        elements: nodes.concat(edges),
+
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#666',
+              'label': 'data(label)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'width': '20px',
+              'height': '20px'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': '#ccc',
+              'target-arrow-color': '#ccc',
+              'target-arrow-shape': 'triangle'
+            }
+          }
+        ],
+
+        layout: {
+          name: 'circle',
+          animate: true
+        }
+      });
     }
 
     // Load the chain of connections for an item
@@ -199,29 +210,49 @@
       return previousConnections; // Return the existing chain of connections
     }
 
-    // Load Connections Edges for Graph Visualization
-    async function loadConnectionsEdges(itemId, edges) {
-      const q = query(
-        collection(db, "connections"),
-        where("previousItem", "==", itemId)
-      );
-      const querySnapshot = await getDocs(q);
+    // Load Connections for an Item (Chain) and Display Beside Item
+    async function loadConnections(itemId, connectionsContainer) {
+      let connectionChain = [];
+      let currentItemId = itemId;
 
-      querySnapshot.forEach((doc) => {
-        const connection = doc.data();
-        edges.push({
-          data: { source: itemId, target: doc.id }
-        });
-      });
+      try {
+        // Fetch the entire connection chain for the item
+        while (currentItemId) {
+          const q = query(
+            collection(db, "connections"),
+            where("previousItem", "==", currentItemId)
+          );
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach((doc) => {
+              const connection = doc.data();
+              connectionChain.push(connection.itemName); // Append the next item in the chain
+              currentItemId = doc.id; // Update to the next item in the chain
+            });
+          } else {
+            currentItemId = null; // End the loop if no more connections
+          }
+        }
+
+        // Display the connection chain inline beside the item
+        if (connectionChain.length > 0) {
+          const connectionText = connectionChain.join(" -> ");
+          const connectionSpan = document.createElement("span");
+          connectionSpan.textContent = " (" + connectionText + ")";
+          connectionsContainer.appendChild(connectionSpan);
+        }
+      } catch (error) {
+        console.error("Error loading connections: ", error);
+      }
     }
-
   </script>
 
   <!-- Custom Styles -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
+      max-width: 600px;
       margin: 0 auto;
       padding: 20px;
     }
@@ -293,11 +324,15 @@
       color: #888;
     }
 
-    #graph-container {
-      width: 100%;
+    span {
+      padding: 5px;
+    }
+
+    #cy {
       height: 400px;
-      margin-top: 20px;
+      width: 100%;
       border: 1px solid #ccc;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -320,8 +355,8 @@
   <h3>Items</h3>
   <ul id="items-list"></ul>
 
-  <!-- Graph Container -->
-  <div id="graph-container"></div>
+  <!-- Cytoscape Container -->
+  <div id="cy"></div>
 
 </body>
 </html>
