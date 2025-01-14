@@ -8,21 +8,83 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .item-list {
+      margin-top: 20px;
+    }
+    .item {
+      background-color: #e9f7ef;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .item-name {
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    .no-items {
+      text-align: center;
+      font-size: 1.2em;
+      color: #999;
+    }
+  </style>
 </head>
 <body>
-  <h2>Add Item</h2>
-  <form id="add-item-form">
-    <label for="item-name">Item Name:</label>
-    <input type="text" id="item-name" placeholder="Enter item name" required /><br /><br />
+  <div class="container">
+    <h2>Add Item</h2>
+    <form id="add-item-form">
+      <label for="item-name">Item Name:</label>
+      <input type="text" id="item-name" placeholder="Enter item name" required />
+      <button type="submit">Add Item</button>
+    </form>
 
-    <label for="item-description">Item Description:</label>
-    <textarea id="item-description" placeholder="Enter item description" required></textarea><br /><br />
-
-    <button type="submit">Add Item</button>
-  </form>
-
-  <h3>Previous Items</h3>
-  <div id="item-list"></div> <!-- Section to display saved items -->
+    <h3>Previous Items</h3>
+    <div id="item-list" class="item-list">
+      <!-- Items will be listed here -->
+    </div>
+  </div>
 
   <script type="module">
     // Firebase Configuration
@@ -45,54 +107,74 @@
     document.getElementById("add-item-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Get item name and description from the form
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Please log in to add an item.");
+        return;
+      }
+
       const itemName = document.getElementById("item-name").value;
-      const itemDescription = document.getElementById("item-description").value;
 
       try {
         // Add item to Firestore
         await db.collection("items").add({
           name: itemName,
-          description: itemDescription,
-          user: auth.currentUser ? auth.currentUser.displayName : "Anonymous",
+          user: user.displayName,
           timestamp: new Date(),
         });
 
-        // Show success message and reset form
         alert("Item added successfully!");
         document.getElementById("add-item-form").reset();
-        loadItems(); // Reload items after successful addition
+        loadItems(); // Reload the list of items after adding one
       } catch (error) {
         console.error("Error adding item: ", error);
         alert("There was an error adding the item.");
       }
     });
 
-    // Retrieve and display items from Firestore
-    async function loadItems() {
-      const itemsContainer = document.getElementById("item-list");
-      itemsContainer.innerHTML = ""; // Clear current items
+    // Load Items from Firestore
+    function loadItems() {
+      const itemListContainer = document.getElementById("item-list");
+      itemListContainer.innerHTML = ""; // Clear the existing list
 
-      try {
-        const querySnapshot = await db.collection("items").orderBy("timestamp", "desc").get();
-        querySnapshot.forEach((doc) => {
-          const item = doc.data();
-          const itemElement = document.createElement("div");
-          itemElement.innerHTML = `
-            <strong>${item.name}</strong>
-            <p>${item.description}</p>
-            <small>By: ${item.user} on ${new Date(item.timestamp.seconds * 1000).toLocaleString()}</small>
-            <hr>
-          `;
-          itemsContainer.appendChild(itemElement);
-        });
-      } catch (error) {
-        console.error("Error retrieving items: ", error);
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Please log in to view your items.");
+        return;
       }
+
+      db.collection("items")
+        .where("user", "==", user.displayName)
+        .orderBy("timestamp", "desc")
+        .get()
+        .then((querySnapshot) => {
+          if (querySnapshot.empty) {
+            itemListContainer.innerHTML = "<p class='no-items'>No items added yet.</p>";
+          } else {
+            querySnapshot.forEach((doc) => {
+              const item = doc.data();
+              const itemElement = document.createElement("div");
+              itemElement.classList.add("item");
+              itemElement.innerHTML = `
+                <div class="item-name">${item.name}</div>
+                <small>Added on ${new Date(item.timestamp.seconds * 1000).toLocaleString()}</small>
+              `;
+              itemListContainer.appendChild(itemElement);
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error retrieving items: ", error);
+          alert("There was an error retrieving your items.");
+        });
     }
 
-    // Load items when the page loads
-    window.onload = loadItems;
+    // Listen for auth state changes
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        loadItems(); // Load items when the user is logged in
+      }
+    });
   </script>
 </body>
 </html>
