@@ -140,17 +140,14 @@
       }
     }
 
-    // Fetch the connection chain for the previous item
+    // Load the chain of connections for an item
     async function getPreviousItemConnections(itemId) {
-      const itemDocRef = doc(db, "connections", itemId); // Fetch from "connections" collection
+      const itemDocRef = doc(db, "items", itemId);
       const itemDoc = await getDoc(itemDocRef);
+      const itemData = itemDoc.data();
 
-      if (itemDoc.exists()) {
-        const itemData = itemDoc.data();
-        return itemData.connectionChain || ""; // Return existing chain if available
-      }
-
-      return ""; // If no connection chain exists
+      let previousConnections = itemData.connectionChain || "";
+      return previousConnections; // Return the existing chain of connections
     }
 
     // Load Connections for an Item (Chain) and Display Beside Item
