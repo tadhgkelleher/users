@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Add Item</title>
-  <script type="module" src="add-item.js"></script>
+  <!-- Firebase SDK Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
 </head>
 <body>
   <h2>Add Item</h2>
@@ -17,5 +20,49 @@
 
     <button type="submit">Add Item</button>
   </form>
+
+  <script type="module">
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.firebasestorage.app",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Add Item to Firestore
+    document.getElementById("add-item-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      // Get item name and description from the form
+      const itemName = document.getElementById("item-name").value;
+      const itemDescription = document.getElementById("item-description").value;
+
+      try {
+        // Add item to Firestore
+        await db.collection("items").add({
+          name: itemName,
+          description: itemDescription,
+          user: auth.currentUser ? auth.currentUser.displayName : "Anonymous",
+          timestamp: new Date(),
+        });
+
+        // Show success message and reset form
+        alert("Item added successfully!");
+        document.getElementById("add-item-form").reset();
+      } catch (error) {
+        console.error("Error adding item: ", error);
+        alert("There was an error adding the item.");
+      }
+    });
+  </script>
 </body>
 </html>
