@@ -167,7 +167,7 @@
           if (!querySnapshot.empty) {
             querySnapshot.forEach((doc) => {
               const connection = doc.data();
-              connectionChain.push(connection.itemName);
+              connectionChain.push(connection.itemName); // Append the next item in the chain
               currentItemId = doc.id; // Update to the next item in the chain
             });
           } else {
@@ -271,23 +271,32 @@
 
     .connections {
       font-size: 14px;
-      color: #555;
+      color: #888;
+    }
+
+    span {
+      padding: 5px;
     }
   </style>
 </head>
 <body>
-  <h2>Add Connection</h2>
+
+  <h2>Manage Item Connections</h2>
+
+  <div id="message"></div>
+
+  <!-- Add Connection Form -->
   <form id="add-connection-form">
-    <input type="text" id="connection-name" placeholder="Connection name" required>
-    <select id="previous-item">
-      <option value="">Select Previous Item</option>
+    <input type="text" id="connection-name" placeholder="Enter item name" required />
+    <select id="previous-item" required>
+      <option value="">Select previous item</option>
     </select>
     <button type="submit">Add Connection</button>
   </form>
 
-  <div id="message"></div>
-
-  <h2>Existing Items and Connections</h2>
+  <!-- Item List -->
+  <h3>Items</h3>
   <ul id="items-list"></ul>
+
 </body>
 </html>
