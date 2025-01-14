@@ -89,158 +89,105 @@
       }
     });
 
-  // Load Objects from Firestore
-async function loadObjects(username) {
-  const objectsList = document.getElementById("objects-list");
-  objectsList.innerHTML = ''; // Clear the list
+    // Load Objects from Firestore
+    async function loadObjects(username) {
+      const objectsList = document.getElementById("objects-list");
+      objectsList.innerHTML = ''; // Clear the list
 
-  try {
-    const q = query(
-      collection(db, "objects"),
-      where("user", "==", username),
-      orderBy("timestamp", "desc")
-    );
-    const querySnapshot = await getDocs(q);
+      try {
+        const q = query(
+          collection(db, "objects"),
+          where("user", "==", username),
+          orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
 
-    // Initialize Cytoscape graph if it's not initialized already
-    if (!cy) {
-      cy = cytoscape({
-        container: document.getElementById('cy'),
-        elements: [],
-        style: [
-          {
-            selector: 'node',
-            style: {
-              'background-color': '#0074D9',
-              'label': 'data(objectName)'
+        // Initialize Cytoscape graph if it's not initialized already
+        if (!cy) {
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [],
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'background-color': '#0074D9',
+                  'label': 'data(objectName)'
+                }
+              },
+              {
+                selector: 'edge',
+                style: {
+                  'width': 3,
+                  'line-color': '#aaa'
+                }
+              }
+            ],
+            layout: {
+              name: 'circle',
+              padding: 10
             }
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 3,
-              'line-color': '#aaa'
-            }
-          }
-        ],
-        layout: {
-          name: 'circle',
-          padding: 10
+          });
         }
-      });
-    }
 
-    // Set to track object names to avoid duplicates
-    const objectNames = new Set();
-    const objects = [];
+        // Set to track object names to avoid duplicates
+        const objectNames = new Set();
+        const objects = [];
 
-    querySnapshot.forEach((doc) => {
-      const object = doc.data();
-      
-      // Check if the node already exists based on objectName (or use doc.id)
-      if (!cy.getElementById(doc.id).length) {
-        cy.add({ data: { id: doc.id, objectName: object.objectName } });
-        objectNames.add(object.objectName);
-        objects.push({ id: doc.id, name: object.objectName });
+        querySnapshot.forEach((doc) => {
+          const object = doc.data();
+          
+          // Check if the node already exists based on objectName (or use doc.id)
+          if (!cy.getElementById(doc.id).length) {
+            cy.add({ data: { id: doc.id, objectName: object.objectName } });
+            objectNames.add(object.objectName);
+            objects.push({ id: doc.id, name: object.objectName });
+          }
+
+          // Display objects in the list
+          const li = document.createElement("li");
+          li.textContent = object.objectName;
+          li.addEventListener('click', () => {
+            selectObject(object.objectName);
+          });
+          objectsList.appendChild(li);
+        });
+
+        cy.layout({ name: 'circle' }).run();
+
+        // Populate the dropdown with objects
+        const connectionDropdown = document.getElementById("connection-dropdown");
+        connectionDropdown.innerHTML = ''; // Clear existing options
+        objects.forEach(object => {
+          const option = document.createElement("option");
+          option.value = object.id;
+          option.textContent = object.name;
+          connectionDropdown.appendChild(option);
+        });
+
+        // Handle connection creation
+        document.getElementById("create-connection").addEventListener("click", () => {
+          const selectedConnectionId = connectionDropdown.value;
+          if (selectedConnectionId) {
+            createEdge(selectedConnectionId);
+          } else {
+            alert("Please select a connection.");
+          }
+        });
+
+      } catch (error) {
+        console.error("Error loading objects: ", error);
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "There was an error loading objects: " + error.message;
+        messageDiv.className = "error";
       }
-
-      // Display objects in the list
-      const li = document.createElement("li");
-      li.textContent = object.objectName;
-      li.addEventListener('click', () => {
-        selectObject(object.objectName);
-      });
-      objectsList.appendChild(li);
-    });
-
-    cy.layout({ name: 'circle' }).run();
-
-    // Populate the dropdown with objects (keep previous items)
-    const connectionDropdown = document.getElementById("connection-dropdown");
-    connectionDropdown.innerHTML = ''; // Clear existing options
-    objects.forEach(object => {
-      const option = document.createElement("option");
-      option.value = object.id;
-      option.textContent = object.name;
-      connectionDropdown.appendChild(option);
-    });
-
-    // Handle connection creation
-    document.getElementById("create-connection").addEventListener("click", () => {
-      const selectedConnectionId = connectionDropdown.value;
-      if (selectedConnectionId) {
-        createEdge(selectedConnectionId);
-      } else {
-        alert("Please select a connection.");
-      }
-    });
-
-  } catch (error) {
-    console.error("Error loading objects: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "There was an error loading objects: " + error.message;
-    messageDiv.className = "error";
-  }
-}
-
-// Add Object to Firestore
-document.getElementById("add-object-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const objectName = document.getElementById("object-name").value;
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = ''; 
-
-  const user = auth.currentUser ? auth.currentUser : null;
-
-  if (!user) {
-    messageDiv.textContent = "You must be logged in to add objects.";
-    messageDiv.className = "error";
-    return;
-  }
-
-  try {
-    // Check if the object already exists in Firestore
-    const objectQuery = query(
-      collection(db, "objects"),
-      where("objectName", "==", objectName),
-      where("user", "==", user.displayName)
-    );
-    const querySnapshot = await getDocs(objectQuery);
-
-    if (!querySnapshot.empty) {
-      messageDiv.textContent = "This object already exists!";
-      messageDiv.className = "error";
-      return;
     }
-
-    // Add new object to Firestore if it doesn't exist
-    await addDoc(collection(db, "objects"), {
-      objectName: objectName,
-      user: user.displayName,
-      timestamp: serverTimestamp()
-    });
-
-    messageDiv.textContent = "Object added successfully!";
-    messageDiv.className = "success"; 
-    document.getElementById("add-object-form").reset();
-
-    // Reload the objects (including the new one)
-    loadObjects(user.displayName);
-
-  } catch (error) {
-    console.error("Error adding object: ", error);
-    messageDiv.textContent = "There was an error adding the object: " + error.message;
-    messageDiv.className = "error"; 
-  }
-});
-
 
     // Select an object from the list
     function selectObject(objectName) {
       selectedObject = objectName;
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
+      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
       messageDiv.className = 'success';
 
       // Show the connection prompt
