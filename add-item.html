@@ -9,7 +9,7 @@
   <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
   import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-  import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+  import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, updateDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
   const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -75,7 +75,7 @@
   // Load Objects from Firestore
   async function loadObjects(username) {
     const objectsList = document.getElementById("objects-list");
-    objectsList.innerHTML = ''; // Clear the list
+    objectsList.innerHTML = '';
 
     try {
       const q = query(
@@ -110,22 +110,18 @@
         }
       });
 
-      // Set to track object names to avoid duplicates
-      const objectNames = new Set();
-
+      // Adding objects to graph and list
       querySnapshot.forEach((doc) => {
         const object = doc.data();
-        // Check if the object is already in the graph
-        if (!objectNames.has(object.objectName)) {
-          cy.add({ data: { id: doc.id, objectName: object.objectName } });
-          objectNames.add(object.objectName);
+        const objectName = object.objectName;
 
-          // Optionally, add edges if you have relationships
-        }
+        // Add to Cytoscape graph
+        cy.add({ data: { id: doc.id, objectName: objectName } });
 
-        // Display objects in the list
+        // Add to list of objects
         const li = document.createElement("li");
-        li.textContent = object.objectName;
+        li.textContent = objectName;
+        li.setAttribute("data-id", doc.id);
         objectsList.appendChild(li);
       });
 
@@ -137,7 +133,58 @@
       messageDiv.className = "error";
     }
   }
-</script>
+
+  // Add Connection (Create Edge)
+  document.getElementById("add-connection-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const fromObjectId = document.getElementById("from-object").value;
+    const toObjectId = document.getElementById("to-object").value;
+
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = '';
+
+    if (!fromObjectId || !toObjectId) {
+      messageDiv.textContent = "Both objects must be selected to create a connection.";
+      messageDiv.className = "error";
+      return;
+    }
+
+    try {
+      // Add edge between the selected objects
+      const cy = cytoscape({ container: document.getElementById('cy') });
+
+      const fromNode = cy.getElementById(fromObjectId);
+      const toNode = cy.getElementById(toObjectId);
+
+      if (!fromNode || !toNode) {
+        messageDiv.textContent = "One or both objects not found.";
+        messageDiv.className = "error";
+        return;
+      }
+
+      cy.add({
+        data: { id: fromObjectId + "-" + toObjectId, source: fromObjectId, target: toObjectId }
+      });
+
+      cy.layout({ name: 'circle' }).run();
+
+      // Update Firestore to reflect the new connection
+      await addDoc(collection(db, "connections"), {
+        fromObject: fromObjectId,
+        toObject: toObjectId,
+        timestamp: serverTimestamp()
+      });
+
+      messageDiv.textContent = "Connection added successfully!";
+      messageDiv.className = "success";
+    } catch (error) {
+      console.error("Error adding connection: ", error);
+      messageDiv.textContent = "There was an error adding the connection: " + error.message;
+      messageDiv.className = "error";
+    }
+  });
+  </script>
 
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
@@ -194,14 +241,12 @@
     #objects-list {
       list-style-type: none;
       padding: 0;
-      margin-top: 20px;
     }
 
     #cy {
       height: 500px;
       width: 100%;
       border: 1px solid #ccc;
-      margin-top: 20px;
     }
   </style>
 </head>
@@ -218,6 +263,17 @@
 
   <h3>Your Objects:</h3>
   <ul id="objects-list"></ul>
+
+  <h3>Add Connection:</h3>
+  <form id="add-connection-form">
+    <select id="from-object">
+      <option value="">Select Object to Connect From</option>
+    </select>
+    <select id="to-object">
+      <option value="">Select Object to Connect To</option>
+    </select>
+    <button type="submit">Add Connection</button>
+  </form>
 
   <div id="cy"></div>
 
