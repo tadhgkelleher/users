@@ -112,19 +112,36 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Check if user is logged in
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // Load items when user is logged in
+        loadItems(user.displayName);
+      } else {
+        alert("You must be logged in to add items.");
+      }
+    });
+
     // Add Item to Firestore
     document.getElementById("add-item-form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
       const itemName = document.getElementById("item-name").value;
-      const user = auth.currentUser ? auth.currentUser.displayName : "Anonymous";
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = ''; // Clear previous messages
+
+      const user = auth.currentUser ? auth.currentUser : null;
+
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to add items.";
+        messageDiv.className = "error";
+        return;
+      }
 
       try {
         await db.collection("items").add({
           name: itemName,
-          user: user,
+          user: user.displayName,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         });
 
@@ -133,7 +150,7 @@
         messageDiv.className = "success"; // Add success class
 
         document.getElementById("add-item-form").reset();
-        loadItems(); // Reload the list of items after adding one
+        loadItems(user.displayName); // Reload the list of items after adding one
       } catch (error) {
         // Error message
         console.error("Error adding item: ", error);
@@ -143,17 +160,22 @@
     });
 
     // Load Items from Firestore
-    async function loadItems() {
-      const user = auth.currentUser ? auth.currentUser.displayName : "Anonymous";
+    async function loadItems(username) {
       const itemsList = document.getElementById("items-list");
       itemsList.innerHTML = ''; // Clear the list before adding new items
 
       try {
         const querySnapshot = await db
           .collection("items")
-          .where("user", "==", user)
+          .where("user", "==", username)
           .orderBy("timestamp", "desc")
           .get();
+
+        if (querySnapshot.empty) {
+          const noItemsMessage = document.createElement("li");
+          noItemsMessage.textContent = "No items found.";
+          itemsList.appendChild(noItemsMessage);
+        }
 
         querySnapshot.forEach((doc) => {
           const item = doc.data();
@@ -163,11 +185,19 @@
         });
       } catch (error) {
         console.error("Error loading items: ", error);
+        const li = document.createElement("li");
+        li.textContent = "There was an error loading items.";
+        itemsList.appendChild(li);
       }
     }
 
     // Load items when the page is loaded
-    window.onload = loadItems;
+    window.onload = () => {
+      const user = auth.currentUser ? auth.currentUser.displayName : null;
+      if (user) {
+        loadItems(user);
+      }
+    };
   </script>
 </body>
 </html>
