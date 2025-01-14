@@ -140,55 +140,34 @@
     }
   }
 
-  // Show connection form for selecting or creating an object
-  async function showConnectionForm(fromObjectId, fromObjectName) {
-    const connectionFormDiv = document.getElementById("connection-form");
-    connectionFormDiv.innerHTML = `
-      <h4>Connect to: ${fromObjectName}</h4>
-      <ul id="selectable-objects"></ul>
-    `;
+ // Connect two objects
+async function connectObjects(fromObjectId, toObjectId) {
+  try {
+    // Create edge in Cytoscape graph
+    const cy = cytoscape({ container: document.getElementById('cy') });
+    cy.add({
+      data: { id: fromObjectId + "-" + toObjectId, source: fromObjectId, target: toObjectId },
+    });
 
-    try {
-      const q = query(
-        collection(db, "objects"),
-        where("user", "==", auth.currentUser.displayName),
-        orderBy("timestamp", "desc")
-      );
-      const querySnapshot = await getDocs(q);
+    // Update Firestore (optional: add a separate collection for edges if needed)
+    // Example of adding a connection in Firestore:
+    // await addDoc(collection(db, "connections"), {
+    //   from: fromObjectId,
+    //   to: toObjectId,
+    //   timestamp: serverTimestamp(),
+    // });
 
-      const selectableObjects = document.getElementById("selectable-objects");
-      querySnapshot.forEach((doc) => {
-        if (doc.id !== fromObjectId) {
-          const object = doc.data();
-          const li = document.createElement("li");
-          li.textContent = object.objectName;
-          li.onclick = () => connectObjects(fromObjectId, doc.id, fromObjectName, object.objectName);
-          selectableObjects.appendChild(li);
-        }
-      });
-    } catch (error) {
-      console.error("Error loading objects for selection: ", error);
-    }
+    // Re-run graph layout
+    cy.layout({ name: "circle" }).run();
 
-    connectionFormDiv.style.display = "block";
+    alert("Connection created successfully!");
+    loadObjects(auth.currentUser.displayName); // Reload objects
+  } catch (error) {
+    console.error("Error connecting objects: ", error);
+    alert("Failed to connect objects.");
   }
+}
 
-  // Connect two objects
-  async function connectObjects(fromObjectId, toObjectId, fromObjectName, toObjectName) {
-    try {
-      const cy = cytoscape({ container: document.getElementById('cy') });
-
-      cy.add({
-        data: { id: fromObjectId + "-" + toObjectId, source: fromObjectId, target: toObjectId }
-      });
-
-      cy.layout({ name: 'circle' }).run();
-      alert(`Connected ${fromObjectName} to ${toObjectName}`);
-      document.getElementById("connection-form").style.display = "none";
-    } catch (error) {
-      console.error("Error connecting objects: ", error);
-    }
-  }
   </script>
 
   <!-- Cytoscape Script -->
