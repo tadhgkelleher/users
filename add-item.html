@@ -18,6 +18,9 @@
     <button type="submit">Add Item</button>
   </form>
 
+  <!-- Confirmation or Error message -->
+  <div id="message"></div>
+
   <h2>Previous Items</h2>
   <ul id="items-list"></ul>
 
@@ -44,6 +47,8 @@
 
       const itemName = document.getElementById("item-name").value;
       const user = auth.currentUser ? auth.currentUser.displayName : "Anonymous";
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = ''; // Clear previous messages
 
       try {
         await db.collection("items").add({
@@ -52,12 +57,17 @@
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         });
 
-        alert("Item added successfully!");
+        // Success message
+        messageDiv.textContent = "Item added successfully!";
+        messageDiv.style.color = "green";  // Success message in green
+
         document.getElementById("add-item-form").reset();
         loadItems(); // Reload the list of items after adding one
       } catch (error) {
+        // Error message
         console.error("Error adding item: ", error);
-        alert("There was an error adding the item.");
+        messageDiv.textContent = "There was an error adding the item. Please try again.";
+        messageDiv.style.color = "red";  // Error message in red
       }
     });
 
