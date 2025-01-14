@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Item</title>
+  <title>Add or Connect Item</title>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
@@ -45,6 +45,7 @@
       e.preventDefault();
 
       const itemName = document.getElementById("item-name").value;
+      const previousItemId = document.getElementById("previous-item").value;
       const messageDiv = document.getElementById("message");
       messageDiv.textContent = ''; // Clear previous messages
 
@@ -57,13 +58,24 @@
       }
 
       try {
-        // Add new item to Firestore
-        const docRef = await addDoc(collection(db, "items"), {
-          name: itemName,
-          user: user.displayName,
-          timestamp: serverTimestamp(),
-          connections: [] // New field to store connected items
-        });
+        let newItemRef;
+
+        if (previousItemId) {
+          // Add new item associated with the previous item
+          newItemRef = await addDoc(collection(db, "items"), {
+            name: itemName,
+            user: user.displayName,
+            timestamp: serverTimestamp(),
+            previousItem: previousItemId, // Link to the previous item
+          });
+        } else {
+          // Add standalone item
+          newItemRef = await addDoc(collection(db, "items"), {
+            name: itemName,
+            user: user.displayName,
+            timestamp: serverTimestamp(),
+          });
+        }
 
         // Success message
         messageDiv.textContent = "Item added successfully!";
@@ -84,6 +96,9 @@
       const itemsList = document.getElementById("items-list");
       itemsList.innerHTML = ''; // Clear the list before adding new items
 
+      const previousItemSelect = document.getElementById("previous-item");
+      previousItemSelect.innerHTML = ''; // Clear previous item dropdown
+
       try {
         const q = query(
           collection(db, "items"),
@@ -96,59 +111,19 @@
           const item = doc.data();
           const li = document.createElement("li");
           li.textContent = item.name;
-
-          // Add a button to display connections
-          const connectButton = document.createElement("button");
-          connectButton.textContent = "Add Connection";
-          connectButton.addEventListener("click", () => showAddConnectionForm(doc.id, item.name));
-          li.appendChild(connectButton);
-          
           itemsList.appendChild(li);
+
+          // Add each item to the previous item select dropdown
+          const option = document.createElement("option");
+          option.value = doc.id; // Store the document ID
+          option.textContent = item.name;
+          previousItemSelect.appendChild(option);
         });
       } catch (error) {
         console.error("Error loading items: ", error);
         const messageDiv = document.getElementById("message");
         messageDiv.textContent = "There was an error loading items: " + error.message;
         messageDiv.className = "error"; // Add error class
-      }
-    }
-
-    // Show add connection form
-    function showAddConnectionForm(itemId, itemName) {
-      const connectionForm = document.getElementById("connection-form");
-      const connectionInput = document.getElementById("connection-item");
-      const messageDiv = document.getElementById("message");
-      
-      connectionForm.style.display = 'block';
-      connectionInput.value = itemName;
-      connectionForm.onsubmit = (e) => addConnection(e, itemId);
-    }
-
-    // Add connection to Firestore
-    async function addConnection(e, itemId) {
-      e.preventDefault();
-
-      const connectionItem = document.getElementById("connection-item").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; // Clear previous messages
-
-      try {
-        // Find the item to connect
-        const itemDocRef = doc(db, "items", itemId);
-        
-        // Update the item with the new connection
-        await updateDoc(itemDocRef, {
-          connections: [...(await getDoc(itemDocRef)).data().connections, connectionItem]
-        });
-
-        messageDiv.textContent = "Connection added successfully!";
-        messageDiv.className = "success";
-        document.getElementById("connection-form").style.display = 'none';
-        loadItems(auth.currentUser.displayName); // Reload items after adding connection
-      } catch (error) {
-        console.error("Error adding connection: ", error);
-        messageDiv.textContent = "There was an error adding the connection: " + error.message;
-        messageDiv.className = "error";
       }
     }
   </script>
@@ -171,6 +146,15 @@
     }
 
     input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    select {
       width: 100%;
       padding: 10px;
       font-size: 16px;
@@ -222,24 +206,20 @@
       padding: 8px 0;
       border-bottom: 1px solid #ddd;
     }
-
-    #connection-form {
-      margin-top: 20px;
-      display: none;
-    }
-
-    #connection-form input[type="text"] {
-      width: 80%;
-    }
   </style>
 </head>
 <body>
-  <h2>Add Item</h2>
+  <h2>Add or Connect Item</h2>
   <form id="add-item-form">
     <label for="item-name">Item Name:</label>
     <input type="text" id="item-name" placeholder="Enter item name" required /><br /><br />
 
-    <button type="submit">Add Item</button>
+    <label for="previous-item">Select a Previous Item (Optional):</label>
+    <select id="previous-item">
+      <option value="">None</option> <!-- Default value if no item is selected -->
+    </select><br /><br />
+
+    <button type="submit">Add Item or Connect</button>
   </form>
 
   <!-- Confirmation or Error message -->
@@ -247,13 +227,5 @@
 
   <h2>Previous Items</h2>
   <ul id="items-list"></ul>
-
-  <!-- Add connection form -->
-  <div id="connection-form">
-    <h3>Connect to Previous Item</h3>
-    <label for="connection-item">Item Name to Connect:</label>
-    <input type="text" id="connection-item" readonly /><br /><br />
-    <button type="submit">Add Connection</button>
-  </div>
 </body>
 </html>
