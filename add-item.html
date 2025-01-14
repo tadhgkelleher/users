@@ -30,7 +30,7 @@
     if (user) {
       messageDiv.textContent = 'You are logged in as ' + user.displayName;
       messageDiv.className = 'success';
-      loadItems(user.displayName);
+      loadObjects(user.displayName);
     } else {
       messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
       messageDiv.className = 'error';
@@ -75,7 +75,7 @@
   // Load Objects from Firestore
   async function loadObjects(username) {
     const objectsList = document.getElementById("objects-list");
-    objectsList.innerHTML = '';
+    objectsList.innerHTML = ''; // Clear the list
 
     try {
       const q = query(
@@ -110,11 +110,23 @@
         }
       });
 
+      // Set to track object names to avoid duplicates
+      const objectNames = new Set();
+
       querySnapshot.forEach((doc) => {
         const object = doc.data();
-        cy.add({ data: { id: doc.id, objectName: object.objectName } });
+        // Check if the object is already in the graph
+        if (!objectNames.has(object.objectName)) {
+          cy.add({ data: { id: doc.id, objectName: object.objectName } });
+          objectNames.add(object.objectName);
 
-        // Optionally, add edges if you have relationships
+          // Optionally, add edges if you have relationships
+        }
+
+        // Display objects in the list
+        const li = document.createElement("li");
+        li.textContent = object.objectName;
+        objectsList.appendChild(li);
       });
 
       cy.layout({ name: 'circle' }).run();
@@ -126,7 +138,6 @@
     }
   }
 </script>
-
 
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
@@ -183,12 +194,14 @@
     #objects-list {
       list-style-type: none;
       padding: 0;
+      margin-top: 20px;
     }
 
     #cy {
       height: 500px;
       width: 100%;
       border: 1px solid #ccc;
+      margin-top: 20px;
     }
   </style>
 </head>
