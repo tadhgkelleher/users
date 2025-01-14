@@ -4,65 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Firebase Authentication</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f0f0f0;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      width: 300px;
-    }
-    input, button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-    }
-    button {
-      background: #007BFF;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .message {
-      font-size: 14px;
-      margin-top: 10px;
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container">
-    <h2>Firebase Authentication</h2>
-
-    <!-- Email/Password Sign Up Form -->
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="emailSignUpBtn">Sign Up with Email</button>
-
-    <!-- Google Sign Up -->
-    <button id="googleSignUpBtn">Sign Up with Google</button>
-
-    <p id="message" class="message"></p>
-  </div>
-
-  <script>
-    // Import the functions you need from the SDKs you need
+  
+  <!-- Firebase SDKs -->
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
@@ -129,5 +73,60 @@
         });
     });
   </script>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      width: 300px;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      background: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .message {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Firebase Authentication</h2>
+
+    <!-- Email/Password Sign Up Form -->
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="emailSignUpBtn">Sign Up with Email</button>
+
+    <!-- Google Sign Up -->
+    <button id="googleSignUpBtn">Sign Up with Google</button>
+
+    <p id="message" class="message"></p>
+  </div>
+
 </body>
 </html>
