@@ -334,7 +334,7 @@
 
         connectionsSnapshot.forEach((doc) => {
           const connection = doc.data();
-          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
+          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
           
           if (existingEdge.length === 0) {
             cy.add({
@@ -377,7 +377,7 @@
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
+      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -408,7 +408,7 @@
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges([source="${selectedObject.id}"][target="${targetId}"]);
+        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
         if (existingEdge.length === 0) {
           try {
             // Save connection to Firebase
