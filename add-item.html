@@ -116,20 +116,6 @@
     #connection-prompt button:hover {
       background-color: #006BB3;
     }
-    
-  .button-group {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .secondary-button {
-      background-color: #0074D9;
-    }
-
-    .secondary-button:hover {
-      background-color: #0056b3;
-    }
   </style>
 </head>
 <body>
@@ -152,14 +138,6 @@
     <button id="create-connection">Create Connection</button>
   </div>
   <div id="cy"></div>
-
-    <div class="button-group">
-    <button id="save-graph" class="secondary-button">Save Graph</button>
-    <button id="load-graph" class="secondary-button">Load Graph</button>
-  </div>
-  
-  <input type="file" id="load-file" accept=".json" style="display: none;">
-
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
@@ -356,7 +334,7 @@
 
         connectionsSnapshot.forEach((doc) => {
           const connection = doc.data();
-          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
+          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
           
           if (existingEdge.length === 0) {
             cy.add({
@@ -399,7 +377,7 @@
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
+      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -430,7 +408,7 @@
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges([source="${selectedObject.id}"][target="${targetId}"]);
+        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
         if (existingEdge.length === 0) {
           try {
             // Save connection to Firebase
@@ -469,83 +447,6 @@
         alert("Please select a connection.");
       }
     });
-
-      // Function to save graph
-    function saveGraph() {
-      const graphData = {
-        nodes: cy.nodes().map(node => ({
-          data: {
-            id: node.id(),
-            objectName: node.data('objectName')
-          }
-        })),
-        edges: cy.edges().map(edge => ({
-          data: {
-            source: edge.source().id(),
-            target: edge.target().id()
-          }
-        }))
-      };
-
-      // Create and trigger download
-      const dataStr = JSON.stringify(graphData, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', graph-${new Date().toISOString()}.json);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = "Graph saved successfully!";
-      messageDiv.className = "success";
-    }
-
-    // Function to load graph
-    async function loadGraph(file) {
-      try {
-        const text = await file.text();
-        const graphData = JSON.parse(text);
-        
-        // Clear existing graph
-        cy.elements().remove();
-        
-        // Add nodes and edges
-        cy.add(graphData.nodes);
-        cy.add(graphData.edges);
-        
-        // Run layout
-        cy.layout({ name: 'circle' }).run();
-        
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Graph loaded successfully!";
-        messageDiv.className = "success";
-        
-        // Refresh objects list
-        loadObjects(auth.currentUser.displayName);
-      } catch (error) {
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading graph: " + error.message;
-        messageDiv.className = "error";
-      }
-    }
-
-    // Add these event listeners after cy initialization
-    document.getElementById("save-graph").addEventListener("click", saveGraph);
-    
-    document.getElementById("load-graph").addEventListener("click", () => {
-      document.getElementById("load-file").click();
-    });
-    
-    document.getElementById("load-file").addEventListener("change", (e) => {
-      if (e.target.files.length > 0) {
-        loadGraph(e.target.files[0]);
-      }
-    });
-
   </script>
 </body>
 </html>
