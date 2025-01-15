@@ -470,42 +470,40 @@
       }
     });
 
-    // Save graph function
-async function saveGraph() {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("You must be logged in to save the graph.");
-    return;
-  }
+      // Function to save graph
+    function saveGraph() {
+      const graphData = {
+        nodes: cy.nodes().map(node => ({
+          data: {
+            id: node.id(),
+            objectName: node.data('objectName')
+          }
+        })),
+        edges: cy.edges().map(edge => ({
+          data: {
+            source: edge.source().id(),
+            target: edge.target().id()
+          }
+        }))
+      };
 
-  try {
-    // Extract nodes and edges from the Cytoscape instance
-    const nodes = cy.nodes().map(node => ({
-      data: node.data()
-    }));
+      // Create and trigger download
+      const dataStr = JSON.stringify(graphData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', graph-${new Date().toISOString()}.json);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "Graph saved successfully!";
+      messageDiv.className = "success";
+    }
 
-    const edges = cy.edges().map(edge => ({
-      data: edge.data()
-    }));
-
-    // Save the graph data in the user's collection in Firestore
-    await addDoc(collection(db, "users", user.uid, "graphs"), {
-      nodes: nodes,
-      edges: edges,
-      timestamp: serverTimestamp()
-    });
-
-    // Notify user that the graph has been saved
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Graph saved successfully!";
-    messageDiv.className = "success";
-  } catch (error) {
-    console.error("Error saving graph: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Error saving graph: " + error.message;
-    messageDiv.className = "error";
-  }
-}
     // Function to load graph
     async function loadGraph(file) {
       try {
@@ -535,8 +533,8 @@ async function saveGraph() {
       }
     }
 
- // Button click handler for saving the graph
-document.getElementById("save-graph").addEventListener("click", saveGraph);
+    // Add these event listeners after cy initialization
+    document.getElementById("save-graph").addEventListener("click", saveGraph);
     
     document.getElementById("load-graph").addEventListener("click", () => {
       document.getElementById("load-file").click();
