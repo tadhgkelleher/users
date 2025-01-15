@@ -52,6 +52,7 @@
             list-style-type: none;
             padding: 0;
             margin-top: 30px;
+            text-align: left;
         }
         .graph-list li {
             background-color: rgba(0, 0, 0, 0.7);
@@ -59,14 +60,16 @@
             padding: 10px;
             border-radius: 5px;
             color: white;
+            font-size: 14px;
         }
-        .graph-list li a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 18px;
-        }
-        .graph-list li a:hover {
-            color: #16A085;
+        .graph-list li pre {
+            background-color: #222;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #9d9d9d;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -114,10 +117,12 @@
             querySnapshot.forEach((doc) => {
                 const graphData = doc.data();
                 const listItem = document.createElement('li');
-                const graphLink = document.createElement('a');
-                graphLink.href = graphData.graphUrl || '#'; // Assuming there's a `graphUrl` in the data
-                graphLink.textContent = graphData.graphTitle || "Untitled Graph";
-                listItem.appendChild(graphLink);
+
+                // Create a preformatted block to show the graph data as JSON
+                const jsonDisplay = document.createElement('pre');
+                jsonDisplay.textContent = JSON.stringify(graphData, null, 2); // Format as JSON
+
+                listItem.appendChild(jsonDisplay);
                 graphsList.appendChild(listItem);
             });
 
