@@ -3,70 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Mandala</title>
+    <title>My Mandala - Saved Graphs</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            background-image: url('https://blog.buddhagroove.com/wp-content/uploads/2021/03/mandala-1200x640.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
-        header {
-            background-color: #2C3E50;
+        .container {
             padding: 20px;
-            color: white;
-            text-align: center;
         }
-        header h1 {
-            margin: 0;
+        .graph-list {
+            list-style-type: none;
+            padding: 0;
         }
-        nav {
-            background-color: #34495E;
-            overflow: hidden;
-            padding: 10px 20px;
+        .graph-list li {
+            background-color: rgba(0, 0, 0, 0.7);
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
         }
-        nav a {
-            color: white;
-            text-align: center;
-            padding: 14px 20px;
+        .graph-list li a {
+            color: #fff;
             text-decoration: none;
             font-size: 18px;
         }
-        nav a:hover {
-            background-color: #16A085;
-            color: white;
-        }
-        .user-info {
-            float: right;
-            padding: 14px 20px;
-            font-size: 16px;
-            color: white;
-            display: flex;
-            align-items: center;
-        }
-        .user-info img {
-            border-radius: 50%;
-            margin-right: 10px;
+        .graph-list li a:hover {
+            color: #16A085;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Welcome to My Mandala</h1>
-    </header>
-
-    <nav>
-        <a href="add-item.html">Add Item</a>
-        <div class="user-info" id="user-info"></div>
-    </nav>
+    <div class="container" id="graphs-container">
+        <!-- Dynamically loaded graphs will appear here -->
+    </div>
 
     <script type="module">
-        // Import necessary Firebase SDKs
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -80,25 +65,43 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
 
-        // Listen for authentication state changes
+        // Function to load saved graphs for the authenticated user
+        async function loadSavedGraphs(userId) {
+            const graphsContainer = document.getElementById('graphs-container');
+            const graphsList = document.createElement('ul');
+            graphsList.classList.add('graph-list');
+            const q = query(collection(db, "savedGraphs"), where("userId", "==", userId));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                graphsContainer.innerHTML = '<p>No saved graphs found.</p>';
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                const graphData = doc.data();
+                const listItem = document.createElement('li');
+                const graphLink = document.createElement('a');
+                graphLink.href = graphData.graphUrl; // Assuming there's a `graphUrl` in the data
+                graphLink.textContent = graphData.graphTitle || "Untitled Graph";
+                listItem.appendChild(graphLink);
+                graphsList.appendChild(listItem);
+            });
+
+            graphsContainer.appendChild(graphsList);
+        }
+
+        // Listen for auth state changes
         onAuthStateChanged(auth, (user) => {
-            const userInfoDiv = document.getElementById('user-info');
-
             if (user) {
-                // If the user is signed in, show their information
-                const userName = user.displayName || user.email; // Use displayName or email
-                const userImage = user.photoURL || 'https://www.example.com/default-avatar.jpg'; // Default avatar URL if not provided
-
-                userInfoDiv.innerHTML = `
-                    <img src="${userImage}" alt="User Avatar" width="30" height="30">
-                    <span>${userName}</span>
-                `;
+                loadSavedGraphs(user.uid);
             } else {
-                // If the user is not signed in, you can optionally handle it (e.g., redirect to login page)
-                window.location.href = '/login.html'; // Example: redirect to login page
+                window.location.href = '/login.html'; // Redirect to login if not authenticated
             }
         });
     </script>
+
 </body>
 </html>
