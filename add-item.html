@@ -331,84 +331,197 @@
             }
           });
         }
+let currentGraphId = null; // Store current graph ID
+
 document.getElementById("new-graph").addEventListener("click", function() {
+  // Create a new graph ID (could be a random string or Firebase timestamp)
+  currentGraphId = 'graph_' + new Date().getTime();  // Example of a simple graph ID
+
   // Clear the current graph
   if (cy) {
     cy.elements().remove(); // Remove all elements (nodes and edges) from the graph
   }
-  
-  // Optional: You can also reset any other UI elements or data related to the graph.
+
+  // Reset UI and selected object
   selectedObject = null;
   document.getElementById("connection-prompt").style.display = 'none';
   document.getElementById("message").textContent = 'A new graph has been created. Add new objects and connections!';
   document.getElementById("message").className = 'success';
+
+  loadObjects(auth.currentUser.displayName); // Load objects for the new graph
 });
 
-        const objects = [];
+// Add Object form handler
+document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-        objectsSnapshot.forEach((doc) => {
-          const object = doc.data();
-          
-          if (!cy.getElementById(doc.id).length) {
-            cy.add({ data: { id: doc.id, objectName: object.objectName } });
-            objects.push({ id: doc.id, name: object.objectName });
-          }
+  const objectName = document.getElementById("object-name").value;
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = '';
 
-          const li = document.createElement("li");
-          li.textContent = object.objectName;
-          li.addEventListener('click', () => {
-            selectObject(doc.id, object.objectName);
-          });
-          objectsList.appendChild(li);
-        });
+  if (!currentGraphId) {
+    messageDiv.textContent = "Please create a new graph first.";
+    messageDiv.className = "error";
+    return;
+  }
 
-        // Load connections
-        const connectionsQuery = query(
-          collection(db, "connections"),
-          where("user", "==", username)
-        );
-        const connectionsSnapshot = await getDocs(connectionsQuery);
+  const user = auth.currentUser;
+  if (!user) {
+    messageDiv.textContent = "You must be logged in to add objects.";
+    messageDiv.className = "error";
+    return;
+  }
 
-        connectionsSnapshot.forEach((doc) => {
-          const connection = doc.data();
-          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
-          
-          if (existingEdge.length === 0) {
-            cy.add({
-              data: { 
-                source: connection.sourceId, 
-                target: connection.targetId,
-                id: doc.id
-              }
-            });
-          }
-        });
+  try {
+    // Check for existing object in this graph
+    const objectQuery = query(
+      collection(db, "objects"),
+      where("objectName", "==", objectName),
+      where("user", "==", user.displayName),
+      where("graphId", "==", currentGraphId)
+    );
+    const querySnapshot = await getDocs(objectQuery);
 
-        cy.layout({ name: 'circle' }).run();
-        updateConnectionDropdown(objects);
-
-      } catch (error) {
-        console.error("Error loading data: ", error);
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading data: " + error.message;
-        messageDiv.className = "error";
-      }
+    if (!querySnapshot.empty) {
+      messageDiv.textContent = "This object already exists in the current graph!";
+      messageDiv.className = "error";
+      return;
     }
 
-    // Update connection dropdown
-    function updateConnectionDropdown(objects) {
-      const connectionDropdown = document.getElementById("connection-dropdown");
-      connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
-      
-      objects.forEach(object => {
-        if (!selectedObject || object.id !== selectedObject.id) {
-          const option = document.createElement("option");
-          option.value = object.id;
-          option.textContent = object.name;
-          connectionDropdown.appendChild(option);
+    // Add new object with graph ID
+    await addDoc(collection(db, "objects"), {
+      objectName: objectName,
+      user: user.displayName,
+      timestamp: serverTimestamp(),
+      graphId: currentGraphId // Associate object with current graph ID
+    });
+
+    messageDiv.textContent = "Object added successfully!";
+    messageDiv.className = "success";
+    document.getElementById("add-object-form").reset();
+    loadObjects(user.displayName); // Reload objects for the current graph
+  } catch (error) {
+    console.error("Error adding object: ", error);
+    messageDiv.textContent = "Error adding object: " + error.message;
+    messageDiv.className = "error";
+  }
+});
+
+// Load Objects and Connections for the current graph
+async function loadObjects(username) {
+  const objectsList = document.getElementById("objects-list");
+  objectsList.innerHTML = '';
+
+  try {
+    // Load objects for the current graph
+    const objectsQuery = query(
+      collection(db, "objects"),
+      where("user", "==", username),
+      where("graphId", "==", currentGraphId), // Filter by current graph ID
+      orderBy("timestamp", "desc")
+    );
+    const objectsSnapshot = await getDocs(objectsQuery);
+
+    // Initialize Cytoscape if needed
+    if (!cy) {
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: [],
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': '#0074D9',
+              'label': 'data(objectName)',
+              'color': '#fff',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 3,
+              'line-color': '#aaa',
+              'curve-style': 'bezier'
+            }
+          }
+        ],
+        layout: {
+          name: 'circle',
+          padding: 10
         }
       });
     }
+
+    const objects = [];
+    objectsSnapshot.forEach((doc) => {
+      const object = doc.data();
+
+      if (!cy.getElementById(doc.id).length) {
+        cy.add({ data: { id: doc.id, objectName: object.objectName } });
+        objects.push({ id: doc.id, name: object.objectName });
+      }
+
+      const li = document.createElement("li");
+      li.textContent = object.objectName;
+      li.addEventListener('click', () => {
+        selectObject(doc.id, object.objectName);
+      });
+      objectsList.appendChild(li);
+    });
+
+    // Load connections for the current graph
+    const connectionsQuery = query(
+      collection(db, "connections"),
+      where("user", "==", username),
+      where("graphId", "==", currentGraphId) // Filter by current graph ID
+    );
+    const connectionsSnapshot = await getDocs(connectionsQuery);
+
+    connectionsSnapshot.forEach((doc) => {
+      const connection = doc.data();
+      const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
+      
+      if (existingEdge.length === 0) {
+        cy.add({
+          data: { 
+            source: connection.sourceId, 
+            target: connection.targetId,
+            id: doc.id
+          }
+        });
+      }
+    });
+
+    cy.layout({ name: 'circle' }).run();
+    updateConnectionDropdown(objects);
+
+  } catch (error) {
+    console.error("Error loading data: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Error loading data: " + error.message;
+    messageDiv.className = "error";
+  }
+}
+
+// Update connection dropdown
+function updateConnectionDropdown(objects) {
+  const connectionDropdown = document.getElementById("connection-dropdown");
+  connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
+
+  objects.forEach(object => {
+    if (!selectedObject || object.id !== selectedObject.id) {
+      const option = document.createElement("option");
+      option.value = object.id;
+      option.textContent = object.name;
+      connectionDropdown.appendChild(option);
+    }
+  });
+}
+
+ 
 
     // Select object handler
     function selectObject(objectId, objectName) {
