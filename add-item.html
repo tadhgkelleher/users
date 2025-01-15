@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>All Users' Saved Graphs</title>
+    <title>Saved Graphs</title>
     <style>
         body {
             margin: 0;
@@ -17,7 +17,7 @@
             background-attachment: fixed;
         }
         .overlay {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.9);
             position: absolute;
             top: 0;
             left: 0;
@@ -57,19 +57,6 @@
             margin-bottom: 10px;
             border-radius: 5px;
             cursor: pointer;
-        }
-        li:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        #graph-details {
-            display: none;
-            background-color: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            margin: 20px auto;
-            max-width: 800px;
-            border-radius: 5px;
-        }
-        #graph-details pre {
             color: #9d9d9d;
         }
     </style>
@@ -79,11 +66,9 @@
     <div class="overlay"></div>
     <div class="container">
         <a href="add-item.html" class="add-item-link">Add Item</a>
-        <ul id="graph-list"></ul>
-        <div id="graph-details">
-            <h3>Graph Data</h3>
-            <pre id="graph-details-content"></pre>
-        </div>
+        <ul id="graph-list">
+            <li>Loading saved graphs...</li>
+        </ul>
     </div>
 
     <script type="module">
@@ -102,35 +87,30 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-
         const graphList = document.getElementById('graph-list');
-        const graphDetails = document.getElementById('graph-details');
-        const graphDetailsContent = document.getElementById('graph-details-content');
 
         async function fetchSavedGraphs() {
-            const querySnapshot = await getDocs(collection(db, "savedGraphs"));
+            try {
+                const querySnapshot = await getDocs(collection(db, "savedGraphs"));
+                graphList.innerHTML = ''; // Clear initial loading message
+                
+                if (querySnapshot.empty) {
+                    graphList.innerHTML = '<li>No saved graphs found.</li>';
+                    return;
+                }
 
-            querySnapshot.forEach((doc) => {
-                const listItem = document.createElement('li');
-                const graphData = doc.data();
+                querySnapshot.forEach((doc) => {
+                    const graphData = doc.data();
+                    const listItem = document.createElement('li');
 
-                // Display the document ID as a preview
-                listItem.textContent = `Graph ID: ${doc.id}`;
-                listItem.addEventListener('click', () => {
-                    showGraphDetails(graphData);
+                    // Display some basic information about the graph
+                    listItem.textContent = `Graph ID: ${doc.id}, Data: ${JSON.stringify(graphData)}`;
+                    graphList.appendChild(listItem);
                 });
-
-                graphList.appendChild(listItem);
-            });
-
-            if (querySnapshot.empty) {
-                graphList.innerHTML = '<li>No saved graphs found.</li>';
+            } catch (error) {
+                console.error("Error fetching graphs:", error);
+                graphList.innerHTML = '<li>Error fetching graphs. Check the console for details.</li>';
             }
-        }
-
-        function showGraphDetails(graphData) {
-            graphDetailsContent.textContent = JSON.stringify(graphData, null, 2);
-            graphDetails.style.display = 'block';
         }
 
         fetchSavedGraphs();
