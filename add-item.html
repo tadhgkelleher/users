@@ -138,6 +138,7 @@
     <button id="create-connection">Create Connection</button>
   </div>
   <div id="cy"></div>
+  <button id="download-graph">Download Graph as JSON</button>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
@@ -306,6 +307,29 @@
             }
           });
         }
+
+        // Download the graph as a JSON file
+document.getElementById('download-graph').addEventListener('click', () => {
+  // Get the graph data in JSON format
+  const graphData = cy.json();
+
+  // Convert the JSON object to a string
+  const graphDataString = JSON.stringify(graphData);
+
+  // Create a Blob from the stringified JSON
+  const blob = new Blob([graphDataString], { type: 'application/json' });
+
+  // Create an object URL for the Blob
+  const url = URL.createObjectURL(blob);
+
+  // Create a temporary anchor element to trigger the download
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'graph.json';  // Set the default filename for the JSON file
+  document.body.appendChild(a);
+  a.click();  // Programmatically click the anchor element to trigger the download
+  document.body.removeChild(a);  // Clean up the anchor element
+});
 
         const objects = [];
 
