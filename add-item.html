@@ -149,7 +149,7 @@
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
       authDomain: "mandala-5165e.firebaseapp.com",
       projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebasestorage.app",
+      storageBucket: "mandala-5165e.firebaseapp.com",
       messagingSenderId: "569537405023",
       appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
       measurementId: "G-TER99X7NBT"
@@ -161,6 +161,43 @@
 
     let selectedObject = null;
     let cy = null;
+
+    // Save connection to Firebase
+    async function saveConnection(sourceId, targetId) {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("User must be logged in to save connections");
+      }
+
+      try {
+        // Check if connection already exists
+        const connectionsRef = collection(db, "connections");
+        const connectionQuery = query(
+          connectionsRef,
+          where("user", "==", user.displayName),
+          where("sourceId", "==", sourceId),
+          where("targetId", "==", targetId)
+        );
+        
+        const querySnapshot = await getDocs(connectionQuery);
+        if (!querySnapshot.empty) {
+          throw new Error("Connection already exists");
+        }
+
+        // Save new connection
+        await addDoc(connectionsRef, {
+          sourceId: sourceId,
+          targetId: targetId,
+          user: user.displayName,
+          timestamp: serverTimestamp()
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Error saving connection: ", error);
+        throw error;
+      }
+    }
 
     // Auth state change handler
     auth.onAuthStateChanged((user) => {
@@ -223,18 +260,19 @@
       }
     });
 
-    // Load Objects function
+    // Load Objects and Connections function
     async function loadObjects(username) {
       const objectsList = document.getElementById("objects-list");
       objectsList.innerHTML = '';
 
       try {
-        const q = query(
+        // Load objects
+        const objectsQuery = query(
           collection(db, "objects"),
           where("user", "==", username),
           orderBy("timestamp", "desc")
         );
-        const querySnapshot = await getDocs(q);
+        const objectsSnapshot = await getDocs(objectsQuery);
 
         // Initialize Cytoscape if needed
         if (!cy) {
@@ -271,7 +309,7 @@
 
         const objects = [];
 
-        querySnapshot.forEach((doc) => {
+        objectsSnapshot.forEach((doc) => {
           const object = doc.data();
           
           if (!cy.getElementById(doc.id).length) {
@@ -287,13 +325,35 @@
           objectsList.appendChild(li);
         });
 
+        // Load connections
+        const connectionsQuery = query(
+          collection(db, "connections"),
+          where("user", "==", username)
+        );
+        const connectionsSnapshot = await getDocs(connectionsQuery);
+
+        connectionsSnapshot.forEach((doc) => {
+          const connection = doc.data();
+          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
+          
+          if (existingEdge.length === 0) {
+            cy.add({
+              data: { 
+                source: connection.sourceId, 
+                target: connection.targetId,
+                id: doc.id
+              }
+            });
+          }
+        });
+
         cy.layout({ name: 'circle' }).run();
         updateConnectionDropdown(objects);
 
       } catch (error) {
-        console.error("Error loading objects: ", error);
+        console.error("Error loading data: ", error);
         const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading objects: " + error.message;
+        messageDiv.textContent = "Error loading data: " + error.message;
         messageDiv.className = "error";
       }
     }
@@ -337,8 +397,8 @@
       });
     }
 
-    // Create edge function
-    function createEdge(targetId) {
+    // Create edge function with Firebase persistence
+    async function createEdge(targetId) {
       if (!selectedObject) {
         alert("Please select a source object first.");
         return;
@@ -348,18 +408,28 @@
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges(`[source = "${selectedObject.id}"][target = "${targetId}"]`);
+        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
         if (existingEdge.length === 0) {
-          cy.add({
-            data: { source: selectedObject.id, target: targetId }
-          });
+          try {
+            // Save connection to Firebase
+            await saveConnection(selectedObject.id, targetId);
 
-          cy.layout({ name: 'circle' }).run();
-          document.getElementById("connection-prompt").style.display = 'none';
-          
-          const messageDiv = document.getElementById("message");
-          messageDiv.textContent = "Connection created successfully!";
-          messageDiv.className = "success";
+            // Add to visualization
+            cy.add({
+              data: { source: selectedObject.id, target: targetId }
+            });
+
+            cy.layout({ name: 'circle' }).run();
+            document.getElementById("connection-prompt").style.display = 'none';
+            
+            const messageDiv = document.getElementById("message");
+            messageDiv.textContent = "Connection created and saved successfully!";
+            messageDiv.className = "success";
+          } catch (error) {
+            const messageDiv = document.getElementById("message");
+            messageDiv.textContent = "Error saving connection: " + error.message;
+            messageDiv.className = "error";
+          }
         } else {
           alert("This connection already exists.");
         }
