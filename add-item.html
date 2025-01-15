@@ -5,215 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Manage Connections</title>
 
-  <!-- Firebase SDK Scripts -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebasestorage.app",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let selectedObject = null;
-    let cy = null; // Declare Cytoscape variable globally
-
-    auth.onAuthStateChanged((user) => {
-      const messageDiv = document.getElementById("message");
-      if (user) {
-        messageDiv.textContent = 'You are logged in as ' + user.displayName;
-        messageDiv.className = 'success';
-        loadObjects(user.displayName);
-      } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
-        messageDiv.className = 'error';
-      }
-    });
-
-    // Add Object to Firestore
-    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const objectName = document.getElementById("object-name").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = ''; 
-
-      const user = auth.currentUser ? auth.currentUser : null;
-
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add objects.";
-        messageDiv.className = "error";
-        return;
-      }
-
-      try {
-        // Check if the object already exists in Firestore
-        const objectQuery = query(
-          collection(db, "objects"),
-          where("objectName", "==", objectName),
-          where("user", "==", user.displayName)
-        );
-        const querySnapshot = await getDocs(objectQuery);
-
-        if (!querySnapshot.empty) {
-          messageDiv.textContent = "This object already exists!";
-          messageDiv.className = "error";
-          return;
-        }
-
-        // Add new object to Firestore if it doesn't exist
-        await addDoc(collection(db, "objects"), {
-          objectName: objectName,
-          user: user.displayName,
-          timestamp: serverTimestamp()
-        });
-
-        messageDiv.textContent = "Object added successfully!";
-        messageDiv.className = "success"; 
-        document.getElementById("add-object-form").reset();
-        loadObjects(user.displayName);
-      } catch (error) {
-        console.error("Error adding object: ", error);
-        messageDiv.textContent = "There was an error adding the object: " + error.message;
-        messageDiv.className = "error"; 
-      }
-    });
-
-    // Load Objects from Firestore
-    async function loadObjects(username) {
-      const objectsList = document.getElementById("objects-list");
-      objectsList.innerHTML = ''; // Clear the list
-
-      try {
-        const q = query(
-          collection(db, "objects"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const querySnapshot = await getDocs(q);
-
-        // Initialize Cytoscape graph if it's not initialized already
-        if (!cy) {
-          cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: [],
-            style: [
-              {
-                selector: 'node',
-                style: {
-                  'background-color': '#0074D9',
-                  'label': 'data(objectName)'
-                }
-              },
-              {
-                selector: 'edge',
-                style: {
-                  'width': 3,
-                  'line-color': '#aaa'
-                }
-              }
-            ],
-            layout: {
-              name: 'circle',
-              padding: 10
-            }
-          });
-        }
-
-        // Set to track object names to avoid duplicates
-        const objectNames = new Set();
-        const objects = [];
-
-        querySnapshot.forEach((doc) => {
-          const object = doc.data();
-          
-          // Check if the node already exists based on objectName (or use doc.id)
-          if (!cy.getElementById(doc.id).length) {
-            cy.add({ data: { id: doc.id, objectName: object.objectName } });
-            objectNames.add(object.objectName);
-            objects.push({ id: doc.id, name: object.objectName });
-          }
-
-          // Display objects in the list
-          const li = document.createElement("li");
-          li.textContent = object.objectName;
-          li.addEventListener('click', () => {
-            selectObject(object.objectName);
-          });
-          objectsList.appendChild(li);
-        });
-
-        cy.layout({ name: 'circle' }).run();
-
-        // Populate the dropdown with objects
-        const connectionDropdown = document.getElementById("connection-dropdown");
-        connectionDropdown.innerHTML = ''; // Clear existing options
-        objects.forEach(object => {
-          const option = document.createElement("option");
-          option.value = object.id;
-          option.textContent = object.name;
-          connectionDropdown.appendChild(option);
-        });
-
-        // Handle connection creation
-        document.getElementById("create-connection").addEventListener("click", () => {
-          const selectedConnectionId = connectionDropdown.value;
-          if (selectedConnectionId) {
-            createEdge(selectedConnectionId);
-          } else {
-            alert("Please select a connection.");
-          }
-        });
-
-      } catch (error) {
-        console.error("Error loading objects: ", error);
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "There was an error loading objects: " + error.message;
-        messageDiv.className = "error";
-      }
-    }
-
-    // Select an object from the list
-    function selectObject(objectName) {
-      selectedObject = objectName;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
-      messageDiv.className = 'success';
-
-      // Show the connection prompt
-      document.getElementById("connection-prompt").style.display = 'block';
-    }
-
-    // Create an edge between the selected object and the target object
-    function createEdge(targetId) {
-      // Ensure target node exists before creating the edge
-      const targetNode = cy.getElementById(targetId);
-      const sourceNode = cy.nodes().filter(node => node.data('objectName') === selectedObject);
-      
-      if (sourceNode.length && targetNode.length) {
-        cy.add({
-          data: { source: sourceNode.id(), target: targetNode.id() }
-        });
-
-        // Optionally, layout the graph after adding the edge
-        cy.layout({ name: 'circle' }).run();
-        document.getElementById("connection-prompt").style.display = 'none';
-      } else {
-        alert("Both nodes must exist before connecting.");
-      }
-    }
-  </script>
-
   <!-- Cytoscape Script -->
   <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
 
@@ -259,11 +50,17 @@
     .error {
       background-color: #f8d7da;
       color: #721c24;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
     }
 
     .success {
       background-color: #d4edda;
       color: #155724;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
     }
 
     #objects-list {
@@ -272,16 +69,32 @@
       margin-top: 20px;
     }
 
+    #objects-list li {
+      padding: 10px;
+      margin: 5px 0;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #objects-list li:hover {
+      background-color: #e9ecef;
+    }
+
     #cy {
       height: 500px;
       width: 100%;
       border: 1px solid #ccc;
       margin-top: 20px;
+      border-radius: 5px;
     }
 
     #connection-prompt {
       display: none;
       margin-top: 20px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
     }
 
     select {
@@ -289,6 +102,8 @@
       font-size: 16px;
       margin-bottom: 10px;
       width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
     }
 
     #connection-prompt button {
@@ -304,7 +119,6 @@
   </style>
 </head>
 <body>
-
   <h2>Manage Objects</h2>
 
   <div id="message"></div>
@@ -325,5 +139,244 @@
   </div>
   <div id="cy"></div>
 
+  <!-- Firebase SDK Scripts -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.firebasestorage.app",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let selectedObject = null;
+    let cy = null;
+
+    // Auth state change handler
+    auth.onAuthStateChanged((user) => {
+      const messageDiv = document.getElementById("message");
+      if (user) {
+        messageDiv.textContent = 'You are logged in as ' + user.displayName;
+        messageDiv.className = 'success';
+        loadObjects(user.displayName);
+      } else {
+        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
+        messageDiv.className = 'error';
+      }
+    });
+
+    // Add Object form handler
+    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const objectName = document.getElementById("object-name").value;
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = '';
+
+      const user = auth.currentUser;
+      if (!user) {
+        messageDiv.textContent = "You must be logged in to add objects.";
+        messageDiv.className = "error";
+        return;
+      }
+
+      try {
+        // Check for existing object
+        const objectQuery = query(
+          collection(db, "objects"),
+          where("objectName", "==", objectName),
+          where("user", "==", user.displayName)
+        );
+        const querySnapshot = await getDocs(objectQuery);
+
+        if (!querySnapshot.empty) {
+          messageDiv.textContent = "This object already exists!";
+          messageDiv.className = "error";
+          return;
+        }
+
+        // Add new object
+        await addDoc(collection(db, "objects"), {
+          objectName: objectName,
+          user: user.displayName,
+          timestamp: serverTimestamp()
+        });
+
+        messageDiv.textContent = "Object added successfully!";
+        messageDiv.className = "success";
+        document.getElementById("add-object-form").reset();
+        loadObjects(user.displayName);
+      } catch (error) {
+        console.error("Error adding object: ", error);
+        messageDiv.textContent = "Error adding object: " + error.message;
+        messageDiv.className = "error";
+      }
+    });
+
+    // Load Objects function
+    async function loadObjects(username) {
+      const objectsList = document.getElementById("objects-list");
+      objectsList.innerHTML = '';
+
+      try {
+        const q = query(
+          collection(db, "objects"),
+          where("user", "==", username),
+          orderBy("timestamp", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+
+        // Initialize Cytoscape if needed
+        if (!cy) {
+          cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: [],
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'background-color': '#0074D9',
+                  'label': 'data(objectName)',
+                  'color': '#fff',
+                  'text-valign': 'center',
+                  'text-halign': 'center',
+                  'font-size': '12px'
+                }
+              },
+              {
+                selector: 'edge',
+                style: {
+                  'width': 3,
+                  'line-color': '#aaa',
+                  'curve-style': 'bezier'
+                }
+              }
+            ],
+            layout: {
+              name: 'circle',
+              padding: 10
+            }
+          });
+        }
+
+        const objects = [];
+
+        querySnapshot.forEach((doc) => {
+          const object = doc.data();
+          
+          if (!cy.getElementById(doc.id).length) {
+            cy.add({ data: { id: doc.id, objectName: object.objectName } });
+            objects.push({ id: doc.id, name: object.objectName });
+          }
+
+          const li = document.createElement("li");
+          li.textContent = object.objectName;
+          li.addEventListener('click', () => {
+            selectObject(doc.id, object.objectName);
+          });
+          objectsList.appendChild(li);
+        });
+
+        cy.layout({ name: 'circle' }).run();
+        updateConnectionDropdown(objects);
+
+      } catch (error) {
+        console.error("Error loading objects: ", error);
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "Error loading objects: " + error.message;
+        messageDiv.className = "error";
+      }
+    }
+
+    // Update connection dropdown
+    function updateConnectionDropdown(objects) {
+      const connectionDropdown = document.getElementById("connection-dropdown");
+      connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
+      
+      objects.forEach(object => {
+        if (!selectedObject || object.id !== selectedObject.id) {
+          const option = document.createElement("option");
+          option.value = object.id;
+          option.textContent = object.name;
+          connectionDropdown.appendChild(option);
+        }
+      });
+    }
+
+    // Select object handler
+    function selectObject(objectId, objectName) {
+      selectedObject = { id: objectId, name: objectName };
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+      messageDiv.className = 'success';
+
+      document.getElementById("connection-prompt").style.display = 'block';
+      
+      const q = query(
+        collection(db, "objects"),
+        where("user", "==", auth.currentUser.displayName),
+        orderBy("timestamp", "desc")
+      );
+      
+      getDocs(q).then((querySnapshot) => {
+        const objects = [];
+        querySnapshot.forEach((doc) => {
+          objects.push({ id: doc.id, name: doc.data().objectName });
+        });
+        updateConnectionDropdown(objects);
+      });
+    }
+
+    // Create edge function
+    function createEdge(targetId) {
+      if (!selectedObject) {
+        alert("Please select a source object first.");
+        return;
+      }
+
+      const sourceNode = cy.getElementById(selectedObject.id);
+      const targetNode = cy.getElementById(targetId);
+      
+      if (sourceNode.length && targetNode.length) {
+        const existingEdge = cy.edges(`[source = "${selectedObject.id}"][target = "${targetId}"]`);
+        if (existingEdge.length === 0) {
+          cy.add({
+            data: { source: selectedObject.id, target: targetId }
+          });
+
+          cy.layout({ name: 'circle' }).run();
+          document.getElementById("connection-prompt").style.display = 'none';
+          
+          const messageDiv = document.getElementById("message");
+          messageDiv.textContent = "Connection created successfully!";
+          messageDiv.className = "success";
+        } else {
+          alert("This connection already exists.");
+        }
+      } else {
+        alert("Both nodes must exist before connecting.");
+      }
+    }
+
+    // Create connection button handler
+    document.getElementById("create-connection").addEventListener("click", () => {
+      const selectedConnectionId = document.getElementById("connection-dropdown").value;
+      if (selectedConnectionId) {
+        createEdge(selectedConnectionId);
+      } else {
+        alert("Please select a connection.");
+      }
+    });
+  </script>
 </body>
 </html>
