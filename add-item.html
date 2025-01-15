@@ -459,40 +459,59 @@
       }
     }
 
-    // Function to save graph
-    function saveGraph() {
-      const graphData = {
-        nodes: cy.nodes().map(node => ({
-          data: {
-            id: node.id(),
-            objectName: node.data('objectName')
-          }
-        })),
-        edges: cy.edges().map(edge => ({
-          data: {
-            source: edge.source().id(),
-            target: edge.target().id()
-          }
-        }))
-      };
+   // Function to save graph
+async function saveGraph() {
+  const user = auth.currentUser;
+  if (!user) {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "You must be logged in to save the graph";
+    messageDiv.className = "error";
+    return;
+  }
 
-      // Create and trigger download
-      const dataStr = JSON.stringify(graphData, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = "Graph saved successfully!";
-      messageDiv.className = "success";
-    }
+  const graphData = {
+    nodes: cy.nodes().map(node => ({
+      data: {
+        id: node.id(),
+        objectName: node.data('objectName')
+      }
+    })),
+    edges: cy.edges().map(edge => ({
+      data: {
+        source: edge.source().id(),
+        target: edge.target().id()
+      }
+    })),
+    timestamp: serverTimestamp(),
+    user: user.displayName
+  };
 
+  try {
+    // Save to Firebase
+    await addDoc(collection(db, "savedGraphs"), graphData);
+
+    // Create and trigger download of JSON file
+    const dataStr = JSON.stringify(graphData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Graph saved successfully to both file and cloud!";
+    messageDiv.className = "success";
+  } catch (error) {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Error saving graph: " + error.message;
+    messageDiv.className = "error";
+    console.error("Error saving graph:", error);
+  }
+}
 async function loadGraph(file) {
   try {
     const text = await file.text();
