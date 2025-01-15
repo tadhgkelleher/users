@@ -139,8 +139,6 @@
   </div>
   <div id="cy"></div>
 
-  <button id="save-graph">Save Graph</button>
-
   <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
@@ -308,38 +306,6 @@
             }
           });
         }
-
-// Save the graph to Firebase
-document.getElementById("save-graph").addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) {
-    alert("You must be logged in to save the graph.");
-    return;
-  }
-
-  try {
-    // Serialize the graph
-    const graphData = cy.json();
-
-    // Save the graph data to Firestore under a user's collection
-    const graphRef = collection(db, "saved_graphs");
-
-    await addDoc(graphRef, {
-      user: user.displayName,
-      graphData: graphData,
-      timestamp: serverTimestamp()
-    });
-
-    alert("Graph saved successfully!");
-  } catch (error) {
-    console.error("Error saving graph: ", error);
-    alert("Error saving graph: " + error.message);
-  }
-});
-
-
-
-        
 
         const objects = [];
 
