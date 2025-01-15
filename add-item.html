@@ -3,170 +3,687 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>All Users' Saved Graphs</title>
+<title>Manage Connections</title>
+
+<!-- Cytoscape Script -->
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
+
 <style>
 body {
-margin: 0;
-padding: 0;
-background-color: black;
-color: white;
 font-family: Arial, sans-serif;
-background-image: url('https://blog.buddhagroove.com/wp-content/uploads/2021/03/mandala-1200x640.jpg');
-background-size: cover;
-background-position: center;
-background-attachment: fixed;
-position: relative;
-z-index: 1;
-height: 100vh;
-}
-.overlay {
-position: absolute;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.8);
-z-index: 2;
-}
-.container {
+max-width: 600px;
+margin: 0 auto;
 padding: 20px;
-position: relative;
-z-index: 3;
-text-align: center;
 }
-.add-item-link {
-display: inline-block;
-padding: 20px 40px;
-background-color: #16A085;
-color: white;
-font-size: 24px;
-text-decoration: none;
+
+h2 {
+color: #333;
+}
+
+form {
+margin-bottom: 20px;
+}
+
+input[type="text"] {
+width: 100%;
+padding: 10px;
+font-size: 16px;
+margin-bottom: 10px;
+border: 1px solid #ccc;
 border-radius: 5px;
-margin-top: 50px;
-transition: background-color 0.3s ease;
 }
-.add-item-link:hover {
-background-color: #1abc9c;
+
+button {
+background-color: #4CAF50;
+color: white;
+border: none;
+padding: 10px 20px;
+font-size: 16px;
+border-radius: 5px;
+cursor: pointer;
 }
-.graph-list {
+
+button:hover {
+background-color: #45a049;
+}
+
+.error {
+background-color: #f8d7da;
+color: #721c24;
+padding: 10px;
+margin: 10px 0;
+border-radius: 5px;
+}
+
+.success {
+background-color: #d4edda;
+color: #155724;
+padding: 10px;
+margin: 10px 0;
+border-radius: 5px;
+}
+
+#objects-list {
 list-style-type: none;
 padding: 0;
-margin-top: 30px;
-text-align: left;
+margin-top: 20px;
 }
-.graph-list li {
-background-color: rgba(0, 0, 0, 0.7);
-margin: 10px 0;
+
+#objects-list li {
 padding: 10px;
+margin: 5px 0;
+background-color: #f8f9fa;
 border-radius: 5px;
-color: white;
-font-size: 14px;
 cursor: pointer;
-transition: background-color 0.3s ease;
 }
-.graph-list li:hover {
-background-color: rgba(0, 0, 0, 0.9);
+
+#objects-list li:hover {
+background-color: #e9ecef;
 }
-.graph-list li pre {
-background-color: #222;
-padding: 15px;
+
+#cy {
+height: 500px;
+width: 100%;
+border: 1px solid #ccc;
+margin-top: 20px;
 border-radius: 5px;
-white-space: pre-wrap;
-word-wrap: break-word;
-color: #9d9d9d;
-font-size: 14px;
 }
-.graph-details {
-background-color: rgba(0, 0, 0, 0.8);
-padding: 20px;
-margin-top: 30px;
-border-radius: 5px;
-color: white;
-font-size: 16px;
+
+#connection-prompt {
 display: none;
+margin-top: 20px;
+padding: 15px;
+background-color: #f8f9fa;
+border-radius: 5px;
+}
+
+select {
+padding: 10px;
+font-size: 16px;
+margin-bottom: 10px;
+width: 100%;
+border: 1px solid #ccc;
+border-radius: 5px;
+}
+
+#connection-prompt button {
+background-color: #0074D9;
+border: none;
+padding: 10px 20px;
+color: white;
+}
+
+#connection-prompt button:hover {
+background-color: #006BB3;
+}
+
+.button-group {
+margin-top: 20px;
+display: flex;
+gap: 10px;
+}
+
+.secondary-button {
+background-color: #0074D9;
+}
+
+.secondary-button:hover {
+background-color: #0056b3;
 }
 </style>
 </head>
 <body>
+<h2>Manage Objects</h2>
 
-<div class="overlay"></div>
+<div id="message"></div>
 
-<div class="container" id="graphs-container">
-<a href="add-item.html" class="add-item-link">Add Item</a> <!-- Prominent Link -->
-<!-- Dynamically loaded graphs will appear here -->
-<div class="graph-details" id="graph-details">
-<h3>Graph Data Details</h3>
-<pre id="graph-details-content"></pre>
+<form id="add-object-form">
+<input type="text" id="object-name" placeholder="Enter Object Name" required />
+<button type="submit">Add Object</button>
+</form>
+
+<h3>Your Objects:</h3>
+<ul id="objects-list"></ul>
+<div id="connection-prompt">
+<h3>Add Connection</h3>
+<select id="connection-dropdown">
+<option value="">Select an Object</option>
+</select>
+<button id="create-connection">Create Connection</button>
 </div>
+<div id="cy"></div>
+<div class="button-group">
+<button id="save-graph" class="secondary-button">Save Graph</button>
+<button id="load-graph" class="secondary-button">Load Graph</button>
 </div>
 
+<input type="file" id="load-file" accept=".json" style="display: none;">
+
+
+<!-- Firebase SDK Scripts -->
 <script type="module">
-// Import Firebase SDKs
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-// Firebase configuration
 const firebaseConfig = {
 apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
 authDomain: "mandala-5165e.firebaseapp.com",
 projectId: "mandala-5165e",
-storageBucket: "mandala-5165e.firebasestorage.app",
+storageBucket: "mandala-5165e.firebaseapp.com",
 messagingSenderId: "569537405023",
 appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
 measurementId: "G-TER99X7NBT"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Function to load all saved graphs from all users
-async function loadAllSavedGraphs() {
-const graphsContainer = document.getElementById('graphs-container');
-const graphsList = document.createElement('ul');
-graphsList.classList.add('graph-list');
-const querySnapshot = await getDocs(collection(db, "savedGraphs"));
+let selectedObject = null;
+let cy = null;
 
-if (querySnapshot.empty) {
-graphsContainer.innerHTML += '<p>No saved graphs found.</p>';
+// Save connection to Firebase
+async function saveConnection(sourceId, targetId) {
+const user = auth.currentUser;
+if (!user) {
+throw new Error("User must be logged in to save connections");
+}
+
+try {
+// Check if connection already exists
+const connectionsRef = collection(db, "connections");
+const connectionQuery = query(
+connectionsRef,
+where("user", "==", user.displayName),
+where("sourceId", "==", sourceId),
+where("targetId", "==", targetId)
+);
+
+const querySnapshot = await getDocs(connectionQuery);
+if (!querySnapshot.empty) {
+throw new Error("Connection already exists");
+}
+
+// Save new connection
+await addDoc(connectionsRef, {
+sourceId: sourceId,
+targetId: targetId,
+user: user.displayName,
+timestamp: serverTimestamp()
+});
+
+return true;
+} catch (error) {
+console.error("Error saving connection: ", error);
+throw error;
+}
+}
+
+// Auth state change handler
+auth.onAuthStateChanged((user) => {
+const messageDiv = document.getElementById("message");
+if (user) {
+messageDiv.textContent = 'You are logged in as ' + user.displayName;
+messageDiv.className = 'success';
+loadObjects(user.displayName);
+} else {
+messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
+messageDiv.className = 'error';
+}
+});
+
+// Add Object form handler
+document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+e.preventDefault();
+
+const objectName = document.getElementById("object-name").value;
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = '';
+
+const user = auth.currentUser;
+if (!user) {
+messageDiv.textContent = "You must be logged in to add objects.";
+messageDiv.className = "error";
 return;
 }
 
+try {
+// Check for existing object
+const objectQuery = query(
+collection(db, "objects"),
+where("objectName", "==", objectName),
+where("user", "==", user.displayName)
+);
+const querySnapshot = await getDocs(objectQuery);
+
+if (!querySnapshot.empty) {
+messageDiv.textContent = "This object already exists!";
+messageDiv.className = "error";
+return;
+}
+
+// Add new object
+await addDoc(collection(db, "objects"), {
+objectName: objectName,
+user: user.displayName,
+timestamp: serverTimestamp()
+});
+
+messageDiv.textContent = "Object added successfully!";
+messageDiv.className = "success";
+document.getElementById("add-object-form").reset();
+loadObjects(user.displayName);
+} catch (error) {
+console.error("Error adding object: ", error);
+messageDiv.textContent = "Error adding object: " + error.message;
+messageDiv.className = "error";
+}
+});
+
+// Load Objects and Connections function
+async function loadObjects(username) {
+const objectsList = document.getElementById("objects-list");
+objectsList.innerHTML = '';
+
+try {
+// Load objects
+const objectsQuery = query(
+collection(db, "objects"),
+where("user", "==", username),
+orderBy("timestamp", "desc")
+);
+const objectsSnapshot = await getDocs(objectsQuery);
+
+// Initialize Cytoscape if needed
+if (!cy) {
+cy = cytoscape({
+container: document.getElementById('cy'),
+elements: [],
+style: [
+{
+selector: 'node',
+style: {
+'background-color': '#0074D9',
+'label': 'data(objectName)',
+'color': '#fff',
+'text-valign': 'center',
+'text-halign': 'center',
+'font-size': '12px'
+}
+},
+{
+selector: 'edge',
+style: {
+'width': 3,
+'line-color': '#aaa',
+'curve-style': 'bezier'
+}
+}
+],
+layout: {
+name: 'circle',
+padding: 10
+}
+});
+}
+
+const objects = [];
+
+objectsSnapshot.forEach((doc) => {
+const object = doc.data();
+
+if (!cy.getElementById(doc.id).length) {
+cy.add({ data: { id: doc.id, objectName: object.objectName } });
+objects.push({ id: doc.id, name: object.objectName });
+}
+
+const li = document.createElement("li");
+li.textContent = object.objectName;
+li.addEventListener('click', () => {
+selectObject(doc.id, object.objectName);
+});
+objectsList.appendChild(li);
+});
+
+// Load connections
+const connectionsQuery = query(
+collection(db, "connections"),
+where("user", "==", username)
+);
+const connectionsSnapshot = await getDocs(connectionsQuery);
+
+connectionsSnapshot.forEach((doc) => {
+const connection = doc.data();
+const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
+
+if (existingEdge.length === 0) {
+cy.add({
+data: { 
+source: connection.sourceId, 
+target: connection.targetId,
+id: doc.id
+}
+});
+}
+});
+
+cy.layout({ name: 'circle' }).run();
+updateConnectionDropdown(objects);
+
+} catch (error) {
+console.error("Error loading data: ", error);
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = "Error loading data: " + error.message;
+messageDiv.className = "error";
+}
+}
+
+// Update connection dropdown
+function updateConnectionDropdown(objects) {
+const connectionDropdown = document.getElementById("connection-dropdown");
+connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
+
+objects.forEach(object => {
+if (!selectedObject || object.id !== selectedObject.id) {
+const option = document.createElement("option");
+option.value = object.id;
+option.textContent = object.name;
+connectionDropdown.appendChild(option);
+}
+});
+}
+
+// Select object handler
+function selectObject(objectId, objectName) {
+selectedObject = { id: objectId, name: objectName };
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+messageDiv.className = 'success';
+
+document.getElementById("connection-prompt").style.display = 'block';
+
+const q = query(
+collection(db, "objects"),
+where("user", "==", auth.currentUser.displayName),
+orderBy("timestamp", "desc")
+);
+
+getDocs(q).then((querySnapshot) => {
+const objects = [];
 querySnapshot.forEach((doc) => {
-const graphData = doc.data();
-const listItem = document.createElement('li');
+objects.push({ id: doc.id, name: doc.data().objectName });
+});
+updateConnectionDropdown(objects);
+});
+}
 
-// Create a preformatted block to show the graph data as JSON (short version)
-const jsonDisplay = document.createElement('pre');
-jsonDisplay.textContent = JSON.stringify(graphData, null, 2).slice(0, 100) + '...'; // Shortened for display
+// Create edge function with Firebase persistence
+async function createEdge(targetId) {
+if (!selectedObject) {
+alert("Please select a source object first.");
+return;
+}
 
-listItem.appendChild(jsonDisplay);
-graphsList.appendChild(listItem);
+const sourceNode = cy.getElementById(selectedObject.id);
+const targetNode = cy.getElementById(targetId);
 
-// Add click event to show detailed graph data
-                listItem.addEventListener('click', () => {
-                listItem.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent default link behavior
-showGraphDetails(graphData);
+if (sourceNode.length && targetNode.length) {
+const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
+if (existingEdge.length === 0) {
+try {
+// Save connection to Firebase
+await saveConnection(selectedObject.id, targetId);
+
+// Add to visualization
+cy.add({
+data: { source: selectedObject.id, target: targetId }
+});
+
+cy.layout({ name: 'circle' }).run();
+document.getElementById("connection-prompt").style.display = 'none';
+
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = "Connection created and saved successfully!";
+messageDiv.className = "success";
+} catch (error) {
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = "Error saving connection: " + error.message;
+messageDiv.className = "error";
+}
+} else {
+alert("This connection already exists.");
+}
+} else {
+alert("Both nodes must exist before connecting.");
+}
+}
+
+    // Function to save graph
+    function saveGraph() {
+      const graphData = {
+        nodes: cy.nodes().map(node => ({
+          data: {
+            id: node.id(),
+            objectName: node.data('objectName')
+          }
+        })),
+        edges: cy.edges().map(edge => ({
+          data: {
+            source: edge.source().id(),
+            target: edge.target().id()
+          }
+        }))
+      };
+
+      // Create and trigger download
+      const dataStr = JSON.stringify(graphData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "Graph saved successfully!";
+      messageDiv.className = "success";
+    }
+   // Function to save graph
+async function saveGraph() {
+  const user = auth.currentUser;
+  if (!user) {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "You must be logged in to save the graph";
+    messageDiv.className = "error";
+    return;
+  }
+
+  const graphData = {
+    nodes: cy.nodes().map(node => ({
+      data: {
+        id: node.id(),
+        objectName: node.data('objectName')
+      }
+    })),
+    edges: cy.edges().map(edge => ({
+      data: {
+        source: edge.source().id(),
+        target: edge.target().id()
+      }
+    })),
+    timestamp: serverTimestamp(),
+    user: user.displayName
+  };
+
+  try {
+    // Save to Firebase
+    await addDoc(collection(db, "savedGraphs"), graphData);
+
+    // Create and trigger download of JSON file
+    const dataStr = JSON.stringify(graphData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Graph saved successfully to both file and cloud!";
+    messageDiv.className = "success";
+  } catch (error) {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Error saving graph: " + error.message;
+    messageDiv.className = "error";
+    console.error("Error saving graph:", error);
+  }
+}
+async function loadGraph(file) {
+try {
+const text = await file.text();
+const graphData = JSON.parse(text);
+const user = auth.currentUser;
+
+if (!user) {
+throw new Error("You must be logged in to load a graph");
+}
+
+// Clear existing graph visualization
+cy.elements().remove();
+
+// First, ensure all nodes exist in Firebase
+for (const node of graphData.nodes) {
+try {
+// Check if object already exists
+const objectsRef = collection(db, "objects");
+const objectQuery = query(
+objectsRef,
+where("objectName", "==", node.data.objectName),
+where("user", "==", user.displayName)
+);
+
+const querySnapshot = await getDocs(objectQuery);
+
+if (querySnapshot.empty) {
+// Add new object to Firebase if it doesn't exist
+await addDoc(objectsRef, {
+objectName: node.data.objectName,
+user: user.displayName,
+timestamp: serverTimestamp()
+});
+}
+} catch (error) {
+console.error("Error ensuring node exists:", error);
+}
+}
+
+// Then load all objects from Firebase to ensure we have the correct IDs
+const objectsQuery = query(
+collection(db, "objects"),
+where("user", "==", user.displayName),
+orderBy("timestamp", "desc")
+);
+
+const objectsSnapshot = await getDocs(objectsQuery);
+const objectsMap = new Map();
+
+objectsSnapshot.forEach((doc) => {
+const object = doc.data();
+objectsMap.set(object.objectName, {
+id: doc.id,
+objectName: object.objectName
 });
 });
 
-graphsContainer.appendChild(graphsList);
+// Add nodes to cytoscape with correct Firebase IDs
+for (const node of graphData.nodes) {
+const firebaseObject = objectsMap.get(node.data.objectName);
+if (firebaseObject) {
+cy.add({
+data: {
+id: firebaseObject.id,
+objectName: firebaseObject.objectName
+}
+});
+}
 }
 
-// Function to show graph details
-function showGraphDetails(graphData) {
-const graphDetails = document.getElementById('graph-details');
-const graphDetailsContent = document.getElementById('graph-details-content');
+// Add edges
+for (const edge of graphData.edges) {
+// Find the correct Firebase IDs for source and target
+const sourceObject = Array.from(objectsMap.values())
+.find(obj => obj.objectName === graphData.nodes
+.find(n => n.data.id === edge.data.source)?.data.objectName);
 
-// Show the details of the selected graph
-graphDetailsContent.textContent = JSON.stringify(graphData, null, 2);
-graphDetails.style.display = 'block'; // Show the details section
+const targetObject = Array.from(objectsMap.values())
+.find(obj => obj.objectName === graphData.nodes
+.find(n => n.data.id === edge.data.target)?.data.objectName);
+
+if (sourceObject && targetObject) {
+try {
+// Save connection to Firebase
+await saveConnection(sourceObject.id, targetObject.id);
+
+// Add to visualization
+cy.add({
+data: {
+source: sourceObject.id,
+target: targetObject.id
+}
+});
+} catch (error) {
+if (error.message !== "Connection already exists") {
+console.error("Error adding connection:", error);
+}
+}
+}
 }
 
-// Load all saved graphs when the page loads
-loadAllSavedGraphs();
+// Run layout
+cy.layout({ name: 'circle' }).run();
+
+// Reload objects list and connections
+await loadObjects(user.displayName);
+
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = "Graph loaded successfully!";
+messageDiv.className = "success";
+} catch (error) {
+const messageDiv = document.getElementById("message");
+messageDiv.textContent = "Error loading graph: " + error.message;
+messageDiv.className = "error";
+console.error("Error loading graph:", error);
+}
+}
+
+// Add these event listeners after cy initialization
+document.getElementById("save-graph").addEventListener("click", saveGraph);
+
+document.getElementById("load-graph").addEventListener("click", () => {
+document.getElementById("load-file").click();
+});
+
+document.getElementById("load-file").addEventListener("change", (e) => {
+if (e.target.files.length > 0) {
+loadGraph(e.target.files[0]);
+}
+});
+// Create connection button handler
+document.getElementById("create-connection").addEventListener("click", () => {
+const selectedConnectionId = document.getElementById("connection-dropdown").value;
+if (selectedConnectionId) {
+createEdge(selectedConnectionId);
+} else {
+alert("Please select a connection.");
+}
+});
 </script>
-
 </body>
 </html>
