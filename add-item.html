@@ -329,68 +329,6 @@
             }
           });
         }
- // Function to save graph
-    function saveGraph() {
-      const graphData = {
-        nodes: cy.nodes().map(node => ({
-          data: {
-            id: node.id(),
-            objectName: node.data('objectName')
-          }
-        })),
-        edges: cy.edges().map(edge => ({
-          data: {
-            source: edge.source().id(),
-            target: edge.target().id()
-          }
-        }))
-      };
-
-      // Create and trigger download
-      const dataStr = JSON.stringify(graphData, null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = "Graph saved successfully!";
-      messageDiv.className = "success";
-    }
-
-    // Function to load graph
-    async function loadGraph(file) {
-      try {
-        const text = await file.text();
-        const graphData = JSON.parse(text);
-        
-        // Clear existing graph
-        cy.elements().remove();
-        
-        // Add nodes and edges
-        cy.add(graphData.nodes);
-        cy.add(graphData.edges);
-        
-        // Run layout
-        cy.layout({ name: 'circle' }).run();
-        
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Graph loaded successfully!";
-        messageDiv.className = "success";
-        
-        // Refresh objects list
-        loadObjects(auth.currentUser.displayName);
-      } catch (error) {
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading graph: " + error.message;
-        messageDiv.className = "error";
-      }
-    }
 
   
         const objects = [];
@@ -524,6 +462,70 @@
       }
     }
 
+     // Function to save graph
+    function saveGraph() {
+      const graphData = {
+        nodes: cy.nodes().map(node => ({
+          data: {
+            id: node.id(),
+            objectName: node.data('objectName')
+          }
+        })),
+        edges: cy.edges().map(edge => ({
+          data: {
+            source: edge.source().id(),
+            target: edge.target().id()
+          }
+        }))
+      };
+
+      // Create and trigger download
+      const dataStr = JSON.stringify(graphData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      const messageDiv = document.getElementById("message");
+      messageDiv.textContent = "Graph saved successfully!";
+      messageDiv.className = "success";
+    }
+
+    // Function to load graph
+    async function loadGraph(file) {
+      try {
+        const text = await file.text();
+        const graphData = JSON.parse(text);
+        
+        // Clear existing graph
+        cy.elements().remove();
+        
+        // Add nodes and edges
+        cy.add(graphData.nodes);
+        cy.add(graphData.edges);
+        
+        // Run layout
+        cy.layout({ name: 'circle' }).run();
+        
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "Graph loaded successfully!";
+        messageDiv.className = "success";
+        
+        // Refresh objects list
+        loadObjects(auth.currentUser.displayName);
+      } catch (error) {
+        const messageDiv = document.getElementById("message");
+        messageDiv.textContent = "Error loading graph: " + error.message;
+        messageDiv.className = "error";
+      }
+    }
+
+
     // Create connection button handler
     document.getElementById("create-connection").addEventListener("click", () => {
       const selectedConnectionId = document.getElementById("connection-dropdown").value;
@@ -546,6 +548,8 @@
         loadGraph(e.target.files[0]);
       }
     });
+
+    
   </script>
 </body>
 </html>
