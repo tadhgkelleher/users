@@ -144,7 +144,8 @@
                 graphsList.appendChild(listItem);
 
                 // Add click event to show detailed graph data
-                listItem.addEventListener('click', () => {
+                listItem.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default link behavior
                     showGraphDetails(graphData);
                 });
             });
