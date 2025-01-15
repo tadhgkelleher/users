@@ -15,97 +15,81 @@
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
-            position: relative;
-            z-index: 1;
-            height: 100vh;
         }
         .overlay {
+            background: rgba(0, 0, 0, 0.85);
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2;
+            z-index: 1;
         }
         .container {
-            padding: 20px;
             position: relative;
-            z-index: 3;
+            z-index: 2;
+            padding: 20px;
             text-align: center;
         }
-        .add-item-link {
+        a.add-item-link {
             display: inline-block;
-            padding: 20px 40px;
+            padding: 15px 30px;
             background-color: #16A085;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             text-decoration: none;
             border-radius: 5px;
-            margin-top: 50px;
-            transition: background-color 0.3s ease;
+            margin-bottom: 30px;
         }
-        .add-item-link:hover {
+        a.add-item-link:hover {
             background-color: #1abc9c;
         }
-        .graph-list {
+        ul {
             list-style-type: none;
             padding: 0;
-            margin-top: 30px;
+            margin: 20px auto;
+            max-width: 800px;
             text-align: left;
         }
-        .graph-list li {
+        li {
             background-color: rgba(0, 0, 0, 0.7);
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .graph-list li:hover {
-            background-color: rgba(0, 0, 0, 0.9);
-        }
-        .graph-list li pre {
-            background-color: #222;
             padding: 15px;
+            margin-bottom: 10px;
             border-radius: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            color: #9d9d9d;
-            font-size: 14px;
+            cursor: pointer;
         }
-        .graph-details {
+        li:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        #graph-details {
+            display: none;
             background-color: rgba(0, 0, 0, 0.8);
             padding: 20px;
-            margin-top: 30px;
+            margin: 20px auto;
+            max-width: 800px;
             border-radius: 5px;
-            color: white;
-            font-size: 16px;
-            display: none;
+        }
+        #graph-details pre {
+            color: #9d9d9d;
         }
     </style>
 </head>
 <body>
 
     <div class="overlay"></div>
-
-    <div class="container" id="graphs-container">
-        <a href="add-item.html" class="add-item-link">Add Item</a> <!-- Prominent Link -->
-        <!-- Dynamically loaded graphs will appear here -->
-        <div class="graph-details" id="graph-details">
-            <h3>Graph Data Details</h3>
+    <div class="container">
+        <a href="add-item.html" class="add-item-link">Add Item</a>
+        <ul id="graph-list"></ul>
+        <div id="graph-details">
+            <h3>Graph Data</h3>
             <pre id="graph-details-content"></pre>
         </div>
     </div>
 
     <script type="module">
-        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -116,55 +100,40 @@
             measurementId: "G-TER99X7NBT"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Function to load all saved graphs from all users
-        async function loadAllSavedGraphs() {
-            const graphsContainer = document.getElementById('graphs-container');
-            const graphsList = document.createElement('ul');
-            graphsList.classList.add('graph-list');
+        const graphList = document.getElementById('graph-list');
+        const graphDetails = document.getElementById('graph-details');
+        const graphDetailsContent = document.getElementById('graph-details-content');
+
+        async function fetchSavedGraphs() {
             const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-            if (querySnapshot.empty) {
-                graphsContainer.innerHTML += '<p>No saved graphs found.</p>';
-                return;
-            }
-
             querySnapshot.forEach((doc) => {
-                const graphData = doc.data();
                 const listItem = document.createElement('li');
+                const graphData = doc.data();
 
-                // Create a preformatted block to show the graph data as JSON (short version)
-                const jsonDisplay = document.createElement('pre');
-                jsonDisplay.textContent = JSON.stringify(graphData, null, 2).slice(0, 100) + '...'; // Shortened for display
-
-                listItem.appendChild(jsonDisplay);
-                graphsList.appendChild(listItem);
-
-                // Add click event to show detailed graph data
-                listItem.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent default link behavior
+                // Display the document ID as a preview
+                listItem.textContent = `Graph ID: ${doc.id}`;
+                listItem.addEventListener('click', () => {
                     showGraphDetails(graphData);
                 });
+
+                graphList.appendChild(listItem);
             });
 
-            graphsContainer.appendChild(graphsList);
+            if (querySnapshot.empty) {
+                graphList.innerHTML = '<li>No saved graphs found.</li>';
+            }
         }
 
-        // Function to show graph details
         function showGraphDetails(graphData) {
-            const graphDetails = document.getElementById('graph-details');
-            const graphDetailsContent = document.getElementById('graph-details-content');
-
-            // Show the details of the selected graph
             graphDetailsContent.textContent = JSON.stringify(graphData, null, 2);
-            graphDetails.style.display = 'block'; // Show the details section
+            graphDetails.style.display = 'block';
         }
 
-        // Load all saved graphs when the page loads
-        loadAllSavedGraphs();
+        fetchSavedGraphs();
     </script>
 
 </body>
