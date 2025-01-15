@@ -1,134 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saved Graphs</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            background-image: url('https://blog.buddhagroove.com/wp-content/uploads/2021/03/mandala-1200x640.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        }
-        .overlay {
-            background: rgba(0, 0, 0, 0.9);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-        .container {
-            position: relative;
-            z-index: 2;
-            padding: 20px;
-            text-align: center;
-        }
-        a.add-item-link {
-            display: inline-block;
-            padding: 15px 30px;
-            background-color: #16A085;
-            color: white;
-            font-size: 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-bottom: 30px;
-        }
-        a.add-item-link:hover {
-            background-color: #1abc9c;
-        }
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin: 20px auto;
-            max-width: 800px;
-            text-align: left;
-        }
-        li {
-            background-color: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            color: #9d9d9d;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Users' Saved Graphs</title>
+<style>
+body {
+margin: 0;
+padding: 0;
+background-color: black;
+color: white;
+font-family: Arial, sans-serif;
+background-image: url('https://blog.buddhagroove.com/wp-content/uploads/2021/03/mandala-1200x640.jpg');
+background-size: cover;
+background-position: center;
+background-attachment: fixed;
+position: relative;
+z-index: 1;
+height: 100vh;
+}
+.overlay {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.8);
+z-index: 2;
+}
+.container {
+padding: 20px;
+position: relative;
+z-index: 3;
+text-align: center;
+}
+.add-item-link {
+display: inline-block;
+padding: 20px 40px;
+background-color: #16A085;
+color: white;
+font-size: 24px;
+text-decoration: none;
+border-radius: 5px;
+margin-top: 50px;
+transition: background-color 0.3s ease;
+}
+.add-item-link:hover {
+background-color: #1abc9c;
+}
+.graph-list {
+list-style-type: none;
+padding: 0;
+margin-top: 30px;
+text-align: left;
+}
+.graph-list li {
+background-color: rgba(0, 0, 0, 0.7);
+margin: 10px 0;
+padding: 10px;
+border-radius: 5px;
+color: white;
+font-size: 14px;
+cursor: pointer;
+transition: background-color 0.3s ease;
+}
+.graph-list li:hover {
+background-color: rgba(0, 0, 0, 0.9);
+}
+.graph-list li pre {
+background-color: #222;
+padding: 15px;
+border-radius: 5px;
+white-space: pre-wrap;
+word-wrap: break-word;
+color: #9d9d9d;
+font-size: 14px;
+}
+.graph-details {
+background-color: rgba(0, 0, 0, 0.8);
+padding: 20px;
+margin-top: 30px;
+border-radius: 5px;
+color: white;
+font-size: 16px;
+display: none;
+}
+</style>
 </head>
 <body>
 
-    <div class="overlay"></div>
-    <div class="container">
-        <a href="add-item.html" class="add-item-link">Add Item</a>
-        <ul id="graph-list">
-            <li>Loading saved graphs...</li>
-        </ul>
-        <div id="graph-details" style="display: none; margin-top: 20px;"></div>
-    </div>
+<div class="overlay"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+<div class="container" id="graphs-container">
+<a href="add-item.html" class="add-item-link">Add Item</a> <!-- Prominent Link -->
+<!-- Dynamically loaded graphs will appear here -->
+<div class="graph-details" id="graph-details">
+<h3>Graph Data Details</h3>
+<pre id="graph-details-content"></pre>
+</div>
+</div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.firebasestorage.app",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+<script type="module">
+// Import Firebase SDKs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const graphList = document.getElementById('graph-list');
-        const graphDetails = document.getElementById('graph-details');
+// Firebase configuration
+const firebaseConfig = {
+apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+authDomain: "mandala-5165e.firebaseapp.com",
+projectId: "mandala-5165e",
+storageBucket: "mandala-5165e.firebasestorage.app",
+messagingSenderId: "569537405023",
+appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+measurementId: "G-TER99X7NBT"
+};
 
-        async function fetchSavedGraphs() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "savedGraphs"));
-                graphList.innerHTML = ''; // Clear initial loading message
-                
-                if (querySnapshot.empty) {
-                    graphList.innerHTML = '<li>No saved graphs found.</li>';
-                    return;
-                }
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-                querySnapshot.forEach((doc) => {
-                    const graphData = doc.data();
-                    const listItem = document.createElement('li');
+// Function to load all saved graphs from all users
+async function loadAllSavedGraphs() {
+const graphsContainer = document.getElementById('graphs-container');
+const graphsList = document.createElement('ul');
+graphsList.classList.add('graph-list');
+const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-                    listItem.textContent = `Graph ID: ${doc.id}`;
-                    listItem.dataset.details = JSON.stringify(graphData);
+if (querySnapshot.empty) {
+graphsContainer.innerHTML += '<p>No saved graphs found.</p>';
+return;
+}
 
-                    // Show graph details on click
-                    listItem.addEventListener('click', () => {
-                        const details = JSON.parse(listItem.dataset.details);
-                        graphDetails.style.display = 'block';
-                        graphDetails.innerHTML = `
-                            <pre style="color: white; text-align: left; background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 5px;">
-                                ${JSON.stringify(details, null, 2)}
-                            </pre>
-                        `;
-                    });
+querySnapshot.forEach((doc) => {
+const graphData = doc.data();
+const listItem = document.createElement('li');
 
-                    graphList.appendChild(listItem);
-                });
-            } catch (error) {
-                console.error("Error fetching graphs:", error);
-                graphList.innerHTML = '<li>Error fetching graphs. Check the console for details.</li>';
-            }
-        }
+// Create a preformatted block to show the graph data as JSON (short version)
+const jsonDisplay = document.createElement('pre');
+jsonDisplay.textContent = JSON.stringify(graphData, null, 2).slice(0, 100) + '...'; // Shortened for display
 
-        fetchSavedGraphs();
-    </script>
+listItem.appendChild(jsonDisplay);
+graphsList.appendChild(listItem);
+
+// Add click event to show detailed graph data
+                listItem.addEventListener('click', () => {
+                listItem.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent default link behavior
+showGraphDetails(graphData);
+});
+});
+
+graphsContainer.appendChild(graphsList);
+}
+
+// Function to show graph details
+function showGraphDetails(graphData) {
+const graphDetails = document.getElementById('graph-details');
+const graphDetailsContent = document.getElementById('graph-details-content');
+
+// Show the details of the selected graph
+graphDetailsContent.textContent = JSON.stringify(graphData, null, 2);
+graphDetails.style.display = 'block'; // Show the details section
+}
+
+// Load all saved graphs when the page loads
+loadAllSavedGraphs();
+</script>
 
 </body>
 </html>
