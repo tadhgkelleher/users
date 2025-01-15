@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Authentication</title>
+  <title>My Mandala Authentication</title>
   
   <!-- Firebase SDKs -->
   <script type="module">
@@ -11,7 +11,6 @@
     import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
 
-    // Your web app's Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
       authDomain: "mandala-5165e.firebaseapp.com",
@@ -22,106 +21,147 @@
       measurementId: "G-TER99X7NBT"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const analytics = getAnalytics(app);
 
-   // Regular Sign Up with Email & Password
-document.getElementById('emailSignUpBtn').addEventListener('click', function() {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const message = document.getElementById('message');
-  
-  message.textContent = 'Attempting to sign up with email...';
-  
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      message.style.color = 'green';
-      message.textContent = `Account created! Welcome ${user.email}`;
-      console.log(`User created: ${user.email}`);
+    document.getElementById('emailSignUpBtn').addEventListener('click', function() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const message = document.getElementById('message');
       
-      // Redirect after successful sign-up
-      window.location.href = 'add-item.html';
-    })
-    .catch((error) => {
-      message.style.color = 'red';
-      message.textContent = `Error: ${error.message}`;
-      console.error('Error creating user:', error);
+      message.textContent = 'Attempting to sign up with email...';
+      
+      createUserWithEmailAndPassword(auth, email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          message.style.color = 'green';
+          message.textContent = `Account created! Welcome ${user.email}`;
+          console.log(`User created: ${user.email}`);
+          
+          window.location.href = 'add-item.html';
+        })
+        .catch((error) => {
+          message.style.color = 'red';
+          message.textContent = `Error: ${error.message}`;
+          console.error('Error creating user:', error);
+        });
     });
-});
 
-// Google Sign-Up
-document.getElementById('googleSignUpBtn').addEventListener('click', function() {
-  const provider = new GoogleAuthProvider();
-  const message = document.getElementById('message');
-  
-  message.textContent = 'Attempting Google sign-up...';
+    document.getElementById('googleSignUpBtn').addEventListener('click', function() {
+      const provider = new GoogleAuthProvider();
+      const message = document.getElementById('message');
+      
+      message.textContent = 'Attempting Google sign-up...';
 
-  signInWithPopup(auth, provider)
-    .then((result) => {
-      const user = result.user;
-      console.log("User signed in:", user);
-      message.style.color = 'green';
-      message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
-      
-      // Redirect after successful Google sign-in
-      window.location.href = 'add-item.html';
-    })
-    .catch((error) => {
-      console.error("Error during Google sign-in:", error.code);
-      console.error("Error message:", error.message);
-      
-      message.style.color = 'red';
-      message.textContent = `Error: ${error.message}`; // Display the error message on the page
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          const user = result.user;
+          console.log("User signed in:", user);
+          message.style.color = 'green';
+          message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
+          
+          window.location.href = 'add-item.html';
+        })
+        .catch((error) => {
+          console.error("Error during Google sign-in:", error.code);
+          console.error("Error message:", error.message);
+          
+          message.style.color = 'red';
+          message.textContent = `Error: ${error.message}`;
+        });
     });
-});
-
   </script>
   
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #000, #333);
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
-      background-color: #f0f0f0;
+      overflow: hidden;
     }
+
     .container {
-      background: white;
+      background: rgba(255, 255, 255, 0.9);
+      color: #000;
       padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      width: 300px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      width: 350px;
+      text-align: center;
+      position: relative;
     }
+
+    h2 {
+      font-family: 'Georgia', serif;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
     input, button {
-      display: block;
       width: 100%;
       padding: 10px;
       margin: 10px 0;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 1rem;
     }
+
     button {
-      background: #007BFF;
-      color: white;
+      background: #000;
+      color: #fff;
       border: none;
       cursor: pointer;
+      transition: all 0.3s ease;
     }
+
     button:hover {
-      background: #0056b3;
+      background: #444;
     }
+
     .message {
       font-size: 14px;
       margin-top: 10px;
+      color: #ff0000;
+    }
+
+    /* Mandala Background Decorations */
+    body::before {
+      content: '';
+      position: absolute;
+      top: -150px;
+      left: -150px;
+      width: 500px;
+      height: 500px;
+      background: url('https://cdn.pixabay.com/photo/2017/03/16/21/27/mandala-2153546_960_720.png') no-repeat center;
+      background-size: contain;
+      opacity: 0.2;
+      z-index: -1;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      bottom: -150px;
+      right: -150px;
+      width: 500px;
+      height: 500px;
+      background: url('https://cdn.pixabay.com/photo/2017/03/16/21/27/mandala-2153546_960_720.png') no-repeat center;
+      background-size: contain;
+      opacity: 0.2;
+      z-index: -1;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h2>Firebase Authentication</h2>
+    <h2>Welcome to My Mandala</h2>
 
     <!-- Email/Password Sign Up Form -->
     <input type="email" id="email" placeholder="Email" />
