@@ -384,18 +384,7 @@
       }
     }
 
-    // Add these event listeners after cy initialization
-    document.getElementById("save-graph").addEventListener("click", saveGraph);
-    
-    document.getElementById("load-graph").addEventListener("click", () => {
-      document.getElementById("load-file").click();
-    });
-    
-    document.getElementById("load-file").addEventListener("change", (e) => {
-      if (e.target.files.length > 0) {
-        loadGraph(e.target.files[0]);
-      }
-    });
+  
         const objects = [];
 
         objectsSnapshot.forEach((doc) => {
@@ -534,6 +523,19 @@
         createEdge(selectedConnectionId);
       } else {
         alert("Please select a connection.");
+      }
+    });
+
+      // Add these event listeners after cy initialization
+    document.getElementById("save-graph").addEventListener("click", saveGraph);
+    
+    document.getElementById("load-graph").addEventListener("click", () => {
+      document.getElementById("load-file").click();
+    });
+    
+    document.getElementById("load-file").addEventListener("change", (e) => {
+      if (e.target.files.length > 0) {
+        loadGraph(e.target.files[0]);
       }
     });
   </script>
