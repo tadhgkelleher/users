@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Mandala Authentication</title>
+  <title>My Mandala - Firebase Authentication</title>
   
   <!-- Firebase SDKs -->
   <script type="module">
@@ -25,6 +25,7 @@
     const auth = getAuth(app);
     const analytics = getAnalytics(app);
 
+    // Regular Sign Up with Email & Password
     document.getElementById('emailSignUpBtn').addEventListener('click', function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -38,7 +39,6 @@
           message.style.color = 'green';
           message.textContent = `Account created! Welcome ${user.email}`;
           console.log(`User created: ${user.email}`);
-          
           window.location.href = 'add-item.html';
         })
         .catch((error) => {
@@ -48,6 +48,7 @@
         });
     });
 
+    // Google Sign-Up
     document.getElementById('googleSignUpBtn').addEventListener('click', function() {
       const provider = new GoogleAuthProvider();
       const message = document.getElementById('message');
@@ -60,7 +61,6 @@
           console.log("User signed in:", user);
           message.style.color = 'green';
           message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
-          
           window.location.href = 'add-item.html';
         })
         .catch((error) => {
@@ -76,103 +76,101 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #000, #333);
-      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
+      background: #000; /* Solid black base */
+      color: white;
+      position: relative;
       overflow: hidden;
     }
 
-    .container {
-      background: rgba(255, 255, 255, 0.9);
-      color: #000;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-      width: 350px;
-      text-align: center;
-      position: relative;
+    /* Mandala background */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://storage.googleapis.com/pod_public/1300/123314.jpg') center/cover no-repeat;
+      opacity: 0.1; /* Make it semi-transparent */
+      z-index: 1;
     }
 
-    h2 {
-      font-family: 'Georgia', serif;
+    .container {
+      position: relative;
+      z-index: 2; /* Above the background */
+      background: rgba(0, 0, 0, 0.8); /* Black with slight transparency */
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    .container h2 {
       margin-bottom: 20px;
       font-size: 1.8rem;
+      color: white;
     }
 
     input, button {
+      display: block;
       width: 100%;
       padding: 10px;
       margin: 10px 0;
-      border-radius: 5px;
-      border: 1px solid #ddd;
       font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+    }
+
+    input {
+      background: #222;
+      color: white;
+      border: 1px solid #555;
     }
 
     button {
-      background: #000;
-      color: #fff;
-      border: none;
+      background: #007BFF;
+      color: white;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.3s;
     }
 
     button:hover {
-      background: #444;
+      background: #0056b3;
     }
 
     .message {
-      font-size: 14px;
+      font-size: 0.9rem;
       margin-top: 10px;
-      color: #ff0000;
     }
 
-    /* Mandala Background Decorations */
-    body::before {
-      content: '';
-      position: absolute;
-      top: -150px;
-      left: -150px;
-      width: 500px;
-      height: 500px;
-      background: url('https://cdn.pixabay.com/photo/2017/03/16/21/27/mandala-2153546_960_720.png') no-repeat center;
-      background-size: contain;
-      opacity: 0.2;
-      z-index: -1;
+    /* Company branding */
+    .branding {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #aaa;
     }
-
-    body::after {
-      content: '';
-      position: absolute;
-      bottom: -150px;
-      right: -150px;
-      width: 500px;
-      height: 500px;
-      background: url('https://cdn.pixabay.com/photo/2017/03/16/21/27/mandala-2153546_960_720.png') no-repeat center;
-      background-size: contain;
-      opacity: 0.2;
-      z-index: -1;
+    .branding span {
+      color: white;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-
   <div class="container">
-    <h2>Welcome to My Mandala</h2>
-
-    <!-- Email/Password Sign Up Form -->
+    <h2>My Mandala</h2>
     <input type="email" id="email" placeholder="Email" />
     <input type="password" id="password" placeholder="Password" />
     <button id="emailSignUpBtn">Sign Up with Email</button>
-
-    <!-- Google Sign Up -->
     <button id="googleSignUpBtn">Sign Up with Google</button>
-
     <p id="message" class="message"></p>
+    <p class="branding">Powered by <span>My Mandala</span></p>
   </div>
-
 </body>
 </html>
