@@ -117,7 +117,7 @@
       background-color: #006BB3;
     }
     
-  .button-group {
+    .button-group {
       margin-top: 20px;
       display: flex;
       gap: 10px;
@@ -153,22 +153,20 @@
   </div>
   <div id="cy"></div>
 
-    <div class="button-group">
+  <div class="button-group">
     <button id="save-graph" class="secondary-button">Save Graph</button>
     <button id="load-graph" class="secondary-button">Load Graph</button>
   </div>
 
   <button id="new-graph" class="secondary-button">Create New Graph</button>
-
   
   <input type="file" id="load-file" accept=".json" style="display: none;">
-
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
     import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp, batch } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -286,11 +284,25 @@
     });
 
     // Load Objects and Connections function
-    async function loadObjects(username) {
+    async function loadObjects(username, clearExisting = false) {
       const objectsList = document.getElementById("objects-list");
       objectsList.innerHTML = '';
 
       try {
+        if (clearExisting) {
+          // Clear Cytoscape instance if it exists
+          if (cy) {
+            cy.elements().remove();
+          }
+          // Reset selected object
+          selectedObject = null;
+          // Hide connection prompt
+          document.getElementById("connection-prompt").style.display = 'none';
+          // Clear the object name input
+          document.getElementById("object-name").value = '';
+          return; // Exit early as we don't want to load existing objects
+        }
+
         // Load objects
         const objectsQuery = query(
           collection(db, "objects"),
@@ -331,18 +343,6 @@
             }
           });
         }
-document.getElementById("new-graph").addEventListener("click", function() {
-  // Clear the current graph
-  if (cy) {
-    cy.elements().remove(); // Remove all elements (nodes and edges) from the graph
-  }
-  
-  // Optional: You can also reset any other UI elements or data related to the graph.
-  selectedObject = null;
-  document.getElementById("connection-prompt").style.display = 'none';
-  document.getElementById("message").textContent = 'A new graph has been created. Add new objects and connections!';
-  document.getElementById("message").className = 'success';
-});
 
         const objects = [];
 
@@ -371,7 +371,7 @@ document.getElementById("new-graph").addEventListener("click", function() {
 
         connectionsSnapshot.forEach((doc) => {
           const connection = doc.data();
-          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
+          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
           
           if (existingEdge.length === 0) {
             cy.add({
@@ -414,7 +414,7 @@ document.getElementById("new-graph").addEventListener("click", function() {
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
+      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -445,7 +445,7 @@ document.getElementById("new-graph").addEventListener("click", function() {
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges([source="${selectedObject.id}"][target="${targetId}"]);
+        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
         if (existingEdge.length === 0) {
           try {
             // Save connection to Firebase
