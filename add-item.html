@@ -157,6 +157,9 @@
     <button id="save-graph" class="secondary-button">Save Graph</button>
     <button id="load-graph" class="secondary-button">Load Graph</button>
   </div>
+
+  <button id="new-graph" class="secondary-button">Create New Graph</button>
+
   
   <input type="file" id="load-file" accept=".json" style="display: none;">
 
@@ -328,6 +331,18 @@
             }
           });
         }
+document.getElementById("new-graph").addEventListener("click", function() {
+  // Clear the current graph
+  if (cy) {
+    cy.elements().remove(); // Remove all elements (nodes and edges) from the graph
+  }
+  
+  // Optional: You can also reset any other UI elements or data related to the graph.
+  selectedObject = null;
+  document.getElementById("connection-prompt").style.display = 'none';
+  document.getElementById("message").textContent = 'A new graph has been created. Add new objects and connections!';
+  document.getElementById("message").className = 'success';
+});
 
         const objects = [];
 
