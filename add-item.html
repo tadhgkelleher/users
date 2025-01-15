@@ -493,40 +493,112 @@
       messageDiv.className = "success";
     }
 
-  async function loadGraph(file) {
+async function loadGraph(file) {
   try {
     const text = await file.text();
     const graphData = JSON.parse(text);
+    const user = auth.currentUser;
     
-    // Clear existing graph and objects list
-    cy.elements().remove();
-    const objectsList = document.getElementById("objects-list");
-    objectsList.innerHTML = '';
-    
-    // Add nodes and edges to cytoscape
-    cy.add(graphData.nodes);
-    cy.add(graphData.edges);
-    
-    // Update objects list with only the loaded graph's nodes
-    graphData.nodes.forEach(node => {
-      const li = document.createElement("li");
-      li.textContent = node.data.objectName;
-      li.addEventListener('click', () => {
-        selectObject(node.data.id, node.data.objectName);
-      });
-      objectsList.appendChild(li);
-    });
+    if (!user) {
+      throw new Error("You must be logged in to load a graph");
+    }
 
-    // Update connection dropdown with loaded objects
-    updateConnectionDropdown(
-      graphData.nodes.map(node => ({
-        id: node.data.id,
-        name: node.data.objectName
-      }))
+    // Clear existing graph visualization
+    cy.elements().remove();
+
+    // First, ensure all nodes exist in Firebase
+    for (const node of graphData.nodes) {
+      try {
+        // Check if object already exists
+        const objectsRef = collection(db, "objects");
+        const objectQuery = query(
+          objectsRef,
+          where("objectName", "==", node.data.objectName),
+          where("user", "==", user.displayName)
+        );
+        
+        const querySnapshot = await getDocs(objectQuery);
+        
+        if (querySnapshot.empty) {
+          // Add new object to Firebase if it doesn't exist
+          await addDoc(objectsRef, {
+            objectName: node.data.objectName,
+            user: user.displayName,
+            timestamp: serverTimestamp()
+          });
+        }
+      } catch (error) {
+        console.error("Error ensuring node exists:", error);
+      }
+    }
+
+    // Then load all objects from Firebase to ensure we have the correct IDs
+    const objectsQuery = query(
+      collection(db, "objects"),
+      where("user", "==", user.displayName),
+      orderBy("timestamp", "desc")
     );
     
+    const objectsSnapshot = await getDocs(objectsQuery);
+    const objectsMap = new Map();
+    
+    objectsSnapshot.forEach((doc) => {
+      const object = doc.data();
+      objectsMap.set(object.objectName, {
+        id: doc.id,
+        objectName: object.objectName
+      });
+    });
+
+    // Add nodes to cytoscape with correct Firebase IDs
+    for (const node of graphData.nodes) {
+      const firebaseObject = objectsMap.get(node.data.objectName);
+      if (firebaseObject) {
+        cy.add({
+          data: {
+            id: firebaseObject.id,
+            objectName: firebaseObject.objectName
+          }
+        });
+      }
+    }
+
+    // Add edges
+    for (const edge of graphData.edges) {
+      // Find the correct Firebase IDs for source and target
+      const sourceObject = Array.from(objectsMap.values())
+        .find(obj => obj.objectName === graphData.nodes
+          .find(n => n.data.id === edge.data.source)?.data.objectName);
+      
+      const targetObject = Array.from(objectsMap.values())
+        .find(obj => obj.objectName === graphData.nodes
+          .find(n => n.data.id === edge.data.target)?.data.objectName);
+
+      if (sourceObject && targetObject) {
+        try {
+          // Save connection to Firebase
+          await saveConnection(sourceObject.id, targetObject.id);
+          
+          // Add to visualization
+          cy.add({
+            data: {
+              source: sourceObject.id,
+              target: targetObject.id
+            }
+          });
+        } catch (error) {
+          if (error.message !== "Connection already exists") {
+            console.error("Error adding connection:", error);
+          }
+        }
+      }
+    }
+
     // Run layout
     cy.layout({ name: 'circle' }).run();
+    
+    // Reload objects list and connections
+    await loadObjects(user.displayName);
     
     const messageDiv = document.getElementById("message");
     messageDiv.textContent = "Graph loaded successfully!";
@@ -535,22 +607,8 @@
     const messageDiv = document.getElementById("message");
     messageDiv.textContent = "Error loading graph: " + error.message;
     messageDiv.className = "error";
+    console.error("Error loading graph:", error);
   }
-}
-
-// Update the updateConnectionDropdown function to handle the loaded graph scenario
-function updateConnectionDropdown(objects) {
-  const connectionDropdown = document.getElementById("connection-dropdown");
-  connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
-  
-  objects.forEach(object => {
-    if (!selectedObject || object.id !== selectedObject.id) {
-      const option = document.createElement("option");
-      option.value = object.id;
-      option.textContent = object.name;
-      connectionDropdown.appendChild(option);
-    }
-  });
 }
 
      // Add these event listeners after cy initialization
