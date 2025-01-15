@@ -69,6 +69,7 @@
         <ul id="graph-list">
             <li>Loading saved graphs...</li>
         </ul>
+        <div id="graph-details" style="display: none; margin-top: 20px;"></div>
     </div>
 
     <script type="module">
@@ -88,6 +89,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const graphList = document.getElementById('graph-list');
+        const graphDetails = document.getElementById('graph-details');
 
         async function fetchSavedGraphs() {
             try {
@@ -103,8 +105,20 @@
                     const graphData = doc.data();
                     const listItem = document.createElement('li');
 
-                    // Display some basic information about the graph
-                    listItem.textContent = `Graph ID: ${doc.id}, Data: ${JSON.stringify(graphData)}`;
+                    listItem.textContent = `Graph ID: ${doc.id}`;
+                    listItem.dataset.details = JSON.stringify(graphData);
+
+                    // Show graph details on click
+                    listItem.addEventListener('click', () => {
+                        const details = JSON.parse(listItem.dataset.details);
+                        graphDetails.style.display = 'block';
+                        graphDetails.innerHTML = `
+                            <pre style="color: white; text-align: left; background: rgba(0, 0, 0, 0.8); padding: 10px; border-radius: 5px;">
+                                ${JSON.stringify(details, null, 2)}
+                            </pre>
+                        `;
+                    });
+
                     graphList.appendChild(listItem);
                 });
             } catch (error) {
