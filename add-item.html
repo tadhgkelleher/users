@@ -130,14 +130,13 @@
 
   <h3>Your Objects:</h3>
   <ul id="objects-list"></ul>
- <div id="connection-prompt">
-  <h3>Add Connection</h3>
-  <input type="text" id="new-object-name" placeholder="Enter New Object Name (optional)" />
-  <select id="connection-dropdown">
-    <option value="">Select an Existing Object</option>
-  </select>
-  <button id="create-connection">Create Connection</button>
-</div>
+  <div id="connection-prompt">
+    <h3>Add Connection</h3>
+    <select id="connection-dropdown">
+      <option value="">Select an Object</option>
+    </select>
+    <button id="create-connection">Create Connection</button>
+  </div>
   <div id="cy"></div>
 
   <!-- Firebase SDK Scripts -->
@@ -335,7 +334,7 @@
 
         connectionsSnapshot.forEach((doc) => {
           const connection = doc.data();
-          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
+          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
           
           if (existingEdge.length === 0) {
             cy.add({
@@ -378,7 +377,7 @@
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -409,7 +408,7 @@
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
+        const existingEdge = cy.edges([source="${selectedObject.id}"][target="${targetId}"]);
         if (existingEdge.length === 0) {
           try {
             // Save connection to Firebase
@@ -439,61 +438,15 @@
       }
     }
 
-document.getElementById("create-connection").addEventListener("click", async () => {
-  const newObjectName = document.getElementById("new-object-name").value.trim();
-  const targetObjectId = document.getElementById("connection-dropdown").value;
-
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = '';
-  if (!selectedObject) {
-    messageDiv.textContent = "Please select a source object.";
-    messageDiv.className = "error";
-    return;
-  }
-
-  if (!newObjectName && !targetObjectId) {
-    messageDiv.textContent = "Please select an existing object or input a new object name.";
-    messageDiv.className = "error";
-    return;
-  }
-
-  try {
-    const user = auth.currentUser;
-    if (!user) {
-      messageDiv.textContent = "You must be logged in to add connections.";
-      messageDiv.className = "error";
-      return;
-    }
-
-    let targetId = targetObjectId;
-
-    // Add the new object if a name is provided
-    if (newObjectName) {
-      const newObjectRef = await addDoc(collection(db, "objects"), {
-        objectName: newObjectName,
-        user: user.displayName,
-        timestamp: serverTimestamp(),
-      });
-      targetId = newObjectRef.id; // Use the new object's ID as the target
-      messageDiv.textContent = `New object '${newObjectName}' created successfully.`;
-      messageDiv.className = "success";
-    }
-
-    // Save the connection
-    await saveConnection(selectedObject.id, targetId);
-
-    messageDiv.textContent = "Connection created successfully!";
-    messageDiv.className = "success";
-
-    // Reload objects and connections
-    loadObjects(user.displayName);
-  } catch (error) {
-    console.error("Error creating connection: ", error);
-    messageDiv.textContent = "Error creating connection: " + error.message;
-    messageDiv.className = "error";
-  }
-});
-
+    // Create connection button handler
+    document.getElementById("create-connection").addEventListener("click", () => {
+      const selectedConnectionId = document.getElementById("connection-dropdown").value;
+      if (selectedConnectionId) {
+        createEdge(selectedConnectionId);
+      } else {
+        alert("Please select a connection.");
+      }
+    });
   </script>
 </body>
 </html>
