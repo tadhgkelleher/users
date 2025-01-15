@@ -6,60 +6,99 @@
     <title>My Mandala</title>
     <style>
         body {
+            font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: black;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #2C3E50;
+            padding: 20px;
             color: white;
-            font-family: 'Arial', sans-serif;
             text-align: center;
-            background-image: url('https://blog.buddhagroove.com/wp-content/uploads/2021/03/mandala-1200x640.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
         }
-
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6); /* semi-transparent black overlay */
+        header h1 {
+            margin: 0;
         }
-
-        .content {
-            z-index: 1;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 2px;
+        nav {
+            background-color: #34495E;
+            overflow: hidden;
+            padding: 10px 20px;
         }
-
-        a {
-            text-decoration: none;
-            color: #FF6347; /* Cool orange color */
-            font-size: 30px;
-            padding: 10px 30px;
-            border: 2px solid #FF6347;
-            border-radius: 50px;
-            transition: all 0.3s ease;
-        }
-
-        a:hover {
-            background-color: #FF6347;
+        nav a {
             color: white;
-            transform: scale(1.1);
+            text-align: center;
+            padding: 14px 20px;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        nav a:hover {
+            background-color: #16A085;
+            color: white;
+        }
+        .user-info {
+            float: right;
+            padding: 14px 20px;
+            font-size: 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        .user-info img {
+            border-radius: 50%;
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="content">
+
+    <header>
+        <h1>Welcome to My Mandala</h1>
+    </header>
+
+    <nav>
         <a href="add-item.html">Add Item</a>
-    </div>
+        <div class="user-info" id="user-info"></div>
+    </nav>
+
+    <script type="module">
+        // Import necessary Firebase SDKs
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.firebasestorage.app",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Listen for authentication state changes
+        onAuthStateChanged(auth, (user) => {
+            const userInfoDiv = document.getElementById('user-info');
+
+            if (user) {
+                // If the user is signed in, show their information
+                const userName = user.displayName || user.email; // Use displayName or email
+                const userImage = user.photoURL || 'https://www.example.com/default-avatar.jpg'; // Default avatar URL if not provided
+
+                userInfoDiv.innerHTML = `
+                    <img src="${userImage}" alt="User Avatar" width="30" height="30">
+                    <span>${userName}</span>
+                `;
+            } else {
+                // If the user is not signed in, you can optionally handle it (e.g., redirect to login page)
+                window.location.href = '/login.html'; // Example: redirect to login page
+            }
+        });
+    </script>
 </body>
 </html>
