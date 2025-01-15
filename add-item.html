@@ -332,17 +332,29 @@
           });
         }
 document.getElementById("new-graph").addEventListener("click", function() {
-  // Clear the current graph
+  // Clear the current graph (remove all elements: nodes and edges)
   if (cy) {
-    cy.elements().remove(); // Remove all elements (nodes and edges) from the graph
+    cy.elements().remove();
   }
-  
-  // Optional: You can also reset any other UI elements or data related to the graph.
+
+  // Clear the objects list in the UI
+  document.getElementById("objects-list").innerHTML = '';
+
+  // Reset the selected object
   selectedObject = null;
+
+  // Hide the connection prompt since there are no objects yet
   document.getElementById("connection-prompt").style.display = 'none';
-  document.getElementById("message").textContent = 'A new graph has been created. Add new objects and connections!';
-  document.getElementById("message").className = 'success';
+
+  // Update the message to inform the user
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = 'A new graph has been created. Add new objects and connections!';
+  messageDiv.className = 'success';
+
+  // Optionally reset other UI elements (like input fields or forms)
+  document.getElementById("add-object-form").reset();
 });
+
 
         const objects = [];
 
