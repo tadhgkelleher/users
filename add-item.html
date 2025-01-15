@@ -140,6 +140,8 @@
   <div id="cy"></div>
   <button id="download-graph">Download Graph as JSON</button>
 
+  <button id="load-graph">Load Graph</button>
+
   <!-- Firebase SDK Scripts -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
@@ -331,6 +333,111 @@ document.getElementById('download-graph').addEventListener('click', () => {
   document.body.removeChild(a);  // Clean up the anchor element
 });
 
+// Handle Load Graph
+document.getElementById('load-graph').addEventListener('click', async () => {
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = '';
+
+  const user = auth.currentUser;
+  if (!user) {
+    messageDiv.textContent = "You must be logged in to load a graph.";
+    messageDiv.className = "error";
+    return;
+  }
+
+  // Let the user upload a graph file (JSON format)
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+  
+  fileInput.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) {
+      messageDiv.textContent = "No file selected.";
+      messageDiv.className = "error";
+      return;
+    }
+
+    try {
+      // Read the file content
+      const reader = new FileReader();
+      reader.onload = async function(fileEvent) {
+        const graphData = JSON.parse(fileEvent.target.result);
+
+        // Clear existing graph and objects
+        cy.elements().remove();
+
+        // Add nodes and edges to Cytoscape from the graph data
+        graphData.elements.forEach(element => {
+          if (element.data) {
+            cy.add(element);
+          }
+        });
+
+        // Update the graph layout
+        cy.layout({ name: 'circle' }).run();
+
+        // Display message
+        messageDiv.textContent = "Graph loaded successfully!";
+        messageDiv.className = "success";
+
+        // Now, load only the objects related to this graph
+        await loadObjectsForGraph(graphData);
+      };
+
+      reader.readAsText(file);
+    } catch (error) {
+      console.error("Error loading graph: ", error);
+      messageDiv.textContent = "Error loading graph: " + error.message;
+      messageDiv.className = "error";
+    }
+  };
+
+  fileInput.click();
+});
+
+// Load Objects associated with the loaded graph
+async function loadObjectsForGraph(graphData) {
+  const objectsList = document.getElementById("objects-list");
+  objectsList.innerHTML = '';
+
+  const user = auth.currentUser;
+  if (!user) {
+    return;
+  }
+
+  try {
+    const graphObjectIds = graphData.elements.map(element => element.data.id);
+
+    // Fetch only objects related to the graph (based on IDs from the graph data)
+    const objectsQuery = query(
+      collection(db, "objects"),
+      where("user", "==", user.displayName),
+      where("id", "in", graphObjectIds)
+    );
+    const objectsSnapshot = await getDocs(objectsQuery);
+
+    objectsSnapshot.forEach((doc) => {
+      const object = doc.data();
+      const li = document.createElement("li");
+      li.textContent = object.objectName;
+      li.addEventListener('click', () => {
+        selectObject(doc.id, object.objectName);
+      });
+      objectsList.appendChild(li);
+    });
+
+  } catch (error) {
+    console.error("Error loading objects: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Error loading objects: " + error.message;
+    messageDiv.className = "error";
+  }
+}
+
+
+        
+        
         const objects = [];
 
         objectsSnapshot.forEach((doc) => {
