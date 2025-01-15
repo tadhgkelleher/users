@@ -331,96 +331,18 @@
             }
           });
         }
-// Button to create a new graph
 document.getElementById("new-graph").addEventListener("click", function() {
-  // Ensure the graph is completely cleared (nodes and edges)
+  // Clear the current graph
   if (cy) {
-    cy.destroy(); // Completely destroy the graph
+    cy.elements().remove(); // Remove all elements (nodes and edges) from the graph
   }
-
-  // Reset the Cytoscape instance
-  cy = cytoscape({
-    container: document.getElementById('cy-container'),
-    elements: [], // Empty array to start fresh
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'background-color': '#666',
-          'label': 'data(id)',
-          'width': 40,
-          'height': 40
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 3,
-          'line-color': '#ccc',
-          'target-arrow-color': '#ccc',
-          'target-arrow-shape': 'triangle'
-        }
-      }
-    ],
-    layout: {
-      name: 'grid',
-      rows: 1
-    }
-  });
-
-  // Clear objects list and reset selected object
-  document.getElementById("objects-list").innerHTML = '';
+  
+  // Optional: You can also reset any other UI elements or data related to the graph.
   selectedObject = null;
-
-  // Hide connection prompt
   document.getElementById("connection-prompt").style.display = 'none';
-
-  // Reset form and message
-  document.getElementById("add-object-form").reset();
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = 'A new graph has been created. Add new objects and connections!';
-  messageDiv.className = 'success';
+  document.getElementById("message").textContent = 'A new graph has been created. Add new objects and connections!';
+  document.getElementById("message").className = 'success';
 });
-
-// Function to add a new object to the graph
-document.getElementById("add-object-form").addEventListener("submit", function(event) {
-  event.preventDefault();
-
-  // Only add the object if the graph has been initialized
-  if (!cy) return;
-
-  // Get object data from form (example: name and type)
-  const objectName = document.getElementById("object-name").value;
-  const objectType = document.getElementById("object-type").value;
-
-  // Add the new node (object) to the graph
-  cy.add({
-    group: 'nodes',
-    data: { id: objectName, type: objectType }
-  });
-
-  // Optionally add an edge (if you want to create connections immediately)
-  if (selectedObject) {
-    cy.add({
-      group: 'edges',
-      data: { source: selectedObject, target: objectName }
-    });
-  }
-
-  // Update the UI with the new object
-  const objectsList = document.getElementById("objects-list");
-  const newObjectElement = document.createElement("li");
-  newObjectElement.textContent = `${objectName} (${objectType})`;
-  objectsList.appendChild(newObjectElement);
-
-  // Update the selected object
-  selectedObject = objectName;
-
-  // Show the connection prompt (if necessary)
-  document.getElementById("connection-prompt").style.display = 'block';
-});
-
-
 
         const objects = [];
 
@@ -449,7 +371,7 @@ document.getElementById("add-object-form").addEventListener("submit", function(e
 
         connectionsSnapshot.forEach((doc) => {
           const connection = doc.data();
-          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
+          const existingEdge = cy.edges([source="${connection.sourceId}"][target="${connection.targetId}"]);
           
           if (existingEdge.length === 0) {
             cy.add({
@@ -492,7 +414,7 @@ document.getElementById("add-object-form").addEventListener("submit", function(e
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -523,7 +445,7 @@ document.getElementById("add-object-form").addEventListener("submit", function(e
       const targetNode = cy.getElementById(targetId);
       
       if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
+        const existingEdge = cy.edges([source="${selectedObject.id}"][target="${targetId}"]);
         if (existingEdge.length === 0) {
           try {
             // Save connection to Firebase
