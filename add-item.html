@@ -317,7 +317,7 @@
     function selectObject(objectId, objectName) {
       selectedObject = { id: objectId, name: objectName };
       const messageDiv = document.getElementById("message");
-      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
+      messageDiv.textContent = You selected: ${objectName}. Now, add a connection.;
       messageDiv.className = 'success';
 
       document.getElementById("connection-prompt").style.display = 'block';
@@ -337,149 +337,36 @@
       });
     }
 
-   // Create Edge Function
-async function createEdge(targetId) {
-  if (!selectedObject) {
-    alert("Please select a source object first.");
-    return;
-  }
+    // Create edge function
+    function createEdge(targetId) {
+      if (!selectedObject) {
+        alert("Please select a source object first.");
+        return;
+      }
 
-  const sourceId = selectedObject.id;
-  const user = auth.currentUser;
+      const sourceNode = cy.getElementById(selectedObject.id);
+      const targetNode = cy.getElementById(targetId);
+      
+      if (sourceNode.length && targetNode.length) {
+        const existingEdge = cy.edges([source = "${selectedObject.id}"][target = "${targetId}"]);
+        if (existingEdge.length === 0) {
+          cy.add({
+            data: { source: selectedObject.id, target: targetId }
+          });
 
-  if (!user) {
-    alert("You must be logged in to create connections.");
-    return;
-  }
-
-  try {
-    const sourceNode = cy.getElementById(sourceId);
-    const targetNode = cy.getElementById(targetId);
-
-    if (sourceNode.length && targetNode.length) {
-      const existingEdge = cy.edges(`[source="${sourceId}"][target="${targetId}"]`);
-      if (existingEdge.length === 0) {
-        // Save the connection to Firestore
-        await addDoc(collection(db, "connections"), {
-          sourceId: sourceId,
-          targetId: targetId,
-          user: user.displayName,
-          timestamp: serverTimestamp(),
-        });
-
-        // Add the connection to the graph
-        cy.add({
-          data: { source: sourceId, target: targetId },
-        });
-
-        cy.layout({ name: "circle" }).run();
-        document.getElementById("connection-prompt").style.display = "none";
-
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Connection created successfully!";
-        messageDiv.className = "success";
+          cy.layout({ name: 'circle' }).run();
+          document.getElementById("connection-prompt").style.display = 'none';
+          
+          const messageDiv = document.getElementById("message");
+          messageDiv.textContent = "Connection created successfully!";
+          messageDiv.className = "success";
+        } else {
+          alert("This connection already exists.");
+        }
       } else {
-        alert("This connection already exists.");
+        alert("Both nodes must exist before connecting.");
       }
     }
-  } catch (error) {
-    console.error("Error creating connection: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Error creating connection: " + error.message;
-    messageDiv.className = "error";
-  }
-}
-
-// Update the loadObjects Function
-async function loadObjects(username) {
-  const objectsList = document.getElementById("objects-list");
-  objectsList.innerHTML = "";
-
-  try {
-    const q = query(
-      collection(db, "objects"),
-      where("user", "==", username),
-      orderBy("timestamp", "desc")
-    );
-    const querySnapshot = await getDocs(q);
-
-    if (!cy) {
-      cy = cytoscape({
-        container: document.getElementById("cy"),
-        elements: [],
-        style: [
-          {
-            selector: "node",
-            style: {
-              "background-color": "#0074D9",
-              label: "data(objectName)",
-              color: "#fff",
-              "text-valign": "center",
-              "text-halign": "center",
-              "font-size": "12px",
-            },
-          },
-          {
-            selector: "edge",
-            style: {
-              width: 3,
-              "line-color": "#aaa",
-              "curve-style": "bezier",
-            },
-          },
-        ],
-        layout: {
-          name: "circle",
-          padding: 10,
-        },
-      });
-    }
-
-    const objects = [];
-    querySnapshot.forEach((doc) => {
-      const object = doc.data();
-      if (!cy.getElementById(doc.id).length) {
-        cy.add({ data: { id: doc.id, objectName: object.objectName } });
-        objects.push({ id: doc.id, name: object.objectName });
-      }
-
-      const li = document.createElement("li");
-      li.textContent = object.objectName;
-      li.addEventListener("click", () => {
-        selectObject(doc.id, object.objectName);
-      });
-      objectsList.appendChild(li);
-    });
-
-    // Load connections
-    const connectionsQuery = query(
-      collection(db, "connections"),
-      where("user", "==", username)
-    );
-    const connectionsSnapshot = await getDocs(connectionsQuery);
-
-    connectionsSnapshot.forEach((doc) => {
-      const connection = doc.data();
-      const existingEdge = cy.edges(
-        `[source="${connection.sourceId}"][target="${connection.targetId}"]`
-      );
-      if (existingEdge.length === 0) {
-        cy.add({
-          data: { source: connection.sourceId, target: connection.targetId },
-        });
-      }
-    });
-
-    cy.layout({ name: "circle" }).run();
-    updateConnectionDropdown(objects);
-  } catch (error) {
-    console.error("Error loading objects: ", error);
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Error loading objects: " + error.message;
-    messageDiv.className = "error";
-  }
-}
-
 
     // Create connection button handler
     document.getElementById("create-connection").addEventListener("click", () => {
