@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Users' Saved Graphs</title>
-    <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.21.0/dist/cytoscape.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -26,7 +25,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.6); /* Increase transparency */
             z-index: 2;
         }
         .container {
@@ -69,11 +68,6 @@
         .graph-list li a:hover {
             color: #16A085;
         }
-        #graph-container {
-            height: 400px;
-            width: 100%;
-            margin: 20px 0;
-        }
         /* Modal Styles */
         #data-modal {
             display: none;
@@ -110,14 +104,22 @@
         #data-modal button:hover {
             background: #1abc9c;
         }
+        /* Style for the graph visualization container */
+        #graph-container {
+            width: 100%;
+            height: 500px;
+            margin: 20px auto;
+            border: 2px solid #fff;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.22.0/cytoscape.min.js"></script>
 </head>
 <body>
 
     <div class="overlay"></div>
 
     <div class="container" id="graphs-container">
-        <a href="add-item.html" class="add-item-link">Add Item</a>
+        <a href="add-item.html" class="add-item-link">Add Item</a> <!-- Prominent Link -->
         <!-- Dynamically loaded graphs will appear here -->
     </div>
 
@@ -126,6 +128,7 @@
         <button onclick="closeModal()">Close</button>
         <h2>Graph Data</h2>
         <pre id="graph-data"></pre>
+        <div id="graph-container"></div> <!-- Placeholder for visual graph -->
     </div>
 
     <script type="module">
@@ -152,7 +155,41 @@
         function openModal(data) {
             const modal = document.getElementById('data-modal');
             const dataContainer = document.getElementById('graph-data');
+            const graphContainer = document.getElementById('graph-container');
+            
             dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
+            graphContainer.innerHTML = ''; // Clear previous content
+
+            // Initialize Cytoscape.js with the graph data
+            const cy = cytoscape({
+                container: graphContainer,
+
+                elements: data.graphElements, // Assuming 'graphElements' holds nodes and edges
+
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'background-color': '#16A085',
+                            'label': 'data(id)',
+                            'color': '#fff'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#16A085'
+                        }
+                    }
+                ],
+
+                layout: {
+                    name: 'grid',
+                    rows: 1
+                }
+            });
+
             modal.style.display = 'block';
         }
 
@@ -180,54 +217,12 @@
                 const graphLink = document.createElement('a');
                 graphLink.href = '#'; // Disable navigation
                 graphLink.textContent = graphData.graphTitle || "Untitled Graph";
-                graphLink.onclick = () => {
-                    openModal(graphData); // Show raw data on click
-                    renderGraph(graphData); // Render graph
-                };
+                graphLink.onclick = () => openModal(graphData); // Show raw data and graph on click
                 listItem.appendChild(graphLink);
                 graphsList.appendChild(listItem);
             });
 
             graphsContainer.appendChild(graphsList);
-        }
-
-        // Function to render a graph using Cytoscape.js
-        function renderGraph(graphData) {
-            const graphContainer = document.createElement('div');
-            graphContainer.id = 'graph-container';
-            document.getElementById('graphs-container').appendChild(graphContainer);
-
-            const cy = cytoscape({
-                container: graphContainer,
-                elements: graphData.nodes.concat(graphData.edges),
-                layout: {
-                    name: 'circle', // Set the layout to 'circle'
-                    padding: 10
-                },
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'background-color': '#0074D9',
-                            'label': 'data(label)',
-                            'color': '#ffffff',
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'font-size': '10px'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': '#AAAAAA',
-                            'target-arrow-color': '#AAAAAA',
-                            'target-arrow-shape': 'triangle',
-                            'curve-style': 'bezier'
-                        }
-                    }
-                ]
-            });
         }
 
         // Load all saved graphs when the page loads
