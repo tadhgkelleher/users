@@ -196,20 +196,25 @@
             const cy = cytoscape({
                 container: graphContainer,
                 elements: [
-                    // Nodes from the data
-                    ...data.nodes.map(node => ({
-                        data: {
-                            id: node.data.id,
-                            label: node.data.objectName || node.data.id
-                        }
-                    })),
-                    // Edges from the data
-                    ...data.edges.map(edge => ({
-                        data: {
-                            source: edge.source,
-                            target: edge.target
-                        }
-                    }))
+                    // Remove duplicate nodes and blank nodes
+                    ...data.nodes
+                        .filter((value, index, self) =>
+                            index === self.findIndex((t) => t.data.id === value.data.id && value.data.objectName !== '')) // Ensure no duplicates or blank nodes
+                        .map(node => ({
+                            data: {
+                                id: node.data.id,
+                                label: node.data.objectName || node.data.id
+                            }
+                        })),
+                    // Remove edges without proper source and target
+                    ...data.edges
+                        .filter(edge => edge.source && edge.target)
+                        .map(edge => ({
+                            data: {
+                                source: edge.source,
+                                target: edge.target
+                            }
+                        }))
                 ],
                 style: [
                     {
@@ -247,6 +252,9 @@
                 const node = evt.target;
                 cy.fit(node, 50);
             });
+
+            // Center the graph
+            cy.center();
 
             // Display the modal
             modal.style.display = 'block';
