@@ -585,12 +585,12 @@ import { deleteDoc, doc, getFirestore, query, collection, where, getDocs } from 
 
 // Initialize Firestore
 const db = getFirestore();
-
-// Clear the graph and delete all objects from Firebase
+// Clear Graph and Delete All Objects Handler
 document.getElementById("clear-graph").addEventListener("click", async () => {
   const messageDiv = document.getElementById("message");
-  const user = auth.currentUser;
+  messageDiv.textContent = '';
 
+  const user = auth.currentUser;
   if (!user) {
     messageDiv.textContent = "You must be logged in to clear the graph.";
     messageDiv.className = "error";
@@ -598,29 +598,32 @@ document.getElementById("clear-graph").addEventListener("click", async () => {
   }
 
   try {
-    // Step 1: Clear the Cytoscape graph
+    // Clear all elements in the Cytoscape graph
     cy.elements().remove();
 
-    // Step 2: Remove all objects from Firestore
+    // Optionally, delete objects from the database (if required)
     const objectsQuery = query(
       collection(db, "objects"),
       where("user", "==", user.displayName)
     );
     const objectsSnapshot = await getDocs(objectsQuery);
 
-    const deletePromises = objectsSnapshot.docs.map(doc => {
-      return deleteDoc(doc.ref); // Delete each object
+    // Loop through the objects and delete them
+    const batch = writeBatch(db);
+    objectsSnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
     });
 
-    await Promise.all(deletePromises);
+    await batch.commit();
 
-    // Step 3: Clear the UI elements
-    document.getElementById("objects-list").innerHTML = '';
-    messageDiv.textContent = "All objects and connections have been deleted!";
+    // Provide feedback to the user
+    messageDiv.textContent = "Graph cleared and objects deleted successfully!";
     messageDiv.className = "success";
-
+    
+    // Reload the graph
+    loadObjects(user.displayName);
   } catch (error) {
-    console.error("Error clearing graph and deleting objects: ", error);
+    console.error("Error clearing graph: ", error);
     messageDiv.textContent = "Error clearing graph: " + error.message;
     messageDiv.className = "error";
   }
