@@ -1,3 +1,7 @@
+Share
+
+
+You said:
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -157,18 +161,8 @@
             const dataContainer = document.getElementById('graph-data');
             const graphContainer = document.getElementById('graph-container');
             
-            // Display the raw data as JSON in the modal
             dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
             graphContainer.innerHTML = ''; // Clear previous content
-
-            // Check if graphElements exists and is an array
-            if (!data.graphElements || !Array.isArray(data.graphElements)) {
-                console.error("Invalid graph data format. 'graphElements' is missing or not an array.");
-                return;
-            }
-
-            // Log the raw data to the console for debugging
-            console.log("Graph Data:", data);
 
             // Initialize Cytoscape.js with the graph data
             const cy = cytoscape({
@@ -195,8 +189,8 @@
                 ],
 
                 layout: {
-                    name: 'circle',  // Changed from 'grid' to 'circle'
-                    padding: 10 // Optional: Adds padding around the circle
+                    name: 'grid',
+                    rows: 1
                 }
             });
 
@@ -216,9 +210,6 @@
             graphsList.classList.add('graph-list');
             const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-            // Log the data to see what is retrieved from Firebase
-            console.log("Firebase Query Snapshot:", querySnapshot);
-
             if (querySnapshot.empty) {
                 graphsContainer.innerHTML += '<p>No saved graphs found.</p>';
                 return;
@@ -226,16 +217,11 @@
 
             querySnapshot.forEach((doc) => {
                 const graphData = doc.data();
-                console.log("Graph Data:", graphData); // Log each graph data for debugging
-                
                 const listItem = document.createElement('li');
                 const graphLink = document.createElement('a');
                 graphLink.href = '#'; // Disable navigation
-                graphLink.textContent = graphData.graphTitle || "Untitled Graph"; // Ensure title is displayed
-                graphLink.onclick = () => {
-                    console.log("Graph clicked:", graphData);
-                    openModal(graphData); // Show raw data and graph on click
-                };
+                graphLink.textContent = graphData.graphTitle || "Untitled Graph";
+                graphLink.onclick = () => openModal(graphData); // Show raw data and graph on click
                 listItem.appendChild(graphLink);
                 graphsList.appendChild(listItem);
             });
