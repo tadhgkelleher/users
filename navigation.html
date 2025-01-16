@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Users' Saved Graphs</title>
     <style>
+        /* Existing styles */
         body {
             margin: 0;
             padding: 0;
@@ -59,6 +60,9 @@
             padding: 10px;
             border-radius: 5px;
             color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .graph-list li a {
             color: #fff;
@@ -67,6 +71,19 @@
         }
         .graph-list li a:hover {
             color: #16A085;
+        }
+        .delete-btn {
+            background-color: #E74C3C;
+            color: white;
+            padding: 5px 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .delete-btn:hover {
+            background-color: #C0392B;
         }
         #data-modal {
             display: none;
@@ -142,7 +159,7 @@
     <script type="module">
         // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -235,6 +252,18 @@
             modal.style.display = 'block';
         }
 
+        // Function to delete a graph from the Firestore database
+        async function deleteGraph(graphId) {
+            try {
+                await deleteDoc(doc(db, "savedGraphs", graphId));
+                alert('Graph deleted successfully!');
+                loadAllSavedGraphs(); // Reload the graphs after deletion
+            } catch (error) {
+                console.error("Error deleting graph:", error);
+                alert('Failed to delete the graph. Please try again.');
+            }
+        }
+
         // Function to load all saved graphs
         async function loadAllSavedGraphs() {
             const graphsContainer = document.getElementById('graphs-container');
@@ -262,7 +291,15 @@
                         e.preventDefault();
                         openModal(graphData);
                     };
+
+                    // Delete button for the graph
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteGraph(doc.id);
+
                     listItem.appendChild(graphLink);
+                    listItem.appendChild(deleteButton);
                     graphsList.appendChild(listItem);
                 });
 
