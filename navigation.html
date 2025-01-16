@@ -160,6 +160,15 @@
             dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
             graphContainer.innerHTML = ''; // Clear previous content
 
+            // Log data to check the structure
+            console.log("Graph Data:", data);
+
+            // Check if graphElements exists and is an array
+            if (!data.graphElements || !Array.isArray(data.graphElements)) {
+                console.error("Invalid graph data format. 'graphElements' is missing or not an array.");
+                return;
+            }
+
             // Initialize Cytoscape.js with the graph data
             const cy = cytoscape({
                 container: graphContainer,
