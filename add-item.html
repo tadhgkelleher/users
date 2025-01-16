@@ -3,718 +3,405 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manage Connections</title>
-
-  <!-- Cytoscape Script -->
-  <script src="https://cdn.jsdelivr.net/npm/cytoscape@3.22.0/dist/cytoscape.min.js"></script>
-
+  <title>The Epic Coffee Run Adventure</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-    h2 {
-      color: #333;
-    }
-
-    form {
-      margin-bottom: 20px;
-    }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
-
-    .success {
-      background-color: #d4edda;
-      color: #155724;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
-
-    #objects-list {
-      list-style-type: none;
+    * {
+      margin: 0;
       padding: 0;
-      margin-top: 20px;
+      box-sizing: border-box;
     }
 
-    #objects-list li {
-      padding: 10px;
-      margin: 5px 0;
-      background-color: #f8f9fa;
-      border-radius: 5px;
-      cursor: pointer;
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #2c3e50;
+      font-family: 'Press Start 2P', cursive;
+      color: #ecf0f1;
     }
 
-    #objects-list li:hover {
-      background-color: #e9ecef;
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(to bottom, #2c3e50 0%, #3498db 100%);
+      overflow: hidden;
     }
 
-    #cy {
-      height: 500px;
+    .office-background {
+      position: absolute;
+      bottom: 0;
       width: 100%;
-      border: 1px solid #ccc;
-      margin-top: 20px;
-      border-radius: 5px;
+      height: 30vh;
+      background: repeating-linear-gradient(
+        90deg,
+        #34495e,
+        #34495e 100px,
+        #2c3e50 100px,
+        #2c3e50 200px
+      );
     }
 
-    #connection-prompt {
-      display: none;
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #f8f9fa;
-      border-radius: 5px;
+    .charlene {
+      position: absolute;
+      bottom: 50px;
+      width: 60px;
+      height: 60px;
+      background-color: #e74c3c;
+      border-radius: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.1s ease;
+      z-index: 100;
     }
 
-    select {
-      padding: 10px;
+    .charlene::before {
+      content: '🏃‍♀️';
+      font-size: 40px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .game-object {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      font-size: 30px;
+      text-align: center;
+      line-height: 40px;
+      transition: top 0.1s ease;
+    }
+
+    .score-board {
+      position: absolute;
+      top: 20px;
+      left: 20px;
       font-size: 16px;
-      margin-bottom: 10px;
+      color: #ffd700;
+      z-index: 10;
+      padding: 15px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      border: 2px solid #ffd700;
+    }
+
+    .power-meter {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      border: 2px solid #2ecc71;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .power-fill {
       width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      height: 100%;
+      background-color: #2ecc71;
+      transition: width 0.3s ease;
     }
 
-    #connection-prompt button {
-      background-color: #0074D9;
-      border: none;
-      padding: 10px 20px;
-      color: white;
+    .message-board {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      color: #ffd700;
+      background-color: rgba(0, 0, 0, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      display: none;
+      z-index: 1000;
     }
 
-    #connection-prompt button:hover {
-      background-color: #006BB3;
-    }
-
-     .button-group {
-      margin-top: 20px;
+    .start-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.9);
       display: flex;
-      gap: 10px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
     }
 
-    .secondary-button {
-      background-color: #0074D9;
+    .start-screen h1 {
+      color: #ffd700;
+      margin-bottom: 30px;
+      text-align: center;
+      line-height: 1.5;
     }
 
-    .secondary-button:hover {
-      background-color: #0056b3;
+    .start-button {
+      padding: 15px 30px;
+      font-size: 20px;
+      background-color: #2ecc71;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-family: 'Press Start 2P', cursive;
+      transition: transform 0.2s ease;
+    }
+
+    .start-button:hover {
+      transform: scale(1.1);
+    }
+
+    .achievement {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #ffd700;
+      padding: 10px;
+      border-radius: 10px;
+      transform: translateX(120%);
+      transition: transform 0.3s ease;
     }
   </style>
 </head>
 <body>
-  <h2>Manage Objects</h2>
-
-  <div id="message"></div>
-
-  <form id="add-object-form">
-    <input type="text" id="object-name" placeholder="Enter Object Name" required />
-    <button type="submit">Add Object</button>
-  </form>
-
-  <h3>Your Objects:</h3>
-  <ul id="objects-list"></ul>
-  <div id="connection-prompt">
-    <h3>Add Connection</h3>
-    <select id="connection-dropdown">
-      <option value="">Select an Object</option>
-    </select>
-    <button id="create-connection">Create Connection</button>
+  <div class="game-container">
+    <div class="office-background"></div>
+    <div class="score-board">
+      <div>Score: <span id="score">0</span></div>
+      <div>High Score: <span id="highScore">0</span></div>
+    </div>
+    <div class="power-meter">
+      <div class="power-fill" id="powerFill"></div>
+    </div>
+    <div class="charlene" id="charlene"></div>
+    <div class="message-board" id="messageBoard"></div>
+    <div class="achievement" id="achievement"></div>
+    <div class="start-screen" id="startScreen">
+      <h1>The Epic Coffee Run<br>Adventure</h1>
+      <button class="start-button" id="startButton">Start Game</button>
+    </div>
   </div>
-  <div id="cy"></div>
-   <div class="button-group">
-    <button id="save-graph" class="secondary-button">Save Graph</button>
-    <button id="load-graph" class="secondary-button">Load Graph</button>
-  </div>
-  
-  <input type="file" id="load-file" accept=".json" style="display: none;">
 
-  <button id="clear-graph" class="secondary-button">Clear Graph and Delete All Objects</button>
-
- 
-
-  <!-- Firebase SDK Scripts -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-    import { getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp ,limit,writeBatch} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebaseapp.com",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
+  <script>
+    const gameState = {
+      score: 0,
+      highScore: localStorage.getItem('highScore') || 0,
+      power: 100,
+      gameStarted: false,
+      paused: false,
+      achievements: new Set()
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    const GAME_OBJECTS = [
+      { emoji: '☕', type: 'coffee', points: 10, speed: 3, message: "Hot coffee acquired!" },
+      { emoji: '🍩', type: 'bonus', points: 15, speed: 4, message: "Sugar rush!" },
+      { emoji: '📱', type: 'obstacle', points: -20, speed: 2, message: "Dropped your phone!" },
+      { emoji: '💼', type: 'obstacle', points: -15, speed: 3, message: "Briefcase collision!" },
+      { emoji: '👔', type: 'obstacle', points: -10, speed: 2.5, message: "Tie tangle!" }
+    ];
 
-    let selectedObject = null;
-    let cy = null;
+    const FUNNY_MESSAGES = [
+      "Coffee is life! ☕",
+      "Running late... as usual! 🏃‍♀️",
+      "Need... more... caffeine! 💪",
+      "Watch out for the boss! 👔",
+      "Monday mornings be like... 😴"
+    ];
 
-    // Save connection to Firebase
-    async function saveConnection(sourceId, targetId) {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("User must be logged in to save connections");
-      }
-
-      try {
-        // Check if connection already exists
-        const connectionsRef = collection(db, "connections");
-        const connectionQuery = query(
-          connectionsRef,
-          where("user", "==", user.displayName),
-          where("sourceId", "==", sourceId),
-          where("targetId", "==", targetId)
-        );
-        
-        const querySnapshot = await getDocs(connectionQuery);
-        if (!querySnapshot.empty) {
-          throw new Error("Connection already exists");
-        }
-
-        // Save new connection
-        await addDoc(connectionsRef, {
-          sourceId: sourceId,
-          targetId: targetId,
-          user: user.displayName,
-          timestamp: serverTimestamp()
-        });
-
-        return true;
-      } catch (error) {
-        console.error("Error saving connection: ", error);
-        throw error;
-      }
-    }
-
-    // Auth state change handler
-    auth.onAuthStateChanged((user) => {
-      const messageDiv = document.getElementById("message");
-      if (user) {
-        messageDiv.textContent = 'You are logged in as ' + user.displayName;
-        messageDiv.className = 'success';
-        loadObjects(user.displayName);
-      } else {
-        messageDiv.textContent = 'You are not logged in. Please log in to manage items.';
-        messageDiv.className = 'error';
-      }
-    });
-
-    // Add Object form handler
-    document.getElementById("add-object-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const objectName = document.getElementById("object-name").value;
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = '';
-
-      const user = auth.currentUser;
-      if (!user) {
-        messageDiv.textContent = "You must be logged in to add objects.";
-        messageDiv.className = "error";
-        return;
-      }
-
-      try {
-        // Check for existing object
-        const objectQuery = query(
-          collection(db, "objects"),
-          where("objectName", "==", objectName),
-          where("user", "==", user.displayName)
-        );
-        const querySnapshot = await getDocs(objectQuery);
-
-        if (!querySnapshot.empty) {
-          messageDiv.textContent = "This object already exists!";
-          messageDiv.className = "error";
-          return;
-        }
-
-        // Add new object
-        await addDoc(collection(db, "objects"), {
-          objectName: objectName,
-          user: user.displayName,
-          timestamp: serverTimestamp()
-        });
-
-        messageDiv.textContent = "Object added successfully!";
-        messageDiv.className = "success";
-        document.getElementById("add-object-form").reset();
-        loadObjects(user.displayName);
-      } catch (error) {
-        console.error("Error adding object: ", error);
-        messageDiv.textContent = "Error adding object: " + error.message;
-        messageDiv.className = "error";
-      }
-    });
-
-    // Load Objects and Connections function
-    async function loadObjects(username) {
-      const objectsList = document.getElementById("objects-list");
-      objectsList.innerHTML = '';
-
-      try {
-        // Load objects
-        const objectsQuery = query(
-          collection(db, "objects"),
-          where("user", "==", username),
-          orderBy("timestamp", "desc")
-        );
-        const objectsSnapshot = await getDocs(objectsQuery);
-
-        // Initialize Cytoscape if needed
-        if (!cy) {
-          cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: [],
-            style: [
-              {
-                selector: 'node',
-                style: {
-                  'background-color': '#0074D9',
-                  'label': 'data(objectName)',
-                  'color': '#fff',
-                  'text-valign': 'center',
-                  'text-halign': 'center',
-                  'font-size': '12px'
-                }
-              },
-              {
-                selector: 'edge',
-                style: {
-                  'width': 3,
-                  'line-color': '#aaa',
-                  'curve-style': 'bezier'
-                }
-              }
-            ],
-            layout: {
-              name: 'circle',
-              padding: 10
-            }
-          });
-        }
-
-        const objects = [];
-
-        objectsSnapshot.forEach((doc) => {
-          const object = doc.data();
-          
-          if (!cy.getElementById(doc.id).length) {
-            cy.add({ data: { id: doc.id, objectName: object.objectName } });
-            objects.push({ id: doc.id, name: object.objectName });
-          }
-
-          const li = document.createElement("li");
-          li.textContent = object.objectName;
-          li.addEventListener('click', () => {
-            selectObject(doc.id, object.objectName);
-          });
-          objectsList.appendChild(li);
-        });
-
-        // Load connections
-        const connectionsQuery = query(
-          collection(db, "connections"),
-          where("user", "==", username)
-        );
-        const connectionsSnapshot = await getDocs(connectionsQuery);
-
-        connectionsSnapshot.forEach((doc) => {
-          const connection = doc.data();
-          const existingEdge = cy.edges(`[source="${connection.sourceId}"][target="${connection.targetId}"]`);
-          
-          if (existingEdge.length === 0) {
-            cy.add({
-              data: { 
-                source: connection.sourceId, 
-                target: connection.targetId,
-                id: doc.id
-              }
-            });
-          }
-        });
-
-        cy.layout({ name: 'circle' }).run();
-        updateConnectionDropdown(objects);
-
-      } catch (error) {
-        console.error("Error loading data: ", error);
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading data: " + error.message;
-        messageDiv.className = "error";
-      }
-    }
-
-    // Update connection dropdown
-    function updateConnectionDropdown(objects) {
-      const connectionDropdown = document.getElementById("connection-dropdown");
-      connectionDropdown.innerHTML = '<option value="">Select an Object</option>';
-      
-      objects.forEach(object => {
-        if (!selectedObject || object.id !== selectedObject.id) {
-          const option = document.createElement("option");
-          option.value = object.id;
-          option.textContent = object.name;
-          connectionDropdown.appendChild(option);
-        }
-      });
-    }
-
-    // Select object handler
-    function selectObject(objectId, objectName) {
-      selectedObject = { id: objectId, name: objectName };
-      const messageDiv = document.getElementById("message");
-      messageDiv.textContent = `You selected: ${objectName}. Now, add a connection.`;
-      messageDiv.className = 'success';
-
-      document.getElementById("connection-prompt").style.display = 'block';
-      
-      const q = query(
-        collection(db, "objects"),
-        where("user", "==", auth.currentUser.displayName),
-        orderBy("timestamp", "desc")
-      );
-      
-      getDocs(q).then((querySnapshot) => {
-        const objects = [];
-        querySnapshot.forEach((doc) => {
-          objects.push({ id: doc.id, name: doc.data().objectName });
-        });
-        updateConnectionDropdown(objects);
-      });
-    }
-
-    // Create edge function with Firebase persistence
-    async function createEdge(targetId) {
-      if (!selectedObject) {
-        alert("Please select a source object first.");
-        return;
-      }
-
-      const sourceNode = cy.getElementById(selectedObject.id);
-      const targetNode = cy.getElementById(targetId);
-      
-      if (sourceNode.length && targetNode.length) {
-        const existingEdge = cy.edges(`[source="${selectedObject.id}"][target="${targetId}"]`);
-        if (existingEdge.length === 0) {
-          try {
-            // Save connection to Firebase
-            await saveConnection(selectedObject.id, targetId);
-
-            // Add to visualization
-            cy.add({
-              data: { source: selectedObject.id, target: targetId }
-            });
-
-            cy.layout({ name: 'circle' }).run();
-            document.getElementById("connection-prompt").style.display = 'none';
-            
-            const messageDiv = document.getElementById("message");
-            messageDiv.textContent = "Connection created and saved successfully!";
-            messageDiv.className = "success";
-          } catch (error) {
-            const messageDiv = document.getElementById("message");
-            messageDiv.textContent = "Error saving connection: " + error.message;
-            messageDiv.className = "error";
-          }
-        } else {
-          alert("This connection already exists.");
-        }
-      } else {
-        alert("Both nodes must exist before connecting.");
-      }
-    }
-
-async function saveGraph() {
-  const user = auth.currentUser;
-  if (!user) {
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "You must be logged in to save the graph";
-    messageDiv.className = "error";
-    return;
-  }
-
-  // Prompt the user for a graph title
-  const title = prompt("Enter a title for your graph:");
-  if (!title || title.trim() === "") {
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Graph title is required.";
-    messageDiv.className = "error";
-    return;
-  }
-
-  const graphData = {
-    title: title.trim(), // Trim whitespace from the title
-    nodes: cy.nodes().map(node => ({
-      data: {
-        id: node.id(),
-        objectName: node.data('objectName'),
-      },
-    })),
-    edges: cy.edges().map(edge => ({
-      data: {
-        source: edge.source().id(),
-        target: edge.target().id(),
-      },
-    })),
-    timestamp: serverTimestamp(),
-    user: user.displayName,
-  };
-
-  try {
-    // Save to Firebase
-    await addDoc(collection(db, "savedGraphs"), graphData);
-
-    // Create and trigger download of JSON file
-    const dataStr = JSON.stringify(graphData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const fileName = `graph-${title.replace(/\s+/g, "_")}-${new Date().toISOString()}.json`; // Replace spaces with underscores
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", fileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Graph saved successfully to both file and cloud!";
-    messageDiv.className = "success";
-  } catch (error) {
-    const messageDiv = document.getElementById("message");
-    messageDiv.textContent = "Error saving graph: " + error.message;
-    messageDiv.className = "error";
-    console.error("Error saving graph:", error);
-  }
-}
-
-
-    // Function to load graph
-    async function loadGraph(file) {
-      try {
-        const text = await file.text();
-        const graphData = JSON.parse(text);
-        
-        // Clear existing graph
-        cy.elements().remove();
-        
-        // Add nodes and edges
-        cy.add(graphData.nodes);
-        cy.add(graphData.edges);
-        
-        // Run layout
-        cy.layout({ name: 'circle' }).run();
-        
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Graph loaded successfully!";
-        messageDiv.className = "success";
-        
-        // Refresh objects list
-        loadObjects(auth.currentUser.displayName);
-      } catch (error) {
-        const messageDiv = document.getElementById("message");
-        messageDiv.textContent = "Error loading graph: " + error.message;
-        messageDiv.className = "error";
-      }
-    }
-
-     // Add these event listeners after cy initialization
-    document.getElementById("save-graph").addEventListener("click", saveGraph);
-    
-    document.getElementById("load-graph").addEventListener("click", () => {
-      document.getElementById("load-file").click();
-    });
-    
-    document.getElementById("load-file").addEventListener("change", (e) => {
-      if (e.target.files.length > 0) {
-        loadGraph(e.target.files[0]);
-      }
-    });
-    // Create connection button handler
-    document.getElementById("create-connection").addEventListener("click", () => {
-      const selectedConnectionId = document.getElementById("connection-dropdown").value;
-      if (selectedConnectionId) {
-        createEdge(selectedConnectionId);
-      } else {
-        alert("Please select a connection.");
-      }
-    });
-
-import { query, collection, where, limit, startAfter, getDocs, writeBatch } from "firebase/firestore"; // Firestore v9+ imports
-
-async function clearGraphAndDeleteObjects() {
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = '';
-  
-  try {
-    // Check authentication
-    const user = auth.currentUser;
-    if (!user?.displayName) {
-      throw new Error("You must be logged in to clear the graph and delete objects.");
-    }
-
-    // Show loading state
-    messageDiv.textContent = "Clearing graph, deleting objects, and removing connections...";
-    messageDiv.className = "loading";
-
-    // Clear Cytoscape elements with error handling
-    try {
-      if (cy && typeof cy.elements === 'function') {
-        cy.elements().remove();
-      } else {
-        throw new Error("Graph visualization is not properly initialized");
-      }
-    } catch (cyError) {
-      console.error("Error clearing cytoscape graph:", cyError);
-      throw new Error("Failed to clear visualization");
-    }
-
-    // Delete connections from Firestore with batching and pagination
-    const deleteConnections = async (lastDoc) => {
-      let connectionsQuery = query(
-        collection(db, "connections"),
-        where("user", "==", user.displayName),
-        limit(500)
-      );
-      
-      if (lastDoc) {
-        connectionsQuery = query(connectionsQuery, startAfter(lastDoc));
-      }
-      
-      const querySnapshot = await getDocs(connectionsQuery);
-      
-      if (querySnapshot.empty) {
-        return;
-      }
-      
-      const batch = writeBatch(db);
-      querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-      
-      await batch.commit();
-      
-      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      if (querySnapshot.size === 500) {
-        return deleteConnections(lastVisible);
-      }
+    const elements = {
+      charlene: document.getElementById('charlene'),
+      scoreDisplay: document.getElementById('score'),
+      highScoreDisplay: document.getElementById('highScore'),
+      powerFill: document.getElementById('powerFill'),
+      messageBoard: document.getElementById('messageBoard'),
+      achievement: document.getElementById('achievement'),
+      startScreen: document.getElementById('startScreen'),
+      startButton: document.getElementById('startButton'),
+      gameContainer: document.querySelector('.game-container')
     };
 
-    await deleteConnections(); // Delete all connections first
+    function createGameObject() {
+      const gameObject = document.createElement('div');
+      const objectType = GAME_OBJECTS[Math.floor(Math.random() * GAME_OBJECTS.length)];
+      
+      gameObject.className = 'game-object';
+      gameObject.innerHTML = objectType.emoji;
+      gameObject.dataset.type = objectType.type;
+      gameObject.dataset.points = objectType.points;
+      gameObject.dataset.speed = objectType.speed;
+      gameObject.dataset.message = objectType.message;
+      
+      gameObject.style.left = `${Math.random() * (window.innerWidth - 40)}px`;
+      gameObject.style.top = '-50px';
+      
+      elements.gameContainer.appendChild(gameObject);
+      return gameObject;
+    }
 
-    // Delete objects from Firestore with batching and pagination
-    const deleteObjects = async (lastDoc) => {
-      let objectsQuery = query(
-        collection(db, "objects"),
-        where("user", "==", user.displayName),
-        limit(500)
-      );
+    function showMessage(message, duration = 2000) {
+      elements.messageBoard.textContent = message;
+      elements.messageBoard.style.display = 'block';
+      setTimeout(() => {
+        elements.messageBoard.style.display = 'none';
+      }, duration);
+    }
+
+    function showAchievement(achievement) {
+      if (!gameState.achievements.has(achievement)) {
+        gameState.achievements.add(achievement);
+        elements.achievement.textContent = `Achievement: ${achievement}`;
+        elements.achievement.style.transform = 'translateX(0)';
+        setTimeout(() => {
+          elements.achievement.style.transform = 'translateX(120%)';
+        }, 3000);
+      }
+    }
+
+    function updateScore(points) {
+      gameState.score += points;
+      elements.scoreDisplay.textContent = gameState.score;
       
-      if (lastDoc) {
-        objectsQuery = query(objectsQuery, startAfter(lastDoc));
+      if (gameState.score > gameState.highScore) {
+        gameState.highScore = gameState.score;
+        elements.highScoreDisplay.textContent = gameState.highScore;
+        localStorage.setItem('highScore', gameState.highScore);
+      }
+
+      // Achievements
+      if (gameState.score >= 100) showAchievement("Coffee Master");
+      if (gameState.score >= 200) showAchievement("Office Legend");
+      if (gameState.score >= 500) showAchievement("Caffeine Overdose");
+    }
+
+    function updatePower(amount) {
+      gameState.power = Math.max(0, Math.min(100, gameState.power + amount));
+      elements.powerFill.style.width = `${gameState.power}%`;
+      
+      if (gameState.power <= 0) {
+        gameOver();
+      }
+    }
+
+    function gameOver() {
+      gameState.gameStarted = false;
+      showMessage(`Game Over! Final Score: ${gameState.score}\n${FUNNY_MESSAGES[Math.floor(Math.random() * FUNNY_MESSAGES.length)]}`, 3000);
+      setTimeout(() => {
+        elements.startScreen.style.display = 'flex';
+      }, 3000);
+    }
+
+    function handleCollision(gameObject) {
+      const points = parseInt(gameObject.dataset.points);
+      const message = gameObject.dataset.message;
+      
+      updateScore(points);
+      showMessage(message);
+      
+      if (gameObject.dataset.type === 'coffee') {
+        updatePower(20);
+      } else if (gameObject.dataset.type === 'obstacle') {
+        updatePower(-30);
       }
       
-      const querySnapshot = await getDocs(objectsQuery);
-      
-      if (querySnapshot.empty) {
-        return;
-      }
-      
-      const batch = writeBatch(db);
-      querySnapshot.forEach((doc) => {
-        batch.delete(doc.ref);
+      gameObject.remove();
+    }
+
+    function moveGameObjects() {
+      if (!gameState.gameStarted || gameState.paused) return;
+
+      document.querySelectorAll('.game-object').forEach(object => {
+        const speed = parseFloat(object.dataset.speed);
+        const currentTop = parseFloat(object.style.top);
+        object.style.top = `${currentTop + speed}px`;
+
+        // Check for collision with Charlene
+        const charleneRect = elements.charlene.getBoundingClientRect();
+        const objectRect = object.getBoundingClientRect();
+
+        if (objectRect.top + objectRect.height > charleneRect.top &&
+            objectRect.left < charleneRect.right &&
+            objectRect.right > charleneRect.left) {
+          handleCollision(object);
+        }
+
+        // Remove if off screen
+        if (currentTop > window.innerHeight) {
+          object.remove();
+        }
       });
-      
-      await batch.commit();
-      
-      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      if (querySnapshot.size === 500) {
-        return deleteObjects(lastVisible);
+
+      // Create new objects randomly
+      if (Math.random() < 0.02) {
+        createGameObject();
       }
-    };
 
-    await deleteObjects(); // Delete all objects
+      // Decrease power over time
+      updatePower(-0.1);
 
-    // Success message with count
-    messageDiv.textContent = `Graph cleared, objects deleted, and connections removed successfully!`;
-    messageDiv.className = "success";
-
-    // Reload the graph with error handling
-    try {
-      await loadObjects(user.displayName);
-    } catch (loadError) {
-      console.error("Error reloading graph:", loadError);
-      messageDiv.textContent += " (Warning: Error during graph reload)";
+      requestAnimationFrame(moveGameObjects);
     }
 
-  } catch (error) {
-    console.error("Error clearing graph, deleting objects, and removing connections:", error);
-    messageDiv.textContent = error.message || "An unexpected error occurred";
-    messageDiv.className = "error";
-    throw error; // Re-throw for higher-level error handling
-  }
-}
-
-// Add event listener with confirmation dialog
-document.getElementById("clear-graph").addEventListener("click", async (e) => {
-  e.preventDefault();
-  
-  const confirmed = window.confirm(
-    "Are you sure you want to clear the graph, delete all objects, and remove all connections? This action cannot be undone."
-  );
-  
-  if (confirmed) {
-    try {
-      await clearGraphAndDeleteObjects();
-    } catch (error) {
-      // Higher-level error handling if needed
-      console.error("Failed to clear graph:", error);
+    function startGame() {
+      gameState.score = 0;
+      gameState.power = 100;
+      gameState.gameStarted = true;
+      elements.startScreen.style.display = 'none';
+      elements.scoreDisplay.textContent = '0';
+      elements.highScoreDisplay.textContent = gameState.highScore;
+      showMessage("Go Charlene, Go!", 2000);
+      moveGameObjects();
     }
-  }
-});
 
+    // Event Listeners
+    elements.startButton.addEventListener('click', startGame);
 
+    let leftPosition = 50;
+    document.addEventListener('keydown', (event) => {
+      if (!gameState.gameStarted) return;
 
+      const moveAmount = 5;
+      if (event.key === 'ArrowLeft' && leftPosition > 0) {
+        leftPosition -= moveAmount;
+        elements.charlene.style.left = `${leftPosition}%`;
+      } else if (event.key === 'ArrowRight' && leftPosition < 95) {
+        leftPosition += moveAmount;
+        elements.charlene.style.left = `${leftPosition}%`;
+      } else if (event.key === 'p') {
+        gameState.paused = !gameState.paused;
+        showMessage(gameState.paused ? "Paused" : "Resumed", 1000);
+      }
+    });
 
+    // Touch controls for mobile
+    let touchStartX = null;
+    document.addEventListener('touchstart', (event) => {
+      touchStartX = event.touches[0].clientX;
+    });
+
+    document.addEventListener('touchmove', (event) => {
+      if (!gameState.gameStarted || !touchStartX) return;
+
+      const touchX = event.touches[0].clientX;
+      const diff = touchX - touchStartX;
+      const moveAmount = (diff / window.innerWidth) * 100;
+      
+      const newPosition = Math.max(0, Math.min(95, leftPosition + moveAmount));
+      elements.charlene.style.left = `${newPosition}%`;
+      leftPosition = newPosition;
+      touchStartX = touchX;
+    });
+
+    // Initialize high score display
+    elements.highScoreDisplay.textContent = gameState.highScore;
   </script>
 </body>
 </html>
-
