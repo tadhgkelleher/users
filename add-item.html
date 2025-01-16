@@ -577,7 +577,11 @@ async function saveGraph() {
         alert("Please select a connection.");
       }
     });
- 
+
+    import { getFirestore, doc, deleteDoc, writeBatch, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+// Initialize Firestore (only needs to be done once)
+const db = getFirestore();
 
 // Clear Graph and Delete All Objects Handler
 document.getElementById("clear-graph").addEventListener("click", async () => {
