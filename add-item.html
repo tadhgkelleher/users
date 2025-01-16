@@ -578,6 +578,156 @@ async function saveGraph() {
       }
     });
 
+// Add delete button to each object in the list
+document.getElementById("add-object-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const objectName = document.getElementById("object-name").value;
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = '';
+
+  const user = auth.currentUser;
+  if (!user) {
+    messageDiv.textContent = "You must be logged in to add objects.";
+    messageDiv.className = "error";
+    return;
+  }
+
+  try {
+    // Check for existing object
+    const objectQuery = query(
+      collection(db, "objects"),
+      where("objectName", "==", objectName),
+      where("user", "==", user.displayName)
+    );
+    const querySnapshot = await getDocs(objectQuery);
+
+    if (!querySnapshot.empty) {
+      messageDiv.textContent = "This object already exists!";
+      messageDiv.className = "error";
+      return;
+    }
+
+    // Add new object
+    const docRef = await addDoc(collection(db, "objects"), {
+      objectName: objectName,
+      user: user.displayName,
+      timestamp: serverTimestamp()
+    });
+
+    messageDiv.textContent = "Object added successfully!";
+    messageDiv.className = "success";
+    document.getElementById("add-object-form").reset();
+    loadObjects(user.displayName);
+  } catch (error) {
+    console.error("Error adding object: ", error);
+    messageDiv.textContent = "Error adding object: " + error.message;
+    messageDiv.className = "error";
+  }
+});
+
+// Delete Object from the database
+async function deleteObject(objectId) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("You must be logged in to delete an object.");
+    return;
+  }
+
+  try {
+    // Delete object from the 'objects' collection
+    await deleteDoc(doc(db, "objects", objectId));
+
+    // Delete all associated connections from the 'connections' collection
+    const connectionsQuery = query(
+      collection(db, "connections"),
+      where("user", "==", user.displayName),
+      where("sourceId", "==", objectId)
+    );
+    const connectionsSnapshot = await getDocs(connectionsQuery);
+    connectionsSnapshot.forEach(async (connectionDoc) => {
+      await deleteDoc(doc(db, "connections", connectionDoc.id));
+    });
+
+    // Also delete connections where the object is the target
+    const targetConnectionsQuery = query(
+      collection(db, "connections"),
+      where("user", "==", user.displayName),
+      where("targetId", "==", objectId)
+    );
+    const targetConnectionsSnapshot = await getDocs(targetConnectionsQuery);
+    targetConnectionsSnapshot.forEach(async (connectionDoc) => {
+      await deleteDoc(doc(db, "connections", connectionDoc.id));
+    });
+
+    // Remove object from Cytoscape graph
+    cy.getElementById(objectId).remove();
+
+    // Reload the objects list
+    loadObjects(user.displayName);
+    alert("Object and associated connections deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting object: ", error);
+    alert("Error deleting object: " + error.message);
+  }
+}
+
+// Update the objects list to include a delete button
+function updateObjectList(objects) {
+  const objectsList = document.getElementById("objects-list");
+  objectsList.innerHTML = '';
+
+  objects.forEach((object) => {
+    const li = document.createElement("li");
+    li.textContent = object.objectName;
+    
+    // Create delete button for each object
+    const deleteButton = document.createElement("button");
+    deleteButton.textContent = "Delete";
+    deleteButton.style.marginLeft = "10px";
+    deleteButton.classList.add("secondary-button");
+    deleteButton.addEventListener('click', () => {
+      const confirmDelete = confirm(`Are you sure you want to delete the object: ${object.objectName}?`);
+      if (confirmDelete) {
+        deleteObject(object.id);
+      }
+    });
+
+    li.appendChild(deleteButton);
+    li.addEventListener('click', () => {
+      selectObject(object.id, object.objectName);
+    });
+    objectsList.appendChild(li);
+  });
+}
+
+// Function to reload objects from Firestore
+async function loadObjects(username) {
+  const objectsList = document.getElementById("objects-list");
+
+  try {
+    // Load objects
+    const objectsQuery = query(
+      collection(db, "objects"),
+      where("user", "==", username),
+      orderBy("timestamp", "desc")
+    );
+    const objectsSnapshot = await getDocs(objectsQuery);
+    const objects = [];
+
+    objectsSnapshot.forEach((doc) => {
+      const object = doc.data();
+      objects.push({ id: doc.id, objectName: object.objectName });
+    });
+
+    updateObjectList(objects);
+  } catch (error) {
+    console.error("Error loading data: ", error);
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Error loading data: " + error.message;
+    messageDiv.className = "error";
+  }
+}
 
 
 
