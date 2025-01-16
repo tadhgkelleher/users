@@ -579,12 +579,6 @@ async function saveGraph() {
     });
  
 
-
-    // Make sure Firestore is initialized
-import { deleteDoc, doc, getFirestore, query, collection, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
-
-// Initialize Firestore
-const db = getFirestore();
 // Clear Graph and Delete All Objects Handler
 document.getElementById("clear-graph").addEventListener("click", async () => {
   const messageDiv = document.getElementById("message");
