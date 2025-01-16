@@ -232,7 +232,10 @@
                 const graphLink = document.createElement('a');
                 graphLink.href = '#'; // Disable navigation
                 graphLink.textContent = graphData.graphTitle || "Untitled Graph"; // Ensure title is displayed
-                graphLink.onclick = () => openModal(graphData); // Show raw data and graph on click
+                graphLink.onclick = () => {
+                    console.log("Graph clicked:", graphData);
+                    openModal(graphData); // Show raw data and graph on click
+                };
                 listItem.appendChild(graphLink);
                 graphsList.appendChild(listItem);
             });
