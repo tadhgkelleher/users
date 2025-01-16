@@ -25,7 +25,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8); /* More opaque overlay to reduce background visibility */
+            background: rgba(0, 0, 0, 0.8);
             z-index: 2;
         }
         .container {
@@ -68,6 +68,42 @@
         .graph-list li a:hover {
             color: #16A085;
         }
+        /* Modal Styles */
+        #data-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #data-modal pre {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #data-modal button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #16A085;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #data-modal button:hover {
+            background: #1abc9c;
+        }
     </style>
 </head>
 <body>
@@ -77,6 +113,13 @@
     <div class="container" id="graphs-container">
         <a href="add-item.html" class="add-item-link">Add Item</a> <!-- Prominent Link -->
         <!-- Dynamically loaded graphs will appear here -->
+    </div>
+
+    <!-- Modal for displaying raw data -->
+    <div id="data-modal">
+        <button onclick="closeModal()">Close</button>
+        <h2>Graph Data</h2>
+        <pre id="graph-data"></pre>
     </div>
 
     <script type="module">
@@ -99,6 +142,20 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Function to open modal and display raw data
+        function openModal(data) {
+            const modal = document.getElementById('data-modal');
+            const dataContainer = document.getElementById('graph-data');
+            dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
+            modal.style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            const modal = document.getElementById('data-modal');
+            modal.style.display = 'none';
+        }
+
         // Function to load all saved graphs from all users
         async function loadAllSavedGraphs() {
             const graphsContainer = document.getElementById('graphs-container');
@@ -115,8 +172,9 @@
                 const graphData = doc.data();
                 const listItem = document.createElement('li');
                 const graphLink = document.createElement('a');
-                graphLink.href = graphData.graphUrl || '#'; // Assuming there's a `graphUrl` in the data
+                graphLink.href = '#'; // Disable navigation
                 graphLink.textContent = graphData.graphTitle || "Untitled Graph";
+                graphLink.onclick = () => openModal(graphData); // Show raw data on click
                 listItem.appendChild(graphLink);
                 graphsList.appendChild(listItem);
             });
