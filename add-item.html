@@ -459,7 +459,6 @@
       }
     }
 
-    // Function to save graph
 async function saveGraph() {
   const user = auth.currentUser;
   if (!user) {
@@ -469,21 +468,31 @@ async function saveGraph() {
     return;
   }
 
+  // Prompt the user for a graph title
+  const title = prompt("Enter a title for your graph:");
+  if (!title || title.trim() === "") {
+    const messageDiv = document.getElementById("message");
+    messageDiv.textContent = "Graph title is required.";
+    messageDiv.className = "error";
+    return;
+  }
+
   const graphData = {
+    title: title.trim(), // Trim whitespace from the title
     nodes: cy.nodes().map(node => ({
       data: {
         id: node.id(),
-        objectName: node.data('objectName')
-      }
+        objectName: node.data('objectName'),
+      },
     })),
     edges: cy.edges().map(edge => ({
       data: {
         source: edge.source().id(),
-        target: edge.target().id()
-      }
+        target: edge.target().id(),
+      },
     })),
     timestamp: serverTimestamp(),
-    user: user.displayName
+    user: user.displayName,
   };
 
   try {
@@ -492,16 +501,17 @@ async function saveGraph() {
 
     // Create and trigger download of JSON file
     const dataStr = JSON.stringify(graphData, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
+    const blob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `graph-${new Date().toISOString()}.json`);
+    const fileName = `graph-${title.replace(/\s+/g, "_")}-${new Date().toISOString()}.json`; // Replace spaces with underscores
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    
+
     const messageDiv = document.getElementById("message");
     messageDiv.textContent = "Graph saved successfully to both file and cloud!";
     messageDiv.className = "success";
@@ -512,6 +522,7 @@ async function saveGraph() {
     console.error("Error saving graph:", error);
   }
 }
+
 
     // Function to load graph
     async function loadGraph(file) {
