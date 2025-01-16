@@ -580,8 +580,7 @@ async function saveGraph() {
 
 import { getFirestore, doc, writeBatch, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-// Initialize Firestore (only needs to be done once)
-const db = getFirestore();
+
 
 // Function to clear the graph by deleting documents in a collection
 async function clearGraph() {
