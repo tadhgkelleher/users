@@ -523,11 +523,21 @@ async function saveGraph() {
     console.error("Error saving graph:", error);
   }
 }
-// Clear Graph and Delete All Objects function
+// Import Firebase functions
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import cytoscape from 'cytoscape'; // Assuming you're using Cytoscape for graph management
+
+// Initialize Firebase Authentication and Firestore
+const auth = getAuth();
+const db = getFirestore();
+
+// Function to clear the graph and delete all objects from Firestore
 async function clearGraphAndDeleteObjects() {
   const messageDiv = document.getElementById("message");
-  messageDiv.textContent = '';
-  
+  messageDiv.textContent = ''; // Clear any previous messages
+
+  // Get the current logged-in user
   const user = auth.currentUser;
   if (!user) {
     messageDiv.textContent = "You must be logged in to clear the graph and delete objects.";
@@ -536,37 +546,63 @@ async function clearGraphAndDeleteObjects() {
   }
 
   try {
-    // Clear Cytoscape elements
-    cy.elements().remove();
+    // Clear Cytoscape elements (graph)
+    const cy = cytoscape(); // Assuming you have your Cytoscape graph initialized
+    cy.elements().remove(); // Remove all elements from the graph
 
-    // Delete all objects from Firestore
+    // Delete all objects related to the user in Firestore
     const objectsQuery = query(
       collection(db, "objects"),
       where("user", "==", user.displayName)
     );
     const querySnapshot = await getDocs(objectsQuery);
 
-    const batch = writeBatch(db);
+    const batch = writeBatch(db); // Start a batch operation to delete objects
     querySnapshot.forEach((doc) => {
-      batch.delete(doc.ref);
+      batch.delete(doc.ref); // Add each delete operation to the batch
     });
 
-    await batch.commit();
+    await batch.commit(); // Commit the batch operation to delete all objects
 
+    // Display success message
     messageDiv.textContent = "Graph cleared and all objects deleted successfully!";
     messageDiv.className = "success";
 
-    // Reload the graph (reset to initial state)
-    loadObjects(user.displayName);
+    // Optionally, you can reload the graph or reset it to its initial state here
+    loadObjects(user.displayName); // Assume loadObjects is defined elsewhere to reload the user's objects
+
   } catch (error) {
+    // Catch any errors and display an error message
     console.error("Error clearing graph and deleting objects: ", error);
     messageDiv.textContent = "Error clearing graph and deleting objects: " + error.message;
     messageDiv.className = "error";
   }
 }
 
-// Add event listener for the clear graph button
-document.getElementById("clear-graph").addEventListener("click", clearGraphAndDeleteObjects);
+// Function to load objects into the graph (if needed after clearing)
+async function loadObjects(userName) {
+  // This function should handle reloading the graph with the user's objects
+  const objectsQuery = query(
+    collection(db, "objects"),
+    where("user", "==", userName)
+  );
+  const querySnapshot = await getDocs(objectsQuery);
+
+  const cy = cytoscape(); // Your Cytoscape instance
+  querySnapshot.forEach((doc) => {
+    const obj = doc.data();
+    cy.add({
+      data: { id: doc.id, label: obj.name, ...obj } // Add objects to the graph
+    });
+  });
+
+  // Optionally, layout or style the graph
+  cy.layout({ name: 'grid' }).run(); // Example layout
+  cy.style().fromJson([]).update(); // Example to update style (empty style for now)
+}
+
+// You can now use the `clearGraphAndDeleteObjects` function to clear the graph and delete all objects.
+
 
 async function loadGraph(file) {
   try {
