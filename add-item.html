@@ -578,6 +578,8 @@ async function saveGraph() {
       }
     });
 
+import { query, collection, where, limit, startAfter, getDocs, writeBatch } from "firebase/firestore"; // Firestore v9+ imports
+
 async function clearGraphAndDeleteObjects() {
   const messageDiv = document.getElementById("message");
   messageDiv.textContent = '';
@@ -590,7 +592,7 @@ async function clearGraphAndDeleteObjects() {
     }
 
     // Show loading state
-    messageDiv.textContent = "Clearing graph and deleting objects...";
+    messageDiv.textContent = "Clearing graph, deleting objects, and removing connections...";
     messageDiv.className = "loading";
 
     // Clear Cytoscape elements with error handling
@@ -605,15 +607,45 @@ async function clearGraphAndDeleteObjects() {
       throw new Error("Failed to clear visualization");
     }
 
+    // Delete connections from Firestore with batching and pagination
+    const deleteConnections = async (lastDoc) => {
+      let connectionsQuery = query(
+        collection(db, "connections"),
+        where("user", "==", user.displayName),
+        limit(500)
+      );
+      
+      if (lastDoc) {
+        connectionsQuery = query(connectionsQuery, startAfter(lastDoc));
+      }
+      
+      const querySnapshot = await getDocs(connectionsQuery);
+      
+      if (querySnapshot.empty) {
+        return;
+      }
+      
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      
+      await batch.commit();
+      
+      const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
+      if (querySnapshot.size === 500) {
+        return deleteConnections(lastVisible);
+      }
+    };
+
+    await deleteConnections(); // Delete all connections first
+
     // Delete objects from Firestore with batching and pagination
-    const BATCH_SIZE = 500; // Firestore batch limit is 500
-    let deletedCount = 0;
-    
-    const deleteNextBatch = async (lastDoc) => {
+    const deleteObjects = async (lastDoc) => {
       let objectsQuery = query(
         collection(db, "objects"),
         where("user", "==", user.displayName),
-        limit(BATCH_SIZE)
+        limit(500)
       );
       
       if (lastDoc) {
@@ -623,29 +655,26 @@ async function clearGraphAndDeleteObjects() {
       const querySnapshot = await getDocs(objectsQuery);
       
       if (querySnapshot.empty) {
-        return deletedCount;
+        return;
       }
       
       const batch = writeBatch(db);
       querySnapshot.forEach((doc) => {
         batch.delete(doc.ref);
-        deletedCount++;
       });
       
       await batch.commit();
       
       const lastVisible = querySnapshot.docs[querySnapshot.docs.length - 1];
-      if (querySnapshot.size === BATCH_SIZE) {
-        return deleteNextBatch(lastVisible);
+      if (querySnapshot.size === 500) {
+        return deleteObjects(lastVisible);
       }
-      
-      return deletedCount;
     };
 
-    const totalDeleted = await deleteNextBatch();
+    await deleteObjects(); // Delete all objects
 
     // Success message with count
-    messageDiv.textContent = `Graph cleared and ${totalDeleted} objects deleted successfully!`;
+    messageDiv.textContent = `Graph cleared, objects deleted, and connections removed successfully!`;
     messageDiv.className = "success";
 
     // Reload the graph with error handling
@@ -657,7 +686,7 @@ async function clearGraphAndDeleteObjects() {
     }
 
   } catch (error) {
-    console.error("Error clearing graph and deleting objects:", error);
+    console.error("Error clearing graph, deleting objects, and removing connections:", error);
     messageDiv.textContent = error.message || "An unexpected error occurred";
     messageDiv.className = "error";
     throw error; // Re-throw for higher-level error handling
@@ -669,7 +698,7 @@ document.getElementById("clear-graph").addEventListener("click", async (e) => {
   e.preventDefault();
   
   const confirmed = window.confirm(
-    "Are you sure you want to clear the graph and delete all objects? This action cannot be undone."
+    "Are you sure you want to clear the graph, delete all objects, and remove all connections? This action cannot be undone."
   );
   
   if (confirmed) {
@@ -681,6 +710,7 @@ document.getElementById("clear-graph").addEventListener("click", async (e) => {
     }
   }
 });
+
 
 
 
