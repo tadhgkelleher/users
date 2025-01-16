@@ -264,63 +264,68 @@
             }
         }
 
-        // Function to load all saved graphs
-        async function loadAllSavedGraphs() {
-            const graphsContainer = document.getElementById('graphs-container');
-            const graphsList = document.createElement('ul');
-            graphsList.classList.add('graph-list');
-            
-            try {
-                const querySnapshot = await getDocs(collection(db, "savedGraphs"));
+       // Function to load all saved graphs
+async function loadAllSavedGraphs() {
+    const graphsContainer = document.getElementById('graphs-container');
+    const graphsList = document.createElement('ul');
+    graphsList.classList.add('graph-list');
+    
+    try {
+        const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-                if (querySnapshot.empty) {
-                    const noGraphs = document.createElement('div');
-                    noGraphs.classList.add('no-graphs');
-                    noGraphs.textContent = 'No saved graphs found.';
-                    graphsContainer.appendChild(noGraphs);
-                    return;
-                }
-
-                querySnapshot.forEach((doc) => {
-                    const graphData = doc.data();
-                    const listItem = document.createElement('li');
-                    const graphLink = document.createElement('a');
-                    graphLink.href = '#';
-                    graphLink.textContent = graphData.graphTitle || "Untitled Graph";
-
-                    // Display creator's name
-                    const creatorName = graphData.creatorName || 'Unknown User';
-                    const creatorLabel = document.createElement('span');
-                    creatorLabel.textContent = ` by ${creatorName}`;
-                    creatorLabel.style.fontSize = '14px';
-                    creatorLabel.style.color = '#16A085';
-                    graphLink.appendChild(creatorLabel);
-
-                    graphLink.onclick = (e) => {
-                        e.preventDefault();
-                        openModal(graphData);
-                    };
-
-                    // Delete button for the graph
-                    const deleteButton = document.createElement('button');
-                    deleteButton.classList.add('delete-btn');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.onclick = () => deleteGraph(doc.id);
-
-                    listItem.appendChild(graphLink);
-                    listItem.appendChild(deleteButton);
-                    graphsList.appendChild(listItem);
-                });
-
-                graphsContainer.appendChild(graphsList);
-            } catch (error) {
-                console.error("Error loading graphs:", error);
-                const errorMessage = document.createElement('div');
-                errorMessage.classList.add('no-graphs');
-                errorMessage.textContent = 'Error loading graphs. Please try again later.';
-                graphsContainer.appendChild(errorMessage);
-            }
+        if (querySnapshot.empty) {
+            const noGraphs = document.createElement('div');
+            noGraphs.classList.add('no-graphs');
+            noGraphs.textContent = 'No saved graphs found.';
+            graphsContainer.appendChild(noGraphs);
+            return;
         }
+
+        querySnapshot.forEach((doc) => {
+            const graphData = doc.data();
+            const listItem = document.createElement('li');
+            const graphLink = document.createElement('a');
+            graphLink.href = '#';
+
+            // Display the graph title, default to 'Untitled Graph' if not available
+            const graphTitle = graphData.graphTitle || "Untitled Graph";
+            graphLink.textContent = graphTitle;
+
+            // Display the creator's name, default to 'Unknown User' if not available
+            const creatorName = graphData.creatorName || 'Unknown User';
+            const creatorLabel = document.createElement('span');
+            creatorLabel.textContent = ` by ${creatorName}`;
+            creatorLabel.style.fontSize = '14px';
+            creatorLabel.style.color = '#16A085';
+            graphLink.appendChild(creatorLabel);
+
+            // Open modal with the graph data
+            graphLink.onclick = (e) => {
+                e.preventDefault();
+                openModal(graphData);
+            };
+
+            // Create delete button for the graph
+            const deleteButton = document.createElement('button');
+            deleteButton.classList.add('delete-btn');
+            deleteButton.textContent = 'Delete';
+            deleteButton.onclick = () => deleteGraph(doc.id);
+
+            listItem.appendChild(graphLink);
+            listItem.appendChild(deleteButton);
+            graphsList.appendChild(listItem);
+        });
+
+        graphsContainer.appendChild(graphsList);
+    } catch (error) {
+        console.error("Error loading graphs:", error);
+        const errorMessage = document.createElement('div');
+        errorMessage.classList.add('no-graphs');
+        errorMessage.textContent = 'Error loading graphs. Please try again later.';
+        graphsContainer.appendChild(errorMessage);
+    }
+}
+
 
         // Load all saved graphs when the page loads
         document.addEventListener('DOMContentLoaded', loadAllSavedGraphs);
