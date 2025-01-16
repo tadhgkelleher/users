@@ -525,9 +525,6 @@ async function saveGraph() {
 }
 
 
-
-import { query, collection, where, limit, startAfter, getDocs, writeBatch } from "firebase/firestore"; // Firestore v9+ imports
-
 async function clearGraphAndDeleteObjects() {
   const messageDiv = document.getElementById("message");
   messageDiv.textContent = '';
@@ -595,7 +592,7 @@ async function clearGraphAndDeleteObjects() {
     const totalDeleted = await deleteNextBatch();
 
     // Success message with count
-    messageDiv.textContent = `Graph cleared and ${totalDeleted} objects deleted successfully!`;
+    messageDiv.textContent = Graph cleared and ${totalDeleted} objects deleted successfully!;
     messageDiv.className = "success";
 
     // Reload the graph with error handling
@@ -631,7 +628,6 @@ document.getElementById("clear-graph").addEventListener("click", async (e) => {
     }
   }
 });
-
 
 async function loadGraph(file) {
   try {
