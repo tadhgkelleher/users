@@ -645,7 +645,7 @@ async function clearGraphAndDeleteObjects() {
     const totalDeleted = await deleteNextBatch();
 
     // Success message with count
-    messageDiv.textContent = Graph cleared and ${totalDeleted} objects deleted successfully!;
+    messageDiv.textContent = `Graph cleared and ${totalDeleted} objects deleted successfully!`;
     messageDiv.className = "success";
 
     // Reload the graph with error handling
@@ -681,7 +681,6 @@ document.getElementById("clear-graph").addEventListener("click", async (e) => {
     }
   }
 });
-
 
 
 
