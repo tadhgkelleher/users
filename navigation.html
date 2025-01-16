@@ -287,6 +287,15 @@
                     const graphLink = document.createElement('a');
                     graphLink.href = '#';
                     graphLink.textContent = graphData.graphTitle || "Untitled Graph";
+
+                    // Display creator's name
+                    const creatorName = graphData.creatorName || 'Unknown User';
+                    const creatorLabel = document.createElement('span');
+                    creatorLabel.textContent = ` by ${creatorName}`;
+                    creatorLabel.style.fontSize = '14px';
+                    creatorLabel.style.color = '#16A085';
+                    graphLink.appendChild(creatorLabel);
+
                     graphLink.onclick = (e) => {
                         e.preventDefault();
                         openModal(graphData);
