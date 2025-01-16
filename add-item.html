@@ -159,6 +159,7 @@
   
   <input type="file" id="load-file" accept=".json" style="display: none;">
  
+<button id="clear-graph" class="secondary-button">Clear Graph</button>
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
@@ -522,6 +523,50 @@ async function saveGraph() {
     console.error("Error saving graph:", error);
   }
 }
+// Clear Graph and Delete All Objects function
+async function clearGraphAndDeleteObjects() {
+  const messageDiv = document.getElementById("message");
+  messageDiv.textContent = '';
+  
+  const user = auth.currentUser;
+  if (!user) {
+    messageDiv.textContent = "You must be logged in to clear the graph and delete objects.";
+    messageDiv.className = "error";
+    return;
+  }
+
+  try {
+    // Clear Cytoscape elements
+    cy.elements().remove();
+
+    // Delete all objects from Firestore
+    const objectsQuery = query(
+      collection(db, "objects"),
+      where("user", "==", user.displayName)
+    );
+    const querySnapshot = await getDocs(objectsQuery);
+
+    const batch = writeBatch(db);
+    querySnapshot.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+
+    messageDiv.textContent = "Graph cleared and all objects deleted successfully!";
+    messageDiv.className = "success";
+
+    // Reload the graph (reset to initial state)
+    loadObjects(user.displayName);
+  } catch (error) {
+    console.error("Error clearing graph and deleting objects: ", error);
+    messageDiv.textContent = "Error clearing graph and deleting objects: " + error.message;
+    messageDiv.className = "error";
+  }
+}
+
+// Add event listener for the clear graph button
+document.getElementById("clear-graph").addEventListener("click", clearGraphAndDeleteObjects);
 
 async function loadGraph(file) {
   try {
