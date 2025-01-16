@@ -1,3 +1,8 @@
+Share
+
+
+You said:
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -70,7 +75,7 @@
         }
         /* Modal Styles */
         #data-modal {
-            display: none; /* Initially hidden */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -151,54 +156,66 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Function to open modal and display raw data
-        function openModal(data) {
-            const modal = document.getElementById('data-modal');
-            const dataContainer = document.getElementById('graph-data');
-            const graphContainer = document.getElementById('graph-container');
-            
-            dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
-            graphContainer.innerHTML = ''; // Clear previous content
+       // Function to open modal and display graph only
+function openModal(data) {
+    const modal = document.getElementById('data-modal');
+    const graphContainer = document.getElementById('graph-container');
+    
+    graphContainer.innerHTML = ''; // Clear previous content
 
-            // Initialize Cytoscape.js with the graph data
-            const cy = cytoscape({
-                container: graphContainer,
+    // Initialize Cytoscape.js with the graph data
+    const cy = cytoscape({
+        container: graphContainer,
 
-                elements: data.nodes.concat(data.edges), // Combine nodes and edges
-
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'background-color': '#16A085',
-                            'label': 'data(id)',
-                            'color': '#fff'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': '#16A085'
-                        }
-                    }
-                ],
-
-                layout: {
-                    name: 'circle', // Set the layout to 'circle'
-                    animate: true
+        elements: [
+            // Nodes from the data
+            ...data.nodes.map(node => ({
+                data: {
+                    id: node.data.id,
+                    label: node.data.objectName || node.data.id  // Use objectName as label
                 }
-            });
+            })),
+            // Edges from the data (if any)
+            ...data.edges.map(edge => ({
+                data: {
+                    source: edge.source,
+                    target: edge.target
+                }
+            }))
+        ],
 
-            modal.style.display = 'block'; // Show the modal
+        style: [
+            {
+                selector: 'node',
+                style: {
+                    'background-color': '#16A085',
+                    'label': 'data(label)', // Display the label for each node
+                    'color': '#fff'
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'width': 2,
+                    'line-color': '#16A085'
+                }
+            }
+        ],
+
+        layout: {
+            name: 'circle', // Use the circular layout
+            padding: 10 // Optional: adds some padding around the circle
         }
+    });
+
+    modal.style.display = 'block'; // Show the modal with the graph
+}
+
 
         // Function to close the modal
         function closeModal() {
             const modal = document.getElementById('data-modal');
-            if (modal) {
-                modal.style.display = 'none'; // Hide the modal
-            }
+            modal.style.display = 'none';
         }
 
         // Function to load all saved graphs from all users
@@ -229,14 +246,6 @@
 
         // Load all saved graphs when the page loads
         loadAllSavedGraphs();
-
-        // Close modal if clicked outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById('data-modal');
-            if (event.target == modal) {
-                closeModal();
-            }
-        }
     </script>
 
 </body>
