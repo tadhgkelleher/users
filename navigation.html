@@ -152,47 +152,63 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Function to open modal and display raw data
-        function openModal(data) {
-            const modal = document.getElementById('data-modal');
-            const dataContainer = document.getElementById('graph-data');
-            const graphContainer = document.getElementById('graph-container');
-            
-            dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
-            graphContainer.innerHTML = ''; // Clear previous content
+       // Function to open modal and display raw data
+function openModal(data) {
+    const modal = document.getElementById('data-modal');
+    const dataContainer = document.getElementById('graph-data');
+    const graphContainer = document.getElementById('graph-container');
+    
+    dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
+    graphContainer.innerHTML = ''; // Clear previous content
 
-            // Initialize Cytoscape.js with the graph data
-            const cy = cytoscape({
-                container: graphContainer,
+    // Initialize Cytoscape.js with the graph data
+    const cy = cytoscape({
+        container: graphContainer,
 
-                elements: data.graphElements, // Assuming 'graphElements' holds nodes and edges
-
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'background-color': '#16A085',
-                            'label': 'data(id)',
-                            'color': '#fff'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': '#16A085'
-                        }
-                    }
-                ],
-
-                layout: {
-                    name: 'grid',
-                    rows: 1
+        elements: [
+            // Nodes from the data
+            ...data.nodes.map(node => ({
+                data: {
+                    id: node.data.id,
+                    label: node.data.objectName || node.data.id  // Use objectName as label
                 }
-            });
+            })),
+            // Edges from the data (if any)
+            ...data.edges.map(edge => ({
+                data: {
+                    source: edge.source,
+                    target: edge.target
+                }
+            }))
+        ],
 
-            modal.style.display = 'block';
+        style: [
+            {
+                selector: 'node',
+                style: {
+                    'background-color': '#16A085',
+                    'label': 'data(label)', // Display the label for each node
+                    'color': '#fff'
+                }
+            },
+            {
+                selector: 'edge',
+                style: {
+                    'width': 2,
+                    'line-color': '#16A085'
+                }
+            }
+        ],
+
+        layout: {
+            name: 'circle', // Use the circular layout
+            padding: 10 // Optional: adds some padding around the circle
         }
+    });
+
+    modal.style.display = 'block';
+}
+
 
         // Function to close the modal
         function closeModal() {
