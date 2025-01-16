@@ -216,6 +216,9 @@
             graphsList.classList.add('graph-list');
             const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
+            // Log the data to see what is retrieved from Firebase
+            console.log("Firebase Query Snapshot:", querySnapshot);
+
             if (querySnapshot.empty) {
                 graphsContainer.innerHTML += '<p>No saved graphs found.</p>';
                 return;
@@ -223,10 +226,12 @@
 
             querySnapshot.forEach((doc) => {
                 const graphData = doc.data();
+                console.log("Graph Data:", graphData); // Log each graph data for debugging
+                
                 const listItem = document.createElement('li');
                 const graphLink = document.createElement('a');
                 graphLink.href = '#'; // Disable navigation
-                graphLink.textContent = graphData.graphTitle || "Untitled Graph";
+                graphLink.textContent = graphData.graphTitle || "Untitled Graph"; // Ensure title is displayed
                 graphLink.onclick = () => openModal(graphData); // Show raw data and graph on click
                 listItem.appendChild(graphLink);
                 graphsList.appendChild(listItem);
