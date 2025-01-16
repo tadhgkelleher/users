@@ -152,13 +152,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-       // Function to open modal and display raw data
+// Function to open modal and display graph only
 function openModal(data) {
     const modal = document.getElementById('data-modal');
-    const dataContainer = document.getElementById('graph-data');
     const graphContainer = document.getElementById('graph-container');
     
-    dataContainer.textContent = JSON.stringify(data, null, 2); // Format JSON nicely
     graphContainer.innerHTML = ''; // Clear previous content
 
     // Initialize Cytoscape.js with the graph data
@@ -206,8 +204,9 @@ function openModal(data) {
         }
     });
 
-    modal.style.display = 'block';
+    modal.style.display = 'block'; // Show the modal with the graph
 }
+
 
 
         // Function to close the modal
