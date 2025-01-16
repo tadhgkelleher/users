@@ -577,7 +577,16 @@ async function saveGraph() {
         alert("Please select a connection.");
       }
     });
-    // Clear the graph and delete all objects from Firebase
+ 
+
+
+    // Make sure Firestore is initialized
+import { deleteDoc, doc, getFirestore, query, collection, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+// Initialize Firestore
+const db = getFirestore();
+
+// Clear the graph and delete all objects from Firebase
 document.getElementById("clear-graph").addEventListener("click", async () => {
   const messageDiv = document.getElementById("message");
   const user = auth.currentUser;
@@ -616,6 +625,7 @@ document.getElementById("clear-graph").addEventListener("click", async () => {
     messageDiv.className = "error";
   }
 });
+
 
   </script>
 </body>
