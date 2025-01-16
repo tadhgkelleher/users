@@ -578,54 +578,37 @@ async function saveGraph() {
       }
     });
 
-    import { getFirestore, doc, deleteDoc, writeBatch, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import { getFirestore, doc, writeBatch, collection, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
 // Initialize Firestore (only needs to be done once)
 const db = getFirestore();
 
-// Clear Graph and Delete All Objects Handler
-document.getElementById("clear-graph").addEventListener("click", async () => {
-  const messageDiv = document.getElementById("message");
-  messageDiv.textContent = '';
-
-  const user = auth.currentUser;
-  if (!user) {
-    messageDiv.textContent = "You must be logged in to clear the graph.";
-    messageDiv.className = "error";
-    return;
-  }
+// Function to clear the graph by deleting documents in a collection
+async function clearGraph() {
+  const batch = writeBatch(db);
+  const graphCollectionRef = collection(db, "graphCollection");
 
   try {
-    // Clear all elements in the Cytoscape graph
-    cy.elements().remove();
-
-    // Optionally, delete objects from the database (if required)
-    const objectsQuery = query(
-      collection(db, "objects"),
-      where("user", "==", user.displayName)
-    );
-    const objectsSnapshot = await getDocs(objectsQuery);
-
-    // Loop through the objects and delete them
-    const batch = writeBatch(db);
-    objectsSnapshot.forEach((doc) => {
-      batch.delete(doc.ref);
+    // Fetch documents in the graph collection
+    const querySnapshot = await getDocs(graphCollectionRef);
+    querySnapshot.forEach((docSnapshot) => {
+      // Add delete operations to the batch
+      const docRef = doc(db, "graphCollection", docSnapshot.id);
+      batch.delete(docRef);
     });
 
+    // Commit the batch
     await batch.commit();
-
-    // Provide feedback to the user
-    messageDiv.textContent = "Graph cleared and objects deleted successfully!";
-    messageDiv.className = "success";
-    
-    // Reload the graph
-    loadObjects(user.displayName);
+    console.log("Graph cleared successfully!");
   } catch (error) {
-    console.error("Error clearing graph: ", error);
-    messageDiv.textContent = "Error clearing graph: " + error.message;
-    messageDiv.className = "error";
+    console.error("Error clearing graph:", error);
   }
-});
+}
+
+// Event listener for the "Clear Graph" button
+const clearGraphButton = document.getElementById('clearGraphButton');
+clearGraphButton.addEventListener('click', clearGraph);  // Clear the graph when the button is clicked
+
 
 
   </script>
