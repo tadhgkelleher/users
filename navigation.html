@@ -85,31 +85,19 @@
         .delete-btn:hover {
             background-color: #C0392B;
         }
-    #data-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 9999;
-    color: white;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-        #graph-container {
-    width: 80%; /* Adjust this width based on your preference */
-    height: 80%; /* Adjust this height based on your preference */
-    background: rgba(0, 0, 0, 0.5);
-    border: 2px solid #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        #data-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
         #data-modal pre {
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
@@ -132,7 +120,13 @@
         #data-modal button:hover {
             background: #1abc9c;
         }
-      
+        #graph-container {
+            width: 100%;
+            height: 500px;
+            margin: 20px auto;
+            border: 2px solid #fff;
+            background: rgba(0, 0, 0, 0.5);
+        }
         .modal-content {
             position: relative;
             padding-top: 60px;
