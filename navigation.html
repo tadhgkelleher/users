@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Users' Saved Graphs</title>
     <style>
-        /* Existing styles */
+        /* Previous styles remain the same */
         body {
             margin: 0;
             padding: 0;
@@ -85,6 +85,8 @@
         .delete-btn:hover {
             background-color: #C0392B;
         }
+        
+        /* Updated modal styles */
         #data-modal {
             display: none;
             position: fixed;
@@ -95,15 +97,27 @@
             background: rgba(0, 0, 0, 0.9);
             z-index: 9999;
             color: white;
-            padding: 20px;
             overflow-y: auto;
         }
-        #data-modal pre {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+        .modal-content {
+            position: relative;
+            max-width: 90%;
+            margin: 0 auto;
+            padding: 60px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #graph-container {
+            width: 80%;
+            height: 70vh;
+            margin: 20px auto;
+            border: 2px solid #fff;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #data-modal button {
             position: absolute;
@@ -120,16 +134,15 @@
         #data-modal button:hover {
             background: #1abc9c;
         }
-        #graph-container {
+        #data-modal pre {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
             width: 100%;
-            height: 500px;
+            max-width: 90%;
             margin: 20px auto;
-            border: 2px solid #fff;
-            background: rgba(0, 0, 0, 0.5);
-        }
-        .modal-content {
-            position: relative;
-            padding-top: 60px;
         }
         .no-graphs {
             background: rgba(0, 0, 0, 0.7);
