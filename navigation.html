@@ -85,22 +85,19 @@
         .delete-btn:hover {
             background-color: #C0392B;
         }
-#data-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    z-index: 9999;
-    color: white;
-    padding: 20px;
-    overflow-y: auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+        #data-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+        }
         #data-modal pre {
             background: rgba(255, 255, 255, 0.1);
             padding: 15px;
@@ -305,7 +302,7 @@ async function loadAllSavedGraphs() {
             // Display the creator's name, default to 'Unknown User' if not available
             const creatorName = graphData.creatorName || 'Unknown User';
             const creatorLabel = document.createElement('span');
-            creatorLabel.textContent =  by ${creatorName};
+            creatorLabel.textContent = ` by ${creatorName}`;
             creatorLabel.style.fontSize = '14px';
             creatorLabel.style.color = '#16A085';
             graphLink.appendChild(creatorLabel);
