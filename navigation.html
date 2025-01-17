@@ -310,14 +310,14 @@
                     return;
                 }
 
-         querySnapshot.forEach((doc) => {
+        querySnapshot.forEach((doc) => {
     const graphData = doc.data();
     const listItem = document.createElement('li');
     const graphLink = document.createElement('a');
     graphLink.href = '#';
 
-    // Check if graphData.Title is defined and fallback to "Untitled Graph" if not
-    const graphTitle = graphData.Title || "Untitled Graph";
+    // Access the 'title' field instead of 'Title'
+    const graphTitle = graphData.title || "Untitled Graph";
     graphLink.textContent = graphTitle;
 
     const creatorName = graphData.user || 'Unknown User';
@@ -331,6 +331,9 @@
         e.preventDefault();
         openModal(graphData);
     };
+
+
+
                     const deleteButton = document.createElement('button');
                     deleteButton.classList.add('delete-btn');
                     deleteButton.textContent = 'Delete';
