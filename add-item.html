@@ -16,11 +16,13 @@
       margin: 0;
       padding: 20px;
       background-color: #f4f4f4;
+      flex-wrap: wrap; /* Allow wrapping on mobile */
     }
 
     main {
       flex: 1;
-      max-width: 70%; /* Adjust this to control the width of the main content */
+      max-width: 70%;
+      margin-right: 20px; /* Space between main content and sidebar */
     }
 
     h2 {
@@ -137,7 +139,7 @@
     }
 
     .sidebar {
-      width: 25%; /* Adjusted width of sidebar */
+      width: 25%; /* Sidebar width */
       background-color: #fff;
       padding: 20px;
       border-radius: 8px;
@@ -169,6 +171,23 @@
       background-color: #e9ecef;
     }
 
+    /* Media Queries for Mobile */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column; /* Stack the main content and sidebar */
+        align-items: center;
+      }
+
+      .sidebar {
+        width: 100%; /* Make the sidebar full width on mobile */
+        margin-top: 20px;
+      }
+
+      main {
+        max-width: 100%;
+        margin-right: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -211,7 +230,6 @@
       <!-- The list of graph titles will be dynamically inserted here -->
     </div>
   </div>
-
 
 
   <!-- Firebase SDK Scripts -->
