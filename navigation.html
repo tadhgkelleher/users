@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<!-- Previous head and style content remains the same -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Users' Saved Graphs</title>
     <style>
-        /* Previous styles remain the same */
+        /* All previous styles remain exactly the same */
         body {
             margin: 0;
             padding: 0;
@@ -85,8 +86,6 @@
         .delete-btn:hover {
             background-color: #C0392B;
         }
-        
-        /* Updated modal styles */
         #data-modal {
             display: none;
             position: fixed;
@@ -189,37 +188,32 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Make closeModal function available globally
         window.closeModal = function() {
             const modal = document.getElementById('data-modal');
             modal.style.display = 'none';
         };
 
-        // Add event listener for close button
         document.getElementById('close-modal-btn').addEventListener('click', window.closeModal);
 
-        // Function to open modal and display graph
         function openModal(data) {
             const modal = document.getElementById('data-modal');
             const graphContainer = document.getElementById('graph-container');
             
             graphContainer.innerHTML = '';
 
-            // Initialize Cytoscape.js with the graph data
+            // Initialize Cytoscape with updated layout options
             const cy = cytoscape({
                 container: graphContainer,
                 elements: [
-                    // Remove duplicate nodes and blank nodes
                     ...data.nodes
                         .filter((value, index, self) =>
-                            index === self.findIndex((t) => t.data.id === value.data.id && value.data.objectName !== '')) // Ensure no duplicates or blank nodes
+                            index === self.findIndex((t) => t.data.id === value.data.id && value.data.objectName !== ''))
                         .map(node => ({
                             data: {
                                 id: node.data.id,
                                 label: node.data.objectName || node.data.id
                             }
                         })),
-                    // Remove edges without proper source and target
                     ...data.edges
                         .filter(edge => edge.source && edge.target)
                         .map(edge => ({
@@ -254,10 +248,29 @@
                 ],
                 layout: {
                     name: 'circle',
+                    fit: true, // Ensures the graph fits in the viewport
                     padding: 50,
                     animate: true,
-                    animationDuration: 500
-                }
+                    animationDuration: 500,
+                    boundingBox: { // Centers the graph in the container
+                        x1: 0,
+                        y1: 0,
+                        w: graphContainer.offsetWidth,
+                        h: graphContainer.offsetHeight
+                    }
+                },
+                // Add these options to ensure proper centering
+                minZoom: 0.5,
+                maxZoom: 2,
+                wheelSensitivity: 0.2,
+                zoom: 1,
+                pan: { x: graphContainer.offsetWidth / 2, y: graphContainer.offsetHeight / 2 }
+            });
+
+            // Ensure proper centering after layout is done
+            cy.on('layoutstop', function() {
+                cy.center();
+                cy.fit();
             });
 
             // Add zoom controls
@@ -266,92 +279,80 @@
                 cy.fit(node, 50);
             });
 
-            // Center the graph
-            cy.center();
-
-            // Display the modal
             modal.style.display = 'block';
         }
 
-        // Function to delete a graph from the Firestore database
+        // Rest of the code remains the same
         async function deleteGraph(graphId) {
             try {
                 await deleteDoc(doc(db, "savedGraphs", graphId));
                 alert('Graph deleted successfully!');
-                loadAllSavedGraphs(); // Reload the graphs after deletion
+                loadAllSavedGraphs();
             } catch (error) {
                 console.error("Error deleting graph:", error);
                 alert('Failed to delete the graph. Please try again.');
             }
         }
 
-       // Function to load all saved graphs
-async function loadAllSavedGraphs() {
-    const graphsContainer = document.getElementById('graphs-container');
-    const graphsList = document.createElement('ul');
-    graphsList.classList.add('graph-list');
-    
-    try {
-        const querySnapshot = await getDocs(collection(db, "savedGraphs"));
+        async function loadAllSavedGraphs() {
+            const graphsContainer = document.getElementById('graphs-container');
+            const graphsList = document.createElement('ul');
+            graphsList.classList.add('graph-list');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-        if (querySnapshot.empty) {
-            const noGraphs = document.createElement('div');
-            noGraphs.classList.add('no-graphs');
-            noGraphs.textContent = 'No saved graphs found.';
-            graphsContainer.appendChild(noGraphs);
-            return;
+                if (querySnapshot.empty) {
+                    const noGraphs = document.createElement('div');
+                    noGraphs.classList.add('no-graphs');
+                    noGraphs.textContent = 'No saved graphs found.';
+                    graphsContainer.appendChild(noGraphs);
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const graphData = doc.data();
+                    const listItem = document.createElement('li');
+                    const graphLink = document.createElement('a');
+                    graphLink.href = '#';
+
+                    const graphTitle = graphData.graphTitle || "Untitled Graph";
+                    graphLink.textContent = graphTitle;
+
+                    const creatorName = graphData.creatorName || 'Unknown User';
+                    const creatorLabel = document.createElement('span');
+                    creatorLabel.textContent = ` by ${creatorName}`;
+                    creatorLabel.style.fontSize = '14px';
+                    creatorLabel.style.color = '#16A085';
+                    graphLink.appendChild(creatorLabel);
+
+                    graphLink.onclick = (e) => {
+                        e.preventDefault();
+                        openModal(graphData);
+                    };
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteGraph(doc.id);
+
+                    listItem.appendChild(graphLink);
+                    listItem.appendChild(deleteButton);
+                    graphsList.appendChild(listItem);
+                });
+
+                graphsContainer.appendChild(graphsList);
+            } catch (error) {
+                console.error("Error loading graphs:", error);
+                const errorMessage = document.createElement('div');
+                errorMessage.classList.add('no-graphs');
+                errorMessage.textContent = 'Error loading graphs. Please try again later.';
+                graphsContainer.appendChild(errorMessage);
+            }
         }
 
-        querySnapshot.forEach((doc) => {
-            const graphData = doc.data();
-            const listItem = document.createElement('li');
-            const graphLink = document.createElement('a');
-            graphLink.href = '#';
-
-            // Display the graph title, default to 'Untitled Graph' if not available
-            const graphTitle = graphData.graphTitle || "Untitled Graph";
-            graphLink.textContent = graphTitle;
-
-            // Display the creator's name, default to 'Unknown User' if not available
-            const creatorName = graphData.creatorName || 'Unknown User';
-            const creatorLabel = document.createElement('span');
-            creatorLabel.textContent = ` by ${creatorName}`;
-            creatorLabel.style.fontSize = '14px';
-            creatorLabel.style.color = '#16A085';
-            graphLink.appendChild(creatorLabel);
-
-            // Open modal with the graph data
-            graphLink.onclick = (e) => {
-                e.preventDefault();
-                openModal(graphData);
-            };
-
-            // Create delete button for the graph
-            const deleteButton = document.createElement('button');
-            deleteButton.classList.add('delete-btn');
-            deleteButton.textContent = 'Delete';
-            deleteButton.onclick = () => deleteGraph(doc.id);
-
-            listItem.appendChild(graphLink);
-            listItem.appendChild(deleteButton);
-            graphsList.appendChild(listItem);
-        });
-
-        graphsContainer.appendChild(graphsList);
-    } catch (error) {
-        console.error("Error loading graphs:", error);
-        const errorMessage = document.createElement('div');
-        errorMessage.classList.add('no-graphs');
-        errorMessage.textContent = 'Error loading graphs. Please try again later.';
-        graphsContainer.appendChild(errorMessage);
-    }
-}
-
-
-        // Load all saved graphs when the page loads
         document.addEventListener('DOMContentLoaded', loadAllSavedGraphs);
 
-        // Add keyboard support for closing modal
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 window.closeModal();
