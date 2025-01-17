@@ -11,56 +11,65 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      margin: 0;
       padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    main {
+      flex: 1;
+      max-width: 800px;
     }
 
     h2 {
       color: #333;
+      margin-bottom: 20px;
+      font-size: 1.8em;
     }
 
     form {
       margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
+    input[type="text"], select {
+      padding: 12px;
       font-size: 16px;
-      margin-bottom: 10px;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 8px;
     }
 
     button {
       background-color: #4CAF50;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       font-size: 16px;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
       background-color: #45a049;
     }
 
-    .error {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 10px;
+    .error, .success {
+      padding: 15px;
+      border-radius: 8px;
       margin: 10px 0;
-      border-radius: 5px;
+      font-size: 1.1em;
+      color: #721c24;
+      background-color: #f8d7da;
     }
 
     .success {
       background-color: #d4edda;
       color: #155724;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
     }
 
     #objects-list {
@@ -70,11 +79,12 @@
     }
 
     #objects-list li {
-      padding: 10px;
+      padding: 12px;
       margin: 5px 0;
-      background-color: #f8f9fa;
-      border-radius: 5px;
+      background-color: #fff;
+      border-radius: 8px;
       cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     #objects-list li:hover {
@@ -86,7 +96,8 @@
       width: 100%;
       border: 1px solid #ccc;
       margin-top: 20px;
-      border-radius: 5px;
+      border-radius: 8px;
+      background-color: #fff;
     }
 
     #connection-prompt {
@@ -94,33 +105,27 @@
       margin-top: 20px;
       padding: 15px;
       background-color: #f8f9fa;
-      border-radius: 5px;
-    }
-
-    select {
-      padding: 10px;
-      font-size: 16px;
-      margin-bottom: 10px;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     }
 
     #connection-prompt button {
       background-color: #0074D9;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       color: white;
+      border-radius: 8px;
     }
 
     #connection-prompt button:hover {
       background-color: #006BB3;
     }
 
-     .button-group {
+    .button-group {
       margin-top: 20px;
       display: flex;
       gap: 10px;
+      justify-content: flex-start;
     }
 
     .secondary-button {
@@ -130,38 +135,84 @@
     .secondary-button:hover {
       background-color: #0056b3;
     }
+
+    .sidebar {
+      width: 300px;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .sidebar h3 {
+      font-size: 1.4em;
+      color: #333;
+      margin-bottom: 15px;
+    }
+
+    #graphs-container {
+      margin-top: 15px;
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #graphs-container div {
+      padding: 10px;
+      margin-bottom: 10px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #graphs-container div:hover {
+      background-color: #e9ecef;
+    }
+
   </style>
 </head>
 <body>
-  <h2>Manage Objects</h2>
 
-  <div id="message"></div>
+  <main>
+    <h2>Manage Objects</h2>
 
-  <form id="add-object-form">
-    <input type="text" id="object-name" placeholder="Enter Object Name" required />
-    <button type="submit">Add Object</button>
-  </form>
+    <div id="message"></div>
 
-  <h3>Your Objects:</h3>
-  <ul id="objects-list"></ul>
-  <div id="connection-prompt">
-    <h3>Add Connection</h3>
-    <select id="connection-dropdown">
-      <option value="">Select an Object</option>
-    </select>
-    <button id="create-connection">Create Connection</button>
+    <form id="add-object-form">
+      <input type="text" id="object-name" placeholder="Enter Object Name" required />
+      <button type="submit">Add Object</button>
+    </form>
+
+    <h3>Your Objects:</h3>
+    <ul id="objects-list"></ul>
+
+    <div id="connection-prompt">
+      <h3>Add Connection</h3>
+      <select id="connection-dropdown">
+        <option value="">Select an Object</option>
+      </select>
+      <button id="create-connection">Create Connection</button>
+    </div>
+
+    <div id="cy"></div>
+
+    <div class="button-group">
+      <button id="save-graph" class="secondary-button">Save Graph</button>
+      <button id="load-graph" class="secondary-button">Load Graph</button>
+    </div>
+
+    <input type="file" id="load-file" accept=".json" style="display: none;">
+    <button id="clear-graph" class="secondary-button">Clear Graph and Delete All Objects</button>
+  </main>
+
+  <div class="sidebar">
+    <h3>Graphs</h3>
+    <div id="graphs-container">
+      <!-- The list of graph titles will be dynamically inserted here -->
+    </div>
   </div>
-  <div id="cy"></div>
-   <div class="button-group">
-    <button id="save-graph" class="secondary-button">Save Graph</button>
-    <button id="load-graph" class="secondary-button">Load Graph</button>
-  </div>
-  
-  <input type="file" id="load-file" accept=".json" style="display: none;">
 
-  <button id="clear-graph" class="secondary-button">Clear Graph and Delete All Objects</button>
 
- 
 
   <!-- Firebase SDK Scripts -->
   <script type="module">
