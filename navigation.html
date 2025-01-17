@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Users' Saved Graphs</title>
     <style>
-        /* Existing styles */
         body {
             margin: 0;
             padding: 0;
@@ -97,6 +96,9 @@
             color: white;
             padding: 20px;
             overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
         #data-modal pre {
             background: rgba(255, 255, 255, 0.1);
@@ -121,15 +123,23 @@
             background: #1abc9c;
         }
         #graph-container {
-            width: 80%; /* Adjust width as needed */
-            height: 500px; /* Adjust height as needed */
-            margin: 20px auto; /* Centers the container horizontally */
+            width: 80%;
+            height: 500px;
+            margin: 20px auto;
             border: 2px solid #fff;
             background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
         .modal-content {
             position: relative;
             padding-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
         .no-graphs {
             background: rgba(0, 0, 0, 0.7);
@@ -199,7 +209,7 @@
                     // Remove duplicate nodes and blank nodes
                     ...data.nodes
                         .filter((value, index, self) =>
-                            index === self.findIndex((t) => t.data.id === value.data.id && value.data.objectName !== '')) // Ensure no duplicates or blank nodes
+                            index === self.findIndex((t) => t.data.id === value.data.id && value.data.objectName !== ''))
                         .map(node => ({
                             data: {
                                 id: node.data.id,
@@ -243,8 +253,23 @@
                     name: 'circle',
                     padding: 50,
                     animate: true,
-                    animationDuration: 500
-                }
+                    animationDuration: 500,
+                    fit: true,
+                    centerGraph: true
+                },
+                wheelSensitivity: 0.2,
+                minZoom: 0.1,
+                maxZoom: 3,
+            });
+
+            // Center and fit the graph after initialization
+            cy.ready(() => {
+                cy.center();
+                cy.fit();
+                cy.zoom({
+                    level: 0.8,
+                    position: cy.center()
+                });
             });
 
             // Add zoom controls
@@ -252,9 +277,6 @@
                 const node = evt.target;
                 cy.fit(node, 50);
             });
-
-            // Center the graph
-            cy.center();
 
             // Display the modal
             modal.style.display = 'block';
@@ -277,25 +299,68 @@
             const graphsContainer = document.getElementById('graphs-container');
             const graphsList = document.createElement('ul');
             graphsList.classList.add('graph-list');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "savedGraphs"));
 
-            const querySnapshot = await getDocs(collection(db, "savedGraphs"));
-            if (querySnapshot.empty) {
-                graphsContainer.innerHTML = '<div class="no-graphs">No saved graphs available.</div>';
-            } else {
+                if (querySnapshot.empty) {
+                    const noGraphs = document.createElement('div');
+                    noGraphs.classList.add('no-graphs');
+                    noGraphs.textContent = 'No saved graphs found.';
+                    graphsContainer.appendChild(noGraphs);
+                    return;
+                }
+
                 querySnapshot.forEach((doc) => {
                     const graphData = doc.data();
                     const listItem = document.createElement('li');
-                    listItem.innerHTML = `
-                        <a href="javascript:void(0)" onclick="openModal(${JSON.stringify(graphData)})">${graphData.name}</a>
-                        <button class="delete-btn" onclick="deleteGraph('${doc.id}')">Delete</button>
-                    `;
+                    const graphLink = document.createElement('a');
+                    graphLink.href = '#';
+
+                    const graphTitle = graphData.graphTitle || "Untitled Graph";
+                    graphLink.textContent = graphTitle;
+
+                    const creatorName = graphData.creatorName || 'Unknown User';
+                    const creatorLabel = document.createElement('span');
+                    creatorLabel.textContent = ` by ${creatorName}`;
+                    creatorLabel.style.fontSize = '14px';
+                    creatorLabel.style.color = '#16A085';
+                    graphLink.appendChild(creatorLabel);
+
+                    graphLink.onclick = (e) => {
+                        e.preventDefault();
+                        openModal(graphData);
+                    };
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.classList.add('delete-btn');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteGraph(doc.id);
+
+                    listItem.appendChild(graphLink);
+                    listItem.appendChild(deleteButton);
                     graphsList.appendChild(listItem);
                 });
+
                 graphsContainer.appendChild(graphsList);
+            } catch (error) {
+                console.error("Error loading graphs:", error);
+                const errorMessage = document.createElement('div');
+                errorMessage.classList.add('no-graphs');
+                errorMessage.textContent = 'Error loading graphs. Please try again later.';
+                graphsContainer.appendChild(errorMessage);
             }
         }
 
-        loadAllSavedGraphs();
+        // Load all saved graphs when the page loads
+        document.addEventListener('DOMContentLoaded', loadAllSavedGraphs);
+
+        // Add keyboard support for closing modal
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                window.closeModal();
+            }
+        });
     </script>
 </body>
 </html>
