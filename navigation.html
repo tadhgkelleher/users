@@ -316,10 +316,10 @@
                     const graphLink = document.createElement('a');
                     graphLink.href = '#';
 
-                    const graphTitle = graphData.graphTitle || "Untitled Graph";
-                    graphLink.textContent = graphTitle;
+                    const graphTitle = graphData.Title || "Untitled Graph";
+                    graphLink.textContent =Title;
 
-                    const creatorName = graphData.creatorName || 'Unknown User';
+                    const creatorName = graphData.user || 'Unknown User';
                     const creatorLabel = document.createElement('span');
                     creatorLabel.textContent = ` by ${creatorName}`;
                     creatorLabel.style.fontSize = '14px';
