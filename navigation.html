@@ -310,27 +310,26 @@
                     return;
                 }
 
-                querySnapshot.forEach((doc) => {
-                    const graphData = doc.data();
-                    const listItem = document.createElement('li');
-                    const graphLink = document.createElement('a');
-                    graphLink.href = '#';
+              querySnapshot.forEach((doc) => {
+    const graphData = doc.data();
+    const listItem = document.createElement('li');
+    const graphLink = document.createElement('a');
+    graphLink.href = '#';
 
-                    const graphTitle = graphData.Title || "Untitled Graph";
-                    graphLink.textContent =Title;
+    const graphTitle = graphData.Title || "Untitled Graph";
+    graphLink.textContent = graphTitle;
 
-                    const creatorName = graphData.user || 'Unknown User';
-                    const creatorLabel = document.createElement('span');
-                    creatorLabel.textContent = ` by ${creatorName}`;
-                    creatorLabel.style.fontSize = '14px';
-                    creatorLabel.style.color = '#16A085';
-                    graphLink.appendChild(creatorLabel);
+    const creatorName = graphData.user || 'Unknown User';
+    const creatorLabel = document.createElement('span');
+    creatorLabel.textContent = ` by ${creatorName}`;
+    creatorLabel.style.fontSize = '14px';
+    creatorLabel.style.color = '#16A085';
+    graphLink.appendChild(creatorLabel);
 
-                    graphLink.onclick = (e) => {
-                        e.preventDefault();
-                        openModal(graphData);
-                    };
-
+    graphLink.onclick = (e) => {
+        e.preventDefault();
+        openModal(graphData);
+    };
                     const deleteButton = document.createElement('button');
                     deleteButton.classList.add('delete-btn');
                     deleteButton.textContent = 'Delete';
