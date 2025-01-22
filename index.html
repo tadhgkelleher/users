@@ -27,13 +27,13 @@
   const db = getFirestore(app);
   const analytics = getAnalytics(app);
 
-  async function createUserProfile(userId, email) {
+  async function createUserProfile(userId, email, photoURL) {
     try {
       const userDocRef = doc(db, "users", userId);
       await setDoc(userDocRef, {
         username: email.split("@")[0], // Use part of email as default username
         email: email,
-        profilePic: "default-profile.png",
+        profilePic: photoURL || "default-profile.png", // Save profile picture (Gravatar or default)
         createdAt: new Date().toISOString(),
       });
       console.log("User profile created in Firestore.");
@@ -55,17 +55,15 @@
       const user = userCredential.user;
 
       // Create Firestore user document
-      await createUserProfile(user.uid, email);
+      await createUserProfile(user.uid, email, "default-profile.png");
 
       message.style.color = "green";
       message.textContent = `Account created! Welcome ${user.email}`;
-      console.log(`User created: ${user.email}`);
 
       window.location.href = "mymandala.html"; // Redirect to profile page
     } catch (error) {
       message.style.color = "red";
       message.textContent = `Error: ${error.message}`;
-      console.error("Error creating user:", error);
     }
   });
 
@@ -80,12 +78,14 @@
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // Get Google profile picture (Gravatar)
+      const photoURL = user.photoURL || "default-profile.png"; // Use Gravatar or default picture
+
       // Create Firestore user document
-      await createUserProfile(user.uid, user.email);
+      await createUserProfile(user.uid, user.email, photoURL);
 
       message.style.color = "green";
       message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
-      console.log("User signed in:", user);
 
       window.location.href = "mymandala.html"; // Redirect to profile page
     } catch (error) {
@@ -106,13 +106,12 @@
       align-items: center;
       height: 100vh;
       margin: 0;
-      background: #000; /* Solid black base */
+      background: #000;
       color: white;
       position: relative;
       overflow: hidden;
     }
 
-    /* Mandala background */
     body::before {
       content: "";
       position: absolute;
@@ -121,14 +120,14 @@
       width: 100%;
       height: 100%;
       background: url('https://storage.googleapis.com/pod_public/1300/123314.jpg') center/cover no-repeat;
-      opacity: 0.1; /* Make it semi-transparent */
+      opacity: 0.1;
       z-index: 1;
     }
 
     .container {
       position: relative;
-      z-index: 2; /* Above the background */
-      background: rgba(0, 0, 0, 0.8); /* Black with slight transparency */
+      z-index: 2;
+      background: rgba(0, 0, 0, 0.8);
       padding: 20px;
       border-radius: 8px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
@@ -175,12 +174,12 @@
       margin-top: 10px;
     }
 
-    /* Company branding */
     .branding {
       margin-top: 10px;
       font-size: 1rem;
       color: #aaa;
     }
+
     .branding span {
       color: white;
       font-weight: bold;
