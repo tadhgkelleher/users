@@ -39,7 +39,7 @@
           message.style.color = 'green';
           message.textContent = `Account created! Welcome ${user.email}`;
           console.log(`User created: ${user.email}`);
-          window.location.href = 'navigation.html';
+          window.location.href = 'mymandala.html';
         })
         .catch((error) => {
           message.style.color = 'red';
@@ -61,7 +61,7 @@
           console.log("User signed in:", user);
           message.style.color = 'green';
           message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
-          window.location.href = 'navigation.html';
+          window.location.href = 'mymandala.html';
         })
         .catch((error) => {
           console.error("Error during Google sign-in:", error.code);
