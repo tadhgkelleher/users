@@ -1,1 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Landing Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .profile {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .profile img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+        }
+        .profile h2 {
+            margin: 0;
+            color: #333;
+        }
+        .invite-form {
+            margin-top: 2rem;
+        }
+        .invite-form input {
+            width: calc(100% - 120px);
+            padding: 0.5rem;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .invite-form button {
+            padding: 0.5rem 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .invite-form button:hover {
+            background-color: #45a049;
+        }
+        .notifications {
+            margin-top: 2rem;
+        }
+        .notification {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Our Social Network</h1>
+    </header>
+    <main>
+        <div class="profile">
+            <img src="default-profile.png" alt="Profile Picture">
+            <h2 id="username">User Name</h2>
+        </div>
 
+        <div class="invite-form">
+            <h3>Invite Friends</h3>
+            <form id="inviteForm">
+                <input type="email" id="inviteEmail" placeholder="Enter email address" required>
+                <button type="submit">Send Invite</button>
+            </form>
+        </div>
+
+        <div class="notifications">
+            <h3>Notifications</h3>
+            <div id="notificationList">
+                <!-- Notifications will be dynamically populated here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase setup (replace with your actual configuration)
+        import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
+
+        const db = getFirestore();
+        const userId = "currentUserId"; // Replace with actual user ID
+
+        document.getElementById("inviteForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("inviteEmail").value;
+            if (email) {
+                try {
+                    await setDoc(doc(db, "invites", email), {
+                        invitedBy: userId,
+                        status: "pending",
+                        timestamp: new Date(),
+                    });
+                    alert("Invite sent successfully!");
+                } catch (error) {
+                    console.error("Error sending invite: ", error);
+                }
+            }
+        });
+
+        // Real-time notifications
+        const notificationList = document.getElementById("notificationList");
+        onSnapshot(doc(db, "users", userId), (doc) => {
+            const data = doc.data();
+            if (data && data.notifications) {
+                notificationList.innerHTML = "";
+                data.notifications.forEach((notification) => {
+                    const div = document.createElement("div");
+                    div.className = "notification";
+                    div.textContent = notification.message;
+                    notificationList.appendChild(div);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
