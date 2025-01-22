@@ -35,6 +35,18 @@
             border-radius: 50%;
             margin-bottom: 1rem;
         }
+        .message {
+            margin-top: 1rem;
+            font-weight: bold;
+            text-align: center;
+            display: none;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
         .invite-form, .notifications {
             margin-top: 2rem;
         }
@@ -65,13 +77,11 @@
         }
     </style>
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-storage.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -82,27 +92,30 @@
             measurementId: "G-TER99X7NBT"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
         const auth = getAuth(app);
 
-        let userId = null; // Dynamically assigned once the user is authenticated
+        let userId = null;
 
         const profilePic = document.getElementById("profilePic");
         const usernameDisplay = document.getElementById("username");
         const profilePicInput = document.getElementById("profilePicInput");
         const uploadBtn = document.getElementById("uploadBtn");
-        const inviteForm = document.getElementById("inviteForm");
-        const inviteEmail = document.getElementById("inviteEmail");
-        const notificationList = document.getElementById("notificationList");
+        const messageDisplay = document.getElementById("message");
 
-        // Load user profile
+        // Function to display a message
+        function displayMessage(type, text) {
+            messageDisplay.textContent = text;
+            messageDisplay.className = `message ${type}`;
+            messageDisplay.style.display = "block";
+        }
+
         async function loadUserProfile() {
             try {
                 if (!userId) {
-                    console.warn("User ID is not available.");
+                    displayMessage("error", "No user is logged in.");
                     return;
                 }
 
@@ -111,91 +124,44 @@
 
                 if (userDoc.exists()) {
                     const userData = userDoc.data();
-                    console.log("User data:", userData); // Debugging log
                     usernameDisplay.textContent = userData.username || "User Name";
                     profilePic.src = userData.profilePic || "default-profile.png";
                 } else {
-                    console.warn("User profile not found in Firestore.");
+                    displayMessage("error", "User profile not found.");
                 }
             } catch (error) {
-                console.error("Error loading user profile:", error);
+                displayMessage("error", `Error loading profile: ${error.message}`);
             }
         }
 
-        // Upload profile picture
         uploadBtn.addEventListener("click", async () => {
             const file = profilePicInput.files[0];
             if (file) {
                 try {
                     const storageRef = ref(storage, `profile_pictures/${userId}`);
-                    console.log("Uploading file:", file.name);
                     await uploadBytes(storageRef, file);
 
                     const downloadURL = await getDownloadURL(storageRef);
-                    console.log("File uploaded successfully. Download URL:", downloadURL);
 
                     const userDocRef = doc(db, "users", userId);
                     await updateDoc(userDocRef, { profilePic: downloadURL });
 
                     profilePic.src = downloadURL;
-                    alert("Profile picture updated successfully!");
+                    displayMessage("success", "Profile picture updated successfully!");
                 } catch (error) {
-                    console.error("Error uploading profile picture:", error);
+                    displayMessage("error", `Error uploading profile picture: ${error.message}`);
                 }
             } else {
-                alert("Please select an image to upload.");
+                displayMessage("error", "Please select an image to upload.");
             }
         });
 
-        // Send invite
-        inviteForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = inviteEmail.value.trim();
-            if (email) {
-                try {
-                    await setDoc(doc(db, "invites", email), {
-                        invitedBy: userId,
-                        status: "pending",
-                        timestamp: new Date(),
-                    });
-                    alert("Invite sent successfully!");
-                    inviteEmail.value = "";
-                } catch (error) {
-                    console.error("Error sending invite:", error);
-                }
-            }
-        });
-
-        // Real-time notifications
-        function listenForNotifications() {
-            if (!userId) {
-                console.warn("Cannot listen for notifications without user ID.");
-                return;
-            }
-
-            onSnapshot(doc(db, "users", userId), (doc) => {
-                const data = doc.data();
-                if (data && data.notifications) {
-                    notificationList.innerHTML = "";
-                    data.notifications.forEach((notification) => {
-                        const div = document.createElement("div");
-                        div.className = "notification";
-                        div.textContent = notification.message;
-                        notificationList.appendChild(div);
-                    });
-                }
-            });
-        }
-
-        // Firebase Auth State Listener
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userId = user.uid;
-                console.log("Logged in user ID:", userId);
                 loadUserProfile();
-                listenForNotifications();
             } else {
-                console.log("No user is logged in.");
+                displayMessage("error", "No user is logged in.");
             }
         });
     </script>
@@ -210,21 +176,7 @@
             <h2 id="username">User Name</h2>
             <input type="file" id="profilePicInput" accept="image/*">
             <button id="uploadBtn">Upload</button>
-        </div>
-
-        <div class="invite-form">
-            <h3>Invite Friends</h3>
-            <form id="inviteForm">
-                <input type="email" id="inviteEmail" placeholder="Enter email address" required>
-                <button type="submit">Send Invite</button>
-            </form>
-        </div>
-
-        <div class="notifications">
-            <h3>Notifications</h3>
-            <div id="notificationList">
-                <!-- Notifications will be dynamically populated here -->
-            </div>
+            <div id="message" class="message"></div>
         </div>
     </main>
 </body>
