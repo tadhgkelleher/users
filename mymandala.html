@@ -47,17 +47,10 @@
         .error {
             color: red;
         }
-        .invite-form, .notifications {
-            margin-top: 2rem;
+        input[type="file"] {
+            margin-top: 1rem;
         }
-        .invite-form input {
-            width: calc(100% - 120px);
-            padding: 0.5rem;
-            margin-right: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .invite-form button {
+        button {
             padding: 0.5rem 1rem;
             background-color: #4CAF50;
             color: white;
@@ -65,15 +58,8 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        .invite-form button:hover {
+        button:hover {
             background-color: #45a049;
-        }
-        .notifications .notification {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #f0f0f0;
         }
     </style>
     <script type="module">
@@ -105,7 +91,7 @@
         const uploadBtn = document.getElementById("uploadBtn");
         const messageDisplay = document.getElementById("message");
 
-        // Function to display a message
+        // Function to display messages
         function displayMessage(type, text) {
             messageDisplay.textContent = text;
             messageDisplay.className = `message ${type}`;
@@ -123,14 +109,27 @@
                 const userDoc = await getDoc(userDocRef);
 
                 if (userDoc.exists()) {
+                    // User profile exists, load the data
                     const userData = userDoc.data();
                     usernameDisplay.textContent = userData.username || "User Name";
                     profilePic.src = userData.profilePic || "default-profile.png";
+                    displayMessage("success", "Profile loaded successfully.");
                 } else {
-                    displayMessage("error", "User profile not found.");
+                    // User profile does not exist, create it
+                    const defaultProfile = {
+                        username: "New User",
+                        profilePic: "default-profile.png",
+                        createdAt: new Date().toISOString(),
+                    };
+
+                    await setDoc(userDocRef, defaultProfile);
+
+                    usernameDisplay.textContent = defaultProfile.username;
+                    profilePic.src = defaultProfile.profilePic;
+                    displayMessage("success", "Profile created and loaded successfully.");
                 }
             } catch (error) {
-                displayMessage("error", `Error loading profile: ${error.message}`);
+                displayMessage("error", `Error loading or creating profile: ${error.message}`);
             }
         }
 
@@ -175,7 +174,7 @@
             <img id="profilePic" src="default-profile.png" alt="Profile Picture">
             <h2 id="username">User Name</h2>
             <input type="file" id="profilePicInput" accept="image/*">
-            <button id="uploadBtn">Upload</button>
+            <button id="uploadBtn">Upload Picture</button>
             <div id="message" class="message"></div>
         </div>
     </main>
