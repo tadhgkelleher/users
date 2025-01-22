@@ -3,204 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Media Landing Page</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <title>User Profile</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --background: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --text-light: #64748b;
-        }
-
-        * {
+        body {
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+            background-color: #f9f9f9;
         }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background);
-            color: var(--text);
-            line-height: 1.6;
-        }
-
         header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            padding: 2rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('/api/placeholder/800/400') center/cover;
-            opacity: 0.1;
-            animation: pulse 4s infinite;
-        }
-
-        header h1 {
+            background-color: #4CAF50;
             color: white;
             text-align: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            position: relative;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem 0;
         }
-
         main {
             max-width: 800px;
-            margin: -3rem auto 2rem;
-            padding: 2rem;
-            position: relative;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-
         .profile {
-            background: var(--card);
-            border-radius: 1rem;
-            padding: 2rem;
             text-align: center;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
-            animation: fadeInUp 1s;
         }
-
         .profile img {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            border: 4px solid var(--primary);
-            padding: 4px;
             margin-bottom: 1rem;
-            transition: transform 0.3s ease;
         }
-
-        .profile img:hover {
-            transform: scale(1.05);
+        .invite-form, .notifications {
+            margin-top: 2rem;
         }
-
-        .profile h2 {
-            color: var(--text);
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .invite-form {
-            background: var(--card);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            animation: fadeInUp 1s 0.2s backwards;
-        }
-
-        .invite-form h3 {
-            color: var(--text);
-            margin-bottom: 1.5rem;
-            font-size: 1.4rem;
-        }
-
-        .invite-form form {
-            display: flex;
-            gap: 1rem;
-        }
-
         .invite-form input {
-            flex: 1;
-            padding: 0.8rem 1rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            outline: none;
+            width: calc(100% - 120px);
+            padding: 0.5rem;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-
-        .invite-form input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-        }
-
         .invite-form button {
-            padding: 0.8rem 1.5rem;
-            background: var(--primary);
+            padding: 0.5rem 1rem;
+            background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
+            border-radius: 4px;
             cursor: pointer;
-            transition: all 0.3s ease;
         }
-
         .invite-form button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
+            background-color: #45a049;
         }
-
-        .notifications {
-            margin-top: 2rem;
-            background: var(--card);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-            animation: fadeInUp 1s 0.4s backwards;
-        }
-
-        .notifications h3 {
-            color: var(--text);
-            margin-bottom: 1.5rem;
-            font-size: 1.4rem;
-        }
-
-        .notification {
+        .notifications .notification {
             padding: 1rem;
-            background: var(--background);
-            border-radius: 0.5rem;
             margin-bottom: 1rem;
-            border-left: 4px solid var(--primary);
-            animation: slideInRight 0.5s;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
-
-        @media (max-width: 640px) {
-            main {
-                padding: 1rem;
-                margin-top: -2rem;
-            }
-
-            .invite-form form {
-                flex-direction: column;
-            }
-
-            .invite-form button {
-                width: 100%;
-            }
-
-            header h1 {
-                font-size: 2rem;
-            }
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f0f0f0;
         }
     </style>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-storage.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Replace with the actual user ID
+        const userId = "currentUserId"; // Dynamically assign based on the logged-in user
+
+        const profilePic = document.getElementById("profilePic");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicInput = document.getElementById("profilePicInput");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const inviteForm = document.getElementById("inviteForm");
+        const inviteEmail = document.getElementById("inviteEmail");
+        const notificationList = document.getElementById("notificationList");
+
+        // Load user profile
+        async function loadUserProfile() {
+            const userDocRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                usernameDisplay.textContent = userData.username || "User Name";
+                profilePic.src = userData.profilePic || "default-profile.png";
+            } else {
+                console.warn("User profile not found.");
+            }
+        }
+
+        // Upload profile picture
+        uploadBtn.addEventListener("click", async () => {
+            const file = profilePicInput.files[0];
+            if (file) {
+                const storageRef = ref(storage, `profile_pictures/${userId}`);
+                try {
+                    await uploadBytes(storageRef, file);
+                    const downloadURL = await getDownloadURL(storageRef);
+                    const userDocRef = doc(db, "users", userId);
+                    await updateDoc(userDocRef, { profilePic: downloadURL });
+                    profilePic.src = downloadURL;
+                    alert("Profile picture updated successfully!");
+                } catch (error) {
+                    console.error("Error uploading profile picture: ", error);
+                }
+            } else {
+                alert("Please select a file to upload.");
+            }
+        });
+
+        // Send invite
+        inviteForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = inviteEmail.value.trim();
+            if (email) {
+                try {
+                    await setDoc(doc(db, "invites", email), {
+                        invitedBy: userId,
+                        status: "pending",
+                        timestamp: new Date(),
+                    });
+                    alert("Invite sent successfully!");
+                    inviteEmail.value = "";
+                } catch (error) {
+                    console.error("Error sending invite: ", error);
+                }
+            }
+        });
+
+        // Real-time notifications
+        onSnapshot(doc(db, "users", userId), (doc) => {
+            const data = doc.data();
+            if (data && data.notifications) {
+                notificationList.innerHTML = "";
+                data.notifications.forEach((notification) => {
+                    const div = document.createElement("div");
+                    div.className = "notification";
+                    div.textContent = notification.message;
+                    notificationList.appendChild(div);
+                });
+            }
+        });
+
+        // Initialize
+        window.onload = loadUserProfile;
+    </script>
 </head>
 <body>
     <header>
-        <h1 class="animate__animated animate__fadeIn">Welcome to Our Social Network</h1>
+        <h1>Welcome to Your Profile</h1>
     </header>
     <main>
         <div class="profile">
-            <img src="/api/placeholder/120/120" alt="Profile Picture">
+            <img id="profilePic" src="default-profile.png" alt="Profile Picture">
             <h2 id="username">User Name</h2>
+            <input type="file" id="profilePicInput" accept="image/*">
+            <button id="uploadBtn">Upload</button>
         </div>
 
         <div class="invite-form">
@@ -214,50 +191,9 @@
         <div class="notifications">
             <h3>Notifications</h3>
             <div id="notificationList">
-                <div class="notification">Welcome! Get started by inviting your friends.</div>
-                <div class="notification">Complete your profile to connect with more people.</div>
+                <!-- Notifications will be dynamically populated here -->
             </div>
         </div>
     </main>
-
-    <script>
-        // Firebase setup (replace with your actual configuration)
-        import { getFirestore, doc, setDoc, onSnapshot } from "firebase/firestore";
-
-        const db = getFirestore();
-        const userId = "currentUserId"; // Replace with actual user ID
-
-        document.getElementById("inviteForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const email = document.getElementById("inviteEmail").value;
-            if (email) {
-                try {
-                    await setDoc(doc(db, "invites", email), {
-                        invitedBy: userId,
-                        status: "pending",
-                        timestamp: new Date(),
-                    });
-                    alert("Invite sent successfully!");
-                } catch (error) {
-                    console.error("Error sending invite: ", error);
-                }
-            }
-        });
-
-        // Real-time notifications
-        const notificationList = document.getElementById("notificationList");
-        onSnapshot(doc(db, "users", userId), (doc) => {
-            const data = doc.data();
-            if (data && data.notifications) {
-                notificationList.innerHTML = "";
-                data.notifications.forEach((notification) => {
-                    const div = document.createElement("div");
-                    div.className = "notification";
-                    div.textContent = notification.message;
-                    notificationList.appendChild(div);
-                });
-            }
-        });
-    </script>
 </body>
 </html>
