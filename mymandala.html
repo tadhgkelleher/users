@@ -67,8 +67,9 @@
     <script type="module">
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-storage.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
 
         // Firebase configuration
         const firebaseConfig = {
@@ -85,9 +86,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const storage = getStorage(app);
+        const auth = getAuth(app);
 
-        // Replace with the actual user ID
-        const userId = "currentUserId"; // Dynamically assign based on the logged-in user
+        let userId = null; // Dynamically assigned once the user is authenticated
 
         const profilePic = document.getElementById("profilePic");
         const usernameDisplay = document.getElementById("username");
@@ -99,15 +100,25 @@
 
         // Load user profile
         async function loadUserProfile() {
-            const userDocRef = doc(db, "users", userId);
-            const userDoc = await getDoc(userDocRef);
+            try {
+                if (!userId) {
+                    console.warn("User ID is not available.");
+                    return;
+                }
 
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                usernameDisplay.textContent = userData.username || "User Name";
-                profilePic.src = userData.profilePic || "default-profile.png";
-            } else {
-                console.warn("User profile not found.");
+                const userDocRef = doc(db, "users", userId);
+                const userDoc = await getDoc(userDocRef);
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log("User data:", userData); // Debugging log
+                    usernameDisplay.textContent = userData.username || "User Name";
+                    profilePic.src = userData.profilePic || "default-profile.png";
+                } else {
+                    console.warn("User profile not found in Firestore.");
+                }
+            } catch (error) {
+                console.error("Error loading user profile:", error);
             }
         }
 
@@ -115,19 +126,24 @@
         uploadBtn.addEventListener("click", async () => {
             const file = profilePicInput.files[0];
             if (file) {
-                const storageRef = ref(storage, `profile_pictures/${userId}`);
                 try {
+                    const storageRef = ref(storage, `profile_pictures/${userId}`);
+                    console.log("Uploading file:", file.name);
                     await uploadBytes(storageRef, file);
+
                     const downloadURL = await getDownloadURL(storageRef);
+                    console.log("File uploaded successfully. Download URL:", downloadURL);
+
                     const userDocRef = doc(db, "users", userId);
                     await updateDoc(userDocRef, { profilePic: downloadURL });
+
                     profilePic.src = downloadURL;
                     alert("Profile picture updated successfully!");
                 } catch (error) {
-                    console.error("Error uploading profile picture: ", error);
+                    console.error("Error uploading profile picture:", error);
                 }
             } else {
-                alert("Please select a file to upload.");
+                alert("Please select an image to upload.");
             }
         });
 
@@ -145,27 +161,43 @@
                     alert("Invite sent successfully!");
                     inviteEmail.value = "";
                 } catch (error) {
-                    console.error("Error sending invite: ", error);
+                    console.error("Error sending invite:", error);
                 }
             }
         });
 
         // Real-time notifications
-        onSnapshot(doc(db, "users", userId), (doc) => {
-            const data = doc.data();
-            if (data && data.notifications) {
-                notificationList.innerHTML = "";
-                data.notifications.forEach((notification) => {
-                    const div = document.createElement("div");
-                    div.className = "notification";
-                    div.textContent = notification.message;
-                    notificationList.appendChild(div);
-                });
+        function listenForNotifications() {
+            if (!userId) {
+                console.warn("Cannot listen for notifications without user ID.");
+                return;
+            }
+
+            onSnapshot(doc(db, "users", userId), (doc) => {
+                const data = doc.data();
+                if (data && data.notifications) {
+                    notificationList.innerHTML = "";
+                    data.notifications.forEach((notification) => {
+                        const div = document.createElement("div");
+                        div.className = "notification";
+                        div.textContent = notification.message;
+                        notificationList.appendChild(div);
+                    });
+                }
+            });
+        }
+
+        // Firebase Auth State Listener
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userId = user.uid;
+                console.log("Logged in user ID:", userId);
+                loadUserProfile();
+                listenForNotifications();
+            } else {
+                console.log("No user is logged in.");
             }
         });
-
-        // Initialize
-        window.onload = loadUserProfile;
     </script>
 </head>
 <body>
