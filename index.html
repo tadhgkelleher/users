@@ -6,73 +6,98 @@
   <title>My Mandala - Firebase Authentication</title>
   
   <!-- Firebase SDKs -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.firebasestorage.app",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+    authDomain: "mandala-5165e.firebaseapp.com",
+    projectId: "mandala-5165e",
+    storageBucket: "mandala-5165e.appspot.com",
+    messagingSenderId: "569537405023",
+    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+    measurementId: "G-TER99X7NBT",
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const analytics = getAnalytics(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const analytics = getAnalytics(app);
 
-    // Regular Sign Up with Email & Password
-    document.getElementById('emailSignUpBtn').addEventListener('click', function() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const message = document.getElementById('message');
-      
-      message.textContent = 'Attempting to sign up with email...';
-      
-      createUserWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          message.style.color = 'green';
-          message.textContent = `Account created! Welcome ${user.email}`;
-          console.log(`User created: ${user.email}`);
-          window.location.href = 'mymandala.html';
-        })
-        .catch((error) => {
-          message.style.color = 'red';
-          message.textContent = `Error: ${error.message}`;
-          console.error('Error creating user:', error);
-        });
-    });
+  async function createUserProfile(userId, email) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      await setDoc(userDocRef, {
+        username: email.split("@")[0], // Use part of email as default username
+        email: email,
+        profilePic: "default-profile.png",
+        createdAt: new Date().toISOString(),
+      });
+      console.log("User profile created in Firestore.");
+    } catch (error) {
+      console.error("Error creating user profile:", error);
+    }
+  }
 
-    // Google Sign-Up
-    document.getElementById('googleSignUpBtn').addEventListener('click', function() {
-      const provider = new GoogleAuthProvider();
-      const message = document.getElementById('message');
-      
-      message.textContent = 'Attempting Google sign-up...';
+  // Regular Sign Up with Email & Password
+  document.getElementById("emailSignUpBtn").addEventListener("click", async function () {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const message = document.getElementById("message");
 
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          const user = result.user;
-          console.log("User signed in:", user);
-          message.style.color = 'green';
-          message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
-          window.location.href = 'mymandala.html';
-        })
-        .catch((error) => {
-          console.error("Error during Google sign-in:", error.code);
-          console.error("Error message:", error.message);
-          
-          message.style.color = 'red';
-          message.textContent = `Error: ${error.message}`;
-        });
-    });
-  </script>
-  
+    message.textContent = "Attempting to sign up with email...";
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Create Firestore user document
+      await createUserProfile(user.uid, email);
+
+      message.style.color = "green";
+      message.textContent = `Account created! Welcome ${user.email}`;
+      console.log(`User created: ${user.email}`);
+
+      window.location.href = "mymandala.html"; // Redirect to profile page
+    } catch (error) {
+      message.style.color = "red";
+      message.textContent = `Error: ${error.message}`;
+      console.error("Error creating user:", error);
+    }
+  });
+
+  // Google Sign-Up
+  document.getElementById("googleSignUpBtn").addEventListener("click", async function () {
+    const provider = new GoogleAuthProvider();
+    const message = document.getElementById("message");
+
+    message.textContent = "Attempting Google sign-up...";
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Create Firestore user document
+      await createUserProfile(user.uid, user.email);
+
+      message.style.color = "green";
+      message.textContent = `Google sign-in successful! Welcome ${user.displayName}`;
+      console.log("User signed in:", user);
+
+      window.location.href = "mymandala.html"; // Redirect to profile page
+    } catch (error) {
+      console.error("Error during Google sign-in:", error.code);
+      console.error("Error message:", error.message);
+
+      message.style.color = "red";
+      message.textContent = `Error: ${error.message}`;
+    }
+  });
+</script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
