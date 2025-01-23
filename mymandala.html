@@ -6,6 +6,104 @@
   <title>My Mandala - Profile</title>
 
   <!-- Firebase SDKs -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .profile-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .profile-container h2 {
+      text-align: center;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .profile-info {
+      text-align: center;
+    }
+
+    .profile-info p {
+      margin: 10px 0;
+    }
+
+    .send-invite {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .send-invite input {
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .send-invite button {
+      padding: 10px 20px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .send-invite button:hover {
+      background: #0056b3;
+    }
+
+    .invitations {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-container">
+    <h2>User Profile</h2>
+    <img id="profilePic" class="profile-pic" src="default-profile.png" alt="Profile Picture">
+    <div class="profile-info">
+      <p><strong>Username:</strong> <span id="username">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    </div>
+
+    <div class="send-invite">
+      <h3>Send Invitation</h3>
+      <input type="email" id="inviteEmail" placeholder="Enter email to invite">
+      <button id="sendInviteButton">Send Invite</button>
+    </div>
+
+    <div id="invitations" class="invitations">
+      <h3>Sent Invitations:</h3>
+      <!-- Invitations will appear here -->
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
@@ -135,103 +233,9 @@
         window.location.href = "login.html"; // Redirect to login if not authenticated
       }
     });
+
+    // Add event listener for the send invite button
+    document.getElementById('sendInviteButton').addEventListener('click', sendInvitation);
   </script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
-      color: #333;
-    }
-
-    .profile-container {
-      background: #fff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      max-width: 600px;
-      width: 100%;
-    }
-
-    .profile-container h2 {
-      text-align: center;
-    }
-
-    .profile-pic {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 20px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .profile-info {
-      text-align: center;
-    }
-
-    .profile-info p {
-      margin: 10px 0;
-    }
-
-    .send-invite {
-      margin-top: 30px;
-      text-align: center;
-    }
-
-    .send-invite input {
-      padding: 10px;
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-    }
-
-    .send-invite button {
-      padding: 10px 20px;
-      background: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .send-invite button:hover {
-      background: #0056b3;
-    }
-
-    .invitations {
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="profile-container">
-    <h2>User Profile</h2>
-    <img id="profilePic" class="profile-pic" src="default-profile.png" alt="Profile Picture">
-    <div class="profile-info">
-      <p><strong>Username:</strong> <span id="username">Loading...</span></p>
-      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-    </div>
-
-    <div class="send-invite">
-      <h3>Send Invitation</h3>
-      <input type="email" id="inviteEmail" placeholder="Enter email to invite">
-      <button onclick="sendInvitation()">Send Invite</button>
-    </div>
-
-    <div id="invitations" class="invitations">
-      <h3>Sent Invitations:</h3>
-      <!-- Invitations will appear here -->
-    </div>
-  </div>
 </body>
 </html>
