@@ -9,7 +9,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -30,7 +30,7 @@
       try {
         const userDocRef = doc(db, "users", userId);
         const userDoc = await getDoc(userDocRef);
-        
+
         if (userDoc.exists()) {
           return userDoc.data();
         } else {
@@ -66,9 +66,15 @@
             const userData = userDoc.data();
 
             // Send invite: Store the invite in Firestore under the sender's document
-            await updateDoc(userDocRef, {
-              invitationsSent: [...(userData.invitationsSent || []), inviteEmail],
+            const inviteRef = await addDoc(collection(db, "invitations"), {
+              fromUserId: currentUser.uid,
+              toEmail: inviteEmail,
+              status: "pending",
+              createdAt: new Date(),
             });
+
+            // Send the invitation email using SendGrid
+            await sendEmail(inviteEmail, userData.username); // Call SendGrid API to send the email
 
             alert(`Invitation sent to ${inviteEmail}!`);
           }
@@ -79,8 +85,36 @@
       }
     }
 
-    // Attach the function to the global scope
-    window.sendInvitation = sendInvitation;
+    async function sendEmail(toEmail, fromUser) {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer 0eARknq4RDS1I5kBbAMElQ',  // Your SendGrid API key
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          personalizations: [
+            {
+              to: [{ email: toEmail }],
+              subject: `You have been invited to join ${fromUser}'s Mandala!`,
+            },
+          ],
+          from: { email: 'your-email@example.com' },  // Replace with your verified sender email
+          content: [
+            {
+              type: 'text/plain',
+              value: `You have been invited by ${fromUser} to join their Mandala project. Please click the link below to join.\n\n[Insert Link to Join]`,
+            },
+          ],
+        }),
+      });
+
+      if (response.ok) {
+        console.log('Email sent!');
+      } else {
+        console.error('Error sending email:', response.statusText);
+      }
+    }
 
     // Handle authentication state change
     onAuthStateChanged(auth, async (user) => {
