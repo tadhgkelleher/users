@@ -124,20 +124,10 @@
                 .join('');
         }
 
-        // Check if user is signed in and display profile
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                usernameDisplay.textContent = user.displayName || "No display name";
-                const emailHash = md5(user.email.trim().toLowerCase());
-                profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
-            } else {
-                usernameDisplay.textContent = "No user signed in";
-            }
-        });
-
-        // Send Invite Logic
-        document.addEventListener('DOMContentLoaded', () => {
+        // Wait until the DOM is fully loaded before executing
+        document.addEventListener('DOMContentLoaded', function () {
             if (sendEmailBtn) {
+                // Check if the send button exists and attach the event listener
                 sendEmailBtn.addEventListener("click", async () => {
                     const emailAddress = emailInput.value;
                     const currentUser = firebase.auth().currentUser;
@@ -166,6 +156,17 @@
                     }
                 });
             }
+
+            // Check if user is signed in and display profile
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    usernameDisplay.textContent = user.displayName || "No display name";
+                    const emailHash = md5(user.email.trim().toLowerCase());
+                    profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
+                } else {
+                    usernameDisplay.textContent = "No user signed in";
+                }
+            });
         });
     </script>
 </body>
