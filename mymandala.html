@@ -7,24 +7,9 @@
 
   <!-- Firebase SDKs -->
   <script type="module">
-    import { 
-      initializeApp 
-    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-    import { 
-      getAuth, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      getDoc, 
-      setDoc, 
-      updateDoc, 
-      collection, 
-      query, 
-      where, 
-      onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -79,19 +64,13 @@
 
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            const username = userData.username || "a Mandala User";
 
-            // Create an invitation document
-            const inviteDocRef = doc(collection(db, "invitations"));
-            await setDoc(inviteDocRef, {
-              fromUserId: currentUser.uid,
-              fromUsername: username,
-              toEmail: inviteEmail,
-              status: "pending",
-              createdAt: new Date().toISOString(),
+            // Send invite: Store the invite in Firestore under the sender's document
+            await updateDoc(userDocRef, {
+              invitationsSent: [...(userData.invitationsSent || []), inviteEmail],
             });
 
-            alert(`Invitation sent to ${inviteEmail} with message: "You have been invited to join ${username}'s mandala!"`);
+            alert(`Invitation sent to ${inviteEmail}!`);
           }
         } catch (error) {
           console.error("Error sending invitation:", error);
@@ -100,32 +79,24 @@
       }
     }
 
-    // Monitor invitation status
-    function monitorInvitations(userId) {
-      const invitesQuery = query(
-        collection(db, "invitations"),
-        where("fromUserId", "==", userId)
-      );
-
-      onSnapshot(invitesQuery, (snapshot) => {
-        const invitesContainer = document.getElementById("invitations");
-        invitesContainer.innerHTML = ""; // Clear previous invitations
-
-        snapshot.forEach((doc) => {
-          const invite = doc.data();
-          const inviteElement = document.createElement("div");
-          inviteElement.textContent = `Invite to ${invite.toEmail}: ${invite.status}`;
-          invitesContainer.appendChild(inviteElement);
-        });
-      });
-    }
+    // Attach the function to the global scope
+    window.sendInvitation = sendInvitation;
 
     // Handle authentication state change
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const userProfile = await getUserProfile(user.uid);
         displayUserProfile(userProfile);
-        monitorInvitations(user.uid);
+
+        // Show sent invitations if any
+        const invitesContainer = document.getElementById("invitations");
+        if (userProfile.invitationsSent && userProfile.invitationsSent.length > 0) {
+          userProfile.invitationsSent.forEach(inviteEmail => {
+            const inviteElement = document.createElement("div");
+            inviteElement.textContent = `Invite sent to: ${inviteEmail}`;
+            invitesContainer.appendChild(inviteElement);
+          });
+        }
       } else {
         window.location.href = "login.html"; // Redirect to login if not authenticated
       }
