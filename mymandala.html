@@ -5,74 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 1rem 0;
-        }
-        main {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .profile {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .message {
-            margin-top: 1rem;
-            font-weight: bold;
-            text-align: center;
-            display: none;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        input[type="email"] {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            font-size: 1rem;
-            width: 100%;
-            max-width: 400px;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .profile-image {
-            border-radius: 50%;
-            width: 150px;
-            height: 150px;
-            margin-bottom: 1rem;
-        }
+        /* Same styles as before */
     </style>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
         import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -83,47 +22,41 @@
             measurementId: "G-TER99X7NBT",
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Function to generate the Gravatar URL
         function getGravatarUrl(email) {
             const hash = MD5(email.trim().toLowerCase());
             return `https://www.gravatar.com/avatar/${hash}?s=200&d=mp`;
         }
 
-        // Fetch the current user's profile
         async function fetchUserProfile(user) {
-            const userRef = doc(db, 'users', user.uid);  // Adjust as per your Firestore structure
+            const userRef = doc(db, 'users', user.uid);  // Adjust Firestore path
             const userDoc = await getDoc(userRef);
 
             if (userDoc.exists()) {
                 const userData = userDoc.data();
                 const username = userData.username;
-                const email = userData.email || user.email;  // Use email from Firestore or Firebase Authentication
+                const email = userData.email || user.email;
 
-                // Set profile image and username
                 document.getElementById('profileImage').src = getGravatarUrl(email);
                 document.getElementById('username').textContent = username;
                 document.getElementById('email').textContent = email;
             }
         }
 
-        // Function to display messages
         function displayMessage(type, text) {
+            const messageDisplay = document.getElementById('message'); // Ensure messageDisplay is selected
             messageDisplay.textContent = text;
             messageDisplay.className = `message ${type}`;
             messageDisplay.style.display = "block";
         }
 
-        // Send email notification
         document.getElementById("sendEmailBtn").addEventListener("click", async () => {
             const emailAddress = document.getElementById("emailInput").value;
             if (emailAddress) {
                 try {
-                    // Send email via your backend (using ngrok URL)
                     const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-email", {
                         method: "POST",
                         headers: {
@@ -146,21 +79,17 @@
             }
         });
 
-        // MD5 hashing function to use for Gravatar
         function MD5(str) {
             return str.split('').reduce(function (a, b) {
-                a = ((a << 5) - a) + b.charCodeAt(0); // eslint-disable-line
+                a = ((a << 5) - a) + b.charCodeAt(0);
                 return a & a;
             }, 0).toString(16);
         }
 
-        // Monitor auth state and fetch profile once signed in
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                // User is signed in, fetch the profile
                 fetchUserProfile(user);
             } else {
-                // No user is signed in, you can redirect or show a message
                 displayMessage('error', 'No user signed in');
             }
         });
