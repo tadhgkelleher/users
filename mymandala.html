@@ -87,11 +87,11 @@
     </main>
 
     <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
+        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
 
-    <script>
         // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -104,9 +104,9 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         // Function to generate the Gravatar URL
         function getGravatarUrl(email) {
@@ -119,10 +119,10 @@
             const user = auth.currentUser;
             if (user) {
                 // Get user data from Firestore (assuming you store username and email)
-                const userRef = db.collection('users').doc(user.uid);  // Adjust as per your Firestore structure
-                const userDoc = await userRef.get();
+                const userRef = doc(db, 'users', user.uid);  // Adjust as per your Firestore structure
+                const userDoc = await getDoc(userRef);
 
-                if (userDoc.exists) {
+                if (userDoc.exists()) {
                     const userData = userDoc.data();
                     const username = userData.username;
                     const email = userData.email || user.email;  // Use email from Firestore or Firebase Authentication
