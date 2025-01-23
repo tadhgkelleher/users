@@ -60,36 +60,16 @@
         button:hover {
             background-color: #45a049;
         }
-        .profile img {
+        .profile-image {
             border-radius: 50%;
-            width: 100px;
-            height: 100px;
+            width: 150px;
+            height: 150px;
+            margin-bottom: 1rem;
         }
     </style>
-</head>
-<body>
-    <header>
-        <h1>Welcome to Your Profile</h1>
-    </header>
-    <main>
-        <div class="profile">
-            <!-- Profile Image -->
-            <img id="profileImage" src="" alt="Profile Image">
-            <!-- Username -->
-            <h2 id="username">Loading...</h2>
-            <!-- Email (Optional) -->
-            <p id="email">Loading...</p>
-            <!-- Email input for sending notifications -->
-            <input type="email" id="emailInput" placeholder="Enter email to notify">
-            <button id="sendEmailBtn">Send Notification</button>
-            <div id="message" class="message"></div>
-        </div>
-    </main>
-
-    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js';
-        import { getAuth } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js';
         import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js';
 
         // Firebase configuration
@@ -115,26 +95,19 @@
         }
 
         // Fetch the current user's profile
-        async function fetchUserProfile() {
-            const user = auth.currentUser;
-            if (user) {
-                // Get user data from Firestore (assuming you store username and email)
-                const userRef = doc(db, 'users', user.uid);  // Adjust as per your Firestore structure
-                const userDoc = await getDoc(userRef);
+        async function fetchUserProfile(user) {
+            const userRef = doc(db, 'users', user.uid);  // Adjust as per your Firestore structure
+            const userDoc = await getDoc(userRef);
 
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    const username = userData.username;
-                    const email = userData.email || user.email;  // Use email from Firestore or Firebase Authentication
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const username = userData.username;
+                const email = userData.email || user.email;  // Use email from Firestore or Firebase Authentication
 
-                    // Set profile image and username
-                    document.getElementById('profileImage').src = getGravatarUrl(email);
-                    document.getElementById('username').textContent = username;
-                    document.getElementById('email').textContent = email;
-                }
-            } else {
-                // No user is signed in
-                alert("No user signed in");
+                // Set profile image and username
+                document.getElementById('profileImage').src = getGravatarUrl(email);
+                document.getElementById('username').textContent = username;
+                document.getElementById('email').textContent = email;
             }
         }
 
@@ -181,8 +154,33 @@
             }, 0).toString(16);
         }
 
-        // Call fetchUserProfile when the page loads
-        window.onload = fetchUserProfile;
+        // Monitor auth state and fetch profile once signed in
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is signed in, fetch the profile
+                fetchUserProfile(user);
+            } else {
+                // No user is signed in, you can redirect or show a message
+                displayMessage('error', 'No user signed in');
+            }
+        });
     </script>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Your Profile</h1>
+    </header>
+    <main>
+        <div class="profile">
+            <img id="profileImage" class="profile-image" src="default-avatar.jpg" alt="Profile Image">
+            <h2 id="username">Loading...</h2>
+            <p id="email">Loading...</p>
+
+            <input type="email" id="emailInput" placeholder="Enter email to notify">
+            <button id="sendEmailBtn">Send Notification</button>
+            
+            <div id="message" class="message"></div>
+        </div>
+    </main>
 </body>
 </html>
