@@ -1,182 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Mandala - Profile</title>
+
+  <!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+    authDomain: "mandala-5165e.firebaseapp.com",
+    projectId: "mandala-5165e",
+    storageBucket: "mandala-5165e.appspot.com",
+    messagingSenderId: "569537405023",
+    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+    measurementId: "G-TER99X7NBT",
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Fetch user data from Firestore
+  async function getUserProfile(userId) {
+    try {
+      const userDocRef = doc(db, "users", userId);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        return userDoc.data();
+      } else {
+        console.log("User not found");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }
+
+  // Update the user profile UI
+  function displayUserProfile(userData) {
+    const profilePic = userData.profilePic || "default-profile.png";
+    const username = userData.username || "Unknown User";
+    const email = userData.email;
+
+    document.getElementById("profilePic").src = profilePic;
+    document.getElementById("username").textContent = username;
+    document.getElementById("email").textContent = email;
+  }
+
+  // Send an invitation to connect
+  async function sendInvitation() {
+    const inviteEmail = document.getElementById("inviteEmail").value.trim();
+    const currentUser = auth.currentUser;
+
+    if (inviteEmail) {
+      try {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+
+          // Send invite: Store the invite in Firestore under the sender's document
+          await updateDoc(userDocRef, {
+            invitationsSent: [...(userData.invitationsSent || []), inviteEmail],
+          });
+
+          alert("Invitation sent!");
         }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 1rem 0;
-        }
-        main {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .profile {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        .profile img {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin-bottom: 1rem;
-        }
-        .message {
-            margin-top: 1rem;
-            font-weight: bold;
-            text-align: center;
-            display: none;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        input[type="file"] {
-            margin-top: 1rem;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-storage.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js";
+      } catch (error) {
+        console.error("Error sending invitation:", error);
+        alert("Error sending invitation.");
+      }
+    }
+  }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+  // Handle authentication state change
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userProfile = await getUserProfile(user.uid);
+      displayUserProfile(userProfile);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
-        const auth = getAuth(app);
-
-        let userId = null;
-
-        const profilePic = document.getElementById("profilePic");
-        const usernameDisplay = document.getElementById("username");
-        const profilePicInput = document.getElementById("profilePicInput");
-        const uploadBtn = document.getElementById("uploadBtn");
-        const messageDisplay = document.getElementById("message");
-
-        // Function to display messages
-        function displayMessage(type, text) {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `message ${type}`;
-            messageDisplay.style.display = "block";
-        }
-
-        async function loadUserProfile() {
-            try {
-                if (!userId) {
-                    displayMessage("error", "No user is logged in.");
-                    return;
-                }
-
-                const userDocRef = doc(db, "users", userId);
-                const userDoc = await getDoc(userDocRef);
-
-                if (userDoc.exists()) {
-                    // User profile exists, load the data
-                    const userData = userDoc.data();
-                    usernameDisplay.textContent = userData.username || "User Name";
-                    profilePic.src = userData.profilePic || "default-profile.png";
-                    displayMessage("success", "Profile loaded successfully.");
-                } else {
-                    // User profile does not exist, create it
-                    const defaultProfile = {
-                        username: "New User",
-                        profilePic: "default-profile.png",
-                        createdAt: new Date().toISOString(),
-                    };
-
-                    await setDoc(userDocRef, defaultProfile);
-
-                    usernameDisplay.textContent = defaultProfile.username;
-                    profilePic.src = defaultProfile.profilePic;
-                    displayMessage("success", "Profile created and loaded successfully.");
-                }
-            } catch (error) {
-                displayMessage("error", `Error loading or creating profile: ${error.message}`);
-            }
-        }
-
-        uploadBtn.addEventListener("click", async () => {
-            const file = profilePicInput.files[0];
-            if (file) {
-                try {
-                    const storageRef = ref(storage, `profile_pictures/${userId}`);
-                    await uploadBytes(storageRef, file);
-
-                    const downloadURL = await getDownloadURL(storageRef);
-
-                    const userDocRef = doc(db, "users", userId);
-                    await updateDoc(userDocRef, { profilePic: downloadURL });
-
-                    profilePic.src = downloadURL;
-                    displayMessage("success", "Profile picture updated successfully!");
-                } catch (error) {
-                    displayMessage("error", `Error uploading profile picture: ${error.message}`);
-                }
-            } else {
-                displayMessage("error", "Please select an image to upload.");
-            }
+      // Show sent invitations if any
+      const invitesContainer = document.getElementById("invitations");
+      if (userProfile.invitationsSent && userProfile.invitationsSent.length > 0) {
+        userProfile.invitationsSent.forEach(inviteEmail => {
+          const inviteElement = document.createElement("div");
+          inviteElement.textContent = `Invite sent to: ${inviteEmail}`;
+          invitesContainer.appendChild(inviteElement);
         });
+      }
+    } else {
+      window.location.href = "login.html"; // Redirect to login if not authenticated
+    }
+  });
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                userId = user.uid;
-                loadUserProfile();
-            } else {
-                displayMessage("error", "No user is logged in.");
-            }
-        });
-    </script>
+</script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .profile-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .profile-container h2 {
+      text-align: center;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 20px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .profile-info {
+      text-align: center;
+    }
+
+    .profile-info p {
+      margin: 10px 0;
+    }
+
+    .send-invite {
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .send-invite input {
+      padding: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .send-invite button {
+      padding: 10px 20px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .send-invite button:hover {
+      background: #0056b3;
+    }
+
+    .invitations {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to Your Profile</h1>
-    </header>
-    <main>
-        <div class="profile">
-            <img id="profilePic" src="default-profile.png" alt="Profile Picture">
-            <h2 id="username">User Name</h2>
-            <input type="file" id="profilePicInput" accept="image/*">
-            <button id="uploadBtn">Upload Picture</button>
-            <div id="message" class="message"></div>
-        </div>
-    </main>
+  <div class="profile-container">
+    <h2>User Profile</h2>
+    <img id="profilePic" class="profile-pic" src="default-profile.png" alt="Profile Picture">
+    <div class="profile-info">
+      <p><strong>Username:</strong> <span id="username">Loading...</span></p>
+      <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    </div>
+
+    <div class="send-invite">
+      <h3>Send Invitation</h3>
+      <input type="email" id="inviteEmail" placeholder="Enter email to invite">
+      <button onclick="sendInvitation()">Send Invite</button>
+    </div>
+
+    <div id="invitations" class="invitations">
+      <h3>Sent Invitations:</h3>
+      <!-- Invitations will appear here -->
+    </div>
+  </div>
 </body>
 </html>
