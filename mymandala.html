@@ -150,37 +150,25 @@
       document.getElementById("email").textContent = email;
     }
 
-    // Function to send email using SendGrid API
-    async function sendEmail(toEmail, fromUser) {
-      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': '0eARknq4RDS1I5kBbAMElQ',  // Your SendGrid API key
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          personalizations: [
-            {
-              to: [{ email: toEmail }],
-              subject: `You have been invited to join ${fromUser}'s Mandala!`,
-            },
-          ],
-          from: { email: 'your-email@example.com' },  // Replace with your verified SendGrid email
-          content: [
-            {
-              type: 'text/plain',
-              value: `You have been invited by ${fromUser} to join their Mandala project. Please click the link below to join.\n\n[Insert Link to Join]`,
-            },
-          ],
-        }),
-      });
+ async function sendEmail(toEmail, fromUser) {
+  const response = await fetch('http://localhost:3000/send-invitation', {  // Update URL to your backend server
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      toEmail: toEmail,
+      fromUsername: fromUser,
+    }),
+  });
 
-      if (response.ok) {
-        console.log('Email sent!');
-      } else {
-        console.error('Error sending email:', response.statusText);
-      }
-    }
+  if (response.ok) {
+    console.log('Email sent!');
+  } else {
+    console.error('Error sending email:', response.statusText);
+  }
+}
+
 
     // Send an invitation to connect
     async function sendInvitation() {
