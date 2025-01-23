@@ -60,31 +60,17 @@
         button:hover {
             background-color: #45a049;
         }
+        img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 1rem;
+        }
     </style>
-</head>
-<body>
-    <header>
-        <h1>Welcome to Your Profile</h1>
-    </header>
-    <main>
-        <div class="profile">
-            <!-- Display username and profile picture -->
-            <h2>Username: <span id="username">Loading...</span></h2>
-            <img id="profilePicture" src="" alt="Profile Picture" style="border-radius: 50%; width: 100px; height: 100px;"/>
-
-            <!-- Form to send invite -->
-            <input type="email" id="emailInput" placeholder="Enter email to notify">
-            <button id="sendEmailBtn">Send Notification</button>
-            
-            <!-- Message display -->
-            <div id="message" class="message"></div>
-        </div>
-    </main>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script type="module">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script>
         // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -97,25 +83,15 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        // Display user profile
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // Show username and Gravatar (based on email hash)
-                document.getElementById("username").textContent = user.displayName || "Anonymous";
-                const emailHash = md5(user.email.trim().toLowerCase());
-                document.getElementById("profilePicture").src = `https://www.gravatar.com/avatar/${emailHash}`;
-            } else {
-                document.getElementById("username").textContent = "No user signed in";
-            }
-        });
-
-        // Frontend JavaScript to handle email sending
-        const sendEmailBtn = document.getElementById("sendEmailBtn");
+        // DOM elements
         const emailInput = document.getElementById("emailInput");
+        const sendEmailBtn = document.getElementById("sendEmailBtn");
         const messageDisplay = document.getElementById("message");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -124,34 +100,18 @@
             messageDisplay.style.display = "block";
         }
 
-        sendEmailBtn.addEventListener("click", async () => {
-            const emailAddress = emailInput.value;
-            if (emailAddress) {
-                try {
-                    // Updated with your ngrok URL
-                    const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-email", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            to: emailAddress,
-                            subject: 'Profile Update Notification',
-                            text: 'Your profile has been successfully updated!',
-                        }),
-                    });
-
-                    const result = await response.text();
-                    displayMessage("success", result);
-                } catch (error) {
-                    displayMessage('error', `Email send failed: ${error.message}`);
-                }
+        // Check if user is signed in and display profile
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                usernameDisplay.textContent = user.displayName || "No display name";
+                const emailHash = md5(user.email.trim().toLowerCase());
+                profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
             } else {
-                displayMessage('error', 'Please enter an email address');
+                usernameDisplay.textContent = "No user signed in";
             }
         });
 
-        // MD5 hashing function for Gravatar (included here for completeness)
+        // MD5 hashing function for Gravatar
         function md5(string) {
             return string.split('')
                 .map(function (c) {
@@ -159,6 +119,49 @@
                 })
                 .join('');
         }
+
+        // Send Invite Logic
+        sendEmailBtn.addEventListener("click", async () => {
+            const emailAddress = emailInput.value;
+            const currentUser = firebase.auth().currentUser;
+
+            if (emailAddress && currentUser) {
+                try {
+                    // Send the invite (using your ngrok server)
+                    const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-invite", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            senderEmail: currentUser.email,
+                            inviteeEmail: emailAddress,
+                        }),
+                    });
+
+                    const result = await response.text();
+                    displayMessage("success", result);
+                } catch (error) {
+                    displayMessage('error', `Invite send failed: ${error.message}`);
+                }
+            } else {
+                displayMessage('error', 'Please enter a valid email address');
+            }
+        });
     </script>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Your Profile</h1>
+    </header>
+    <main>
+        <div class="profile">
+            <img id="profilePicture" src="" alt="Profile Picture">
+            <h2 id="username">Loading...</h2>
+            <input type="email" id="emailInput" placeholder="Enter email to send invite">
+            <button id="sendEmailBtn">Send Invite</button>
+            <div id="message" class="message"></div>
+        </div>
+    </main>
 </body>
 </html>
