@@ -6,100 +6,131 @@
   <title>My Mandala - Profile</title>
 
   <!-- Firebase SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-  import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+  <script type="module">
+    import { 
+      initializeApp 
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { 
+      getAuth, 
+      onAuthStateChanged 
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      updateDoc, 
+      collection, 
+      query, 
+      where, 
+      onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-    authDomain: "mandala-5165e.firebaseapp.com",
-    projectId: "mandala-5165e",
-    storageBucket: "mandala-5165e.appspot.com",
-    messagingSenderId: "569537405023",
-    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-    measurementId: "G-TER99X7NBT",
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.appspot.com",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT",
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  // Fetch user data from Firestore
-  async function getUserProfile(userId) {
-    try {
-      const userDocRef = doc(db, "users", userId);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        return userDoc.data();
-      } else {
-        console.log("User not found");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  }
-
-  // Update the user profile UI
-  function displayUserProfile(userData) {
-    const profilePic = userData.profilePic || "default-profile.png";
-    const username = userData.username || "Unknown User";
-    const email = userData.email;
-
-    document.getElementById("profilePic").src = profilePic;
-    document.getElementById("username").textContent = username;
-    document.getElementById("email").textContent = email;
-  }
-
-  // Send an invitation to connect
-  async function sendInvitation() {
-    const inviteEmail = document.getElementById("inviteEmail").value.trim();
-    const currentUser = auth.currentUser;
-
-    if (inviteEmail) {
+    // Fetch user data from Firestore
+    async function getUserProfile(userId) {
       try {
-        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocRef = doc(db, "users", userId);
         const userDoc = await getDoc(userDocRef);
-
+        
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-
-          // Send invite: Store the invite in Firestore under the sender's document
-          await updateDoc(userDocRef, {
-            invitationsSent: [...(userData.invitationsSent || []), inviteEmail],
-          });
-
-          alert("Invitation sent!");
+          return userDoc.data();
+        } else {
+          console.log("User not found");
         }
       } catch (error) {
-        console.error("Error sending invitation:", error);
-        alert("Error sending invitation.");
+        console.error("Error fetching user data:", error);
       }
     }
-  }
 
-  // Handle authentication state change
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      const userProfile = await getUserProfile(user.uid);
-      displayUserProfile(userProfile);
+    // Update the user profile UI
+    function displayUserProfile(userData) {
+      const profilePic = userData.profilePic || "default-profile.png";
+      const username = userData.username || "Unknown User";
+      const email = userData.email;
 
-      // Show sent invitations if any
-      const invitesContainer = document.getElementById("invitations");
-      if (userProfile.invitationsSent && userProfile.invitationsSent.length > 0) {
-        userProfile.invitationsSent.forEach(inviteEmail => {
+      document.getElementById("profilePic").src = profilePic;
+      document.getElementById("username").textContent = username;
+      document.getElementById("email").textContent = email;
+    }
+
+    // Send an invitation to connect
+    async function sendInvitation() {
+      const inviteEmail = document.getElementById("inviteEmail").value.trim();
+      const currentUser = auth.currentUser;
+
+      if (inviteEmail) {
+        try {
+          const userDocRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const username = userData.username || "a Mandala User";
+
+            // Create an invitation document
+            const inviteDocRef = doc(collection(db, "invitations"));
+            await setDoc(inviteDocRef, {
+              fromUserId: currentUser.uid,
+              fromUsername: username,
+              toEmail: inviteEmail,
+              status: "pending",
+              createdAt: new Date().toISOString(),
+            });
+
+            alert(`Invitation sent to ${inviteEmail} with message: "You have been invited to join ${username}'s mandala!"`);
+          }
+        } catch (error) {
+          console.error("Error sending invitation:", error);
+          alert("Error sending invitation.");
+        }
+      }
+    }
+
+    // Monitor invitation status
+    function monitorInvitations(userId) {
+      const invitesQuery = query(
+        collection(db, "invitations"),
+        where("fromUserId", "==", userId)
+      );
+
+      onSnapshot(invitesQuery, (snapshot) => {
+        const invitesContainer = document.getElementById("invitations");
+        invitesContainer.innerHTML = ""; // Clear previous invitations
+
+        snapshot.forEach((doc) => {
+          const invite = doc.data();
           const inviteElement = document.createElement("div");
-          inviteElement.textContent = `Invite sent to: ${inviteEmail}`;
+          inviteElement.textContent = `Invite to ${invite.toEmail}: ${invite.status}`;
           invitesContainer.appendChild(inviteElement);
         });
-      }
-    } else {
-      window.location.href = "login.html"; // Redirect to login if not authenticated
+      });
     }
-  });
 
-</script>
+    // Handle authentication state change
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userProfile = await getUserProfile(user.uid);
+        displayUserProfile(userProfile);
+        monitorInvitations(user.uid);
+      } else {
+        window.location.href = "login.html"; // Redirect to login if not authenticated
+      }
+    });
+  </script>
 
   <style>
     body {
