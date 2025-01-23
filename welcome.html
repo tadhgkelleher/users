@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        .message {
+            text-align: center;
+            margin: 2rem;
+            font-size: 1.2rem;
+        }
+        #firebaseui-auth-container {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Our App!</h1>
+    </header>
+    <div class="message">
+        <h2>Hi <span id="username">[Name]</span>,</h2>
+        <p>Thank you for accepting the invite! We're excited to have you onboard. Please sign in to complete your account setup.</p>
+        <div id="firebaseui-auth-container"></div>
+        <button id="complete-signup" style="display:none;" onclick="window.location.href='/complete-signup.html'">Complete Your Signup</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/ui/5.0.0/firebase-ui-auth.js"></script>
+    <link href="https://www.gstatic.com/firebasejs/ui/5.0.0/firebase-ui-auth.css" rel="stylesheet">
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Initialize FirebaseUI
+        const ui = new firebaseui.auth.AuthUI(auth);
+
+        // Check if the user is already logged in
+        auth.onAuthStateChanged(function(user) {
+            if (user) {
+                // If logged in, show the 'Complete Signup' button
+                document.getElementById('complete-signup').style.display = 'block';
+                document.getElementById('firebaseui-auth-container').style.display = 'none';
+
+                // Optional: personalize the welcome message
+                document.getElementById('username').textContent = user.displayName || user.email.split('@')[0];
+            } else {
+                // If not logged in, show Firebase UI for login
+                const email = new URLSearchParams(window.location.search).get('email');
+                document.getElementById('username').textContent = email.split('@')[0] || 'Guest';
+
+                // Configure FirebaseUI
+                const uiConfig = {
+                    signInSuccessUrl: '/welcome.html',  // Redirect after successful login
+                    signInOptions: [
+                        firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+                        firebase.auth.EmailAuthProvider.PROVIDER_ID
+                    ],
+                    tosUrl: '/terms-of-service',  // Optional: Link to your terms of service
+                    privacyPolicyUrl: '/privacy-policy'  // Optional: Link to your privacy policy
+                };
+
+                ui.start('#firebaseui-auth-container', uiConfig);
+            }
+        });
+    </script>
+</body>
+</html>
