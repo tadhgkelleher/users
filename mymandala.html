@@ -41,7 +41,7 @@
         .error {
             color: red;
         }
-        input[type="email"] {
+        input[type="email"], input[type="text"] {
             margin-top: 1rem;
             padding: 0.5rem;
             font-size: 1rem;
@@ -60,12 +60,23 @@
         button:hover {
             background-color: #45a049;
         }
+        .accepted-invites {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
     </style>
     <script type="module">
-        // Frontend JavaScript to handle email sending
         const sendEmailBtn = document.getElementById("sendEmailBtn");
         const emailInput = document.getElementById("emailInput");
+        const usernameInput = document.getElementById("usernameInput");
         const messageDisplay = document.getElementById("message");
+        const acceptedInvitesContainer = document.getElementById("acceptedInvites");
+
+        // Sample accepted invites for demonstration
+        let acceptedInvites = [];
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -74,11 +85,24 @@
             messageDisplay.style.display = "block";
         }
 
+        // Function to display the list of accepted invites
+        function displayAcceptedInvites() {
+            acceptedInvitesContainer.innerHTML = '<h3>Accepted Invites:</h3>';
+            const list = document.createElement('ul');
+            acceptedInvites.forEach(invite => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${invite.username} (${invite.email})`;
+                list.appendChild(listItem);
+            });
+            acceptedInvitesContainer.appendChild(list);
+        }
+
         sendEmailBtn.addEventListener("click", async () => {
             const emailAddress = emailInput.value;
-            if (emailAddress) {
+            const username = usernameInput.value;
+            if (emailAddress && username) {
                 try {
-                    // Updated with your ngrok URL
+                    // Update with your ngrok URL
                     const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-email", {
                         method: "POST",
                         headers: {
@@ -87,17 +111,21 @@
                         body: JSON.stringify({
                             to: emailAddress,
                             subject: 'Profile Update Notification',
-                            text: 'Your profile has been successfully updated!',
+                            text: `Hello ${username},\n\nYour profile has been successfully updated!`,
                         }),
                     });
 
                     const result = await response.text();
                     displayMessage("success", result);
+
+                    // Add the invite to the list (mocking the invite acceptance process here)
+                    acceptedInvites.push({ email: emailAddress, username });
+                    displayAcceptedInvites();
                 } catch (error) {
                     displayMessage('error', `Email send failed: ${error.message}`);
                 }
             } else {
-                displayMessage('error', 'Please enter an email address');
+                displayMessage('error', 'Please enter both email and username');
             }
         });
     </script>
@@ -108,10 +136,15 @@
     </header>
     <main>
         <div class="profile">
+            <input type="text" id="usernameInput" placeholder="Enter username">
             <input type="email" id="emailInput" placeholder="Enter email to notify">
             <button id="sendEmailBtn">Send Notification</button>
             
             <div id="message" class="message"></div>
+        </div>
+
+        <div id="acceptedInvites" class="accepted-invites">
+            <!-- List of accepted invites will appear here -->
         </div>
     </main>
 </body>
