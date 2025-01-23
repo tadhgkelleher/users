@@ -70,6 +70,21 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Welcome to Your Profile</h1>
+    </header>
+    <main>
+        <div class="profile">
+            <img id="profilePicture" src="" alt="Profile Picture">
+            <h2 id="username">Loading...</h2>
+            <input type="email" id="emailInput" placeholder="Enter email to send invite">
+            <button id="sendEmailBtn">Send Invite</button>
+            <div id="message" class="message"></div>
+        </div>
+    </main>
+
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -100,6 +115,15 @@
             messageDisplay.style.display = "block";
         }
 
+        // MD5 hashing function for Gravatar
+        function md5(string) {
+            return string.split('')
+                .map(function (c) {
+                    return c.charCodeAt(0).toString(16);
+                })
+                .join('');
+        }
+
         // Check if user is signed in and display profile
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
@@ -111,57 +135,38 @@
             }
         });
 
-        // MD5 hashing function for Gravatar
-        function md5(string) {
-            return string.split('')
-                .map(function (c) {
-                    return c.charCodeAt(0).toString(16);
-                })
-                .join('');
-        }
-
         // Send Invite Logic
-        sendEmailBtn.addEventListener("click", async () => {
-            const emailAddress = emailInput.value;
-            const currentUser = firebase.auth().currentUser;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (sendEmailBtn) {
+                sendEmailBtn.addEventListener("click", async () => {
+                    const emailAddress = emailInput.value;
+                    const currentUser = firebase.auth().currentUser;
 
-            if (emailAddress && currentUser) {
-                try {
-                    // Send the invite (using your ngrok server)
-                    const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-invite", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            senderEmail: currentUser.email,
-                            inviteeEmail: emailAddress,
-                        }),
-                    });
+                    if (emailAddress && currentUser) {
+                        try {
+                            // Send the invite (using your ngrok server)
+                            const response = await fetch("https://d6db-37-228-215-45.ngrok-free.app/send-invite", {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                    senderEmail: currentUser.email,
+                                    inviteeEmail: emailAddress,
+                                }),
+                            });
 
-                    const result = await response.text();
-                    displayMessage("success", result);
-                } catch (error) {
-                    displayMessage('error', `Invite send failed: ${error.message}`);
-                }
-            } else {
-                displayMessage('error', 'Please enter a valid email address');
+                            const result = await response.text();
+                            displayMessage("success", result);
+                        } catch (error) {
+                            displayMessage('error', `Invite send failed: ${error.message}`);
+                        }
+                    } else {
+                        displayMessage('error', 'Please enter a valid email address');
+                    }
+                });
             }
         });
     </script>
-</head>
-<body>
-    <header>
-        <h1>Welcome to Your Profile</h1>
-    </header>
-    <main>
-        <div class="profile">
-            <img id="profilePicture" src="" alt="Profile Picture">
-            <h2 id="username">Loading...</h2>
-            <input type="email" id="emailInput" placeholder="Enter email to send invite">
-            <button id="sendEmailBtn">Send Invite</button>
-            <div id="message" class="message"></div>
-        </div>
-    </main>
 </body>
 </html>
