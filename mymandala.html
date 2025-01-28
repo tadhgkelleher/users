@@ -99,6 +99,10 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
+            <div id="acceptedInvitesSection" style="margin-top: 2rem;">
+                <h3>Accepted Invitations</h3>
+                <ul id="acceptedInvitesList"></ul>
+            </div>
         </div>
     </main>
 
@@ -117,6 +121,7 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // DOM elements
         const generateLinkBtn = document.getElementById("generateLinkBtn");
@@ -129,6 +134,7 @@
         const whatsappShare = document.getElementById("whatsappShare");
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
+        const acceptedInvitesList = document.getElementById("acceptedInvitesList");
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -150,10 +156,10 @@
                 const currentUser = firebase.auth().currentUser;
                 if (currentUser) {
                     const uniqueId = Math.random().toString(36).substr(2, 9); // Generate a unique ID
-                    const inviteLink = `https://yourdomain.com/welcome.html?inviteId=${uniqueId}`;
+                    const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
                     
                     // Store the invitation in Firestore
-                    const inviteRef = firebase.firestore().collection("invitations").doc(uniqueId);
+                    const inviteRef = db.collection("invitations").doc(uniqueId);
                     inviteRef.set({
                         senderEmail: currentUser.email,
                         status: "pending",
@@ -185,7 +191,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const inviteId = urlParams.get('inviteId');
             if (inviteId) {
-                const inviteRef = firebase.firestore().collection("invitations").doc(inviteId);
+                const inviteRef = db.collection("invitations").doc(inviteId);
                 inviteRef.get().then((doc) => {
                     if (doc.exists) {
                         const inviteData = doc.data();
@@ -210,6 +216,21 @@
                     usernameDisplay.textContent = user.displayName || "No display name";
                     const emailHash = md5(user.email.trim().toLowerCase());
                     profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
+
+                    // Fetch accepted invitations for the current user
+                    db.collection("invitations")
+                        .where("senderEmail", "==", user.email)
+                        .where("status", "==", "accepted")
+                        .get()
+                        .then((querySnapshot) => {
+                            acceptedInvitesList.innerHTML = ""; // Clear previous results
+                            querySnapshot.forEach((doc) => {
+                                const inviteData = doc.data();
+                                const listItem = document.createElement("li");
+                                listItem.textContent = `Accepted by: ${inviteData.senderEmail}`;
+                                acceptedInvitesList.appendChild(listItem);
+                            });
+                        });
                 } else {
                     usernameDisplay.textContent = "No user signed in";
                 }
