@@ -67,16 +67,6 @@
             height: 100px;
             margin-bottom: 1rem;
         }
-        .share-icons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .share-icons a img {
-            width: 32px;
-            height: 32px;
-        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -88,21 +78,11 @@
     </header>
     <main>
         <div class="profile">
-            <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
             <button id="generateLinkBtn">Generate Invitation Link</button>
             <input type="text" id="inviteLink" readonly style="display: none;">
             <button id="copyLinkBtn" style="display: none;">Copy Link</button>
             <div id="message" class="message"></div>
-            <div class="share-icons" style="display: none;" id="shareIcons">
-                <a id="whatsappShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp"></a>
-                <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
-                <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
-            </div>
-            <div id="acceptedInvitesSection" style="margin-top: 2rem;">
-                <h3>Accepted Invitations</h3>
-                <ul id="acceptedInvitesList"></ul>
-            </div>
         </div>
     </main>
 
@@ -115,7 +95,6 @@
             storageBucket: "mandala-5165e.appspot.com",
             messagingSenderId: "569537405023",
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT",
         };
 
         // Initialize Firebase
@@ -129,66 +108,58 @@
         const copyLinkBtn = document.getElementById("copyLinkBtn");
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
-        const profilePicture = document.getElementById("profilePicture");
-        const shareIcons = document.getElementById("shareIcons");
-        const whatsappShare = document.getElementById("whatsappShare");
-        const gmailShare = document.getElementById("gmailShare");
-        const genericShare = document.getElementById("genericShare");
-        const acceptedInvitesList = document.getElementById("acceptedInvitesList");
 
-        // Function to display messages
+        // Display messages
         function displayMessage(type, text) {
             messageDisplay.textContent = text;
             messageDisplay.className = `message ${type}`;
             messageDisplay.style.display = "block";
         }
 
-        // Fetch and display user's generated invitations
-        function displayGeneratedInvitations(user) {
-            const generatedInvitesSection = document.createElement("div");
-            generatedInvitesSection.style.marginTop = "2rem";
+        // Generate Invitation Link
+        generateLinkBtn.addEventListener("click", () => {
+            const currentUser = firebase.auth().currentUser;
 
-            const generatedInvitesHeader = document.createElement("h3");
-            generatedInvitesHeader.textContent = "Generated Invitations";
-            generatedInvitesSection.appendChild(generatedInvitesHeader);
+            if (currentUser) {
+                const uniqueId = Math.random().toString(36).substr(2, 9); // Generate unique ID
+                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
+                console.log("Generated Invite Link:", inviteLink);
 
-            const generatedInvitesList = document.createElement("ul");
-            generatedInvitesList.id = "generatedInvitesList";
-            generatedInvitesSection.appendChild(generatedInvitesList);
-
-            document.querySelector(".profile").appendChild(generatedInvitesSection);
-
-            db.collection("invitations")
-                .where("fromUserId", "==", user.uid)
-                .orderBy("timestamp", "desc")
-                .get()
-                .then((querySnapshot) => {
-                    if (querySnapshot.empty) {
-                        generatedInvitesList.innerHTML = "<li>No invitations created yet.</li>";
-                    } else {
-                        querySnapshot.forEach((doc) => {
-                            const inviteData = doc.data();
-                            const listItem = document.createElement("li");
-                            listItem.textContent = `Invitation ID: ${doc.id}, Status: ${inviteData.status}`;
-                            generatedInvitesList.appendChild(listItem);
-                        });
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error fetching generated invitations:", error);
+                // Save the invitation to Firestore
+                db.collection("invitations").doc(uniqueId).set({
+                    senderEmail: currentUser.email,
+                    fromUserId: currentUser.uid,
+                    status: "pending",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                }).then(() => {
+                    console.log("Invitation successfully saved in Firestore.");
+                    inviteLinkInput.value = inviteLink;
+                    inviteLinkInput.style.display = "block";
+                    copyLinkBtn.style.display = "inline-block";
+                    displayMessage("success", "Invitation link generated!");
+                }).catch((error) => {
+                    console.error("Error saving invitation:", error);
+                    displayMessage("error", "Failed to save invitation. Check Firestore rules.");
                 });
-        }
+            } else {
+                displayMessage("error", "No user is signed in. Please log in.");
+            }
+        });
 
-        document.addEventListener('DOMContentLoaded', () => {
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    usernameDisplay.textContent = user.displayName || "No display name";
-                    profilePicture.src = `https://www.gravatar.com/avatar/${user.email.trim().toLowerCase().split('').map(c => c.charCodeAt(0).toString(16)).join('')}`;
-                    displayGeneratedInvitations(user);
-                } else {
-                    usernameDisplay.textContent = "No user signed in";
-                }
-            });
+        // Copy Link to Clipboard
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            displayMessage("success", "Link copied to clipboard!");
+        });
+
+        // Check Authentication State
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                usernameDisplay.textContent = user.displayName || "No display name";
+            } else {
+                usernameDisplay.textContent = "No user signed in";
+            }
         });
     </script>
 </body>
