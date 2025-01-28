@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile and Invitation</title>
+    <title>User Profile</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -99,9 +99,9 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
-            <div id="invitationStatus" style="margin-top: 2rem;">
-                <h3>Invitation Status</h3>
-                <div id="inviteStatusMessage">Loading...</div>
+            <div id="acceptedInvitesSection" style="margin-top: 2rem;">
+                <h3>Accepted Invitations</h3>
+                <ul id="acceptedInvitesList"></ul>
             </div>
         </div>
     </main>
@@ -134,7 +134,7 @@
         const whatsappShare = document.getElementById("whatsappShare");
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
-        const inviteStatusMessage = document.getElementById("inviteStatusMessage");
+        const acceptedInvitesList = document.getElementById("acceptedInvitesList");
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -143,94 +143,48 @@
             messageDisplay.style.display = "block";
         }
 
-        // MD5 hashing function for Gravatar
-        function md5(string) {
-            return string.split('')
-                .map(c => c.charCodeAt(0).toString(16))
-                .join('');
+        // Fetch and display user's generated invitations
+        function displayGeneratedInvitations(user) {
+            const generatedInvitesSection = document.createElement("div");
+            generatedInvitesSection.style.marginTop = "2rem";
+
+            const generatedInvitesHeader = document.createElement("h3");
+            generatedInvitesHeader.textContent = "Generated Invitations";
+            generatedInvitesSection.appendChild(generatedInvitesHeader);
+
+            const generatedInvitesList = document.createElement("ul");
+            generatedInvitesList.id = "generatedInvitesList";
+            generatedInvitesSection.appendChild(generatedInvitesList);
+
+            document.querySelector(".profile").appendChild(generatedInvitesSection);
+
+            db.collection("invitations")
+                .where("fromUserId", "==", user.uid)
+                .orderBy("timestamp", "desc")
+                .get()
+                .then((querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        generatedInvitesList.innerHTML = "<li>No invitations created yet.</li>";
+                    } else {
+                        querySnapshot.forEach((doc) => {
+                            const inviteData = doc.data();
+                            const listItem = document.createElement("li");
+                            listItem.textContent = `Invitation ID: ${doc.id}, Status: ${inviteData.status}`;
+                            generatedInvitesList.appendChild(listItem);
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching generated invitations:", error);
+                });
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Generate Link Logic
-            generateLinkBtn.addEventListener("click", () => {
-                const currentUser = firebase.auth().currentUser;
-                if (currentUser) {
-                    const uniqueId = Math.random().toString(36).substr(2, 9); // Generate a unique ID
-                    const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-                    
-                    // Store the invitation in Firestore
-                    const inviteRef = db.collection("invitations").doc(uniqueId);
-                    inviteRef.set({
-                        senderEmail: currentUser.email,
-                        status: "pending",
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    });
-
-                    // Show the link and share options
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    shareIcons.style.display = "flex";
-
-                    whatsappShare.href = `https://wa.me/?text=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
-                    gmailShare.href = `mailto:?subject=You're%20Invited!&body=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
-                    genericShare.href = inviteLink;
-                } else {
-                    displayMessage('error', 'No user signed in.');
-                }
-            });
-
-            // Copy Link to Clipboard
-            copyLinkBtn.addEventListener("click", () => {
-                inviteLinkInput.select();
-                document.execCommand("copy");
-                displayMessage("success", "Link copied to clipboard!");
-            });
-
-            // Track Acceptance on the invitee's page
-            const urlParams = new URLSearchParams(window.location.search);
-            const inviteId = urlParams.get('inviteId');
-            if (inviteId) {
-                const inviteRef = db.collection("invitations").doc(inviteId);
-                inviteRef.get().then((doc) => {
-                    if (doc.exists) {
-                        const inviteData = doc.data();
-                        if (inviteData.status === "pending") {
-                            // Mark as accepted
-                            inviteRef.update({
-                                status: "accepted",
-                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            });
-                            // Display acceptance status
-                            inviteStatusMessage.textContent = "Invitation Accepted!";
-                        }
-                    } else {
-                        inviteStatusMessage.textContent = "Invalid invitation link.";
-                    }
-                });
-            }
-
-            // Display Profile Information
             firebase.auth().onAuthStateChanged((user) => {
                 if (user) {
                     usernameDisplay.textContent = user.displayName || "No display name";
-                    const emailHash = md5(user.email.trim().toLowerCase());
-                    profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
-
-                    // Check if user has any invitations
-                    db.collection("invitations")
-                        .where("senderEmail", "==", user.email)
-                        .where("status", "==", "accepted")
-                        .get()
-                        .then((querySnapshot) => {
-                            inviteStatusMessage.innerHTML = ""; // Clear previous results
-                            querySnapshot.forEach((doc) => {
-                                const inviteData = doc.data();
-                                const listItem = document.createElement("li");
-                                listItem.textContent = `Accepted by: ${inviteData.senderEmail}`;
-                                inviteStatusMessage.appendChild(listItem);
-                            });
-                        });
+                    profilePicture.src = `https://www.gravatar.com/avatar/${user.email.trim().toLowerCase().split('').map(c => c.charCodeAt(0).toString(16)).join('')}`;
+                    displayGeneratedInvitations(user);
                 } else {
                     usernameDisplay.textContent = "No user signed in";
                 }
