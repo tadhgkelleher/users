@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile and Invitations</title>
+    <title>User Profile and Invitation</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,9 +77,6 @@
             width: 32px;
             height: 32px;
         }
-        .invitation-section, .accepted-invites-section {
-            margin-top: 2rem;
-        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -87,10 +84,9 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Profile and Invitations</h1>
+        <h1>Welcome to Your Profile</h1>
     </header>
     <main>
-        <!-- Profile Section -->
         <div class="profile">
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
@@ -103,18 +99,10 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
-        </div>
-
-        <!-- Invitation Management Section -->
-        <div class="invitation-section">
-            <h3>Your Invitations</h3>
-            <ul id="invitationList"></ul>
-        </div>
-
-        <!-- Accepted Invitations Section -->
-        <div class="accepted-invites-section">
-            <h3>Accepted Invitations</h3>
-            <ul id="acceptedInvitesList"></ul>
+            <div id="invitationStatus" style="margin-top: 2rem;">
+                <h3>Invitation Status</h3>
+                <div id="inviteStatusMessage">Loading...</div>
+            </div>
         </div>
     </main>
 
@@ -146,8 +134,7 @@
         const whatsappShare = document.getElementById("whatsappShare");
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
-        const invitationList = document.getElementById("invitationList");
-        const acceptedInvitesList = document.getElementById("acceptedInvitesList");
+        const inviteStatusMessage = document.getElementById("inviteStatusMessage");
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -169,7 +156,7 @@
                 const currentUser = firebase.auth().currentUser;
                 if (currentUser) {
                     const uniqueId = Math.random().toString(36).substr(2, 9); // Generate a unique ID
-                    const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
+                    const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
                     
                     // Store the invitation in Firestore
                     const inviteRef = db.collection("invitations").doc(uniqueId);
@@ -214,11 +201,11 @@
                                 status: "accepted",
                                 acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
                             });
-                            // Optionally, display a success message on the page
-                            displayMessage("success", "Invitation Accepted!");
+                            // Display acceptance status
+                            inviteStatusMessage.textContent = "Invitation Accepted!";
                         }
                     } else {
-                        displayMessage("error", "Invalid invitation link.");
+                        inviteStatusMessage.textContent = "Invalid invitation link.";
                     }
                 });
             }
@@ -230,33 +217,18 @@
                     const emailHash = md5(user.email.trim().toLowerCase());
                     profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
 
-                    // Fetch invitations for the current user
-                    db.collection("invitations")
-                        .where("senderEmail", "==", user.email)
-                        .where("status", "==", "pending")
-                        .get()
-                        .then((querySnapshot) => {
-                            invitationList.innerHTML = ""; // Clear previous results
-                            querySnapshot.forEach((doc) => {
-                                const inviteData = doc.data();
-                                const listItem = document.createElement("li");
-                                listItem.textContent = `Invite to: ${inviteData.senderEmail}`;
-                                invitationList.appendChild(listItem);
-                            });
-                        });
-
-                    // Fetch accepted invitations for the current user
+                    // Check if user has any invitations
                     db.collection("invitations")
                         .where("senderEmail", "==", user.email)
                         .where("status", "==", "accepted")
                         .get()
                         .then((querySnapshot) => {
-                            acceptedInvitesList.innerHTML = ""; // Clear previous results
+                            inviteStatusMessage.innerHTML = ""; // Clear previous results
                             querySnapshot.forEach((doc) => {
                                 const inviteData = doc.data();
                                 const listItem = document.createElement("li");
                                 listItem.textContent = `Accepted by: ${inviteData.senderEmail}`;
-                                acceptedInvitesList.appendChild(listItem);
+                                inviteStatusMessage.appendChild(listItem);
                             });
                         });
                 } else {
