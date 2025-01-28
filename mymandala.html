@@ -162,6 +162,7 @@
                     const inviteRef = db.collection("invitations").doc(uniqueId);
                     inviteRef.set({
                         senderEmail: currentUser.email,
+                        fromUserId: currentUser.uid,  // Store sender's user ID for later reference
                         status: "pending",
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     });
@@ -228,6 +229,19 @@
                                 const inviteData = doc.data();
                                 const listItem = document.createElement("li");
                                 listItem.textContent = `Accepted by: ${inviteData.senderEmail}`;
+
+                                // Optionally, add sender profile pic and name
+                                db.collection("users").doc(inviteData.fromUserId).get()
+                                    .then((senderSnapshot) => {
+                                        if (senderSnapshot.exists) {
+                                            const senderData = senderSnapshot.data();
+                                            listItem.textContent = `Accepted by: ${senderData.displayName}`;
+                                            // Optionally add a sender's profile picture
+                                            const senderProfilePic = senderData.photoURL || `https://www.gravatar.com/avatar/${md5(senderData.email.trim().toLowerCase())}`;
+                                            listItem.innerHTML += `<img src="${senderProfilePic}" alt="${senderData.displayName}'s Profile Picture" style="width: 50px; height: 50px; border-radius: 50%;">`;
+                                        }
+                                    });
+
                                 acceptedInvitesList.appendChild(listItem);
                             });
                         });
