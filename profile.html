@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .profile-info {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin-bottom: 1rem;
+        }
+        .info {
+            font-size: 1.2rem;
+            margin-top: 1rem;
+        }
+        button {
+            padding: 0.5rem 1rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Your Profile</h1>
+    </header>
+    <main>
+        <div class="profile-info">
+            <img id="profilePicture" src="" alt="Profile Picture">
+            <h2 id="username">Loading...</h2>
+            <p id="userEmail"></p>
+            <p id="senderInfo" class="info">Loading invitation details...</p>
+        </div>
+        <button id="signOutBtn">Sign Out</button>
+    </main>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT",
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const profilePicture = document.getElementById("profilePicture");
+        const usernameDisplay = document.getElementById("username");
+        const userEmailDisplay = document.getElementById("userEmail");
+        const senderInfo = document.getElementById("senderInfo");
+        const signOutBtn = document.getElementById("signOutBtn");
+
+        // Function to fetch and display user data
+        function displayUserProfile(user) {
+            // Display user information
+            usernameDisplay.textContent = user.displayName || "No display name";
+            userEmailDisplay.textContent = user.email;
+            
+            // Display Google profile image or fallback to Gravatar
+            if (user.photoURL) {
+                profilePicture.src = user.photoURL;  // Use Google profile image
+            } else {
+                const emailHash = md5(user.email.trim().toLowerCase());
+                profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`; // Default to Gravatar
+            }
+
+            // Get the invitation details from Firestore
+            db.collection("invitations")
+                .where("inviteeEmail", "==", user.email)
+                .where("status", "==", "accepted")
+                .get()
+                .then((querySnapshot) => {
+                    if (!querySnapshot.empty) {
+                        const inviteData = querySnapshot.docs[0].data();
+                        const sender = inviteData.senderEmail;
+                        senderInfo.textContent = `You were invited by: ${sender}`;
+                    } else {
+                        senderInfo.textContent = "No invitation found.";
+                    }
+                })
+                .catch((error) => {
+                    senderInfo.textContent = "Failed to retrieve invitation details.";
+                });
+        }
+
+        // MD5 hashing function for Gravatar
+        function md5(string) {
+            return string.split('')
+                .map(function (c) {
+                    return c.charCodeAt(0).toString(16);
+                })
+                .join('');
+        }
+
+        // Listen for auth state change
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Display the profile when user is signed in
+                displayUserProfile(user);
+            } else {
+                // Redirect to welcome page if no user is signed in
+                window.location.href = "welcome.html";
+            }
+        });
+
+        // Sign out button functionality
+        signOutBtn.addEventListener('click', () => {
+            auth.signOut()
+                .then(() => {
+                    window.location.href = "welcome.html";  // Redirect to welcome page after sign out
+                })
+                .catch((error) => {
+                    console.error("Sign out error:", error);
+                });
+        });
+    </script>
+</body>
+</html>
