@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>User Profile and Invitations</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -77,6 +77,9 @@
             width: 32px;
             height: 32px;
         }
+        .invitation-section, .accepted-invites-section {
+            margin-top: 2rem;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -84,9 +87,10 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Profile</h1>
+        <h1>Welcome to Your Profile and Invitations</h1>
     </header>
     <main>
+        <!-- Profile Section -->
         <div class="profile">
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
@@ -99,10 +103,18 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
-            <div id="acceptedInvitesSection" style="margin-top: 2rem;">
-                <h3>Accepted Invitations</h3>
-                <ul id="acceptedInvitesList"></ul>
-            </div>
+        </div>
+
+        <!-- Invitation Management Section -->
+        <div class="invitation-section">
+            <h3>Your Invitations</h3>
+            <ul id="invitationList"></ul>
+        </div>
+
+        <!-- Accepted Invitations Section -->
+        <div class="accepted-invites-section">
+            <h3>Accepted Invitations</h3>
+            <ul id="acceptedInvitesList"></ul>
         </div>
     </main>
 
@@ -134,6 +146,7 @@
         const whatsappShare = document.getElementById("whatsappShare");
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
+        const invitationList = document.getElementById("invitationList");
         const acceptedInvitesList = document.getElementById("acceptedInvitesList");
 
         // Function to display messages
@@ -162,7 +175,6 @@
                     const inviteRef = db.collection("invitations").doc(uniqueId);
                     inviteRef.set({
                         senderEmail: currentUser.email,
-                        fromUserId: currentUser.uid,  // Store sender's user ID for later reference
                         status: "pending",
                         timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     });
@@ -218,6 +230,21 @@
                     const emailHash = md5(user.email.trim().toLowerCase());
                     profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`;
 
+                    // Fetch invitations for the current user
+                    db.collection("invitations")
+                        .where("senderEmail", "==", user.email)
+                        .where("status", "==", "pending")
+                        .get()
+                        .then((querySnapshot) => {
+                            invitationList.innerHTML = ""; // Clear previous results
+                            querySnapshot.forEach((doc) => {
+                                const inviteData = doc.data();
+                                const listItem = document.createElement("li");
+                                listItem.textContent = `Invite to: ${inviteData.senderEmail}`;
+                                invitationList.appendChild(listItem);
+                            });
+                        });
+
                     // Fetch accepted invitations for the current user
                     db.collection("invitations")
                         .where("senderEmail", "==", user.email)
@@ -229,19 +256,6 @@
                                 const inviteData = doc.data();
                                 const listItem = document.createElement("li");
                                 listItem.textContent = `Accepted by: ${inviteData.senderEmail}`;
-
-                                // Optionally, add sender profile pic and name
-                                db.collection("users").doc(inviteData.fromUserId).get()
-                                    .then((senderSnapshot) => {
-                                        if (senderSnapshot.exists) {
-                                            const senderData = senderSnapshot.data();
-                                            listItem.textContent = `Accepted by: ${senderData.displayName}`;
-                                            // Optionally add a sender's profile picture
-                                            const senderProfilePic = senderData.photoURL || `https://www.gravatar.com/avatar/${md5(senderData.email.trim().toLowerCase())}`;
-                                            listItem.innerHTML += `<img src="${senderProfilePic}" alt="${senderData.displayName}'s Profile Picture" style="width: 50px; height: 50px; border-radius: 50%;">`;
-                                        }
-                                    });
-
                                 acceptedInvitesList.appendChild(listItem);
                             });
                         });
