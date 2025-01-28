@@ -25,9 +25,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .profile {
-            text-align: center;
-            margin-bottom: 2rem;
+        .section {
+            margin-top: 2rem;
         }
         .message {
             margin-top: 1rem;
@@ -41,31 +40,15 @@
         .error {
             color: red;
         }
-        input[type="text"] {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            font-size: 1rem;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        ul {
+            list-style: none;
+            padding: 0;
         }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        img {
-            border-radius: 50%;
-            width: 100px;
-            height: 100px;
+        li {
             margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: #f1f1f1;
+            border-radius: 8px;
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -77,12 +60,17 @@
         <h1>Welcome to Your Profile</h1>
     </header>
     <main>
-        <div class="profile">
-            <h2 id="username">Loading...</h2>
-            <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly style="display: none;">
-            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-            <div id="message" class="message"></div>
+        <h2 id="username">Loading...</h2>
+        <div id="message" class="message"></div>
+
+        <div class="section">
+            <h3>Links I Have Sent</h3>
+            <ul id="sentLinksList"></ul>
+        </div>
+
+        <div class="section">
+            <h3>Links I Have Received</h3>
+            <ul id="receivedLinksList"></ul>
         </div>
     </main>
 
@@ -103,11 +91,10 @@
         const db = firebase.firestore();
 
         // DOM elements
-        const generateLinkBtn = document.getElementById("generateLinkBtn");
-        const inviteLinkInput = document.getElementById("inviteLink");
-        const copyLinkBtn = document.getElementById("copyLinkBtn");
-        const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
+        const messageDisplay = document.getElementById("message");
+        const sentLinksList = document.getElementById("sentLinksList");
+        const receivedLinksList = document.getElementById("receivedLinksList");
 
         // Display messages
         function displayMessage(type, text) {
@@ -116,49 +103,71 @@
             messageDisplay.style.display = "block";
         }
 
-        // Generate Invitation Link
-        generateLinkBtn.addEventListener("click", () => {
-            const currentUser = firebase.auth().currentUser;
+        // Fetch and Display Sent Links
+        function fetchSentLinks(user) {
+            db.collection("invitations")
+                .where("fromUserId", "==", user.uid)
+                .get()
+                .then((querySnapshot) => {
+                    sentLinksList.innerHTML = ""; // Clear list
+                    querySnapshot.forEach((doc) => {
+                        const invite = doc.data();
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `Link: https://my-mandala.com/welcome.html?inviteId=${doc.id} - Status: ${invite.status}`;
+                        sentLinksList.appendChild(listItem);
+                    });
+                })
+                .catch((error) => console.error("Error fetching sent links:", error));
+        }
 
-            if (currentUser) {
-                const uniqueId = Math.random().toString(36).substr(2, 9); // Generate unique ID
-                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
-                console.log("Generated Invite Link:", inviteLink);
+        // Fetch and Display Received Links
+        function fetchReceivedLinks(user) {
+            db.collection("invitations")
+                .where("recipientUserId", "==", user.uid)
+                .get()
+                .then((querySnapshot) => {
+                    receivedLinksList.innerHTML = ""; // Clear list
+                    querySnapshot.forEach((doc) => {
+                        const invite = doc.data();
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `From: ${invite.senderEmail} - Status: ${invite.status}`;
+                        receivedLinksList.appendChild(listItem);
+                    });
+                })
+                .catch((error) => console.error("Error fetching received links:", error));
+        }
 
-                // Save the invitation to Firestore
-                db.collection("invitations").doc(uniqueId).set({
-                    senderEmail: currentUser.email,
-                    fromUserId: currentUser.uid,
-                    status: "pending",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => {
-                    console.log("Invitation successfully saved in Firestore.");
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    displayMessage("success", "Invitation link generated!");
-                }).catch((error) => {
-                    console.error("Error saving invitation:", error);
-                    displayMessage("error", "Failed to save invitation. Check Firestore rules.");
-                });
-            } else {
-                displayMessage("error", "No user is signed in. Please log in.");
+        // Handle Invite Acceptance
+        function handleInviteAcceptance(user) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteId = urlParams.get("inviteId");
+            if (inviteId) {
+                const inviteRef = db.collection("invitations").doc(inviteId);
+                inviteRef.get().then((doc) => {
+                    if (doc.exists) {
+                        const invite = doc.data();
+                        if (invite.status === "pending") {
+                            inviteRef.update({
+                                status: "accepted",
+                                recipientUserId: user.uid,
+                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            });
+                            displayMessage("success", `You have accepted an invitation from ${invite.senderEmail}`);
+                        }
+                    }
+                }).catch((error) => console.error("Error accepting invite:", error));
             }
-        });
+        }
 
-        // Copy Link to Clipboard
-        copyLinkBtn.addEventListener("click", () => {
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            displayMessage("success", "Link copied to clipboard!");
-        });
-
-        // Check Authentication State
+        // Authentication State Listener
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
-                usernameDisplay.textContent = user.displayName || "No display name";
+                usernameDisplay.textContent = `Welcome, ${user.displayName || user.email}`;
+                handleInviteAcceptance(user);
+                fetchSentLinks(user);
+                fetchReceivedLinks(user);
             } else {
-                usernameDisplay.textContent = "No user signed in";
+                usernameDisplay.textContent = "Please sign in.";
             }
         });
     </script>
