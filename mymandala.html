@@ -81,15 +81,8 @@
             margin-top: 2rem;
         }
         .invitation-item {
-            background-color: #f1f1f1;
             padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .sign-out-btn {
-            background-color: #f44336;
-            margin-top: 1rem;
+            border-bottom: 1px solid #ddd;
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -113,10 +106,12 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
-            <div class="invitations" id="invitationsList">
-                <!-- Invitations will be displayed here -->
-            </div>
-            <button id="signOutBtn" class="sign-out-btn">Sign Out</button>
+            <button id="signOutBtn" style="display: none;">Sign Out</button>
+        </div>
+
+        <div class="invitations" id="invitationsContainer">
+            <h3>Sent and Accepted Invitations</h3>
+            <div id="invitationsList"></div>
         </div>
     </main>
 
@@ -148,6 +143,7 @@
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
         const signOutBtn = document.getElementById("signOutBtn");
+        const invitationsContainer = document.getElementById("invitationsContainer");
         const invitationsList = document.getElementById("invitationsList");
 
         // Function to display messages
@@ -192,56 +188,39 @@
                 usernameDisplay.textContent = user.displayName || "No display name";
                 profilePicture.src = `https://www.gravatar.com/avatar/${md5(user.email.trim().toLowerCase())}`;
 
-                const urlParams = new URLSearchParams(window.location.search);
-                const inviteId = urlParams.get("inviteId");
-
-                if (inviteId) {
-                    const inviteRef = db.collection("invitations").doc(inviteId);
-
-                    inviteRef.get().then((doc) => {
-                        if (doc.exists) {
-                            inviteRef.collection("acceptedUsers").doc(user.uid).set({
-                                recipientUserId: user.uid,
-                                recipientEmail: user.email,
-                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            });
-
-                            displayMessage("success", "You have accepted the invitation!");
-                        } else {
-                            displayMessage("error", "Invalid invitation link.");
-                        }
-                    });
-                }
-
-                // Fetch and display invitations sent or accepted by the current user
+                // Display sign-out button
+                signOutBtn.style.display = "block";
+                
+                // Fetch invitations sent or accepted by the user
                 db.collection("invitations")
                     .where("fromUserId", "==", user.uid)
                     .get()
                     .then((querySnapshot) => {
-                        invitationsList.innerHTML = ""; // Clear previous list
+                        invitationsList.innerHTML = '';
                         querySnapshot.forEach((doc) => {
-                            const inviteData = doc.data();
+                            const invitationData = doc.data();
                             const invitationItem = document.createElement("div");
                             invitationItem.classList.add("invitation-item");
                             invitationItem.innerHTML = `
-                                <p>Invitation to: ${inviteData.senderEmail}</p>
-                                <p>Status: ${inviteData.status}</p>
-                                <p>Sent on: ${new Date(inviteData.timestamp.seconds * 1000).toLocaleString()}</p>
+                                <p>Invitation sent to: ${invitationData.senderEmail}</p>
+                                <p>Status: ${invitationData.status}</p>
                             `;
                             invitationsList.appendChild(invitationItem);
                         });
                     });
+
             } else {
                 usernameDisplay.textContent = "No user signed in";
+                invitationsList.innerHTML = '';
             }
         });
 
-        // Sign out button
+        // Sign out the user
         signOutBtn.addEventListener("click", () => {
-            auth.signOut().then(() => {
-                window.location.reload(); // Reload page to reflect signed-out state
+            firebase.auth().signOut().then(() => {
+                window.location.reload();
             }).catch((error) => {
-                displayMessage("error", `Sign out failed: ${error.message}`);
+                displayMessage("error", "Error signing out: " + error.message);
             });
         });
     </script>
