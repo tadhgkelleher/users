@@ -77,6 +77,20 @@
             width: 32px;
             height: 32px;
         }
+        .invitations {
+            margin-top: 2rem;
+        }
+        .invitation-item {
+            background-color: #f1f1f1;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .sign-out-btn {
+            background-color: #f44336;
+            margin-top: 1rem;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -99,6 +113,10 @@
                 <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
                 <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
             </div>
+            <div class="invitations" id="invitationsList">
+                <!-- Invitations will be displayed here -->
+            </div>
+            <button id="signOutBtn" class="sign-out-btn">Sign Out</button>
         </div>
     </main>
 
@@ -129,6 +147,8 @@
         const whatsappShare = document.getElementById("whatsappShare");
         const gmailShare = document.getElementById("gmailShare");
         const genericShare = document.getElementById("genericShare");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const invitationsList = document.getElementById("invitationsList");
 
         // Function to display messages
         function displayMessage(type, text) {
@@ -192,9 +212,37 @@
                         }
                     });
                 }
+
+                // Fetch and display invitations sent or accepted by the current user
+                db.collection("invitations")
+                    .where("fromUserId", "==", user.uid)
+                    .get()
+                    .then((querySnapshot) => {
+                        invitationsList.innerHTML = ""; // Clear previous list
+                        querySnapshot.forEach((doc) => {
+                            const inviteData = doc.data();
+                            const invitationItem = document.createElement("div");
+                            invitationItem.classList.add("invitation-item");
+                            invitationItem.innerHTML = `
+                                <p>Invitation to: ${inviteData.senderEmail}</p>
+                                <p>Status: ${inviteData.status}</p>
+                                <p>Sent on: ${new Date(inviteData.timestamp.seconds * 1000).toLocaleString()}</p>
+                            `;
+                            invitationsList.appendChild(invitationItem);
+                        });
+                    });
             } else {
                 usernameDisplay.textContent = "No user signed in";
             }
+        });
+
+        // Sign out button
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.reload(); // Reload page to reflect signed-out state
+            }).catch((error) => {
+                displayMessage("error", `Sign out failed: ${error.message}`);
+            });
         });
     </script>
 </body>
