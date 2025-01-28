@@ -41,12 +41,13 @@
         .error {
             color: red;
         }
-        input[type="email"] {
+        input[type="text"] {
             margin-top: 1rem;
             padding: 0.5rem;
             font-size: 1rem;
             width: 100%;
             max-width: 400px;
+            text-align: center;
         }
         button {
             padding: 0.5rem 1rem;
@@ -77,9 +78,11 @@
     </header>
     <main>
         <div class="profile">
-            <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
-            <p id="senderInfo"></p>
+            <button id="generateLinkBtn">Generate Invitation Link</button>
+            <input type="text" id="inviteLink" readonly style="display: none;">
+            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+            <div id="message" class="message"></div>
         </div>
     </main>
 
@@ -92,88 +95,71 @@
             storageBucket: "mandala-5165e.appspot.com",
             messagingSenderId: "569537405023",
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT",
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         // DOM elements
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const inviteLinkInput = document.getElementById("inviteLink");
+        const copyLinkBtn = document.getElementById("copyLinkBtn");
+        const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
-        const profilePicture = document.getElementById("profilePicture");
-        const senderInfo = document.getElementById("senderInfo");
 
-        // MD5 hashing function for Gravatar
-        function md5(string) {
-            return string.split('')
-                .map(function (c) {
-                    return c.charCodeAt(0).toString(16);
-                })
-                .join('');
+        // Display messages
+        function displayMessage(type, text) {
+            messageDisplay.textContent = text;
+            messageDisplay.className = `message ${type}`;
+            messageDisplay.style.display = "block";
         }
 
-        // Function to display user profile and invitations
-        function displayUserProfile(user) {
-            // Display user information
-            usernameDisplay.textContent = user.displayName || "No display name";
-            
-            // Display Google profile image or fallback to Gravatar
-            if (user.photoURL) {
-                profilePicture.src = user.photoURL;  // Use Google profile image
-            } else {
-                const emailHash = md5(user.email.trim().toLowerCase());
-                profilePicture.src = `https://www.gravatar.com/avatar/${emailHash}`; // Default to Gravatar
-            }
+        // Generate Invitation Link
+        generateLinkBtn.addEventListener("click", () => {
+            const currentUser = firebase.auth().currentUser;
 
-            // Get the invitation details from Firestore
-            db.collection("invitations")
-                .where("toEmail", "==", user.email)  // Match the recipient's email (toEmail)
-                .get()
-                .then((querySnapshot) => {
-                    console.log("Firestore query results:", querySnapshot);
-                    if (!querySnapshot.empty) {
-                        const inviteData = querySnapshot.docs[0].data();
-                        const senderId = inviteData.fromUserId;  // Get sender's ID (can use for future reference)
-                        
-                        // Now fetch sender's details from users collection
-                        db.collection("users").doc(senderId).get()
-                            .then((senderSnapshot) => {
-                                if (senderSnapshot.exists) {
-                                    const senderData = senderSnapshot.data();
-                                    senderInfo.textContent = `You were invited by: ${senderData.displayName || "Unknown"}`;
-                                    // Display sender's profile picture (optional)
-                                    const senderProfilePic = senderData.photoURL || `https://www.gravatar.com/avatar/${md5(senderData.email.trim().toLowerCase())}`;
-                                    senderInfo.innerHTML += `<br><img src="${senderProfilePic}" alt="${senderData.displayName}'s Profile Picture" style="width: 50px; height: 50px; border-radius: 50%;">`;
-                                } else {
-                                    senderInfo.textContent = "Sender not found.";
-                                }
-                            })
-                            .catch((error) => {
-                                console.error("Error fetching sender details:", error);
-                                senderInfo.textContent = "Failed to retrieve sender details.";
-                            });
-                    } else {
-                        senderInfo.textContent = "No invitation found.";
-                    }
-                })
-                .catch((error) => {
-                    console.error("Firestore error:", error);
-                    senderInfo.textContent = "Failed to retrieve invitation details.";
+            if (currentUser) {
+                const uniqueId = Math.random().toString(36).substr(2, 9); // Generate unique ID
+                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
+                console.log("Generated Invite Link:", inviteLink);
+
+                // Save the invitation to Firestore
+                db.collection("invitations").doc(uniqueId).set({
+                    senderEmail: currentUser.email,
+                    fromUserId: currentUser.uid,
+                    status: "pending",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                }).then(() => {
+                    console.log("Invitation successfully saved in Firestore.");
+                    inviteLinkInput.value = inviteLink;
+                    inviteLinkInput.style.display = "block";
+                    copyLinkBtn.style.display = "inline-block";
+                    displayMessage("success", "Invitation link generated!");
+                }).catch((error) => {
+                    console.error("Error saving invitation:", error);
+                    displayMessage("error", "Failed to save invitation. Check Firestore rules.");
                 });
-        }
+            } else {
+                displayMessage("error", "No user is signed in. Please log in.");
+            }
+        });
 
-        // Wait until the DOM is fully loaded before executing
-        document.addEventListener('DOMContentLoaded', function () {
-            // Check if user is signed in
-            firebase.auth().onAuthStateChanged((user) => {
-                if (user) {
-                    displayUserProfile(user);
-                } else {
-                    usernameDisplay.textContent = "No user signed in";
-                }
-            });
+        // Copy Link to Clipboard
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            displayMessage("success", "Link copied to clipboard!");
+        });
+
+        // Check Authentication State
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                usernameDisplay.textContent = user.displayName || "No display name";
+            } else {
+                usernameDisplay.textContent = "No user signed in";
+            }
         });
     </script>
 </body>
