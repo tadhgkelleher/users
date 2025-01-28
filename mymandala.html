@@ -67,6 +67,30 @@
             height: 100px;
             margin-bottom: 1rem;
         }
+        .share-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .share-icons a img {
+            width: 32px;
+            height: 32px;
+        }
+        .invitations {
+            margin-top: 2rem;
+        }
+        .invitation-item {
+            background-color: #f1f1f1;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .sign-out-btn {
+            background-color: #f44336;
+            margin-top: 1rem;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -78,23 +102,33 @@
     </header>
     <main>
         <div class="profile">
+            <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
             <button id="generateLinkBtn">Generate Invitation Link</button>
             <input type="text" id="inviteLink" readonly style="display: none;">
             <button id="copyLinkBtn" style="display: none;">Copy Link</button>
             <div id="message" class="message"></div>
+            <div class="share-icons" style="display: none;" id="shareIcons">
+                <a id="whatsappShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp"></a>
+                <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
+                <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
+            </div>
+            <div class="invitations" id="invitationsList">
+                <!-- Invitations will be displayed here -->
+            </div>
+            <button id="signOutBtn" class="sign-out-btn">Sign Out</button>
         </div>
     </main>
 
     <script>
         // Firebase Configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
         };
 
         // Initialize Firebase
@@ -108,8 +142,15 @@
         const copyLinkBtn = document.getElementById("copyLinkBtn");
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
+        const shareIcons = document.getElementById("shareIcons");
+        const whatsappShare = document.getElementById("whatsappShare");
+        const gmailShare = document.getElementById("gmailShare");
+        const genericShare = document.getElementById("genericShare");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const invitationsList = document.getElementById("invitationsList");
 
-        // Display messages
+        // Function to display messages
         function displayMessage(type, text) {
             messageDisplay.textContent = text;
             messageDisplay.className = `message ${type}`;
@@ -119,47 +160,89 @@
         // Generate Invitation Link
         generateLinkBtn.addEventListener("click", () => {
             const currentUser = firebase.auth().currentUser;
-
             if (currentUser) {
                 const uniqueId = Math.random().toString(36).substr(2, 9); // Generate unique ID
                 const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
-                console.log("Generated Invite Link:", inviteLink);
 
-                // Save the invitation to Firestore
+                // Save invitation to Firestore
                 db.collection("invitations").doc(uniqueId).set({
                     senderEmail: currentUser.email,
                     fromUserId: currentUser.uid,
-                    status: "pending",
+                    status: "open",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => {
-                    console.log("Invitation successfully saved in Firestore.");
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    displayMessage("success", "Invitation link generated!");
-                }).catch((error) => {
-                    console.error("Error saving invitation:", error);
-                    displayMessage("error", "Failed to save invitation. Check Firestore rules.");
                 });
+
+                // Show invite link and share options
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                copyLinkBtn.style.display = "inline-block";
+                shareIcons.style.display = "flex";
+
+                whatsappShare.href = `https://wa.me/?text=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
+                gmailShare.href = `mailto:?subject=You're%20Invited!&body=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
+                genericShare.href = inviteLink;
             } else {
-                displayMessage("error", "No user is signed in. Please log in.");
+                displayMessage("error", "No user signed in.");
             }
         });
 
-        // Copy Link to Clipboard
-        copyLinkBtn.addEventListener("click", () => {
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            displayMessage("success", "Link copied to clipboard!");
-        });
-
-        // Check Authentication State
-        firebase.auth().onAuthStateChanged((user) => {
+        // Handle Invite Acceptance
+        auth.onAuthStateChanged((user) => {
             if (user) {
                 usernameDisplay.textContent = user.displayName || "No display name";
+                profilePicture.src = `https://www.gravatar.com/avatar/${md5(user.email.trim().toLowerCase())}`;
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteId = urlParams.get("inviteId");
+
+                if (inviteId) {
+                    const inviteRef = db.collection("invitations").doc(inviteId);
+
+                    inviteRef.get().then((doc) => {
+                        if (doc.exists) {
+                            inviteRef.collection("acceptedUsers").doc(user.uid).set({
+                                recipientUserId: user.uid,
+                                recipientEmail: user.email,
+                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            });
+
+                            displayMessage("success", "You have accepted the invitation!");
+                        } else {
+                            displayMessage("error", "Invalid invitation link.");
+                        }
+                    });
+                }
+
+                // Fetch and display invitations sent or accepted by the current user
+                db.collection("invitations")
+                    .where("fromUserId", "==", user.uid)
+                    .get()
+                    .then((querySnapshot) => {
+                        invitationsList.innerHTML = ""; // Clear previous list
+                        querySnapshot.forEach((doc) => {
+                            const inviteData = doc.data();
+                            const invitationItem = document.createElement("div");
+                            invitationItem.classList.add("invitation-item");
+                            invitationItem.innerHTML = `
+                                <p>Invitation to: ${inviteData.senderEmail}</p>
+                                <p>Status: ${inviteData.status}</p>
+                                <p>Sent on: ${new Date(inviteData.timestamp.seconds * 1000).toLocaleString()}</p>
+                            `;
+                            invitationsList.appendChild(invitationItem);
+                        });
+                    });
             } else {
                 usernameDisplay.textContent = "No user signed in";
             }
+        });
+
+        // Sign out button
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.reload(); // Reload page to reflect signed-out state
+            }).catch((error) => {
+                displayMessage("error", `Sign out failed: ${error.message}`);
+            });
         });
     </script>
 </body>
