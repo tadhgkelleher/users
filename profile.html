@@ -113,6 +113,7 @@
                 .where("status", "==", "accepted")
                 .get()
                 .then((querySnapshot) => {
+                    console.log("Firestore query results:", querySnapshot);
                     if (!querySnapshot.empty) {
                         const inviteData = querySnapshot.docs[0].data();
                         const sender = inviteData.senderEmail;
@@ -122,6 +123,7 @@
                     }
                 })
                 .catch((error) => {
+                    console.error("Firestore error:", error);
                     senderInfo.textContent = "Failed to retrieve invitation details.";
                 });
         }
@@ -139,6 +141,7 @@
         auth.onAuthStateChanged((user) => {
             if (user) {
                 // Display the profile when user is signed in
+                console.log("Current user:", user);
                 displayUserProfile(user);
             } else {
                 // Redirect to welcome page if no user is signed in
