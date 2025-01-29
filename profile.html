@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>My Mandala - Profile & Invitations</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -56,6 +56,14 @@
             margin: 1rem auto;
             display: block;
         }
+        .instructions {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .invite-list {
+            margin-top: 2rem;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -74,10 +82,12 @@
         <button id="signInBtn">Sign In</button>
         <button id="registerBtn">Register</button>
         <div id="authMessage" class="message"></div>
+        <button id="googleSignInBtn">Sign In with Google</button>
     </div>
 
     <!-- Profile Section -->
     <main id="profileSection" class="hidden">
+        <div id="userInstructions" class="instructions"></div>
         <div class="profile">
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
@@ -90,7 +100,7 @@
         <div id="message" class="message"></div>
 
         <div class="invite-list">
-            <h3>My Invitations</h3>
+            <h3>Your Invitations</h3>
             <div id="invitationsList"></div>
         </div>
     </main>
@@ -115,11 +125,13 @@
         // DOM Elements
         const loginForm = document.getElementById("loginForm");
         const profileSection = document.getElementById("profileSection");
+        const userInstructions = document.getElementById("userInstructions");
         const emailInput = document.getElementById("email");
         const passwordInput = document.getElementById("password");
         const signInBtn = document.getElementById("signInBtn");
         const registerBtn = document.getElementById("registerBtn");
         const authMessage = document.getElementById("authMessage");
+        const googleSignInBtn = document.getElementById("googleSignInBtn");
 
         const generateLinkBtn = document.getElementById("generateLinkBtn");
         const inviteLinkInput = document.getElementById("inviteLink");
@@ -152,6 +164,19 @@
             auth.createUserWithEmailAndPassword(email, password)
                 .then(() => location.reload()) // Refresh after sign-up
                 .catch(err => displayMessage(authMessage, "error", err.message));
+        });
+
+        // Google Sign-In
+        googleSignInBtn.addEventListener("click", () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then(result => {
+                    // Signed in successfully
+                    location.reload(); // Refresh after sign-in
+                })
+                .catch(err => {
+                    displayMessage(authMessage, "error", err.message);
+                });
         });
 
         // Generate Invitation Link
@@ -192,7 +217,8 @@
                     invitationsList.innerHTML = "";
                     querySnapshot.forEach((doc) => {
                         const inviteData = doc.data();
-                        invitationsList.innerHTML += `<p>Invitation ID: ${doc.id} - Status: ${inviteData.status}</p>`;
+                        const status = inviteData.status.charAt(0).toUpperCase() + inviteData.status.slice(1);
+                        invitationsList.innerHTML += `<p>Invitation ID: ${doc.id} - Status: ${status}</p>`;
                     });
                 });
         }
@@ -203,10 +229,13 @@
                 loginForm.classList.add("hidden");
                 profileSection.classList.remove("hidden");
                 usernameDisplay.textContent = user.email;
+                profilePicture.src = `https://www.gravatar.com/avatar/${md5(user.email.trim().toLowerCase())}`;
+                userInstructions.textContent = "You are signed in! You can now generate invitations and view your sent invites.";
                 loadInvitations(user);
             } else {
                 loginForm.classList.remove("hidden");
                 profileSection.classList.add("hidden");
+                userInstructions.textContent = "Welcome! Please sign in to generate invitations and view your profile.";
             }
         });
     </script>
