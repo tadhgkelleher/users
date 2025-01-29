@@ -1,37 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Keep existing meta tags and styles -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile and Invitations</title>
     <style>
-        /* Add to existing styles */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0,0,0,.3);
-            border-radius: 50%;
-            border-top-color: #333;
-            animation: spin 1s ease-in-out infinite;
+        /* Simple styling for layout */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
         }
-        .password-container {
-            position: relative;
+        .profile, .invite-list {
+            padding: 20px;
+            margin: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
         }
-        .toggle-password {
-            position: absolute;
-            right: 10px;
-            top: 35px;
+        .message {
+            padding: 10px;
+            margin-top: 10px;
+            display: none;
+        }
+        .message.success {
+            background-color: green;
+            color: white;
+        }
+        .message.error {
+            background-color: red;
+            color: white;
+        }
+        button {
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
             cursor: pointer;
+            margin-top: 10px;
+        }
+        input[type="email"], input[type="password"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
-    <!-- Keep existing HTML structure -->
+    <header>
+        <h1>Welcome to Your Profile</h1>
+    </header>
+
+    <main>
+        <div class="profile">
+            <img id="profilePicture" src="" alt="Profile Picture" width="100">
+            <h2 id="username">Loading...</h2>
+            <button id="signOutBtn" class="hidden">Sign Out</button>
+        </div>
+
+        <!-- Sign In Section -->
+        <div id="signInSection">
+            <h3>Sign In</h3>
+            <form id="signInForm">
+                <input type="email" id="signInEmail" placeholder="Email" required />
+                <input type="password" id="signInPassword" placeholder="Password" required />
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+
+        <!-- Invitation Section -->
+        <div id="invitationSection">
+            <h3>Generate Invitation</h3>
+            <button id="generateLinkBtn">Generate Invitation Link</button>
+            <input type="text" id="inviteLink" readonly class="hidden">
+            <button id="copyLinkBtn" class="hidden">Copy Link</button>
+            <div id="message" class="message"></div>
+
+            <h3>Sign Up to Accept Invitation</h3>
+            <form id="signUpForm" class="hidden">
+                <input type="email" id="email" placeholder="Email" required />
+                <input type="password" id="password" placeholder="Password" required />
+                <button type="submit">Sign Up</button>
+            </form>
+        </div>
+
+        <!-- Invitations List -->
+        <div class="invite-list">
+            <h3>My Invitations</h3>
+            <div id="invitationsList"></div>
+        </div>
+    </main>
 
     <script>
-        // Improved Firebase initialization
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -42,256 +116,165 @@
             measurementId: "G-TER99X7NBT",
         };
 
-        const app = firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const FieldValue = firebase.firestore.FieldValue;
 
         // DOM Elements
-        const elements = {
-            profile: document.querySelector('.profile'),
-            signInSection: document.getElementById('signInSection'),
-            invitationSection: document.getElementById('invitationSection'),
-            // Add more element references as needed
-        };
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const inviteLinkInput = document.getElementById("inviteLink");
+        const copyLinkBtn = document.getElementById("copyLinkBtn");
+        const messageDisplay = document.getElementById("message");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
+        const invitationsList = document.getElementById("invitationsList");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const signUpSection = document.getElementById("invitationSection");
+        const signUpForm = document.getElementById("signUpForm");
+        const signInSection = document.getElementById("signInSection");
+        const signInForm = document.getElementById("signInForm");
 
-        // State management
-        let state = {
-            currentUser: null,
-            isLoading: false,
-            inviteId: new URLSearchParams(window.location.search).get('inviteId')
-        };
+        let inviteIdFromUrl = new URLSearchParams(window.location.search).get('inviteId');
+        let fromUserId = null;
 
-        // Utility functions
-        const utils = {
-            showLoader(button) {
-                button.setAttribute('data-original-text', button.textContent);
-                button.innerHTML = `<div class="loading"></div>`;
-                button.disabled = true;
-            },
-            hideLoader(button) {
-                if (button.getAttribute('data-original-text')) {
-                    button.textContent = button.getAttribute('data-original-text');
-                    button.disabled = false;
-                }
-            },
-            togglePassword(inputId) {
-                const input = document.getElementById(inputId);
-                const type = input.type === 'password' ? 'text' : 'password';
-                input.type = type;
-            }
-        };
+        // Display messages
+        function displayMessage(type, text) {
+            messageDisplay.textContent = text;
+            messageDisplay.className = `message ${type}`;
+            messageDisplay.style.display = "block";
+        }
 
-        // Auth functions
-        const authHandlers = {
-            async handleSignIn(email, password) {
-                try {
-                    await auth.signInWithEmailAndPassword(email, password);
-                    return true;
-                } catch (error) {
-                    throw this.getAuthError(error);
-                }
-            },
+        // Generate Invitation Link
+        generateLinkBtn.addEventListener("click", () => {
+            const currentUser = firebase.auth().currentUser;
+            if (currentUser) {
+                const uniqueId = Math.random().toString(36).substr(2, 9); // Create unique ID
+                const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
-            async handleSignUp(email, password) {
-                try {
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    await this.sendEmailVerification(userCredential.user);
-                    return userCredential;
-                } catch (error) {
-                    throw this.getAuthError(error);
-                }
-            },
-
-            async sendEmailVerification(user) {
-                try {
-                    await user.sendEmailVerification();
-                } catch (error) {
-                    console.error('Verification email error:', error);
-                }
-            },
-
-            getAuthError(error) {
-                const errorMap = {
-                    'auth/wrong-password': 'Invalid password',
-                    'auth/user-not-found': 'User not found',
-                    'auth/email-already-in-use': 'Email already in use',
-                    'auth/weak-password': 'Password should be at least 6 characters'
-                };
-                return errorMap[error.code] || error.message;
-            }
-        };
-
-        // Invitation functions
-        const invitationHandlers = {
-            async generateInvitationLink(userId) {
-                const inviteId = Math.random().toString(36).substr(2, 9);
-                const inviteData = {
-                    fromUserId: userId,
-                    status: 'open',
-                    createdAt: FieldValue.serverTimestamp(),
-                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 1 week expiration
-                };
-
-                await db.collection('invitations').doc(inviteId).set(inviteData);
-                return `${window.location.origin}?inviteId=${inviteId}`;
-            },
-
-            async validateInvitation(inviteId) {
-                if (!inviteId) return null;
-                
-                const doc = await db.collection('invitations').doc(inviteId).get();
-                if (!doc.exists) throw new Error('Invalid invitation link');
-                
-                const data = doc.data();
-                if (data.status !== 'open') throw new Error('Invitation already used');
-                if (new Date(data.expiresAt) < new Date()) throw new Error('Invitation expired');
-                
-                return data.fromUserId;
-            },
-
-            async acceptInvitation(inviteId, userId) {
-                const batch = db.batch();
-                const inviteRef = db.collection('invitations').doc(inviteId);
-                
-                batch.update(inviteRef, {
-                    status: 'accepted',
-                    acceptedBy: userId,
-                    acceptedAt: FieldValue.serverTimestamp()
+                db.collection("invitations").doc(uniqueId).set({
+                    fromUserId: currentUser.uid,
+                    status: "open",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 });
 
-                const userRef = db.collection('users').doc(userId);
-                batch.set(userRef, {
-                    invitedBy: inviteRef,
-                    inviteAccepted: true
-                }, { merge: true });
-
-                await batch.commit();
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.classList.remove("hidden");
+                copyLinkBtn.classList.remove("hidden");
+            } else {
+                displayMessage("error", "No user signed in.");
             }
-        };
+        });
 
-        // UI functions
-        const ui = {
-            showElement(el) {
-                el.classList.remove('hidden');
-            },
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            displayMessage("success", "Link copied to clipboard!");
+        });
 
-            hideElement(el) {
-                el.classList.add('hidden');
-            },
+        // Handle Sign Up
+        signUpForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
-            displayMessage(type, text, duration = 5000) {
-                const message = document.getElementById('message');
-                message.textContent = text;
-                message.className = `message ${type}`;
-                message.style.display = 'block';
-                
-                if (duration) {
-                    setTimeout(() => {
-                        message.style.display = 'none';
-                    }, duration);
+            auth.createUserWithEmailAndPassword(email, password).then((userCredential) => {
+                const user = userCredential.user;
+                if (inviteIdFromUrl) {
+                    // Associate the invite
+                    db.collection("invitations").doc(inviteIdFromUrl).update({
+                        status: "accepted",
+                        acceptedBy: user.uid,
+                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    });
+
+                    // Optionally, store the invite sender's ID in the user's profile
+                    db.collection("users").doc(user.uid).set({
+                        inviteId: inviteIdFromUrl,
+                        fromUserId: fromUserId,
+                    });
+
+                    displayMessage("success", "Invitation accepted!");
+                    window.location.href = "?"; // Stay on the same page after sign-up
                 }
-            },
-
-            async loadInvitations(userId) {
-                const snapshot = await db.collection('invitations')
-                    .where('fromUserId', '==', userId)
-                    .orderBy('createdAt', 'desc')
-                    .limit(10)
-                    .get();
-
-                const invitationsList = document.getElementById('invitationsList');
-                invitationsList.innerHTML = '';
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const item = document.createElement('div');
-                    item.className = 'invite-item';
-                    item.innerHTML = `
-                        <p>Invite ID: ${doc.id}</p>
-                        <p>Status: ${data.status}</p>
-                        ${data.acceptedBy ? `<p>Accepted by: ${data.acceptedBy}</p>` : ''}
-                    `;
-                    invitationsList.appendChild(item);
-                });
-            }
-        };
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', async () => {
-            // Add password toggles
-            document.querySelectorAll('.password-container').forEach(container => {
-                const toggle = document.createElement('span');
-                toggle.className = 'toggle-password';
-                toggle.textContent = '👁️';
-                toggle.onclick = () => utils.togglePassword(container.querySelector('input').id);
-                container.appendChild(toggle);
-            });
-
-            // Handle invitation parameter
-            try {
-                if (state.inviteId) {
-                    const fromUserId = await invitationHandlers.validateInvitation(state.inviteId);
-                    ui.showElement(document.getElementById('signUpForm'));
-                }
-            } catch (error) {
-                ui.displayMessage('error', error.message);
-                history.replaceState(null, '', window.location.pathname);
-            }
-
-            auth.onAuthStateChanged(async user => {
-                state.currentUser = user;
-                if (user) {
-                    await ui.loadInvitations(user.uid);
-                    // Update UI for logged in state
-                } else {
-                    // Update UI for logged out state
-                }
+            }).catch((error) => {
+                displayMessage("error", error.message);
             });
         });
 
-        // Add improved event handlers for forms
-        document.getElementById('signInForm').addEventListener('submit', async (e) => {
+        // Handle Sign In
+        signInForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            const button = e.target.querySelector('button');
-            utils.showLoader(button);
-            
-            try {
-                await authHandlers.handleSignIn(
-                    document.getElementById('signInEmail').value,
-                    document.getElementById('signInPassword').value
-                );
-            } catch (error) {
-                ui.displayMessage('error', error);
-            } finally {
-                utils.hideLoader(button);
+            const email = document.getElementById("signInEmail").value;
+            const password = document.getElementById("signInPassword").value;
+
+            auth.signInWithEmailAndPassword(email, password).then((userCredential) => {
+                const user = userCredential.user;
+                displayMessage("success", "Signed In Successfully!");
+            }).catch((error) => {
+                displayMessage("error", error.message);
+            });
+        });
+
+        // Load Invitations
+        function loadInvitations(user) {
+            db.collection("invitations").where("fromUserId", "==", user.uid)
+                .get()
+                .then((querySnapshot) => {
+                    invitationsList.innerHTML = "";
+                    querySnapshot.forEach((doc) => {
+                        const invitationData = doc.data();
+                        const inviteId = doc.id;
+
+                        const inviteItem = document.createElement("div");
+                        inviteItem.innerHTML = `<p>Invitation ID: ${inviteId} - Status: ${invitationData.status}</p>`;
+
+                        // Fetch Accepted Users
+                        doc.ref.collection("acceptedUsers").get().then((subSnapshot) => {
+                            if (!subSnapshot.empty) {
+                                subSnapshot.forEach((subDoc) => {
+                                    const userData = subDoc.data();
+                                    const userItem = document.createElement("p");
+                                    userItem.textContent = `Accepted by: ${userData.recipientEmail}`;
+                                    inviteItem.appendChild(userItem);
+                                });
+                            } else {
+                                const noAccepts = document.createElement("p");
+                                noAccepts.textContent = "No recipients yet.";
+                                inviteItem.appendChild(noAccepts);
+                            }
+                        });
+
+                        invitationsList.appendChild(inviteItem);
+                    });
+                });
+        }
+
+        // Check Authentication
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log("User logged in:", user);
+                usernameDisplay.textContent = user.displayName || "No display name";
+                profilePicture.src = user.photoURL || "default-profile.png";
+                loadInvitations(user);
+                signInSection.style.display = "none"; // Hide sign-in section
+                signUpSection.style.display = "none"; // Hide sign-up section
+                signOutBtn.classList.remove("hidden"); // Show Sign Out button
+            } else {
+                console.log("No user signed in.");
+                signInSection.style.display = "block"; // Show sign-in section
+                signUpSection.style.display = "none"; // Hide sign-up section
+                signOutBtn.classList.add("hidden"); // Hide Sign Out button
             }
         });
 
-        document.getElementById('signUpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const button = e.target.querySelector('button');
-            utils.showLoader(button);
-            
-            try {
-                if (!state.inviteId) throw new Error('No invitation found');
-                
-                const userCredential = await authHandlers.handleSignUp(
-                    document.getElementById('email').value,
-                    document.getElementById('password').value
-                );
-
-                await invitationHandlers.acceptInvitation(state.inviteId, userCredential.user.uid);
-                ui.displayMessage('success', 'Account created and invitation accepted!');
-                setTimeout(() => window.location.replace('/'), 3000);
-            } catch (error) {
-                ui.displayMessage('error', error);
-            } finally {
-                utils.hideLoader(button);
-            }
+        // Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.href = "?"; // Reload page after sign-out
+            });
         });
-
-        // Add remaining event handlers (sign out, generate link, etc.)
     </script>
 </body>
 </html>
