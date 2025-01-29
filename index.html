@@ -691,7 +691,6 @@ function renderCircularNodes(nodes) {
     });
 }
 
-// Function to display user information in the modal
 function showUserInfo(userId) {
     if (!userId) return;
 
@@ -702,19 +701,69 @@ function showUserInfo(userId) {
         .then(doc => {
             if (doc.exists) {
                 const userData = doc.data();
+                console.log("Available user data:", userData); // Debug log
                 
-                // Update modal content with user data
-                document.getElementById("modalUserName").textContent = userData.displayName || userData.email || "Anonymous User";
-                document.getElementById("modalUserEmail").textContent = userData.email || "No email provided";
-                document.getElementById("modalUserImage").src = userData.photoURL || "/api/placeholder/100/100";
-                document.getElementById("modalUserJoinDate").textContent = userData.joinDate ? new Date(userData.joinDate.toDate()).toLocaleDateString() : "Unknown";
-                document.getElementById("modalUserStatus").textContent = userData.status || "Active";
-                document.getElementById("modalUserBio").textContent = userData.bio || "No bio provided";
+                // Clear previous content
+                const userInfoContainer = document.getElementById("userInfoDisplay");
+                if (!userInfoContainer) {
+                    console.error("userInfoDisplay element not found");
+                    return;
+                }
+
+                // Create a list of all available fields and their values
+                let htmlContent = '<div class="user-data-fields">';
                 
+                // Iterate through all fields in userData
+                Object.entries(userData).forEach(([field, value]) => {
+                    let displayValue = value;
+                    
+                    // Handle different types of values
+                    if (value === null || value === undefined) {
+                        displayValue = 'Not provided';
+                    } else if (value instanceof firebase.firestore.Timestamp) {
+                        displayValue = value.toDate().toLocaleString();
+                    } else if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value);
+                    }
+                    
+                    htmlContent += `
+                        <div class="field-row">
+                            <strong>${field}:</strong> 
+                            <span>${displayValue}</span>
+                        </div>
+                    `;
+                });
+                
+                htmlContent += '</div>';
+                userInfoContainer.innerHTML = htmlContent;
+
+                // Add styles for the fields
+                const style = document.createElement('style');
+                style.textContent = `
+                    .user-data-fields {
+                        padding: 15px;
+                        background: rgba(255, 255, 255, 0.05);
+                        border-radius: 8px;
+                    }
+                    .field-row {
+                        padding: 8px 0;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                    .field-row:last-child {
+                        border-bottom: none;
+                    }
+                    .field-row strong {
+                        color: #3498db;
+                        margin-right: 10px;
+                        text-transform: capitalize;
+                    }
+                `;
+                document.head.appendChild(style);
+
                 // Show the modal
                 modal.style.display = "block";
             } else {
-                console.error("No user found!");
+                console.error("No user document found for ID:", userId);
             }
         })
         .catch(error => {
@@ -722,17 +771,20 @@ function showUserInfo(userId) {
         });
 }
 
-// Close modal when clicking the close button
-document.querySelector(".close-btn").onclick = function() {
-    document.getElementById("userInfoModal").style.display = "none";
-}
+// Update the modal HTML structure
+const modalHtml = `
+<div id="userInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>User Information</h3>
+        <div id="userInfoDisplay"></div>
+    </div>
+</div>
+`;
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById("userInfoModal");
-    if (event.target === modal) {
-        modal.style.display = "none";
-    }
+// Add this to your document if not already present
+if (!document.getElementById('userInfoModal')) {
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
 // Function to get the appropriate CSS class based on invitation status
