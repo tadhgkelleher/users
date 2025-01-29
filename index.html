@@ -234,7 +234,15 @@
                     <h3 id="username" class="card-title"></h3>
                     <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
                     
-                
+                <!-- Modal Structure -->
+<div id="userInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="userName"></h3>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Additional Info:</strong> <span id="userAdditionalInfo"></span></p>
+    </div>
+</div>
 
                     <!-- Invitation Section -->
                     <div id="generateLinkSection" class="mt-4">
@@ -293,6 +301,45 @@
     .share-btn i {
         margin-right: 8px;
     }
+
+    /* Modal Style */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 8px;
+}
+
+.close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
 
     /* Button colors */
     .btn-whatsapp { background-color: #25D366; }
@@ -544,20 +591,24 @@ function renderCircularNodes(nodes) {
     const nodeData = nodes.map((d, i) => ({
         x: width / 2 + radius * Math.cos(i * angleStep),
         y: height / 2 + radius * Math.sin(i * angleStep),
-        name: d.name
+        name: d.name,
+        id: d.id // Keep track of user ID for each node
     }));
 
     console.log("Node Data for Circular Layout:", nodeData); // Debug log for layout data
 
-    svg.selectAll("circle")
+    // Create nodes (circles)
+    const circles = svg.selectAll("circle")
         .data(nodeData)
         .enter()
         .append("circle")
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .attr("r", 20)
-        .attr("fill", "steelblue");
+        .attr("fill", "steelblue")
+        .style("cursor", "pointer"); // Show pointer cursor on hover
 
+    // Create text labels inside the circles
     svg.selectAll("text")
         .data(nodeData)
         .enter()
@@ -569,6 +620,43 @@ function renderCircularNodes(nodes) {
         .text(d => d.name)
         .attr("fill", "white")
         .attr("font-size", "12px");
+
+    // Add click event listener to the nodes
+    circles.on("click", function(event, d) {
+        // When a node is clicked, show information about the associated user
+        showUserInfo(d.id);
+    });
+}
+
+// Function to display user information when a node is clicked
+function showUserInfo(userId) {
+    if (!userId) return;
+
+    // Query the user info from Firestore using the user ID
+    db.collection("users").doc(userId).get()
+        .then(doc => {
+            if (doc.exists) {
+                const userData = doc.data();
+                // Display the user information (You can customize this part)
+                const userInfo = `
+                    <div>
+                        <h3>${userData.displayName || userData.email}</h3>
+                        <p><strong>Email:</strong> ${userData.email || 'N/A'}</p>
+                        <p><strong>Additional Info:</strong> ${userData.additionalInfo || 'N/A'}</p>
+                    </div>
+                `;
+                // Display user information in a modal or a separate section
+                const infoDisplay = document.getElementById("userInfoDisplay");
+                if (infoDisplay) {
+                    infoDisplay.innerHTML = userInfo;
+                }
+            } else {
+                console.error("No user found!");
+            }
+        })
+        .catch((error) => {
+            console.error("Error getting user info:", error);
+        });
 }
 
 // Function to get the appropriate CSS class based on invitation status
