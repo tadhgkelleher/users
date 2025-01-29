@@ -387,15 +387,24 @@ document.getElementById("shareFacebookBtn").addEventListener("click", () => {
             }, 5000);
         }
 
-        // Helper function to update UI for authenticated user
-        function updateUIForAuthenticatedUser(user) {
-            authSection.style.display = "none";
-            profileSection.style.display = "block";
-            signOutBtn.style.display = "block";
-            usernameDisplay.textContent = `Hello, ${user.displayName || user.email || 'User'}`;
-            profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
-            loadInvitations(user);
-        }
+       // Update UI for authenticated user
+function updateUIForAuthenticatedUser(user) {
+    authSection.style.display = "none";
+    profileSection.style.display = "block";
+    signOutBtn.style.display = "block";
+    usernameDisplay.textContent = `Hello, ${user.displayName || user.email || 'User'}`;
+
+    // Only display the profile picture if it exists
+    if (user.photoURL) {
+        profilePicture.src = user.photoURL;
+        profilePicture.style.display = "block"; // Make the image visible
+    } else {
+        profilePicture.style.display = "none"; // Hide the profile picture if not available
+    }
+
+    loadInvitations(user);
+}
+
 
         // Helper function to update UI for signed out user
         function updateUIForSignedOutUser() {
