@@ -621,8 +621,8 @@ function renderCircularNodes(nodes) {
 
     // Add click event listener to the nodes
     circles.on("click", function(event, d) {
-        // When a node is clicked, show information about the associated user
-        showUserInfo(d.id);
+        console.log("Node clicked, User ID:", d.id); // Debug: Check the userId
+        showUserInfo(d.id); // Show user info in modal
     });
 }
 
@@ -635,6 +635,7 @@ function showUserInfo(userId) {
         .then(doc => {
             if (doc.exists) {
                 const userData = doc.data();
+                console.log("User data:", userData); // Debug: Log user data
 
                 // Update the modal content with user information
                 document.getElementById("userName").innerText = userData.displayName || userData.email;
@@ -656,6 +657,7 @@ function showUserInfo(userId) {
 // Close the modal when the user clicks on the close button (x)
 const closeBtn = document.getElementsByClassName("close-btn")[0];
 closeBtn.onclick = function() {
+    console.log("Closing modal"); // Debug: Log when close button is clicked
     const modal = document.getElementById("userInfoModal");
     modal.style.display = "none";
 }
@@ -664,6 +666,7 @@ closeBtn.onclick = function() {
 window.onclick = function(event) {
     const modal = document.getElementById("userInfoModal");
     if (event.target === modal) {
+        console.log("Closing modal by clicking outside"); // Debug: Log when clicked outside modal
         modal.style.display = "none";
     }
 }
