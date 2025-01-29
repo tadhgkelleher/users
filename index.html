@@ -680,34 +680,37 @@ function renderCircularNodes(nodes) {
 }
 
 function showUserInfo(userId) {
-    if (!userId) return;
+    console.log("showUserInfo called with userId:", userId); // Debug log
+    
+    if (!userId) {
+        console.log("No userId provided");
+        return;
+    }
 
     const modal = document.getElementById("userInfoModal");
+    const debugFields = document.getElementById("debugFields");
     
-    // Query the user info from Firestore
+    // Clear previous content
+    debugFields.innerHTML = 'Loading...';
+    
+    // Get user data from Firebase
     db.collection("users").doc(userId).get()
         .then(doc => {
+            console.log("Firebase response:", doc); // Debug log
+            
             if (doc.exists) {
                 const userData = doc.data();
-                console.log("Available user data:", userData); // Debug log
+                console.log("User data:", userData); // Debug log
                 
-                // Clear previous content
-                const userInfoContainer = document.getElementById("userInfoDisplay");
-                if (!userInfoContainer) {
-                    console.error("userInfoDisplay element not found");
-                    return;
-                }
-
-                // Create a list of all available fields and their values
-                let htmlContent = '<div class="user-data-fields">';
+                // Display all available fields
+                let htmlContent = '';
                 
-                // Iterate through all fields in userData
-                Object.entries(userData).forEach(([field, value]) => {
+                Object.entries(userData).forEach(([key, value]) => {
                     let displayValue = value;
                     
                     // Handle different types of values
                     if (value === null || value === undefined) {
-                        displayValue = 'Not provided';
+                        displayValue = 'Not set';
                     } else if (value instanceof firebase.firestore.Timestamp) {
                         displayValue = value.toDate().toLocaleString();
                     } else if (typeof value === 'object') {
@@ -716,46 +719,23 @@ function showUserInfo(userId) {
                     
                     htmlContent += `
                         <div class="field-row">
-                            <strong>${field}:</strong> 
-                            <span>${displayValue}</span>
+                            <strong>${key}:</strong> ${displayValue}
                         </div>
                     `;
                 });
                 
-                htmlContent += '</div>';
-                userInfoContainer.innerHTML = htmlContent;
-
-                // Add styles for the fields
-                const style = document.createElement('style');
-                style.textContent = `
-                    .user-data-fields {
-                        padding: 15px;
-                        background: rgba(255, 255, 255, 0.05);
-                        border-radius: 8px;
-                    }
-                    .field-row {
-                        padding: 8px 0;
-                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    }
-                    .field-row:last-child {
-                        border-bottom: none;
-                    }
-                    .field-row strong {
-                        color: #3498db;
-                        margin-right: 10px;
-                        text-transform: capitalize;
-                    }
-                `;
-                document.head.appendChild(style);
-
+                debugFields.innerHTML = htmlContent || 'No fields found';
+                
                 // Show the modal
                 modal.style.display = "block";
             } else {
-                console.error("No user document found for ID:", userId);
+                debugFields.innerHTML = 'No user data found';
+                console.log("No user document found");
             }
         })
         .catch(error => {
-            console.error("Error getting user info:", error);
+            console.error("Error getting user data:", error);
+            debugFields.innerHTML = 'Error loading user data';
         });
 }
 
