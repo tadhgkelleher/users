@@ -8,7 +8,137 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-</head>
+    
+ <style>
+        /* Custom Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+        }
+
+        .navbar-brand {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+
+        .card-body {
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+        }
+
+        .form-group label {
+            font-weight: bold;
+        }
+
+        .btn {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        .rounded-circle {
+            border-radius: 50%;
+        }
+
+        .alert {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        .badge-warning {
+            background-color: #ffc107;
+        }
+
+        .badge-success {
+            background-color: #28a745;
+        }
+
+        .badge-danger {
+            background-color: #dc3545;
+        }
+
+        .badge-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-group .btn {
+            width: 120px;
+        }
+
+        .btn-group-vertical {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #generateLinkBtn, #copyLinkBtn {
+            display: inline-block;
+        }
+
+        #shareSection {
+            display: none;
+            margin-top: 20px;
+        }
+
+        #shareSection .btn-group .btn {
+            width: auto;
+        }
+
+        .navbar .btn-danger {
+            margin-left: auto;
+        }
+    </style>
 <body>
     <header class="mb-4">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
