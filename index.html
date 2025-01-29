@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     
 <style>
         body {
@@ -221,7 +222,7 @@
                     <h3 id="username" class="card-title"></h3>
                     <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
                     
-                 
+                 <svg id="circleLayout" width="500" height="500"></svg>
 
                     <!-- Invitation Section -->
                     <div id="generateLinkSection" class="mt-4">
@@ -381,70 +382,66 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-    function loadInvitations(user) {
+   function loadInvitations(user) {
     if (!user) return;
 
-    const invitationsList = document.getElementById("invitationsList");
-    invitationsList.innerHTML = ''; // Clear existing invitations
-
-    // Query all invitations where fromUserId matches current user
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
-            const acceptedInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
+            const acceptedInvitations = querySnapshot.docs
+                .filter(doc => doc.data().status === "accepted")
+                .map(doc => ({
+                    id: doc.id,
+                    toUserId: doc.data().toUserId
+                }));
 
-            if (acceptedInvitations.length === 0) {
-                invitationsList.innerHTML = `
-                    <div class="text-center text-muted">
-                        <p>No accepted invitations yet.</p>
-                    </div>`;
-                return;
-            }
-
-            acceptedInvitations.forEach((doc) => {
-                const invitationData = doc.data();
-                const formattedDate = invitationData.timestamp 
-                    ? invitationData.timestamp.toDate().toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                    : 'Date unavailable';
-
-                let userInfoPromise = invitationData.toUserId 
-                    ? db.collection("users").doc(invitationData.toUserId).get()
-                    : Promise.resolve(null);
-
-                userInfoPromise.then((userDoc) => {
-                    const acceptedByUser = userDoc?.data()?.displayName || userDoc?.data()?.email || 'Unknown User';
-                    const inviteItem = document.createElement("div");
-                    inviteItem.className = "mb-3 border-bottom pb-3";
-                    inviteItem.innerHTML = `
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <p class="mb-1"><strong>Created:</strong> ${formattedDate}</p>
-                                <p class="mb-1">
-                                    <strong>Status:</strong> 
-                                    <span class="badge badge-success">Accepted</span>
-                                </p>
-                                <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
-                            </div>
-                        </div>`;
-
-                    invitationsList.appendChild(inviteItem);
-                }).catch(error => {
-                    console.error("Error getting user info:", error);
-                });
-            });
+            renderCircularNodes(acceptedInvitations);
         })
-        .catch((error) => {
+        .catch(error => {
             showMessage("Error loading invitations: " + error.message, "danger");
         });
 }
+
+function renderCircularNodes(nodes) {
+    const width = 500, height = 500, radius = 200;
+    const svg = d3.select("#circleLayout")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.selectAll("*").remove(); // Clear previous rendering
+
+    const angleStep = (2 * Math.PI) / nodes.length;
+    
+    const nodeData = nodes.map((d, i) => ({
+        x: width / 2 + radius * Math.cos(i * angleStep),
+        y: height / 2 + radius * Math.sin(i * angleStep),
+        label: d.toUserId || "Unknown"
+    }));
+
+    svg.selectAll("circle")
+        .data(nodeData)
+        .enter()
+        .append("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("r", 20)
+        .attr("fill", "steelblue");
+
+    svg.selectAll("text")
+        .data(nodeData)
+        .enter()
+        .append("text")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y)
+        .attr("dy", 5)
+        .attr("text-anchor", "middle")
+        .text(d => d.label)
+        .attr("fill", "white")
+        .attr("font-size", "12px");
+}
+
 
 
 // Function to get the appropriate CSS class based on invitation status
