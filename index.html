@@ -4,40 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile and Invitations</title>
-    <style>
-        /* You can add your styles here */
-    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Profile</h1>
+        <h1 class="text-center">Welcome to Your Profile</h1>
     </header>
-    <main>
-        <div class="profile">
-            <img id="profilePicture" src="" alt="Profile Picture">
-            <h2 id="username">Loading...</h2>
-            <button id="signOutBtn">Sign Out</button>
+    <main class="container">
+        <div id="authSection">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="form-control" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Password" required>
+            </div>
+            <button id="signUpBtn" class="btn btn-primary">Sign Up</button>
+            <button id="loginBtn" class="btn btn-secondary">Login</button>
+            <button id="signOutBtn" class="btn btn-danger" style="display: none;">Sign Out</button>
         </div>
 
-        <div id="invitationSection">
-            <h3>Generate Invitation</h3>
-            <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly style="display: none;">
-            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-            <div id="message" class="message"></div>
+        <div id="profileSection" style="display: none;">
+            <h3 id="username"></h3>
+            <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle" width="100" height="100">
+            <div id="generateLinkSection">
+                <h3>Generate Invitation</h3>
+                <button id="generateLinkBtn" class="btn btn-success">Generate Invitation Link</button>
+                <input type="text" id="inviteLink" class="form-control" readonly style="display: none;">
+                <button id="copyLinkBtn" class="btn btn-info" style="display: none;">Copy Link</button>
+            </div>
+            <div id="message" class="alert alert-info" style="display: none;"></div>
         </div>
 
-        <div class="invite-list">
-            <h3>My Invitations</h3>
-            <div id="invitationsList"></div>
+        <div id="signUpSection" style="display: none;">
+            <h3>Sign Up to Accept Invitation</h3>
+            <form id="signUpForm">
+                <input type="email" id="signUpEmail" placeholder="Email" class="form-control" required />
+                <input type="password" id="signUpPassword" placeholder="Password" class="form-control" required />
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+            </form>
         </div>
+
+        <div id="invitationsList"></div>
     </main>
 
     <script>
-        // Firebase Configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -45,7 +61,7 @@
             storageBucket: "mandala-5165e.appspot.com",
             messagingSenderId: "569537405023",
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT",
+            measurementId: "G-TER99X7NBT"
         };
 
         // Initialize Firebase
@@ -60,49 +76,85 @@
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
         const profilePicture = document.getElementById("profilePicture");
-        const invitationsList = document.getElementById("invitationsList");
+        const signUpSection = document.getElementById("signUpSection");
+        const signUpForm = document.getElementById("signUpForm");
+        const signUpBtn = document.getElementById("signUpBtn");
+        const loginBtn = document.getElementById("loginBtn");
         const signOutBtn = document.getElementById("signOutBtn");
-        
-        // Listen for authentication state changes
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                console.log("User logged in: ", user); // Debugging log to confirm user is logged in
-                usernameDisplay.textContent = user.displayName || "No display name";
-                profilePicture.src = user.photoURL || "default-profile.png";
-                generateLinkBtn.style.display = "block"; // Show the "Generate Link" button
-                loadInvitations(user);
-            } else {
-                console.log("No user signed in");
-                usernameDisplay.textContent = "No user signed in";
-                generateLinkBtn.style.display = "none"; // Hide the "Generate Link" button
-            }
+        const authSection = document.getElementById("authSection");
+
+        let inviteIdFromUrl = new URLSearchParams(window.location.search).get('inviteId');
+
+        // Handle Sign Up
+        signUpForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("signUpEmail").value;
+            const password = document.getElementById("signUpPassword").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    processInvite(inviteIdFromUrl, user);
+                })
+                .catch((error) => {
+                    messageDisplay.textContent = error.message;
+                    messageDisplay.style.display = "block";
+                });
         });
 
-        // Function to display messages
-        function displayMessage(type, text) {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `message ${type}`;
-            messageDisplay.style.display = "block";
-        }
+        // Handle Login
+        loginBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
-        // Generate Invitation Link
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    authSection.style.display = "none";
+                    document.getElementById("profileSection").style.display = "block";
+                    usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
+                    profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
+                    loadInvitations(user);
+                })
+                .catch((error) => {
+                    messageDisplay.textContent = error.message;
+                    messageDisplay.style.display = "block";
+                });
+        });
+
+        // Handle Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                authSection.style.display = "block";
+                document.getElementById("profileSection").style.display = "none";
+                messageDisplay.style.display = "none";
+            });
+        });
+
+        // Handle Generate Invitation Link
         generateLinkBtn.addEventListener("click", () => {
             const currentUser = firebase.auth().currentUser;
             if (currentUser) {
-                const uniqueId = Math.random().toString(36).substr(2, 9); // Create unique ID
+                const uniqueId = Math.random().toString(36).substr(2, 9);
                 const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
                 db.collection("invitations").doc(uniqueId).set({
                     fromUserId: currentUser.uid,
                     status: "open",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                }).then(() => {
+                    inviteLinkInput.value = inviteLink;
+                    inviteLinkInput.style.display = "block";
+                    copyLinkBtn.style.display = "inline-block";
+                    messageDisplay.textContent = "Invitation Link Generated!";
+                    messageDisplay.style.display = "block";
+                }).catch((error) => {
+                    messageDisplay.textContent = error.message;
+                    messageDisplay.style.display = "block";
                 });
-
-                inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                copyLinkBtn.style.display = "inline-block";
             } else {
-                displayMessage("error", "No user signed in.");
+                messageDisplay.textContent = "You must be signed in to generate an invitation.";
+                messageDisplay.style.display = "block";
             }
         });
 
@@ -110,7 +162,8 @@
         copyLinkBtn.addEventListener("click", () => {
             inviteLinkInput.select();
             document.execCommand("copy");
-            displayMessage("success", "Link copied to clipboard!");
+            messageDisplay.textContent = "Link copied to clipboard!";
+            messageDisplay.style.display = "block";
         });
 
         // Load Invitations
@@ -118,23 +171,57 @@
             db.collection("invitations").where("fromUserId", "==", user.uid)
                 .get()
                 .then((querySnapshot) => {
-                    invitationsList.innerHTML = "";
                     querySnapshot.forEach((doc) => {
                         const invitationData = doc.data();
                         const inviteId = doc.id;
 
                         const inviteItem = document.createElement("div");
                         inviteItem.innerHTML = `<p>Invitation ID: ${inviteId} - Status: ${invitationData.status}</p>`;
-                        invitationsList.appendChild(inviteItem);
+                        document.getElementById("invitationsList").appendChild(inviteItem);
                     });
                 });
         }
 
-        // Sign Out
-        signOutBtn.addEventListener("click", () => {
-            auth.signOut().then(() => {
-                window.location.href = "?"; // Reload page after sign-out
-            });
+        // Process Invitation
+        function processInvite(inviteId, user) {
+            if (inviteId) {
+                const inviteRef = db.collection("invitations").doc(inviteId);
+                inviteRef.get().then((doc) => {
+                    if (doc.exists) {
+                        const inviteData = doc.data();
+                        if (inviteData.status === "open" && inviteData.fromUserId !== user.uid) {
+                            inviteRef.update({
+                                status: "accepted",
+                                toUserId: user.uid,
+                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            });
+                            alert("Invitation Accepted!");
+                        } else {
+                            alert("This invitation is no longer valid.");
+                        }
+                    } else {
+                        alert("Invalid invitation link.");
+                    }
+                }).catch((error) => {
+                    alert("Error processing invitation: " + error.message);
+                });
+            }
+        }
+
+        // Handle Auth State Change
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                authSection.style.display = "none";
+                document.getElementById("profileSection").style.display = "block";
+                usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
+                profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
+                loadInvitations(user);
+                signOutBtn.style.display = "inline-block";
+            } else {
+                authSection.style.display = "block";
+                document.getElementById("profileSection").style.display = "none";
+                signOutBtn.style.display = "none";
+            }
         });
     </script>
 </body>
