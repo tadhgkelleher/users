@@ -445,28 +445,30 @@
 function loadInvitations(user) {
     if (!user) return;
 
-    // Clear previous nodes
     const svg = d3.select("#circleLayout");
-    svg.selectAll("*").remove();
+    svg.selectAll("*").remove(); // Clear previous nodes
 
     // Query invitations where the current user is the sender
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
         .orderBy("timestamp", "desc")
         .get()
-        .then((querySnapshot) => {
-            const sentInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
+        .then((sentSnapshot) => {
+            const sentInvitations = sentSnapshot.docs.filter(doc => doc.data().status === "accepted");
+            console.log("Sent Invitations:", sentInvitations); // Debug log for sent invitations
 
-            // Query invitations where the current user is the recipient (toUserId)
+            // Query invitations where the current user is the recipient
             db.collection("invitations")
                 .where("toUserId", "==", user.uid)
                 .orderBy("timestamp", "desc")
                 .get()
                 .then((receivedSnapshot) => {
                     const receivedInvitations = receivedSnapshot.docs.filter(doc => doc.data().status === "accepted");
+                    console.log("Received Invitations:", receivedInvitations); // Debug log for received invitations
 
                     // Combine both sent and received accepted invitations
                     const allInvitations = [...sentInvitations, ...receivedInvitations];
+                    console.log("All Invitations:", allInvitations); // Debug log for combined invitations
                     
                     if (allInvitations.length === 0) {
                         svg.append("text")
@@ -487,6 +489,8 @@ function loadInvitations(user) {
                     });
 
                     Promise.all(userPromises).then(userDocs => {
+                        console.log("User Docs:", userDocs); // Debug log for user documents
+
                         let nodes = userDocs.map(doc => {
                             if (doc && doc.exists) {
                                 return {
@@ -501,8 +505,11 @@ function loadInvitations(user) {
                             }
                         });
 
+                        console.log("Nodes to Render:", nodes); // Debug log for nodes data
                         renderCircularNodes(nodes);
-                    }).catch(error => console.error("Error fetching user data:", error));
+                    }).catch(error => {
+                        console.error("Error fetching user data:", error);
+                    });
                 })
                 .catch((error) => {
                     console.error("Error loading received invitations:", error);
@@ -540,6 +547,8 @@ function renderCircularNodes(nodes) {
         name: d.name
     }));
 
+    console.log("Node Data for Circular Layout:", nodeData); // Debug log for layout data
+
     svg.selectAll("circle")
         .data(nodeData)
         .enter()
@@ -561,7 +570,6 @@ function renderCircularNodes(nodes) {
         .attr("fill", "white")
         .attr("font-size", "12px");
 }
-
 
 // Function to get the appropriate CSS class based on invitation status
 function getStatusClass(status) {
