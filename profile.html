@@ -5,18 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f9f9f9; }
-        header { background-color: #4CAF50; color: white; text-align: center; padding: 1rem 0; }
-        main { max-width: 800px; margin: 2rem auto; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
-        .profile { text-align: center; margin-bottom: 2rem; }
-        .message { margin-top: 1rem; font-weight: bold; text-align: center; display: none; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .hidden { display: none; }
+        .message {
+            margin-top: 1rem;
+            font-weight: bold;
+            text-align: center;
+        }
         .success { color: green; }
         .error { color: red; }
-        button { padding: 0.5rem 1rem; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 1rem; }
+        input, button {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            margin: 0.5rem auto;
+            padding: 0.5rem;
+            font-size: 1rem;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
         button:hover { background-color: #45a049; }
-        img { border-radius: 50%; width: 100px; height: 100px; margin-bottom: 1rem; }
-        #invitationsList { margin-top: 1rem; }
-        .invitation { padding: 0.5rem; background: #e0e0e0; margin: 0.5rem 0; border-radius: 5px; }
+        img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            margin: 1rem auto;
+            display: block;
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -24,23 +63,40 @@
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Profile</h1>
+        <h1>Welcome to My Mandala</h1>
     </header>
-    <main>
+
+    <!-- Sign-in Form -->
+    <div id="loginForm" class="hidden">
+        <h2>Sign In</h2>
+        <input type="email" id="email" placeholder="Enter your email">
+        <input type="password" id="password" placeholder="Enter your password">
+        <button id="signInBtn">Sign In</button>
+        <button id="registerBtn">Register</button>
+        <div id="authMessage" class="message"></div>
+    </div>
+
+    <!-- Profile Section -->
+    <main id="profileSection" class="hidden">
         <div class="profile">
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
             <button id="signOutBtn">Sign Out</button>
-            <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly style="display: none;">
-            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-            <div id="message" class="message"></div>
         </div>
-        <h3>Sent Invitations</h3>
-        <div id="invitationsList"></div>
+
+        <button id="generateLinkBtn">Generate Invitation Link</button>
+        <input type="text" id="inviteLink" readonly class="hidden">
+        <button id="copyLinkBtn" class="hidden">Copy Link</button>
+        <div id="message" class="message"></div>
+
+        <div class="invite-list">
+            <h3>My Invitations</h3>
+            <div id="invitationsList"></div>
+        </div>
     </main>
-    
+
     <script>
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -51,81 +107,107 @@
             measurementId: "G-TER99X7NBT",
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // DOM Elements
+        const loginForm = document.getElementById("loginForm");
+        const profileSection = document.getElementById("profileSection");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const signInBtn = document.getElementById("signInBtn");
+        const registerBtn = document.getElementById("registerBtn");
+        const authMessage = document.getElementById("authMessage");
+
         const generateLinkBtn = document.getElementById("generateLinkBtn");
-        const signOutBtn = document.getElementById("signOutBtn");
         const inviteLinkInput = document.getElementById("inviteLink");
         const copyLinkBtn = document.getElementById("copyLinkBtn");
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
         const profilePicture = document.getElementById("profilePicture");
         const invitationsList = document.getElementById("invitationsList");
+        const signOutBtn = document.getElementById("signOutBtn");
 
-        function displayMessage(type, text) {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `message ${type}`;
-            messageDisplay.style.display = "block";
+        function displayMessage(element, type, text) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = "block";
         }
 
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                usernameDisplay.textContent = user.displayName || "No display name";
-                profilePicture.src = `https://www.gravatar.com/avatar/${md5(user.email.trim().toLowerCase())}`;
-                loadInvitations(user.uid);
-            } else {
-                usernameDisplay.textContent = "No user signed in";
-            }
+        // Sign In
+        signInBtn.addEventListener("click", () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => location.reload()) // Refresh after sign-in
+                .catch(err => displayMessage(authMessage, "error", err.message));
         });
 
-        generateLinkBtn.addEventListener("click", () => {
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-                const uniqueId = Math.random().toString(36).substr(2, 9);
-                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${uniqueId}`;
+        // Register New User
+        registerBtn.addEventListener("click", () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => location.reload()) // Refresh after sign-up
+                .catch(err => displayMessage(authMessage, "error", err.message));
+        });
 
-                db.collection("invitations").doc(uniqueId).set({
-                    senderEmail: currentUser.email,
-                    fromUserId: currentUser.uid,
+        // Generate Invitation Link
+        generateLinkBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (user) {
+                const inviteId = Math.random().toString(36).substr(2, 9);
+                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${inviteId}`;
+
+                db.collection("invitations").doc(inviteId).set({
+                    fromUserId: user.uid,
                     status: "open",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => {
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    displayMessage("success", "Invitation link generated!");
-                    loadInvitations(currentUser.uid);
                 });
-            } else {
-                displayMessage("error", "No user signed in.");
+
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.classList.remove("hidden");
+                copyLinkBtn.classList.remove("hidden");
             }
         });
 
-        function loadInvitations(userId) {
-            invitationsList.innerHTML = "Loading...";
-            db.collection("invitations").where("fromUserId", "==", userId).get().then((snapshot) => {
-                invitationsList.innerHTML = "";
-                if (snapshot.empty) {
-                    invitationsList.innerHTML = "<p>No invitations sent.</p>";
-                    return;
-                }
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const inviteItem = document.createElement("div");
-                    inviteItem.classList.add("invitation");
-                    inviteItem.textContent = `To: ${data.senderEmail} - Status: ${data.status}`;
-                    invitationsList.appendChild(inviteItem);
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            displayMessage(messageDisplay, "success", "Link copied to clipboard!");
+        });
+
+        // Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => location.reload());
+        });
+
+        // Load Invitations
+        function loadInvitations(user) {
+            db.collection("invitations").where("fromUserId", "==", user.uid)
+                .get().then((querySnapshot) => {
+                    invitationsList.innerHTML = "";
+                    querySnapshot.forEach((doc) => {
+                        const inviteData = doc.data();
+                        invitationsList.innerHTML += `<p>Invitation ID: ${doc.id} - Status: ${inviteData.status}</p>`;
+                    });
                 });
-            });
         }
 
-        signOutBtn.addEventListener("click", () => {
-            auth.signOut().then(() => {
-                displayMessage("success", "Signed out successfully.");
-                window.location.reload();
-            });
+        // Check Authentication
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loginForm.classList.add("hidden");
+                profileSection.classList.remove("hidden");
+                usernameDisplay.textContent = user.email;
+                loadInvitations(user);
+            } else {
+                loginForm.classList.remove("hidden");
+                profileSection.classList.add("hidden");
+            }
         });
     </script>
 </body>
