@@ -87,7 +87,7 @@
         generateLinkBtn.addEventListener("click", () => {
             const currentUser = firebase.auth().currentUser;
             if (currentUser) {
-                const uniqueId = Math.random().toString(36).substr(2, 9);
+                const uniqueId = Math.random().toString(36).substr(2, 9); // Create unique ID
                 const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
                 db.collection("invitations").doc(uniqueId).set({
@@ -182,8 +182,10 @@
                 profilePicture.src = user.photoURL || "default-profile.png";
                 loadInvitations(user);
                 signUpSection.style.display = "none"; // Hide sign-up section if logged in
+                generateLinkBtn.style.display = "block"; // Show Generate Link button when logged in
             } else {
                 usernameDisplay.textContent = "No user signed in";
+                generateLinkBtn.style.display = "none"; // Hide Generate Link button if not logged in
                 if (inviteIdFromUrl) {
                     // Check the invite ID and show sign-up form if necessary
                     db.collection("invitations").doc(inviteIdFromUrl).get().then((doc) => {
