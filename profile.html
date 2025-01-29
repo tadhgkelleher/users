@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile</title>
-    <script src="https://cdn.jsdelivr.net/npm/js-md5@0.7.3/build/md5.min.js"></script> <!-- Add md5 library -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,92 +25,73 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        .profile {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
+        .hidden { display: none; }
         .message {
             margin-top: 1rem;
             font-weight: bold;
             text-align: center;
-            display: none;
         }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        input[type="text"] {
-            margin-top: 1rem;
-            padding: 0.5rem;
-            font-size: 1rem;
+        .success { color: green; }
+        .error { color: red; }
+        input, button {
+            display: block;
             width: 100%;
             max-width: 400px;
-            text-align: center;
+            margin: 0.5rem auto;
+            padding: 0.5rem;
+            font-size: 1rem;
         }
         button {
-            padding: 0.5rem 1rem;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-top: 1rem;
         }
-        button:hover {
-            background-color: #45a049;
-        }
+        button:hover { background-color: #45a049; }
         img {
             border-radius: 50%;
             width: 100px;
             height: 100px;
-            margin-bottom: 1rem;
-        }
-        .share-icons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .share-icons a img {
-            width: 32px;
-            height: 32px;
-        }
-        .sign-in-btn {
-            margin-top: 1rem;
-            padding: 0.5rem 1rem;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .sign-in-btn:hover {
-            background-color: #357AE8;
+            margin: 1rem auto;
+            display: block;
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 </head>
 <body>
     <header>
-        <h1>Welcome to Your Profile</h1>
+        <h1>Welcome to My Mandala</h1>
     </header>
-    <main>
+
+    <!-- Sign-in Form -->
+    <div id="loginForm" class="hidden">
+        <h2>Sign In</h2>
+        <input type="email" id="email" placeholder="Enter your email">
+        <input type="password" id="password" placeholder="Enter your password">
+        <button id="signInBtn">Sign In</button>
+        <button id="registerBtn">Register</button>
+        <div id="authMessage" class="message"></div>
+    </div>
+
+    <!-- Profile Section -->
+    <main id="profileSection" class="hidden">
         <div class="profile">
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
-            <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly style="display: none;">
-            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-            <div id="message" class="message"></div>
-            <div class="share-icons" style="display: none;" id="shareIcons">
-                <a id="whatsappShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp"></a>
-                <a id="gmailShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/732/732200.png" alt="Gmail"></a>
-                <a id="genericShare" href="#" target="_blank"><img src="https://cdn-icons-png.flaticon.com/512/561/561127.png" alt="Share"></a>
-            </div>
+            <button id="signOutBtn">Sign Out</button>
+        </div>
 
-            <!-- Sign In with Google -->
-            <button class="sign-in-btn" id="googleSignInBtn">Sign In with Google</button>
+        <button id="generateLinkBtn">Generate Invitation Link</button>
+        <input type="text" id="inviteLink" readonly class="hidden">
+        <button id="copyLinkBtn" class="hidden">Copy Link</button>
+        <div id="message" class="message"></div>
+
+        <div class="invite-list">
+            <h3>My Invitations</h3>
+            <div id="invitationsList"></div>
         </div>
     </main>
 
@@ -135,92 +112,103 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM elements
+        // DOM Elements
+        const loginForm = document.getElementById("loginForm");
+        const profileSection = document.getElementById("profileSection");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const signInBtn = document.getElementById("signInBtn");
+        const registerBtn = document.getElementById("registerBtn");
+        const authMessage = document.getElementById("authMessage");
+
         const generateLinkBtn = document.getElementById("generateLinkBtn");
         const inviteLinkInput = document.getElementById("inviteLink");
         const copyLinkBtn = document.getElementById("copyLinkBtn");
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
         const profilePicture = document.getElementById("profilePicture");
-        const shareIcons = document.getElementById("shareIcons");
-        const googleSignInBtn = document.getElementById("googleSignInBtn");
-        const whatsappShare = document.getElementById("whatsappShare");
-        const gmailShare = document.getElementById("gmailShare");
-        const genericShare = document.getElementById("genericShare");
+        const invitationsList = document.getElementById("invitationsList");
+        const signOutBtn = document.getElementById("signOutBtn");
 
-        // Display messages
-        function displayMessage(type, text) {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `message ${type}`;
-            messageDisplay.style.display = "block";
+        function displayMessage(element, type, text) {
+            element.textContent = text;
+            element.className = `message ${type}`;
+            element.style.display = "block";
         }
 
-        // Handle Google Sign-In
-        googleSignInBtn.addEventListener("click", () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then((result) => {
-                // User signed in successfully
-                displayMessage("success", "Signed in with Google!");
-                window.location.reload();
-            }).catch((error) => {
-                console.log(error);
-                displayMessage("error", "Failed to sign in with Google.");
-            });
+        // Sign In
+        signInBtn.addEventListener("click", () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => location.reload()) // Refresh after sign-in
+                .catch(err => displayMessage(authMessage, "error", err.message));
         });
 
-        // Handle Auth State Change
-        auth.onAuthStateChanged((user) => {
+        // Register New User
+        registerBtn.addEventListener("click", () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => location.reload()) // Refresh after sign-up
+                .catch(err => displayMessage(authMessage, "error", err.message));
+        });
+
+        // Generate Invitation Link
+        generateLinkBtn.addEventListener("click", () => {
+            const user = auth.currentUser;
             if (user) {
-                usernameDisplay.textContent = user.displayName || "No display name";
-                profilePicture.src = `https://www.gravatar.com/avatar/${md5(user.email.trim().toLowerCase())}`;
+                const inviteId = Math.random().toString(36).substr(2, 9);
+                const inviteLink = `https://my-mandala.com/welcome.html?inviteId=${inviteId}`;
 
-                // Load Invitations
-                loadInvitations(user);
-
-                // Generate Invitation Link
-                generateLinkBtn.addEventListener("click", () => {
-                    const uniqueId = Math.random().toString(36).substr(2, 9);
-                    const inviteLink = `https://yourdomain.com/welcome.html?inviteId=${uniqueId}`;
-
-                    // Save invitation to Firestore
-                    db.collection("invitations").doc(uniqueId).set({
-                        senderEmail: user.email,
-                        fromUserId: user.uid,
-                        status: "pending",
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    });
-
-                    // Show invite link and share options
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    shareIcons.style.display = "flex";
-
-                    whatsappShare.href = `https://wa.me/?text=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
-                    gmailShare.href = `mailto:?subject=You're%20Invited!&body=Join%20me%20here:%20${encodeURIComponent(inviteLink)}`;
-                    genericShare.href = inviteLink;
+                db.collection("invitations").doc(inviteId).set({
+                    fromUserId: user.uid,
+                    status: "open",
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 });
-            } else {
-                usernameDisplay.textContent = "No user signed in";
+
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.classList.remove("hidden");
+                copyLinkBtn.classList.remove("hidden");
             }
         });
 
-        // Load Invitations for current user
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            displayMessage(messageDisplay, "success", "Link copied to clipboard!");
+        });
+
+        // Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => location.reload());
+        });
+
+        // Load Invitations
         function loadInvitations(user) {
-            db.collection("invitations").where("fromUserId", "==", user.uid).get().then((querySnapshot) => {
-                if (querySnapshot.empty) {
-                    displayMessage("info", "No invitations found.");
-                } else {
+            db.collection("invitations").where("fromUserId", "==", user.uid)
+                .get().then((querySnapshot) => {
+                    invitationsList.innerHTML = "";
                     querySnapshot.forEach((doc) => {
                         const inviteData = doc.data();
-                        const status = inviteData.status.charAt(0).toUpperCase() + inviteData.status.slice(1);
-                        messageDisplay.innerHTML += `<p>Invitation ID: ${doc.id} - Status: ${status}</p>`;
+                        invitationsList.innerHTML += `<p>Invitation ID: ${doc.id} - Status: ${inviteData.status}</p>`;
                     });
-                }
-            }).catch((error) => {
-                displayMessage("error", "Error loading invitations.");
-            });
+                });
         }
+
+        // Check Authentication
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                loginForm.classList.add("hidden");
+                profileSection.classList.remove("hidden");
+                usernameDisplay.textContent = user.email;
+                loadInvitations(user);
+            } else {
+                loginForm.classList.remove("hidden");
+                profileSection.classList.add("hidden");
+            }
+        });
     </script>
 </body>
 </html>
