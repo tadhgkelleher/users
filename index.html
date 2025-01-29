@@ -274,19 +274,7 @@
     </main>
 </body>
 
-            <div id="message" class="alert alert-info" style="display: none;"></div>
-            
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h3 class="mb-0">My Sent Invitations</h3>
-                </div>
-                <div class="card-body">
-                    <div id="invitationsList"></div>
-                </div>
-            </div>
-        </div>
-    </main>
-
+           
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -398,20 +386,21 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-       function loadInvitations(user) {
+    function loadInvitations(user) {
     if (!user) return;
 
     const invitationsList = document.getElementById("invitationsList");
     invitationsList.innerHTML = ''; // Clear existing invitations
 
-    // Query only accepted invitations where fromUserId matches current user
+    // Query all invitations where fromUserId matches current user
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
-        .where("status", "==", "accepted") // Only fetch accepted invitations
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
-            if (querySnapshot.empty) {
+            const acceptedInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
+
+            if (acceptedInvitations.length === 0) {
                 invitationsList.innerHTML = `
                     <div class="text-center text-muted">
                         <p>No accepted invitations yet.</p>
@@ -419,7 +408,7 @@
                 return;
             }
 
-            querySnapshot.forEach((doc) => {
+            acceptedInvitations.forEach((doc) => {
                 const invitationData = doc.data();
                 const formattedDate = invitationData.timestamp 
                     ? invitationData.timestamp.toDate().toLocaleDateString('en-US', {
@@ -431,7 +420,6 @@
                     })
                     : 'Date unavailable';
 
-                // Get the user info of who accepted the invitation
                 let userInfoPromise = invitationData.toUserId 
                     ? db.collection("users").doc(invitationData.toUserId).get()
                     : Promise.resolve(null);
