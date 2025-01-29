@@ -302,7 +302,7 @@
         margin-right: 8px;
     }
 
-    /* Modal Style */
+ /* Modal Style */
 .modal {
     display: none; /* Hidden by default */
     position: fixed;
@@ -339,6 +339,7 @@
     text-decoration: none;
     cursor: pointer;
 }
+
 
 
     /* Button colors */
@@ -671,7 +672,7 @@ window.onclick = function(event) {
     }
 }
 
-// Function to display user information when a node is clicked
+// Function to display user information in the modal
 function showUserInfo(userId) {
     if (!userId) return;
 
@@ -680,19 +681,17 @@ function showUserInfo(userId) {
         .then(doc => {
             if (doc.exists) {
                 const userData = doc.data();
-                // Display the user information (You can customize this part)
-                const userInfo = `
-                    <div>
-                        <h3>${userData.displayName || userData.email}</h3>
-                        <p><strong>Email:</strong> ${userData.email || 'N/A'}</p>
-                        <p><strong>Additional Info:</strong> ${userData.additionalInfo || 'N/A'}</p>
-                    </div>
-                `;
-                // Display user information in a modal or a separate section
-                const infoDisplay = document.getElementById("userInfoDisplay");
-                if (infoDisplay) {
-                    infoDisplay.innerHTML = userInfo;
-                }
+                console.log("User data:", userData); // Debug: Log user data
+
+                // Update the modal content with user information
+                document.getElementById("userName").innerText = userData.displayName || userData.email;
+                document.getElementById("userEmail").innerText = userData.email || 'N/A';
+                document.getElementById("userAdditionalInfo").innerText = userData.additionalInfo || 'N/A';
+
+                // Show the modal
+                const modal = document.getElementById("userInfoModal");
+                console.log("Displaying modal"); // Debug: Confirm the modal is being displayed
+                modal.style.display = "block"; // Ensure display is set to "block" to show modal
             } else {
                 console.error("No user found!");
             }
@@ -701,6 +700,24 @@ function showUserInfo(userId) {
             console.error("Error getting user info:", error);
         });
 }
+
+// Close the modal when the user clicks on the close button (x)
+const closeBtn = document.getElementsByClassName("close-btn")[0];
+closeBtn.onclick = function() {
+    console.log("Closing modal"); // Debug: Log when close button is clicked
+    const modal = document.getElementById("userInfoModal");
+    modal.style.display = "none";
+}
+
+// Close the modal when the user clicks anywhere outside the modal
+window.onclick = function(event) {
+    const modal = document.getElementById("userInfoModal");
+    if (event.target === modal) {
+        console.log("Closing modal by clicking outside"); // Debug: Log when clicked outside modal
+        modal.style.display = "none";
+    }
+}
+
 
 // Function to get the appropriate CSS class based on invitation status
 function getStatusClass(status) {
