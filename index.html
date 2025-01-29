@@ -18,17 +18,24 @@
     </header>
     <main class="container">
         <div id="authSection">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" class="form-control" placeholder="Email" required>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" id="authTitle">Sign In</h3>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Password" required>
+                    </div>
+                    <div class="btn-group-vertical w-100">
+                        <button id="signUpBtn" class="btn btn-primary mb-2">Sign Up</button>
+                        <button id="loginBtn" class="btn btn-secondary mb-2">Login</button>
+                        <button id="googleSignInBtn" class="btn btn-warning">Sign In with Google</button>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" class="form-control" placeholder="Password" required>
-            </div>
-            <button id="signUpBtn" class="btn btn-primary">Sign Up</button>
-            <button id="loginBtn" class="btn btn-secondary">Login</button>
-            <button id="googleSignInBtn" class="btn btn-warning">Sign In with Google</button>
         </div>
 
         <div id="profileSection" style="display: none;">
@@ -46,7 +53,6 @@
             </div>
             <div id="message" class="alert alert-info" style="display: none;"></div>
             
-            <!-- Updated invitations section with a card container -->
             <div class="card mt-4">
                 <div class="card-header">
                     <h3 class="mb-0">My Sent Invitations</h3>
@@ -56,27 +62,10 @@
                 </div>
             </div>
         </div>
-
-        <div id="signUpSection" style="display: none;">
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="card-title">Sign Up to Accept Invitation</h3>
-                    <form id="signUpForm">
-                        <div class="form-group">
-                            <input type="email" id="signUpEmail" placeholder="Email" class="form-control" required />
-                        </div>
-                        <div class="form-group">
-                            <input type="password" id="signUpPassword" placeholder="Password" class="form-control" required />
-                        </div>
-                        <button type="submit" class="btn btn-primary">Sign Up</button>
-                    </form>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script>
-        // Firebase configuration and initialization remain the same
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -87,6 +76,7 @@
             measurementId: "G-TER99X7NBT"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -98,13 +88,19 @@
         const messageDisplay = document.getElementById("message");
         const usernameDisplay = document.getElementById("username");
         const profilePicture = document.getElementById("profilePicture");
-        const signUpSection = document.getElementById("signUpSection");
-        const signUpForm = document.getElementById("signUpForm");
         const signUpBtn = document.getElementById("signUpBtn");
         const loginBtn = document.getElementById("loginBtn");
         const signOutBtn = document.getElementById("signOutBtn");
         const authSection = document.getElementById("authSection");
         const profileSection = document.getElementById("profileSection");
+        const authTitle = document.getElementById("authTitle");
+
+        // Check for invitation ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteIdFromUrl = urlParams.get('inviteId');
+        if (inviteIdFromUrl) {
+            authTitle.textContent = "Sign Up to Accept Invitation";
+        }
 
         // Google Sign-In
         const googleProvider = new firebase.auth.GoogleAuthProvider();
@@ -114,6 +110,9 @@
             auth.signInWithPopup(googleProvider)
                 .then((result) => {
                     const user = result.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
                     updateUIForAuthenticatedUser(user);
                 })
                 .catch((error) => {
@@ -129,6 +128,9 @@
             auth.createUserWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
                     updateUIForAuthenticatedUser(user);
                 })
                 .catch((error) => {
@@ -144,6 +146,9 @@
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
                     updateUIForAuthenticatedUser(user);
                 })
                 .catch((error) => {
@@ -151,6 +156,7 @@
                 });
         });
 
+        
         // Handle Sign Out
         signOutBtn.addEventListener("click", () => {
             auth.signOut().then(() => {
@@ -318,26 +324,17 @@
             document.getElementById("password").value = "";
         }
 
-        // Handle Auth State Change
+      // Handle Auth State Change
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 updateUIForAuthenticatedUser(user);
+                if (inviteIdFromUrl) {
+                    processInvite(inviteIdFromUrl, user);
+                }
             } else {
                 updateUIForSignedOutUser();
             }
         });
-
-        // Check for invitation ID in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteIdFromUrl = urlParams.get('inviteId');
-        if (inviteIdFromUrl) {
-            const user = auth.currentUser;
-            if (user) {
-                processInvite(inviteIdFromUrl, user);
-            } else {
-                signUpSection.style.display = "block";
-            }
-        }
     </script>
 </body>
 </html>
