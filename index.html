@@ -135,6 +135,7 @@
                     usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
                     profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
                     loadInvitations(user);
+                    signOutBtn.style.display = "inline-block";
                 })
                 .catch((error) => {
                     messageDisplay.textContent = error.message;
@@ -148,6 +149,7 @@
                 authSection.style.display = "block";
                 document.getElementById("profileSection").style.display = "none";
                 messageDisplay.style.display = "none";
+                signOutBtn.style.display = "none"; // Hide the sign-out button after sign out
             });
         });
 
@@ -252,11 +254,11 @@
                 usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
                 profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
                 loadInvitations(user);
-                signOutBtn.style.display = "inline-block";
+                signOutBtn.style.display = "inline-block"; // Ensure it's visible when signed in
             } else {
                 authSection.style.display = "block";
                 document.getElementById("profileSection").style.display = "none";
-                signOutBtn.style.display = "none";
+                signOutBtn.style.display = "none"; // Hide the sign-out button when not signed in
             }
         });
     </script>
