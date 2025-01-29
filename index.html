@@ -166,29 +166,7 @@
             });
         });
 
-        // Handle Generate Invitation Link
-        generateLinkBtn.addEventListener("click", () => {
-            const currentUser = auth.currentUser;
-            if (currentUser) {
-                const uniqueId = Math.random().toString(36).substr(2, 9);
-                const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-
-                db.collection("invitations").doc(uniqueId).set({
-                    fromUserId: currentUser.uid,
-                    status: "open",
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => {
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                    showMessage("Invitation Link Generated!", "success");
-                }).catch((error) => {
-                    showMessage(error.message, "danger");
-                });
-            } else {
-                showMessage("You must be signed in to generate an invitation.", "warning");
-            }
-        });
+       
 
         // Copy Invite Link
         copyLinkBtn.addEventListener("click", () => {
