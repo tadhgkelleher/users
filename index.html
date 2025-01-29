@@ -359,24 +359,23 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-          // Updated loadInvitations function
 function loadInvitations(user) {
     if (!user) return;
 
     const invitationsList = document.getElementById("invitationsList");
     invitationsList.innerHTML = ''; // Clear existing invitations
 
-    // Query invitations where fromUserId matches current user
+    // Query invitations where fromUserId matches current user and status is 'accepted'
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
+        .where("status", "==", "accepted")  // Filter by accepted invitations
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
             if (querySnapshot.empty) {
                 invitationsList.innerHTML = `
                     <div class="text-center text-muted">
-                        <p>You haven't sent any invitations yet.</p>
-                        <p>Use the "Generate Invitation Link" button above to create one!</p>
+                        <p>You have not had any invitations accepted yet.</p>
                     </div>`;
                 return;
             }
@@ -414,9 +413,7 @@ function loadInvitations(user) {
                                         ${invitationData.status || 'Pending'}
                                     </span>
                                 </p>
-                                ${invitationData.status === 'accepted' ? ` 
-                                    <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
-                                ` : ''}
+                                <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
                             </div>
                         </div>`;
 
@@ -430,6 +427,7 @@ function loadInvitations(user) {
             showMessage("Error loading invitations: " + error.message, "danger");
         });
 }
+
 
 // Function to get the appropriate CSS class based on invitation status
 function getStatusClass(status) {
