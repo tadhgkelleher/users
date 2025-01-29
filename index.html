@@ -26,6 +26,7 @@
             <button id="signUpBtn" class="btn btn-primary">Sign Up</button>
             <button id="loginBtn" class="btn btn-secondary">Login</button>
             <button id="signOutBtn" class="btn btn-danger" style="display: none;">Sign Out</button>
+            <button id="googleSignInBtn" class="btn btn-warning">Sign In with Google</button>
         </div>
 
         <div id="profileSection" style="display: none;">
@@ -83,7 +84,26 @@
         const signOutBtn = document.getElementById("signOutBtn");
         const authSection = document.getElementById("authSection");
 
-        let inviteIdFromUrl = new URLSearchParams(window.location.search).get('inviteId');
+        // Google Sign-In
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        // Handle Google Sign-In
+        document.getElementById("googleSignInBtn").addEventListener("click", () => {
+            auth.signInWithPopup(googleProvider)
+                .then((result) => {
+                    const user = result.user;
+                    authSection.style.display = "none";
+                    document.getElementById("profileSection").style.display = "block";
+                    usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
+                    profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
+                    loadInvitations(user);
+                    signOutBtn.style.display = "inline-block";
+                })
+                .catch((error) => {
+                    messageDisplay.textContent = error.message;
+                    messageDisplay.style.display = "block";
+                });
+        });
 
         // Handle Sign Up
         signUpForm.addEventListener("submit", (e) => {
@@ -176,10 +196,14 @@
                         const inviteId = doc.id;
 
                         // Get and format the invite timestamp
-                        const timestamp = invitationData.timestamp.toDate();
-                        const formattedDate = timestamp.toLocaleDateString('en-US', {
-                            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                        });
+                        let formattedDate = "No date available"; // Default fallback
+
+                        if (invitationData.timestamp) {
+                            const timestamp = invitationData.timestamp.toDate();
+                            formattedDate = timestamp.toLocaleDateString('en-US', {
+                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                            });
+                        }
 
                         // Create the invitation display text
                         const inviteStatus = invitationData.status || 'Pending'; // Default status
@@ -188,6 +212,9 @@
 
                         document.getElementById("invitationsList").appendChild(inviteItem);
                     });
+                })
+                .catch((error) => {
+                    console.error("Error fetching invitations: ", error);
                 });
         }
 
