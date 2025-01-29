@@ -197,45 +197,53 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-          // Updated loadInvitations function
-        function loadInvitations(user) {
-            if (!user) return;
+           // Updated loadInvitations function
+    function loadInvitations(user) {
+        if (!user) return;
 
-            const invitationsList = document.getElementById("invitationsList");
-            invitationsList.innerHTML = ''; // Clear existing invitations
+        const invitationsList = document.getElementById("invitationsList");
+        invitationsList.innerHTML = ''; // Clear existing invitations
 
-            // Only query invitations where fromUserId matches current user
-            db.collection("invitations")
-                .where("fromUserId", "==", user.uid)
-                .orderBy("timestamp", "desc") // Show newest first
-                .get()
-                .then((querySnapshot) => {
-                    if (querySnapshot.empty) {
-                        invitationsList.innerHTML = `
-                            <div class="text-center text-muted">
-                                <p>You haven't sent any invitations yet.</p>
-                                <p>Use the "Generate Invitation Link" button above to create one!</p>
-                            </div>`;
-                        return;
+        // Query invitations where fromUserId matches current user
+        db.collection("invitations")
+            .where("fromUserId", "==", user.uid)
+            .orderBy("timestamp", "desc")
+            .get()
+            .then((querySnapshot) => {
+                if (querySnapshot.empty) {
+                    invitationsList.innerHTML = `
+                        <div class="text-center text-muted">
+                            <p>You haven't sent any invitations yet.</p>
+                            <p>Use the "Generate Invitation Link" button above to create one!</p>
+                        </div>`;
+                    return;
+                }
+
+                querySnapshot.forEach((doc) => {
+                    const invitationData = doc.data();
+                    const formattedDate = invitationData.timestamp 
+                        ? invitationData.timestamp.toDate().toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })
+                        : 'Date unavailable';
+
+                    // Get the user info of who accepted the invitation
+                    let userInfoPromise = Promise.resolve(null);
+                    if (invitationData.toUserId) {
+                        userInfoPromise = db.collection("users").doc(invitationData.toUserId).get();
                     }
 
-                    querySnapshot.forEach((doc) => {
-                        const invitationData = doc.data();
-                        const formattedDate = invitationData.timestamp 
-                            ? invitationData.timestamp.toDate().toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })
-                            : 'Date unavailable';
-
+                    userInfoPromise.then((userDoc) => {
+                        const acceptedByUser = userDoc?.data()?.displayName || userDoc?.data()?.email || 'Unknown User';
                         const statusClass = getStatusClass(invitationData.status);
                         const inviteItem = document.createElement("div");
                         inviteItem.className = "mb-3 border-bottom pb-3";
                         inviteItem.innerHTML = `
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <p class="mb-1"><strong>Created:</strong> ${formattedDate}</p>
                                     <p class="mb-1">
@@ -244,57 +252,77 @@
                                             ${invitationData.status || 'Pending'}
                                         </span>
                                     </p>
+                                    ${invitationData.status === 'accepted' ? `
+                                        <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
+                                    ` : ''}
                                 </div>
                             </div>`;
 
                         invitationsList.appendChild(inviteItem);
+                    }).catch(error => {
+                        console.error("Error getting user info:", error);
                     });
-                })
-                .catch((error) => {
-                    showMessage("Error loading invitations: " + error.message, "danger");
                 });
-        }
+            })
+            .catch((error) => {
+                showMessage("Error loading invitations: " + error.message, "danger");
+            });
+    }
 
-        // Helper function to get appropriate Bootstrap badge class for status
-        function getStatusClass(status) {
-            switch (status?.toLowerCase()) {
-                case 'accepted':
-                    return 'badge-success';
-                case 'open':
-                    return 'badge-primary';
-                case 'expired':
-                    return 'badge-secondary';
-                default:
-                    return 'badge-warning';
-            }
-        }
+    // Updated generateLink function to store more information
+    generateLinkBtn.addEventListener("click", () => {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
-        // Process Invitation
-        function processInvite(inviteId, user) {
-            if (inviteId) {
-                const inviteRef = db.collection("invitations").doc(inviteId);
-                inviteRef.get().then((doc) => {
-                    if (doc.exists) {
-                        const inviteData = doc.data();
-                        if (inviteData.status === "open" && inviteData.fromUserId !== user.uid) {
-                            inviteRef.update({
-                                status: "accepted",
-                                toUserId: user.uid,
-                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            });
-                            showMessage("Invitation Accepted!", "success");
-                        } else {
-                            showMessage("This invitation is no longer valid.", "warning");
-                        }
+            // Store more user information with the invitation
+            db.collection("invitations").doc(uniqueId).set({
+                fromUserId: currentUser.uid,
+                fromUserEmail: currentUser.email,
+                fromUserName: currentUser.displayName || currentUser.email,
+                status: "open",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(() => {
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                copyLinkBtn.style.display = "inline-block";
+                showMessage("Invitation Link Generated!", "success");
+            }).catch((error) => {
+                showMessage(error.message, "danger");
+            });
+        } else {
+            showMessage("You must be signed in to generate an invitation.", "warning");
+        }
+    });
+
+    // Updated processInvite function to store accepter's info
+    function processInvite(inviteId, user) {
+        if (inviteId) {
+            const inviteRef = db.collection("invitations").doc(inviteId);
+            inviteRef.get().then((doc) => {
+                if (doc.exists) {
+                    const inviteData = doc.data();
+                    if (inviteData.status === "open" && inviteData.fromUserId !== user.uid) {
+                        inviteRef.update({
+                            status: "accepted",
+                            toUserId: user.uid,
+                            toUserEmail: user.email,
+                            toUserName: user.displayName || user.email,
+                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        });
+                        showMessage("Invitation Accepted!", "success");
                     } else {
-                        showMessage("Invalid invitation link.", "warning");
+                        showMessage("This invitation is no longer valid.", "warning");
                     }
-                }).catch((error) => {
-                    showMessage("Error processing invitation: " + error.message, "danger");
-                });
-            }
+                } else {
+                    showMessage("Invalid invitation link.", "warning");
+                }
+            }).catch((error) => {
+                showMessage("Error processing invitation: " + error.message, "danger");
+            });
         }
-
+    }
         // Helper function to show messages
         function showMessage(message, type = "info") {
             messageDisplay.textContent = message;
