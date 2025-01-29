@@ -282,32 +282,73 @@ function getStatusClass(status) {
     }
 }
 
-    // Updated generateLink function to store more information
-    generateLinkBtn.addEventListener("click", () => {
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-            const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+ // Handle Generate Invitation Link
+generateLinkBtn.addEventListener("click", () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
-            // Store more user information with the invitation
-            db.collection("invitations").doc(uniqueId).set({
-                fromUserId: currentUser.uid,
-                fromUserEmail: currentUser.email,
-                fromUserName: currentUser.displayName || currentUser.email,
-                status: "open",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(() => {
-                inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                copyLinkBtn.style.display = "inline-block";
-                showMessage("Invitation Link Generated!", "success");
-            }).catch((error) => {
-                showMessage(error.message, "danger");
-            });
-        } else {
-            showMessage("You must be signed in to generate an invitation.", "warning");
-        }
+        db.collection("invitations").doc(uniqueId).set({
+            fromUserId: currentUser.uid,
+            fromUserEmail: currentUser.email,
+            fromUserName: currentUser.displayName || currentUser.email,
+            status: "open",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        }).then(() => {
+            inviteLinkInput.value = inviteLink;
+            inviteLinkInput.style.display = "block";
+            copyLinkBtn.style.display = "inline-block";
+            showMessage("Invitation Link Generated!", "success");
+
+            // Show the social sharing icons
+            document.getElementById("shareSection").style.display = "block";
+        }).catch((error) => {
+            showMessage(error.message, "danger");
+        });
+    } else {
+        showMessage("You must be signed in to generate an invitation.", "warning");
+    }
+});
+
+        // Share via WhatsApp
+document.getElementById("shareWhatsappBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(inviteLink)}`;
+    window.open(whatsappUrl, "_blank");
+});
+
+// Share via Email
+document.getElementById("shareEmailBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const subject = "Check out this invitation!";
+    const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(inviteLink)}`;
+    window.location.href = emailUrl;
+});
+
+// Share via Link (just copy the link)
+document.getElementById("shareLinkBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    navigator.clipboard.writeText(inviteLink).then(() => {
+        showMessage("Link copied to clipboard!", "success");
+    }).catch(() => {
+        showMessage("Failed to copy the link.", "danger");
     });
+});
+
+// Share via X (Twitter)
+document.getElementById("shareXBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(inviteLink)}`;
+    window.open(twitterUrl, "_blank");
+});
+
+// Share via Facebook
+document.getElementById("shareFacebookBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteLink)}`;
+    window.open(facebookUrl, "_blank");
+});
 
     // Updated processInvite function to store accepter's info
     function processInvite(inviteId, user) {
