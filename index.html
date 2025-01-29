@@ -5,38 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile and Invitations</title>
     <style>
-        /* Your previous styles here */
+        /* Your styles for the page */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        .profile, .invite-list {
+            padding: 20px;
+            margin: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+        }
         .message {
             padding: 10px;
             margin-top: 10px;
-            border-radius: 5px;
             display: none;
         }
         .message.success {
-            background-color: #4CAF50;
+            background-color: green;
             color: white;
         }
         .message.error {
-            background-color: #f44336;
+            background-color: red;
             color: white;
         }
-        #generateLinkBtn {
-            display: none;
-            background-color: #4CAF50;
+        button {
+            padding: 10px;
+            background-color: #333;
             color: white;
-            padding: 10px 20px;
             border: none;
             cursor: pointer;
-            font-size: 16px;
             margin-top: 10px;
         }
-        #inviteLink {
-            display: none;
-            margin-top: 10px;
+        input[type="email"], input[type="password"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-        #copyLinkBtn {
+        .hidden {
             display: none;
-            margin-top: 10px;
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -47,23 +63,32 @@
     <header>
         <h1>Welcome to Your Profile</h1>
     </header>
+
     <main>
         <div class="profile">
-            <img id="profilePicture" src="" alt="Profile Picture">
+            <img id="profilePicture" src="" alt="Profile Picture" width="100">
             <h2 id="username">Loading...</h2>
-            <button id="signOutBtn">Sign Out</button>
+            <button id="signOutBtn" class="hidden">Sign Out</button>
         </div>
 
-        <div id="invitationSection">
+        <div id="signInSection">
+            <h3>Sign In</h3>
+            <form id="signInForm">
+                <input type="email" id="signInEmail" placeholder="Email" required />
+                <input type="password" id="signInPassword" placeholder="Password" required />
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+
+        <div id="invitationSection" class="hidden">
             <h3>Generate Invitation</h3>
             <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly>
-            <button id="copyLinkBtn">Copy Link</button>
+            <input type="text" id="inviteLink" readonly class="hidden">
+            <button id="copyLinkBtn" class="hidden">Copy Link</button>
             <div id="message" class="message"></div>
 
-            <!-- Sign-Up Form -->
             <h3>Sign Up to Accept Invitation</h3>
-            <form id="signUpForm">
+            <form id="signUpForm" class="hidden">
                 <input type="email" id="email" placeholder="Email" required />
                 <input type="password" id="password" placeholder="Password" required />
                 <button type="submit">Sign Up</button>
@@ -104,6 +129,8 @@
         const signOutBtn = document.getElementById("signOutBtn");
         const signUpSection = document.getElementById("invitationSection");
         const signUpForm = document.getElementById("signUpForm");
+        const signInSection = document.getElementById("signInSection");
+        const signInForm = document.getElementById("signInForm");
 
         let inviteIdFromUrl = new URLSearchParams(window.location.search).get('inviteId');
         let fromUserId = null;
@@ -129,8 +156,8 @@
                 });
 
                 inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                copyLinkBtn.style.display = "inline-block";
+                inviteLinkInput.classList.remove("hidden");
+                copyLinkBtn.classList.remove("hidden");
             } else {
                 displayMessage("error", "No user signed in.");
             }
@@ -173,6 +200,20 @@
             });
         });
 
+        // Handle Sign In
+        signInForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const email = document.getElementById("signInEmail").value;
+            const password = document.getElementById("signInPassword").value;
+
+            auth.signInWithEmailAndPassword(email, password).then((userCredential) => {
+                const user = userCredential.user;
+                displayMessage("success", "Signed In Successfully!");
+            }).catch((error) => {
+                displayMessage("error", error.message);
+            });
+        });
+
         // Load Invitations
         function loadInvitations(user) {
             db.collection("invitations").where("fromUserId", "==", user.uid)
@@ -209,30 +250,21 @@
 
         // Check Authentication
         auth.onAuthStateChanged((user) => {
-            console.log('Auth State Changed:', user); // Log the user object for debugging
-
             if (user) {
-                console.log("User is logged in:", user);
+                console.log("User logged in:", user);
                 usernameDisplay.textContent = user.displayName || "No display name";
                 profilePicture.src = user.photoURL || "default-profile.png";
                 loadInvitations(user);
-                signUpSection.style.display = "none"; // Hide sign-up section if logged in
-                generateLinkBtn.style.display = "block"; // Show Generate Link button when logged in
+                signInSection.style.display = "none"; // Hide sign-in section
+                signUpSection.style.display = "none"; // Hide sign-up section
+                generateLinkBtn.classList.remove("hidden"); // Show Generate Link button
+                signOutBtn.classList.remove("hidden"); // Show Sign Out button
             } else {
                 console.log("No user signed in.");
-                usernameDisplay.textContent = "No user signed in";
-                generateLinkBtn.style.display = "none"; // Hide Generate Link button if not logged in
-                if (inviteIdFromUrl) {
-                    // Check the invite ID and show sign-up form if necessary
-                    db.collection("invitations").doc(inviteIdFromUrl).get().then((doc) => {
-                        if (doc.exists) {
-                            fromUserId = doc.data().fromUserId;
-                            signUpSection.style.display = "block"; // Show sign-up form
-                        } else {
-                            displayMessage("error", "Invalid invite link.");
-                        }
-                    });
-                }
+                signInSection.style.display = "block"; // Show sign-in section
+                signUpSection.style.display = "none"; // Hide sign-up section
+                generateLinkBtn.classList.add("hidden"); // Hide Generate Link button
+                signOutBtn.classList.add("hidden"); // Hide Sign Out button
             }
         });
 
