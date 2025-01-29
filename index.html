@@ -429,26 +429,37 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-   function loadInvitations(user) {
+  function loadInvitations(user) {
     if (!user) return;
 
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
+        .where("status", "==", "accepted")
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
-            const acceptedInvitations = querySnapshot.docs
-                .filter(doc => doc.data().status === "accepted")
-                .map(doc => ({
+            let invitations = querySnapshot.docs.map(doc => doc.data().toUserId);
+            
+            if (invitations.length === 0) {
+                renderCircularNodes([]); // No accepted invitations
+                return;
+            }
+
+            // Fetch user details for each accepted invitation
+            let userPromises = invitations.map(userId => 
+                db.collection("users").doc(userId).get()
+            );
+
+            Promise.all(userPromises).then(userDocs => {
+                let nodes = userDocs.map(doc => ({
                     id: doc.id,
-                    toUserId: doc.data().toUserId
+                    name: doc.exists ? doc.data().displayName || doc.data().email || "Unknown User" : "Unknown User"
                 }));
 
-            renderCircularNodes(acceptedInvitations);
+                renderCircularNodes(nodes);
+            }).catch(error => console.error("Error fetching user data:", error));
         })
-        .catch(error => {
-            showMessage("Error loading invitations: " + error.message, "danger");
-        });
+        .catch(error => console.error("Error loading invitations:", error));
 }
 
 function renderCircularNodes(nodes) {
@@ -459,12 +470,23 @@ function renderCircularNodes(nodes) {
 
     svg.selectAll("*").remove(); // Clear previous rendering
 
+    if (nodes.length === 0) {
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#666")
+            .attr("font-size", "16px")
+            .text("No accepted invitations");
+        return;
+    }
+
     const angleStep = (2 * Math.PI) / nodes.length;
     
     const nodeData = nodes.map((d, i) => ({
         x: width / 2 + radius * Math.cos(i * angleStep),
         y: height / 2 + radius * Math.sin(i * angleStep),
-        label: d.toUserId || "Unknown"
+        name: d.name
     }));
 
     svg.selectAll("circle")
@@ -484,7 +506,7 @@ function renderCircularNodes(nodes) {
         .attr("y", d => d.y)
         .attr("dy", 5)
         .attr("text-anchor", "middle")
-        .text(d => d.label)
+        .text(d => d.name)
         .attr("fill", "white")
         .attr("font-size", "12px");
 }
