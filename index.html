@@ -101,18 +101,20 @@
         // Generate Invitation Link
         generateLinkBtn.addEventListener("click", () => {
             const currentUser = firebase.auth().currentUser;
-            console.log('Current User:', currentUser);
+            console.log('Generate Link Clicked - Current User:', currentUser); // Debugging log
             if (currentUser) {
                 const uniqueId = Math.random().toString(36).substr(2, 9); // Create unique ID
-                console.log('Generated Unique ID:', uniqueId);
+                console.log('Generated Unique ID:', uniqueId); // Debugging log
                 const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+                console.log('Generated Invite Link:', inviteLink); // Debugging log
 
+                // Add invitation to Firestore
                 db.collection("invitations").doc(uniqueId).set({
                     fromUserId: currentUser.uid,
                     status: "open",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 }).then(() => {
-                    console.log('Invitation Link Created:', inviteLink);
+                    console.log('Invitation Link Created in Firestore');
                     inviteLinkInput.value = inviteLink;
                     inviteLinkInput.style.display = "block";
                     copyLinkBtn.style.display = "inline-block";
