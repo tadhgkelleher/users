@@ -45,6 +45,16 @@
                 </div>
             </div>
             <div id="message" class="alert alert-info" style="display: none;"></div>
+            
+            <!-- Updated invitations section with a card container -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="mb-0">My Sent Invitations</h3>
+                </div>
+                <div class="card-body">
+                    <div id="invitationsList"></div>
+                </div>
+            </div>
         </div>
 
         <div id="signUpSection" style="display: none;">
@@ -63,12 +73,10 @@
                 </div>
             </div>
         </div>
-
-        <div id="invitationsList" class="mt-4"></div>
     </main>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration and initialization remain the same
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -79,7 +87,6 @@
             measurementId: "G-TER99X7NBT"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -184,48 +191,76 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-        // Load Invitations
+          // Updated loadInvitations function
         function loadInvitations(user) {
-            const invitationsList = document.getElementById("invitationsList");
-            invitationsList.innerHTML = '<h3>Your Invitations</h3>';
+            if (!user) return;
 
-            db.collection("invitations").where("fromUserId", "==", user.uid)
+            const invitationsList = document.getElementById("invitationsList");
+            invitationsList.innerHTML = ''; // Clear existing invitations
+
+            // Only query invitations where fromUserId matches current user
+            db.collection("invitations")
+                .where("fromUserId", "==", user.uid)
+                .orderBy("timestamp", "desc") // Show newest first
                 .get()
                 .then((querySnapshot) => {
                     if (querySnapshot.empty) {
-                        invitationsList.innerHTML += '<p>No invitations sent yet.</p>';
+                        invitationsList.innerHTML = `
+                            <div class="text-center text-muted">
+                                <p>You haven't sent any invitations yet.</p>
+                                <p>Use the "Generate Invitation Link" button above to create one!</p>
+                            </div>`;
                         return;
                     }
 
                     querySnapshot.forEach((doc) => {
                         const invitationData = doc.data();
-                        const inviteId = doc.id;
-                        let formattedDate = "No date available";
+                        const formattedDate = invitationData.timestamp 
+                            ? invitationData.timestamp.toDate().toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })
+                            : 'Date unavailable';
 
-                        if (invitationData.timestamp) {
-                            const timestamp = invitationData.timestamp.toDate();
-                            formattedDate = timestamp.toLocaleDateString('en-US', {
-                                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                            });
-                        }
-
-                        const inviteStatus = invitationData.status || 'Pending';
+                        const statusClass = getStatusClass(invitationData.status);
                         const inviteItem = document.createElement("div");
-                        inviteItem.className = "card mb-2";
+                        inviteItem.className = "mb-3 border-bottom pb-3";
                         inviteItem.innerHTML = `
-                            <div class="card-body">
-                                <h5 class="card-title">Invitation ${inviteId}</h5>
-                                <p class="card-text">Created on: ${formattedDate}</p>
-                                <p class="card-text">Status: ${inviteStatus}</p>
-                            </div>
-                        `;
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-1"><strong>Created:</strong> ${formattedDate}</p>
+                                    <p class="mb-1">
+                                        <strong>Status:</strong> 
+                                        <span class="badge ${statusClass}">
+                                            ${invitationData.status || 'Pending'}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>`;
 
                         invitationsList.appendChild(inviteItem);
                     });
                 })
                 .catch((error) => {
-                    showMessage("Error fetching invitations: " + error.message, "danger");
+                    showMessage("Error loading invitations: " + error.message, "danger");
                 });
+        }
+
+        // Helper function to get appropriate Bootstrap badge class for status
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'accepted':
+                    return 'badge-success';
+                case 'open':
+                    return 'badge-primary';
+                case 'expired':
+                    return 'badge-secondary';
+                default:
+                    return 'badge-warning';
+            }
         }
 
         // Process Invitation
