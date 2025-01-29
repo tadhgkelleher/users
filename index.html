@@ -9,43 +9,63 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     
- <style>
-        /* Custom Styles */
+ HTML
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile and Invitations</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Futuristic Styles */
         body {
-            font-family: 'Roboto', sans-serif; /* Modern font */
-            background-color: #f8f9fa; /* Light gray background */
-            color: #343a40; /* Dark gray text */
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom right, #1e3c72, #2a5298); /* Gradient background */
+            color: #e0e0e0; /* Light text color */
+            overflow-x: hidden; /* Prevent horizontal scroll on some screen sizes */
         }
 
         header {
-            background-color: #007bff; /* Blue header */
-            color: white;
-            padding: 1rem 0; /* Increased padding */
+            background: rgba(255, 255, 255, 0.1); /* Semi-transparent header */
+            padding: 1rem 0;
+            backdrop-filter: blur(5px); /* Blur effect */
         }
 
         .navbar-brand {
-            font-size: 1.75rem; /* Larger brand text */
-            font-weight: 600; /* Semi-bold */
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: #fff;
         }
 
         .container {
-            max-width: 960px; /* Slightly wider container */
-            padding-top: 2rem; /* Increased top padding */
+            max-width: 960px;
+            padding-top: 2rem;
         }
 
         .card {
-            border: none; /* Remove card borders */
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Subtle shadow */
+            background: rgba(255, 255, 255, 0.05); /* Glassmorphism card background */
+            border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2); /* Deeper shadow */
+            backdrop-filter: blur(10px); /* More blur */
+            border-radius: 15px;
             margin-bottom: 2rem;
-            border-radius: 10px; /* Rounded corners */
         }
 
         .card-header {
-          background-color: #fff;
-          border-bottom: 1px solid #dee2e6;
-          padding: 1rem 1.5rem;
-          border-top-left-radius: 10px;
-          border-top-right-radius: 10px;
+            background: transparent; /* transparent header */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* subtle border */
+            padding: 1rem 1.5rem;
+            color: #fff;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
         }
 
         .card-body {
@@ -53,112 +73,76 @@
         }
 
         .form-group label {
-            font-weight: 500; /* Slightly less bold */
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.02); /* Glassmorphism form fields */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 10px;
+            padding: 0.8rem;
+        }
+
+        .form-control:focus {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #66b3ff; /* Neon blue focus */
+            box-shadow: 0 0 0 0.2rem rgba(102, 179, 255, 0.25);
         }
 
         .btn {
-            border-radius: 8px; /* More rounded buttons */
-            padding: 0.8rem 1.2rem; /* Adjusted padding */
+            border-radius: 10px;
+            padding: 0.8rem 1.2rem;
             font-size: 1rem;
-            transition: all 0.2s ease; /* Smooth hover effect */
+            transition: all 0.2s ease;
+            background: linear-gradient(to right, #66b3ff, #007bff); /* Gradient buttons */
+            border: none;
+            color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .btn:hover {
-            transform: translateY(-2px); /* Lift up on hover */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* More prominent shadow on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
         }
 
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+        .btn:focus {
+            box-shadow: 0 0 0 0.2rem rgba(102, 179, 255, 0.5);
         }
-
-        .btn-primary:hover {
-            background-color: #0069d9;
-            border-color: #0062cc;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-
-        .btn-warning {
-            background-color: #ffc107;
-            border-color: #ffc107;
-            color: #212529; /* Dark text for contrast */
-        }
-
-        .btn-warning:hover {
-            background-color: #e0a800;
-            border-color: #d39e00;
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-
-        .btn-danger:hover {
-            background-color: #c12a36;
-            border-color: #bd2130;
-        }
-
-        .btn-info {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-        }
-
-        .btn-info:hover {
-            background-color: #138496;
-            border-color: #117a8b;
-        }
-
 
         .rounded-circle {
-            width: 120px; /* Slightly larger profile picture */
+            width: 120px;
             height: 120px;
-            object-fit: cover; /* Prevent image distortion */
-            border: 3px solid #fff; /* White border */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.5); /* Slightly transparent border */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
 
         .alert {
-            border-radius: 8px;
+            border-radius: 10px;
             margin-top: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
         }
 
         .badge {
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 0.4rem 0.8rem; /* Adjusted padding */
-            border-radius: 6px;
-        }
-
-        .btn-group .btn {
-            width: auto; /* Reset width for social buttons */
-            margin: 0 0.2rem; /* Spacing between buttons */
-        }
-
-        .btn-group-vertical .btn {
-            width: 100%; /* Full width for auth buttons */
-            margin-bottom: 0.5rem; /* Spacing between buttons */
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
         }
 
         #invitationsList .border-bottom {
-            border-bottom: 1px solid #dee2e6 !important; /* Light gray separator */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
         #invitationsList .mb-3 {
-            margin-bottom: 1.5rem !important; /* Increased spacing */
+            margin-bottom: 1.5rem !important;
         }
 
+        /* Social sharing buttons */
         #shareSection .btn-group .btn {
             width: 40px;
             height: 40px;
@@ -167,6 +151,17 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            margin: 0 0.2rem; /* Adjust spacing */
+            box-shadow: none; /* Remove shadow from social buttons */
+        }
+
+        #shareSection .btn-group .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(0); /* Remove lift effect */
+            box-shadow: none;
         }
         #shareSection .btn-group .btn i {
             font-size: 1.2rem;
@@ -174,16 +169,7 @@
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
-            .btn-group-vertical .btn {
-                font-size: 0.9rem;
-            }
-            .btn-group .btn {
-                font-size: 0.9rem;
-            }
-            .rounded-circle {
-                width: 100px;
-                height: 100px;
-            }
+            /* ... (Your existing responsive styles) ... */
         }
     </style>
 <body>
