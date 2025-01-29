@@ -97,7 +97,7 @@
                     usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
                     profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
                     loadInvitations(user);
-                    signOutBtn.style.display = "inline-block";
+                    signOutBtn.style.display = "inline-block"; // Ensure the sign-out button is visible after sign-in
                 })
                 .catch((error) => {
                     messageDisplay.textContent = error.message;
@@ -135,7 +135,7 @@
                     usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
                     profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
                     loadInvitations(user);
-                    signOutBtn.style.display = "inline-block";
+                    signOutBtn.style.display = "inline-block"; // Ensure the sign-out button is visible after sign-in
                 })
                 .catch((error) => {
                     messageDisplay.textContent = error.message;
