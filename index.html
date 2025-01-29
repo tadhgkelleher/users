@@ -5,19 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile and Invitations</title>
     <style>
-        /* Your styles here */
+        /* Your previous styles here */
         .message {
             padding: 10px;
             margin-top: 10px;
+            border-radius: 5px;
             display: none;
         }
-        .success {
-            background-color: green;
+        .message.success {
+            background-color: #4CAF50;
             color: white;
         }
-        .error {
-            background-color: red;
+        .message.error {
+            background-color: #f44336;
             color: white;
+        }
+        #generateLinkBtn {
+            display: none;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #inviteLink {
+            display: none;
+            margin-top: 10px;
+        }
+        #copyLinkBtn {
+            display: none;
+            margin-top: 10px;
         }
     </style>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -33,14 +52,13 @@
             <img id="profilePicture" src="" alt="Profile Picture">
             <h2 id="username">Loading...</h2>
             <button id="signOutBtn">Sign Out</button>
-            <button id="signInBtn">Sign In</button>
         </div>
 
         <div id="invitationSection">
             <h3>Generate Invitation</h3>
             <button id="generateLinkBtn">Generate Invitation Link</button>
-            <input type="text" id="inviteLink" readonly style="display: none;">
-            <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+            <input type="text" id="inviteLink" readonly>
+            <button id="copyLinkBtn">Copy Link</button>
             <div id="message" class="message"></div>
 
             <!-- Sign-Up Form -->
@@ -86,7 +104,6 @@
         const signOutBtn = document.getElementById("signOutBtn");
         const signUpSection = document.getElementById("invitationSection");
         const signUpForm = document.getElementById("signUpForm");
-        const signInBtn = document.getElementById("signInBtn");
 
         let inviteIdFromUrl = new URLSearchParams(window.location.search).get('inviteId');
         let fromUserId = null;
@@ -101,27 +118,19 @@
         // Generate Invitation Link
         generateLinkBtn.addEventListener("click", () => {
             const currentUser = firebase.auth().currentUser;
-            console.log('Generate Link Clicked - Current User:', currentUser); // Debugging log
             if (currentUser) {
                 const uniqueId = Math.random().toString(36).substr(2, 9); // Create unique ID
-                console.log('Generated Unique ID:', uniqueId); // Debugging log
                 const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-                console.log('Generated Invite Link:', inviteLink); // Debugging log
 
-                // Add invitation to Firestore
                 db.collection("invitations").doc(uniqueId).set({
                     fromUserId: currentUser.uid,
                     status: "open",
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(() => {
-                    console.log('Invitation Link Created in Firestore');
-                    inviteLinkInput.value = inviteLink;
-                    inviteLinkInput.style.display = "block";
-                    copyLinkBtn.style.display = "inline-block";
-                }).catch((error) => {
-                    console.error('Error creating invitation:', error);
-                    displayMessage("error", "Failed to generate invitation link.");
                 });
+
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                copyLinkBtn.style.display = "inline-block";
             } else {
                 displayMessage("error", "No user signed in.");
             }
@@ -200,19 +209,28 @@
 
         // Check Authentication
         auth.onAuthStateChanged((user) => {
-            console.log('Auth State Changed:', user); // Debugging log
+            console.log('Auth State Changed:', user); // Log the user object for debugging
+
             if (user) {
-                console.log('User is signed in:', user);
                 usernameDisplay.textContent = user.displayName || "No display name";
                 profilePicture.src = user.photoURL || "default-profile.png";
                 loadInvitations(user);
                 signUpSection.style.display = "none"; // Hide sign-up section if logged in
                 generateLinkBtn.style.display = "block"; // Show Generate Link button when logged in
             } else {
-                console.log('No user signed in');
                 usernameDisplay.textContent = "No user signed in";
                 generateLinkBtn.style.display = "none"; // Hide Generate Link button if not logged in
-                signUpSection.style.display = "none"; // Hide sign-up form if no user
+                if (inviteIdFromUrl) {
+                    // Check the invite ID and show sign-up form if necessary
+                    db.collection("invitations").doc(inviteIdFromUrl).get().then((doc) => {
+                        if (doc.exists) {
+                            fromUserId = doc.data().fromUserId;
+                            signUpSection.style.display = "block"; // Show sign-up form
+                        } else {
+                            displayMessage("error", "Invalid invite link.");
+                        }
+                    });
+                }
             }
         });
 
@@ -221,21 +239,6 @@
             auth.signOut().then(() => {
                 window.location.href = "?"; // Reload page after sign-out
             });
-        });
-
-        // Sign In
-        signInBtn.addEventListener("click", () => {
-            const email = prompt("Enter email:");
-            const password = prompt("Enter password:");
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    console.log('Signed in:', userCredential.user);
-                    // Refresh page or update UI
-                })
-                .catch((error) => {
-                    console.error('Error signing in:', error.message);
-                    alert("Error signing in.");
-                });
         });
     </script>
 </body>
