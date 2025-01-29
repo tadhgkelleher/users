@@ -445,56 +445,71 @@
 function loadInvitations(user) {
     if (!user) return;
 
-    // Clear existing nodes in the circular layout
+    // Clear previous nodes
     const svg = d3.select("#circleLayout");
-    svg.selectAll("*").remove(); // Clear previous rendering
+    svg.selectAll("*").remove();
 
+    // Query invitations where the current user is the sender
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
-            const acceptedInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
+            const sentInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
 
-            if (acceptedInvitations.length === 0) {
-                svg.append("text")
-                    .attr("x", svg.attr("width") / 2)
-                    .attr("y", svg.attr("height") / 2)
-                    .attr("text-anchor", "middle")
-                    .attr("fill", "#666")
-                    .attr("font-size", "16px")
-                    .text("No accepted invitations");
-                return;
-            }
+            // Query invitations where the current user is the recipient (toUserId)
+            db.collection("invitations")
+                .where("toUserId", "==", user.uid)
+                .orderBy("timestamp", "desc")
+                .get()
+                .then((receivedSnapshot) => {
+                    const receivedInvitations = receivedSnapshot.docs.filter(doc => doc.data().status === "accepted");
 
-            // Collect user info for the accepted invitations
-            let userPromises = acceptedInvitations.map((doc) => {
-                const invitationData = doc.data();
-                return invitationData.toUserId
-                    ? db.collection("users").doc(invitationData.toUserId).get()
-                    : Promise.resolve(null);
-            });
-
-            Promise.all(userPromises).then(userDocs => {
-                let nodes = userDocs.map(doc => {
-                    if (doc && doc.exists) {
-                        return {
-                            id: doc.id,
-                            name: doc.data().displayName || doc.data().email || "Unknown User"
-                        };
-                    } else {
-                        return {
-                            id: null,
-                            name: "Unknown User"
-                        };
+                    // Combine both sent and received accepted invitations
+                    const allInvitations = [...sentInvitations, ...receivedInvitations];
+                    
+                    if (allInvitations.length === 0) {
+                        svg.append("text")
+                            .attr("x", svg.attr("width") / 2)
+                            .attr("y", svg.attr("height") / 2)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "#666")
+                            .attr("font-size", "16px")
+                            .text("No accepted invitations");
+                        return;
                     }
-                });
 
-                renderCircularNodes(nodes);
-            }).catch(error => console.error("Error fetching user data:", error));
+                    // Collect user info for both sent and received invitations
+                    let userPromises = allInvitations.map((doc) => {
+                        const invitationData = doc.data();
+                        const userId = invitationData.fromUserId === user.uid ? invitationData.toUserId : invitationData.fromUserId;
+                        return userId ? db.collection("users").doc(userId).get() : Promise.resolve(null);
+                    });
+
+                    Promise.all(userPromises).then(userDocs => {
+                        let nodes = userDocs.map(doc => {
+                            if (doc && doc.exists) {
+                                return {
+                                    id: doc.id,
+                                    name: doc.data().displayName || doc.data().email || "Unknown User"
+                                };
+                            } else {
+                                return {
+                                    id: null,
+                                    name: "Unknown User"
+                                };
+                            }
+                        });
+
+                        renderCircularNodes(nodes);
+                    }).catch(error => console.error("Error fetching user data:", error));
+                })
+                .catch((error) => {
+                    console.error("Error loading received invitations:", error);
+                });
         })
         .catch((error) => {
-            console.error("Error loading invitations:", error);
+            console.error("Error loading sent invitations:", error);
         });
 }
 
