@@ -80,7 +80,7 @@
             </form>
         </div>
 
-        <div id="invitationSection" class="hidden">
+        <div id="invitationSection">
             <h3>Generate Invitation</h3>
             <button id="generateLinkBtn">Generate Invitation Link</button>
             <input type="text" id="inviteLink" readonly class="hidden">
@@ -257,13 +257,11 @@
                 loadInvitations(user);
                 signInSection.style.display = "none"; // Hide sign-in section
                 signUpSection.style.display = "none"; // Hide sign-up section
-                generateLinkBtn.classList.remove("hidden"); // Show Generate Link button
                 signOutBtn.classList.remove("hidden"); // Show Sign Out button
             } else {
                 console.log("No user signed in.");
                 signInSection.style.display = "block"; // Show sign-in section
                 signUpSection.style.display = "none"; // Hide sign-up section
-                generateLinkBtn.classList.add("hidden"); // Hide Generate Link button
                 signOutBtn.classList.add("hidden"); // Hide Sign Out button
             }
         });
