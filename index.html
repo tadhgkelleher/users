@@ -359,24 +359,25 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
+ // Updated loadInvitations function
 function loadInvitations(user) {
     if (!user) return;
 
     const invitationsList = document.getElementById("invitationsList");
     invitationsList.innerHTML = ''; // Clear existing invitations
 
-    // Query invitations where fromUserId matches current user and status is 'accepted'
+    // Query invitations where fromUserId matches current user
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
-        .where("status", "==", "accepted")  // Filter by accepted invitations
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
             if (querySnapshot.empty) {
-                invitationsList.innerHTML = `
+                invitationsList.innerHTML = 
                     <div class="text-center text-muted">
-                        <p>You have not had any invitations accepted yet.</p>
-                    </div>`;
+                        <p>You haven't sent any invitations yet.</p>
+                        <p>Use the "Generate Invitation Link" button above to create one!</p>
+                    </div>;
                 return;
             }
 
@@ -403,7 +404,7 @@ function loadInvitations(user) {
                     const statusClass = getStatusClass(invitationData.status);
                     const inviteItem = document.createElement("div");
                     inviteItem.className = "mb-3 border-bottom pb-3";
-                    inviteItem.innerHTML = `
+                    inviteItem.innerHTML = 
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
                                 <p class="mb-1"><strong>Created:</strong> ${formattedDate}</p>
@@ -413,9 +414,11 @@ function loadInvitations(user) {
                                         ${invitationData.status || 'Pending'}
                                     </span>
                                 </p>
-                                <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
+                                ${invitationData.status === 'accepted' ?  
+                                    <p class="mb-1"><strong>Accepted by:</strong> ${acceptedByUser}</p>
+                                 : ''}
                             </div>
-                        </div>`;
+                        </div>;
 
                     invitationsList.appendChild(inviteItem);
                 }).catch(error => {
