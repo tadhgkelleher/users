@@ -595,8 +595,6 @@ function renderCircularNodes(nodes) {
         id: d.id // Keep track of user ID for each node
     }));
 
-    console.log("Node Data for Circular Layout:", nodeData); // Debug log for layout data
-
     // Create nodes (circles)
     const circles = svg.selectAll("circle")
         .data(nodeData)
@@ -626,6 +624,48 @@ function renderCircularNodes(nodes) {
         // When a node is clicked, show information about the associated user
         showUserInfo(d.id);
     });
+}
+
+// Function to display user information in the modal
+function showUserInfo(userId) {
+    if (!userId) return;
+
+    // Query the user info from Firestore using the user ID
+    db.collection("users").doc(userId).get()
+        .then(doc => {
+            if (doc.exists) {
+                const userData = doc.data();
+
+                // Update the modal content with user information
+                document.getElementById("userName").innerText = userData.displayName || userData.email;
+                document.getElementById("userEmail").innerText = userData.email || 'N/A';
+                document.getElementById("userAdditionalInfo").innerText = userData.additionalInfo || 'N/A';
+
+                // Show the modal
+                const modal = document.getElementById("userInfoModal");
+                modal.style.display = "block";
+            } else {
+                console.error("No user found!");
+            }
+        })
+        .catch((error) => {
+            console.error("Error getting user info:", error);
+        });
+}
+
+// Close the modal when the user clicks on the close button (x)
+const closeBtn = document.getElementsByClassName("close-btn")[0];
+closeBtn.onclick = function() {
+    const modal = document.getElementById("userInfoModal");
+    modal.style.display = "none";
+}
+
+// Close the modal when the user clicks anywhere outside the modal
+window.onclick = function(event) {
+    const modal = document.getElementById("userInfoModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
 }
 
 // Function to display user information when a node is clicked
