@@ -26,6 +26,8 @@
             <button id="signUpBtn" class="btn btn-primary">Sign Up</button>
             <button id="loginBtn" class="btn btn-secondary">Login</button>
             <button id="signOutBtn" class="btn btn-danger" style="display: none;">Sign Out</button>
+            <!-- Google Sign Up Button -->
+            <button id="googleSignUpBtn" class="btn btn-danger">Sign Up with Google</button>
         </div>
 
         <div id="profileSection" style="display: none;">
@@ -129,6 +131,27 @@
                 document.getElementById("profileSection").style.display = "none";
                 messageDisplay.style.display = "none";
             });
+        });
+
+        // Handle Google Sign-Up
+        const googleSignUpBtn = document.getElementById("googleSignUpBtn");
+
+        googleSignUpBtn.addEventListener("click", () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    authSection.style.display = "none";
+                    document.getElementById("profileSection").style.display = "block";
+                    usernameDisplay.textContent = `Hello, ${user.displayName || 'No Name'}`;
+                    profilePicture.src = user.photoURL || "https://via.placeholder.com/100";
+                    loadInvitations(user);
+                })
+                .catch((error) => {
+                    messageDisplay.textContent = error.message;
+                    messageDisplay.style.display = "block";
+                });
         });
 
         // Handle Generate Invitation Link
