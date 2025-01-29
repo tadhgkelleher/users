@@ -212,12 +212,14 @@
             console.log('Auth State Changed:', user); // Log the user object for debugging
 
             if (user) {
+                console.log("User is logged in:", user);
                 usernameDisplay.textContent = user.displayName || "No display name";
                 profilePicture.src = user.photoURL || "default-profile.png";
                 loadInvitations(user);
                 signUpSection.style.display = "none"; // Hide sign-up section if logged in
                 generateLinkBtn.style.display = "block"; // Show Generate Link button when logged in
             } else {
+                console.log("No user signed in.");
                 usernameDisplay.textContent = "No user signed in";
                 generateLinkBtn.style.display = "none"; // Hide Generate Link button if not logged in
                 if (inviteIdFromUrl) {
