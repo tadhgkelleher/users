@@ -427,37 +427,60 @@
             showMessage("Link copied to clipboard!", "success");
         });
 
-  function loadInvitations(user) {
+function loadInvitations(user) {
     if (!user) return;
+
+    // Clear existing nodes in the circular layout
+    const svg = d3.select("#circleLayout");
+    svg.selectAll("*").remove(); // Clear previous rendering
 
     db.collection("invitations")
         .where("fromUserId", "==", user.uid)
-        .where("status", "==", "accepted")
         .orderBy("timestamp", "desc")
         .get()
         .then((querySnapshot) => {
-            let invitations = querySnapshot.docs.map(doc => doc.data().toUserId);
-            
-            if (invitations.length === 0) {
-                renderCircularNodes([]); // No accepted invitations
+            const acceptedInvitations = querySnapshot.docs.filter(doc => doc.data().status === "accepted");
+
+            if (acceptedInvitations.length === 0) {
+                svg.append("text")
+                    .attr("x", svg.attr("width") / 2)
+                    .attr("y", svg.attr("height") / 2)
+                    .attr("text-anchor", "middle")
+                    .attr("fill", "#666")
+                    .attr("font-size", "16px")
+                    .text("No accepted invitations");
                 return;
             }
 
-            // Fetch user details for each accepted invitation
-            let userPromises = invitations.map(userId => 
-                db.collection("users").doc(userId).get()
-            );
+            // Collect user info for the accepted invitations
+            let userPromises = acceptedInvitations.map((doc) => {
+                const invitationData = doc.data();
+                return invitationData.toUserId
+                    ? db.collection("users").doc(invitationData.toUserId).get()
+                    : Promise.resolve(null);
+            });
 
             Promise.all(userPromises).then(userDocs => {
-                let nodes = userDocs.map(doc => ({
-                    id: doc.id,
-                    name: doc.exists ? doc.data().displayName || doc.data().email || "Unknown User" : "Unknown User"
-                }));
+                let nodes = userDocs.map(doc => {
+                    if (doc && doc.exists) {
+                        return {
+                            id: doc.id,
+                            name: doc.data().displayName || doc.data().email || "Unknown User"
+                        };
+                    } else {
+                        return {
+                            id: null,
+                            name: "Unknown User"
+                        };
+                    }
+                });
 
                 renderCircularNodes(nodes);
             }).catch(error => console.error("Error fetching user data:", error));
         })
-        .catch(error => console.error("Error loading invitations:", error));
+        .catch((error) => {
+            console.error("Error loading invitations:", error);
+        });
 }
 
 function renderCircularNodes(nodes) {
@@ -480,7 +503,7 @@ function renderCircularNodes(nodes) {
     }
 
     const angleStep = (2 * Math.PI) / nodes.length;
-    
+
     const nodeData = nodes.map((d, i) => ({
         x: width / 2 + radius * Math.cos(i * angleStep),
         y: height / 2 + radius * Math.sin(i * angleStep),
@@ -508,7 +531,6 @@ function renderCircularNodes(nodes) {
         .attr("fill", "white")
         .attr("font-size", "12px");
 }
-
 
 
 // Function to get the appropriate CSS class based on invitation status
