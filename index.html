@@ -28,7 +28,35 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
-    // Check if user is already logged in
+    // Handle login button click
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("login-button").addEventListener("click", () => {
+        signInWithRedirect(auth, provider); // Redirect for login
+      });
+    });
+
+    // Wait for redirect result after login
+    window.addEventListener("load", () => {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            console.log("✅ Login successful:", result.user.email);
+            // Check if inviteId exists and redirect to profile page
+            let redirectUrl = "profile.html";
+            if (inviteId) {
+              redirectUrl += `?inviteId=${inviteId}`;
+            }
+            window.location.href = redirectUrl; // Redirect to profile
+          } else {
+            console.log("🚨 No user found after redirect.");
+          }
+        })
+        .catch((error) => {
+          console.error("❌ Login error:", error.message);
+        });
+    });
+
+    // Listen to authentication state change
     onAuthStateChanged(auth, (user) => {
       if (user) {
         console.log("✅ User is logged in:", user.email);
@@ -36,35 +64,10 @@
         if (inviteId) {
           redirectUrl += `?inviteId=${inviteId}`;
         }
-        window.location.href = redirectUrl;
+        window.location.href = redirectUrl;  // If user is logged in, redirect to profile
       } else {
         console.log("🚨 No user logged in yet.");
       }
-    });
-
-    // Handle login button
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("login-button").addEventListener("click", () => {
-        signInWithRedirect(auth, provider); // ✅ Redirect instead of popup
-      });
-    });
-
-    // Handle redirect login result
-    window.addEventListener("load", () => {
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result && result.user) {
-            console.log("✅ Redirect login successful:", result.user.email);
-            let redirectUrl = "profile.html";
-            if (inviteId) {
-              redirectUrl += `?inviteId=${inviteId}`;
-            }
-            window.location.href = redirectUrl;
-          }
-        })
-        .catch((error) => {
-          console.error("❌ Login error:", error.message);
-        });
     });
 
   </script>
