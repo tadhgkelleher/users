@@ -4,20 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Profile</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-</head>
-<body>
-  <h1>User Profile</h1>
-  <div id="user-details">
-    <h2>User Information</h2>
-    <p><strong>Full Name:</strong> <span id="user-name"></span></p>
-    <p><strong>Email:</strong> <span id="user-email"></span></p>
-    <p><strong>Invite Code:</strong> <span id="invite-code"></span></p>
-  </div>
-
-  <script>
+  <script type="module">
     // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -29,25 +16,36 @@
         measurementId: "G-TER99X7NBT"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    // Import Firebase SDK modules
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
-    // Get the user details from Firebase and invite code from the URL
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+
+    // Get user details and invite code
     auth.onAuthStateChanged((user) => {
       if (user) {
-        // Display user info
         document.getElementById("user-name").textContent = user.displayName || "No name available";
         document.getElementById("user-email").textContent = user.email || "No email available";
 
-        // Get invite code from URL params
         const urlParams = new URLSearchParams(window.location.search);
         const inviteCode = urlParams.get('inviteId') || "No invite code provided";
         document.getElementById("invite-code").textContent = inviteCode;
       } else {
-        window.location.href = "index.html";  // Redirect to login if not signed in
+        window.location.href = "index.html"; // Redirect if not signed in
       }
     });
   </script>
+</head>
+<body>
+  <h1>User Profile</h1>
+  <div id="user-details">
+    <h2>User Information</h2>
+    <p><strong>Full Name:</strong> <span id="user-name"></span></p>
+    <p><strong>Email:</strong> <span id="user-email"></span></p>
+    <p><strong>Invite Code:</strong> <span id="invite-code"></span></p>
+  </div>
 </body>
 </html>
