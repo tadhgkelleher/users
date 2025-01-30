@@ -480,7 +480,7 @@
 
        // Handle Google Sign-In
 document.getElementById("googleSignInBtn").addEventListener("click", () => {
-    auth.signInWithPopup(googleProvider)
+   auth.signInWithRedirect(googleProvider);
         .then((result) => {
             const user = result.user;
             if (inviteIdFromUrl) {
