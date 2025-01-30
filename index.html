@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Mandala - Login</title>
   <script type="module">
-    // Import Firebase SDK modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
     import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
-    // Firebase configuration
+    // Firebase config
     const firebaseConfig = {
         apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
         authDomain: "mandala-5165e.firebaseapp.com",
@@ -25,32 +24,36 @@
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    // Extract the inviteId from the URL
+    // Extract inviteId from URL
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
-    // 🔍 Step 1: Check if user is already logged in on page load
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("User already logged in:", user);
-        window.location.href = `profile.html?inviteId=${inviteId}`;
+    // Ensure login button exists
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginButton = document.getElementById("login-button");
+      if (loginButton) {
+        loginButton.addEventListener("click", () => {
+          console.log("Logging in...");
+          signInWithRedirect(auth, provider);
+        });
       }
     });
 
-    // 🔄 Step 2: Handle login with redirect
-    document.addEventListener("DOMContentLoaded", () => {
-      const loginButton = document.getElementById("login-button");
-      loginButton.addEventListener("click", () => {
-        console.log("Login button clicked, starting sign-in redirect...");
-        signInWithRedirect(auth, provider);
-      });
+    // Fix redirect loop by checking if user is logged in before redirecting
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User logged in:", user.email);
+        window.location.href = `profile.html?inviteId=${inviteId}`;
+      } else {
+        console.log("No user signed in. Waiting for login.");
+      }
     });
 
-    // ✅ Step 3: Handle redirect result (fix issue)
+    // Handle login redirects correctly
     getRedirectResult(auth)
       .then((result) => {
         if (result && result.user) {
-          console.log("Redirect successful. User:", result.user);
+          console.log("Redirect login successful:", result.user.email);
           window.location.href = `profile.html?inviteId=${inviteId}`;
         }
       })
