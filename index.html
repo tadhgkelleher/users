@@ -18,18 +18,40 @@
 
     // Import Firebase SDK modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithRedirect } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
+    // Extract the inviteId from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteId = urlParams.get('inviteId');
+
     // Handle login with redirect
     const loginButton = document.getElementById("login-button");
     loginButton.addEventListener("click", () => {
-      signInWithRedirect(auth, provider);
+      if (inviteId) {
+        // If inviteId exists, include it in the flow and proceed to sign in
+        signInWithRedirect(auth, provider);
+      } else {
+        // Handle case where there is no inviteId
+        alert("No invite code provided");
+      }
     });
+
+    // Check if the user is redirected back from Firebase after login
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          // If a user is authenticated, redirect to profile.html
+          window.location.href = `profile.html?inviteId=${inviteId}`;
+        }
+      })
+      .catch((error) => {
+        console.error("Error during redirect result: ", error);
+      });
   </script>
 </head>
 <body>
