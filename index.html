@@ -438,7 +438,7 @@
 
            
     <script>
-   // Firebase configuration
+  // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
     authDomain: "mandala-5165e.firebaseapp.com",
@@ -505,7 +505,7 @@ function updateUIForSignedOutUser() {
     }
 }
 
-// Auth state observer
+// Auth state observer (updated to handle both redirect and direct login)
 auth.onAuthStateChanged((user) => {
     if (user) {
         updateUIForAuthenticatedUser(user);
@@ -559,6 +559,8 @@ window.onload = () => {
                     processInvite(inviteIdFromUrl, user);
                 }
                 showMessage("Logged in successfully!", "success");
+            } else {
+                showMessage("No user found in redirect result.", "warning");
             }
         })
         .catch((error) => {
