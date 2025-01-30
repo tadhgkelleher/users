@@ -24,35 +24,26 @@
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    // Extract inviteId from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const inviteId = urlParams.get('inviteId');
-
-    // Check if the user has been redirected after login
+    // Handle the login flow after redirect
     window.addEventListener("load", async () => {
       try {
-        // If a result is returned, handle the result after redirect
         const result = await getRedirectResult(auth);
-        if (result && result.user) {
-          // Successfully logged in user
-          console.log("✅ Login successful:", result.user.email);
-          let redirectUrl = "profile.html";
-          if (inviteId) {
-            redirectUrl += `?inviteId=${inviteId}`;
-          }
-          window.location.href = redirectUrl;  // Redirect to profile
+        const user = result?.user;
+        const statusElement = document.getElementById("status");
+
+        if (user) {
+          statusElement.innerHTML = `Logged in as: ${user.email}`;
         } else {
-          console.log("🚨 No user found after redirect.");
+          statusElement.innerHTML = "Not logged in.";
         }
       } catch (error) {
-        console.error("❌ Login error:", error.message);
+        console.error("Error during redirect login:", error);
       }
     });
 
-    // Handle login button click event
+    // Handle login button click to trigger redirect login
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("login-button").addEventListener("click", () => {
-        // Trigger the redirect login flow when the button is clicked
         signInWithRedirect(auth, provider);
       });
     });
@@ -60,7 +51,7 @@
 </head>
 <body>
   <h1>Welcome to My Mandala</h1>
-  <p id="status">Please log in.</p>
+  <p id="status">Checking login status...</p>
   <button id="login-button">Login with Google</button>
 </body>
 </html>
