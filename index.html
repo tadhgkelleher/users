@@ -438,7 +438,8 @@
 
            
     <script>
-  // Firebase configuration
+        // Firebase configuration
+     
 const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
     authDomain: "mandala-5165e.firebaseapp.com",
@@ -449,7 +450,7 @@ const firebaseConfig = {
     measurementId: "G-TER99X7NBT"
 };
 
-// Initialize Firebase
+// Initialize Firebase (with proper import checks)
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
 } else {
@@ -473,26 +474,26 @@ const authSection = document.getElementById("authSection");
 const profileSection = document.getElementById("profileSection");
 const authTitle = document.getElementById("authTitle");
 
-// Show message function
+// Show message function (added)
 function showMessage(message, type) {
     if (messageDisplay) {
         messageDisplay.textContent = message;
-        messageDisplay.className = `alert alert-${type}`;
+        messageDisplay.className = alert alert-${type};
         messageDisplay.style.display = 'block';
     }
 }
 
-// Update UI functions
+// Update UI functions (added)
 function updateUIForAuthenticatedUser(user) {
     if (authSection && profileSection) {
         authSection.style.display = 'none';
         profileSection.style.display = 'block';
     }
-
+    
     if (usernameDisplay) {
         usernameDisplay.textContent = user.email || user.displayName || 'User';
     }
-
+    
     if (profilePicture && user.photoURL) {
         profilePicture.src = user.photoURL;
     }
@@ -505,7 +506,7 @@ function updateUIForSignedOutUser() {
     }
 }
 
-// Auth state observer (updated to handle both redirect and direct login)
+// Auth state observer (added)
 auth.onAuthStateChanged((user) => {
     if (user) {
         updateUIForAuthenticatedUser(user);
@@ -522,12 +523,12 @@ if (inviteIdFromUrl && authTitle) {
     authTitle.textContent = "Sign Up to Accept Invitation";
 }
 
-// Process invite function
+// Process invite function (added)
 async function processInvite(inviteId, user) {
     try {
         const inviteRef = db.collection('invites').doc(inviteId);
         const inviteDoc = await inviteRef.get();
-
+        
         if (inviteDoc.exists) {
             // Process the invite (implement your logic here)
             showMessage("Invitation processed successfully!", "success");
@@ -539,41 +540,30 @@ async function processInvite(inviteId, user) {
     }
 }
 
-// Google Sign-In (Redirect)
+// Google Sign-In
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
+// Google Sign-In handler
 if (document.getElementById("googleSignInBtn")) {
     document.getElementById("googleSignInBtn").addEventListener("click", () => {
-        auth.signInWithRedirect(googleProvider);  // Redirect login
+        auth.signInWithPopup(googleProvider)  // Changed from redirect to popup for better error handling
+            .then((result) => {
+                if (result.user && inviteIdFromUrl) {
+                    processInvite(inviteIdFromUrl, result.user);
+                }
+            })
+            .catch((error) => {
+                showMessage(error.message, "danger");
+            });
     });
 }
 
-// Handle the redirect result (this should be called after the page reloads)
-window.onload = () => {
-    auth.getRedirectResult()
-        .then((result) => {
-            if (result.user) {
-                // If login is successful, handle the logged-in user
-                const user = result.user;
-                if (inviteIdFromUrl) {
-                    processInvite(inviteIdFromUrl, user);
-                }
-                showMessage("Logged in successfully!", "success");
-            } else {
-                showMessage("No user found in redirect result.", "warning");
-            }
-        })
-        .catch((error) => {
-            showMessage("Error during redirect login: " + error.message, "danger");
-        });
-}
-
-// Login handler (Email and Password)
+// Login handler
 if (loginBtn) {
     loginBtn.addEventListener("click", () => {
         const email = document.getElementById("email")?.value;
         const password = document.getElementById("password")?.value;
-
+        
         if (!email || !password) {
             showMessage("Please enter both email and password", "danger");
             return;
@@ -613,7 +603,6 @@ if (copyLinkBtn && inviteLinkInput) {
         showMessage("Link copied to clipboard!", "success");
     });
 }
-
 
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
