@@ -478,20 +478,20 @@
         // Google Sign-In
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-        // Handle Google Sign-In
-        document.getElementById("googleSignInBtn").addEventListener("click", () => {
-          auth.signInWithPopup(googleProvider);
-                .then((result) => {
-                    const user = result.user;
-                    if (inviteIdFromUrl) {
-                        processInvite(inviteIdFromUrl, user);
-                    }
-                    updateUIForAuthenticatedUser(user);
-                })
-                .catch((error) => {
-                    showMessage(error.message, "danger");
-                });
+       // Handle Google Sign-In
+document.getElementById("googleSignInBtn").addEventListener("click", () => {
+    auth.signInWithPopup(googleProvider)
+        .then((result) => {
+            const user = result.user;
+            if (inviteIdFromUrl) {
+                processInvite(inviteIdFromUrl, user);
+            }
+            updateUIForAuthenticatedUser(user);
+        })
+        .catch((error) => {
+            showMessage(error.message, "danger");
         });
+});
 
         // Handle Sign Up
         signUpBtn.addEventListener("click", () => {
