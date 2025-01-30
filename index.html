@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Mandala - Login</title>
+  <title>Login</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
-    // Firebase config
+    // Firebase configuration
     const firebaseConfig = {
         apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
         authDomain: "mandala-5165e.firebaseapp.com",
@@ -28,45 +28,38 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
-    // Ensure login button exists
-    document.addEventListener("DOMContentLoaded", () => {
-      const loginButton = document.getElementById("login-button");
-      if (loginButton) {
-        loginButton.addEventListener("click", () => {
-          console.log("Logging in...");
-          signInWithRedirect(auth, provider);
-        });
-      }
-    });
-
-    // Fix redirect loop by checking if user is logged in before redirecting
+    // Wait for Firebase to check authentication state
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("User logged in:", user.email);
-        window.location.href = `profile.html?inviteId=${inviteId}`;
+        console.log("✅ User is logged in:", user.email);
+        let redirectUrl = "profile.html";
+        if (inviteId) {
+          redirectUrl += `?inviteId=${inviteId}`;
+        }
+        window.location.href = redirectUrl;  // ✅ Only redirect **after** confirming login
       } else {
-        console.log("No user signed in. Waiting for login.");
+        console.log("🚨 No user logged in yet.");
       }
     });
 
-    // Handle login redirects correctly
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result && result.user) {
-          console.log("Redirect login successful:", result.user.email);
-          window.location.href = `profile.html?inviteId=${inviteId}`;
-        }
-      })
-      .catch((error) => {
-        console.error("Error handling redirect:", error);
+    // Login function
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("login-button").addEventListener("click", () => {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            console.log("✅ Login successful:", result.user.email);
+          })
+          .catch((error) => {
+            console.error("❌ Login failed:", error);
+          });
       });
+    });
 
   </script>
 </head>
 <body>
   <h1>Welcome to My Mandala</h1>
-  <div id="login-container">
-    <button id="login-button">Login with Google</button>
-  </div>
+  <p id="status">Please log in.</p>
+  <button id="login-button">Login with Google</button>
 </body>
 </html>
