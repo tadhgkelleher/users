@@ -542,6 +542,14 @@
             document.execCommand("copy");
             showMessage("Link copied to clipboard!", "success");
         });
+function closeModal() {
+    const modal = document.getElementById("userInfoModal");
+    if (modal) {
+        modal.style.display = "none";
+    } else {
+        console.error("Modal element not found!");
+    }
+}
 
 function loadInvitations(user) {
     if (!user) return;
