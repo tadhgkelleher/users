@@ -4,18 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
-   
-<meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
     <title>Profile and Invitations</title>
-    
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-  
-
     
 <style>
    body {
@@ -229,10 +223,10 @@
                     <h3 id="username" class="card-title"></h3>
                     <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
                     
-     <!-- User Info Modal -->
-<div id="userInfoModal" class="modal" style="display: none;">
+                <!-- Modal Structure -->
+<div id="userInfoModal" class="modal">
     <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <span class="close-btn">&times;</span>
         <h3 id="userName"></h3>
         <p><strong>Email:</strong> <span id="userEmail"></span></p>
         <p><strong>Additional Info:</strong> <span id="userAdditionalInfo"></span></p>
@@ -438,313 +432,116 @@
 </body>
 
            
-   <script>
-    // Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-    authDomain: "mandala-5165e.firebaseapp.com",
-    projectId: "mandala-5165e",
-    storageBucket: "mandala-5165e.appspot.com",
-    messagingSenderId: "569537405023",
-    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-    measurementId: "G-TER99X7NBT"
-};
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-// DOM Elements
-const generateLinkBtn = document.getElementById("generateLinkBtn");
-const inviteLinkInput = document.getElementById("inviteLink");
-const copyLinkBtn = document.getElementById("copyLinkBtn");
-const messageDisplay = document.getElementById("message");
-const usernameDisplay = document.getElementById("username");
-const profilePicture = document.getElementById("profilePicture");
-const signUpBtn = document.getElementById("signUpBtn");
-const loginBtn = document.getElementById("loginBtn");
-const signOutBtn = document.getElementById("signOutBtn");
-const authSection = document.getElementById("authSection");
-const profileSection = document.getElementById("profileSection");
-const authTitle = document.getElementById("authTitle");
-const loadingSpinner = document.getElementById("loadingSpinner");
+        // DOM Elements
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const inviteLinkInput = document.getElementById("inviteLink");
+        const copyLinkBtn = document.getElementById("copyLinkBtn");
+        const messageDisplay = document.getElementById("message");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
+        const signUpBtn = document.getElementById("signUpBtn");
+        const loginBtn = document.getElementById("loginBtn");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const authSection = document.getElementById("authSection");
+        const profileSection = document.getElementById("profileSection");
+        const authTitle = document.getElementById("authTitle");
 
-// Check for invitation ID in URL
-const urlParams = new URLSearchParams(window.location.search);
-const inviteIdFromUrl = urlParams.get('inviteId');
-if (inviteIdFromUrl) {
-    authTitle.textContent = "Sign Up to Accept Invitation";
-}
+        // Check for invitation ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteIdFromUrl = urlParams.get('inviteId');
+        if (inviteIdFromUrl) {
+            authTitle.textContent = "Sign Up to Accept Invitation";
+        }
 
-// Show/hide loading spinner
-function setLoading(isLoading) {
-    if (loadingSpinner) {
-        loadingSpinner.style.display = isLoading ? "block" : "none";
-    }
-    
-    // Disable buttons during loading
-    const buttons = [signUpBtn, loginBtn, document.getElementById("googleSignInBtn")];
-    buttons.forEach(button => {
-        if (button) button.disabled = isLoading;
-    });
-}
+        // Google Sign-In
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Message display function
-function showMessage(message, type = "info") {
-    if (messageDisplay) {
-        messageDisplay.textContent = message;
-        messageDisplay.className = `alert alert-${type}`;
-        messageDisplay.style.display = "block";
-        
-        // Hide message after 5 seconds
-        setTimeout(() => {
-            messageDisplay.style.display = "none";
-        }, 5000);
-    }
-}
-
-// Update UI for authenticated user
-function updateUIForAuthenticatedUser(user) {
-    if (authSection) authSection.style.display = "none";
-    if (profileSection) profileSection.style.display = "block";
-    
-    if (usernameDisplay) {
-        usernameDisplay.textContent = user.displayName || user.email;
-    }
-    
-    if (profilePicture && user.photoURL) {
-        profilePicture.src = user.photoURL;
-        profilePicture.style.display = "block";
-    }
-    
-    // Update user data in Firestore
-    updateUserData(user);
-}
-
-// Update UI for signed out user
-function updateUIForSignedOutUser() {
-    if (authSection) authSection.style.display = "block";
-    if (profileSection) profileSection.style.display = "none";
-    
-    // Clear form fields
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-    if (email) email.value = "";
-    if (password) password.value = "";
-}
-
-// Update user data in Firestore
-async function updateUserData(user) {
-    try {
-        await db.collection("users").doc(user.uid).set({
-            email: user.email,
-            displayName: user.displayName,
-            photoURL: user.photoURL,
-            lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-    } catch (error) {
-        console.error("Error updating user data:", error);
-    }
-}
-
-// Process invite after authentication
-async function processInvite(inviteId, user) {
-    try {
-        const inviteRef = db.collection("invites").doc(inviteId);
-        const inviteDoc = await inviteRef.get();
-        
-        if (inviteDoc.exists) {
-            const inviteData = inviteDoc.data();
-            
-            // Check if invite is still valid
-            if (!inviteData.claimed) {
-                await inviteRef.update({
-                    claimed: true,
-                    claimedBy: user.uid,
-                    claimedAt: firebase.firestore.FieldValue.serverTimestamp()
+        // Handle Google Sign-In
+        document.getElementById("googleSignInBtn").addEventListener("click", () => {
+            auth.signInWithPopup(googleProvider)
+                .then((result) => {
+                    const user = result.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
                 });
-                showMessage("Invitation accepted successfully!", "success");
-            } else {
-                showMessage("This invitation has already been claimed.", "warning");
-            }
-        } else {
-            showMessage("Invalid invitation link.", "danger");
-        }
-    } catch (error) {
-        console.error("Error processing invite:", error);
-        showMessage("Error processing invitation.", "danger");
-    }
-}
-
-// Initialize Google provider
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-// Handle Google Sign-In
-document.getElementById("googleSignInBtn").addEventListener("click", () => {
-    setLoading(true);
-    firebase.auth().signInWithRedirect(googleProvider);
-});
-
-// Check for redirect result immediately when page loads
-firebase.auth().getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            // User successfully logged in
-            if (inviteIdFromUrl) {
-                processInvite(inviteIdFromUrl, result.user);
-            }
-            updateUIForAuthenticatedUser(result.user);
-        }
-    })
-    .catch((error) => {
-        console.error("Error after redirect: ", error);
-        showMessage(error.message, "danger");
-    })
-    .finally(() => {
-        setLoading(false);
-    });
-
-// Add auth state listener
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        // User is signed in
-        updateUIForAuthenticatedUser(user);
-    } else {
-        // User is signed out
-        updateUIForSignedOutUser();
-    }
-    setLoading(false);
-});
-       
-// Google Sign-In button click handler
-document.getElementById("googleSignInBtn").addEventListener("click", () => {
-    setLoading(true);
-    auth.signInWithRedirect(googleProvider)
-        .catch((error) => {
-            setLoading(false);
-            showMessage(error.message, "danger");
-        });
-});
-
-// Handle Sign Up
-signUpBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    
-    if (!email || !password) {
-        showMessage("Please fill in all fields.", "warning");
-        return;
-    }
-    
-    setLoading(true);
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        if (inviteIdFromUrl) {
-            await processInvite(inviteIdFromUrl, userCredential.user);
-        }
-        updateUIForAuthenticatedUser(userCredential.user);
-    } catch (error) {
-        showMessage(error.message, "danger");
-    } finally {
-        setLoading(false);
-    }
-});
-
-// Handle Login
-loginBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    
-    if (!email || !password) {
-        showMessage("Please fill in all fields.", "warning");
-        return;
-    }
-    
-    setLoading(true);
-    try {
-        const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        if (inviteIdFromUrl) {
-            await processInvite(inviteIdFromUrl, userCredential.user);
-        }
-        updateUIForAuthenticatedUser(userCredential.user);
-    } catch (error) {
-        showMessage(error.message, "danger");
-    } finally {
-        setLoading(false);
-    }
-});
-
-// Handle Sign Out
-signOutBtn.addEventListener("click", async () => {
-    setLoading(true);
-    try {
-        await auth.signOut();
-        updateUIForSignedOutUser();
-    } catch (error) {
-        showMessage(error.message, "danger");
-    } finally {
-        setLoading(false);
-    }
-});
-
-// Generate Invite Link
-generateLinkBtn.addEventListener("click", async () => {
-    setLoading(true);
-    try {
-        const user = auth.currentUser;
-        if (!user) {
-            showMessage("Please sign in to generate an invite link.", "warning");
-            return;
-        }
-
-        // Create a new invite document
-        const inviteRef = await db.collection("invites").add({
-            createdBy: user.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            claimed: false
         });
 
-        // Generate the invite link
-        const inviteLink = `${window.location.origin}${window.location.pathname}?inviteId=${inviteRef.id}`;
-        inviteLinkInput.value = inviteLink;
-        inviteLinkInput.style.display = "block";
-        copyLinkBtn.style.display = "block";
+        // Handle Sign Up
+        signUpBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        // Handle Login
+        loginBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
         
-        showMessage("Invite link generated successfully!", "success");
-    } catch (error) {
-        console.error("Error generating invite:", error);
-        showMessage("Error generating invite link.", "danger");
-    } finally {
-        setLoading(false);
-    }
-});
+        // Handle Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                updateUIForSignedOutUser();
+            }).catch((error) => {
+                showMessage(error.message, "danger");
+            });
+        });
 
-// Copy Invite Link
-copyLinkBtn.addEventListener("click", async () => {
-    try {
-        if (navigator.clipboard) {
-            // Use modern clipboard API if available
-            await navigator.clipboard.writeText(inviteLinkInput.value);
-        } else {
-            // Fallback to older method
+       
+
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
             inviteLinkInput.select();
             document.execCommand("copy");
-        }
-        showMessage("Link copied to clipboard!", "success");
-    } catch (error) {
-        console.error("Error copying to clipboard:", error);
-        showMessage("Error copying link. Please copy manually.", "warning");
-    }
-});
-function closeModal() {
-    const modal = document.getElementById("userInfoModal");
-    if (modal) {
-        modal.style.display = "none";
-    } else {
-        console.error("Modal element not found!");
-    }
-}
+            showMessage("Link copied to clipboard!", "success");
+        });
 
 function loadInvitations(user) {
     if (!user) return;
@@ -884,42 +681,64 @@ function renderCircularNodes(nodes) {
 }
 
 function showUserInfo(userId) {
-    if (!userId) return;
+    console.log("showUserInfo called with userId:", userId); // Debug log
+    
+    if (!userId) {
+        console.log("No userId provided");
+        return;
+    }
 
-    // Query Firestore for user details
+    const modal = document.getElementById("userInfoModal");
+    const debugFields = document.getElementById("debugFields");
+    
+    // Clear previous content
+    debugFields.innerHTML = 'Loading...';
+    
+    // Get user data from Firebase
     db.collection("users").doc(userId).get()
         .then(doc => {
+            console.log("Firebase response:", doc); // Debug log
+            
             if (doc.exists) {
                 const userData = doc.data();
-                console.log("User data:", userData); // Debugging
-
-                // Ensure modal elements exist
-                const modal = document.getElementById("userInfoModal");
-                const nameElem = document.getElementById("userName");
-                const emailElem = document.getElementById("userEmail");
-                const infoElem = document.getElementById("userAdditionalInfo");
-
-                if (!modal || !nameElem || !emailElem || !infoElem) {
-                    console.error("Modal or its elements are missing from the DOM.");
-                    return;
-                }
-
-                // Fix: Ensure it displays the username, not just the email
-                nameElem.innerText = userData.displayName ? userData.displayName : "(No Name)";
-                emailElem.innerText = userData.email || "N/A";
-                infoElem.innerText = userData.additionalInfo || "N/A";
-
+                console.log("User data:", userData); // Debug log
+                
+                // Display all available fields
+                let htmlContent = '';
+                
+                Object.entries(userData).forEach(([key, value]) => {
+                    let displayValue = value;
+                    
+                    // Handle different types of values
+                    if (value === null || value === undefined) {
+                        displayValue = 'Not set';
+                    } else if (value instanceof firebase.firestore.Timestamp) {
+                        displayValue = value.toDate().toLocaleString();
+                    } else if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value);
+                    }
+                    
+                    htmlContent += `
+                        <div class="field-row">
+                            <strong>${key}:</strong> ${displayValue}
+                        </div>
+                    `;
+                });
+                
+                debugFields.innerHTML = htmlContent || 'No fields found';
+                
                 // Show the modal
                 modal.style.display = "block";
             } else {
-                console.error("No user found!");
+                debugFields.innerHTML = 'No user data found';
+                console.log("No user document found");
             }
         })
-        .catch((error) => {
-            console.error("Error getting user info:", error);
+        .catch(error => {
+            console.error("Error getting user data:", error);
+            debugFields.innerHTML = 'Error loading user data';
         });
 }
-
 
 // Update the modal HTML structure
 const modalHtml = `
