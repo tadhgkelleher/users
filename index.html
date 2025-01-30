@@ -479,18 +479,22 @@
         const googleProvider = new firebase.auth.GoogleAuthProvider();
 
         // Handle Google Sign-In
-        document.getElementById("googleSignInBtn").addEventListener("click", () => {
-            auth.signInWithPopup(googleProvider)
-                .then((result) => {
-                    const user = result.user;
-                    if (inviteIdFromUrl) {
-                        processInvite(inviteIdFromUrl, user);
-                    }
-                    updateUIForAuthenticatedUser(user);
-                })
-                .catch((error) => {
-                    showMessage(error.message, "danger");
-                });
+       document.getElementById("googleSignInBtn").addEventListener("click", () => {
+    auth.signInWithRedirect(googleProvider);  // Use redirect for Google sign-in
+});
+
+firebase.auth().getRedirectResult().then((result) => {
+    if (result.user) {
+        const user = result.user;
+        if (inviteIdFromUrl) {
+            processInvite(inviteIdFromUrl, user);  // Process the invitation if applicable
+        }
+        updateUIForAuthenticatedUser(user);  // Update UI for logged-in user
+    }
+}).catch((error) => {
+    showMessage(error.message, "danger");  // Handle errors
+});
+
         });
 
         // Handle Sign Up
