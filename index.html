@@ -4,14 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
+<meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
     <title>Profile and Invitations</title>
+    
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
-<meta http-equiv="Cross-Origin-Embedder-Policy" content="credentialless">
+  
 
     
 <style>
@@ -478,7 +480,7 @@
 
         // Handle Google Sign-In
         document.getElementById("googleSignInBtn").addEventListener("click", () => {
-           auth.signInWithRedirect(googleProvider);
+          auth.signInWithPopup(googleProvider);
                 .then((result) => {
                     const user = result.user;
                     if (inviteIdFromUrl) {
