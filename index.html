@@ -223,10 +223,10 @@
                     <h3 id="username" class="card-title"></h3>
                     <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
                     
-                <!-- Modal Structure -->
-<div id="userInfoModal" class="modal">
+     <!-- User Info Modal -->
+<div id="userInfoModal" class="modal" style="display: none;">
     <div class="modal-content">
-        <span class="close-btn">&times;</span>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
         <h3 id="userName"></h3>
         <p><strong>Email:</strong> <span id="userEmail"></span></p>
         <p><strong>Additional Info:</strong> <span id="userAdditionalInfo"></span></p>
@@ -681,62 +681,39 @@ function renderCircularNodes(nodes) {
 }
 
 function showUserInfo(userId) {
-    console.log("showUserInfo called with userId:", userId); // Debug log
-    
-    if (!userId) {
-        console.log("No userId provided");
-        return;
-    }
+    if (!userId) return;
 
-    const modal = document.getElementById("userInfoModal");
-    const debugFields = document.getElementById("debugFields");
-    
-    // Clear previous content
-    debugFields.innerHTML = 'Loading...';
-    
-    // Get user data from Firebase
+    // Query the user info from Firestore using the user ID
     db.collection("users").doc(userId).get()
         .then(doc => {
-            console.log("Firebase response:", doc); // Debug log
-            
             if (doc.exists) {
                 const userData = doc.data();
-                console.log("User data:", userData); // Debug log
-                
-                // Display all available fields
-                let htmlContent = '';
-                
-                Object.entries(userData).forEach(([key, value]) => {
-                    let displayValue = value;
-                    
-                    // Handle different types of values
-                    if (value === null || value === undefined) {
-                        displayValue = 'Not set';
-                    } else if (value instanceof firebase.firestore.Timestamp) {
-                        displayValue = value.toDate().toLocaleString();
-                    } else if (typeof value === 'object') {
-                        displayValue = JSON.stringify(value);
-                    }
-                    
-                    htmlContent += `
-                        <div class="field-row">
-                            <strong>${key}:</strong> ${displayValue}
-                        </div>
-                    `;
-                });
-                
-                debugFields.innerHTML = htmlContent || 'No fields found';
-                
+                console.log("User data:", userData); // Debugging
+
+                // Check if modal elements exist
+                const modal = document.getElementById("userInfoModal");
+                const nameElem = document.getElementById("userName");
+                const emailElem = document.getElementById("userEmail");
+                const infoElem = document.getElementById("userAdditionalInfo");
+
+                if (!modal || !nameElem || !emailElem || !infoElem) {
+                    console.error("Modal or its elements are missing from the DOM.");
+                    return;
+                }
+
+                // Update the modal content
+                nameElem.innerText = userData.displayName || userData.email;
+                emailElem.innerText = userData.email || "N/A";
+                infoElem.innerText = userData.additionalInfo || "N/A";
+
                 // Show the modal
                 modal.style.display = "block";
             } else {
-                debugFields.innerHTML = 'No user data found';
-                console.log("No user document found");
+                console.error("No user found!");
             }
         })
-        .catch(error => {
-            console.error("Error getting user data:", error);
-            debugFields.innerHTML = 'Error loading user data';
+        .catch((error) => {
+            console.error("Error getting user info:", error);
         });
 }
 
