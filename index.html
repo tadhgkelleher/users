@@ -26,12 +26,14 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // Check for a redirect result when the page loads
+    // Function to check if user is logged in after redirect
     window.onload = () => {
+      console.log("Page loaded. Checking redirect result...");
+
       getRedirectResult(auth).then((result) => {
         if (result) {
           const user = result.user;
-          console.log("User signed in:", user);
+          console.log("User successfully logged in:", user);
           document.getElementById("user-info").innerHTML = `Logged in as: ${user.displayName} (${user.email})`;
           document.getElementById("login-section").style.display = 'none';
           document.getElementById("user-info").style.display = 'block';
@@ -43,8 +45,9 @@
       });
     };
 
-    // Trigger Google login
+    // Trigger Google login on button click
     document.getElementById("login-btn").addEventListener("click", () => {
+      console.log("Redirecting for Google login...");
       signInWithRedirect(auth, provider);
     });
   </script>
