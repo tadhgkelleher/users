@@ -1,67 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Firebase Login</title>
-
-  <!-- Firebase SDK imports -->
-  <script type="module">
-    // Import Firebase modules
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.appspot.com",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    // Function to check if user is logged in after redirect
-    window.onload = () => {
-      console.log("Page loaded. Checking redirect result...");
-
-      getRedirectResult(auth).then((result) => {
-        if (result) {
-          const user = result.user;
-          console.log("User successfully logged in:", user);
-          document.getElementById("user-info").innerHTML = `Logged in as: ${user.displayName} (${user.email})`;
-          document.getElementById("login-section").style.display = 'none';
-          document.getElementById("user-info").style.display = 'block';
-        } else {
-          console.log("No user found after redirect.");
-        }
-      }).catch((error) => {
-        console.error("Error during redirect:", error);
-      });
-    };
-
-    // Trigger Google login on button click
-    document.getElementById("login-btn").addEventListener("click", () => {
-      console.log("Redirecting for Google login...");
-      signInWithRedirect(auth, provider);
-    });
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
 </head>
 <body>
-  <h1>Firebase Login</h1>
-
-  <div id="user-info" style="display: none;">
-    <h2>Logged In!</h2>
-    <p id="user-details"></p>
-  </div>
-  
-  <div id="login-section">
+    <h1>My Mandala</h1>
+    <p id="status">Checking login status...</p>
     <button id="login-btn">Login with Google</button>
-  </div>
+
+    <script>
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // Check if user is logged in
+        auth.onAuthStateChanged(user => {
+            const status = document.getElementById("status");
+            if (user) {
+                status.innerText = `✅ Logged in as ${user.displayName}`;
+                const urlParams = new URLSearchParams(window.location.search);
+                const inviteId = urlParams.get('inviteId');
+                let profileUrl = "profile.html";
+                if (inviteId) profileUrl += `?inviteId=${inviteId}`;
+                window.location.href = profileUrl;
+            } else {
+                status.innerText = "❌ Not logged in.";
+            }
+        });
+
+        // Login with popup
+        document.getElementById("login-btn").addEventListener("click", () => {
+            auth.signInWithPopup(provider)
+                .catch(error => console.error("Login error:", error));
+        });
+    </script>
 </body>
 </html>
