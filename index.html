@@ -31,7 +31,7 @@
     // Check if user is already logged in
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("✅ User logged in:", user.email);
+        console.log("✅ User is logged in:", user.email);
         let redirectUrl = "profile.html";
         if (inviteId) {
           redirectUrl += `?inviteId=${inviteId}`;
@@ -49,16 +49,23 @@
       });
     });
 
-    // Handle redirect result (after coming back from Google login)
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result.user) {
-          console.log("✅ Redirect login successful:", result.user.email);
-        }
-      })
-      .catch((error) => {
-        console.error("❌ Login error:", error);
-      });
+    // Handle redirect login result
+    window.addEventListener("load", () => {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result && result.user) {
+            console.log("✅ Redirect login successful:", result.user.email);
+            let redirectUrl = "profile.html";
+            if (inviteId) {
+              redirectUrl += `?inviteId=${inviteId}`;
+            }
+            window.location.href = redirectUrl;
+          }
+        })
+        .catch((error) => {
+          console.error("❌ Login error:", error.message);
+        });
+    });
 
   </script>
 </head>
