@@ -18,28 +18,17 @@
 
     // Import Firebase SDK modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, GoogleAuthProvider, signInWithRedirect } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    // Handle login
+    // Handle login with redirect
     const loginButton = document.getElementById("login-button");
     loginButton.addEventListener("click", () => {
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          const user = result.user;
-          const urlParams = new URLSearchParams(window.location.search);
-          const inviteId = urlParams.get('inviteId');
-
-          // Redirect to profile.html with invite code as query param
-          window.location.href = `profile.html?inviteId=${inviteId}&userId=${user.uid}`;
-        })
-        .catch((error) => {
-          console.error("Error signing in: ", error);
-        });
+      signInWithRedirect(auth, provider);
     });
   </script>
 </head>
