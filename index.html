@@ -683,14 +683,14 @@ function renderCircularNodes(nodes) {
 function showUserInfo(userId) {
     if (!userId) return;
 
-    // Query the user info from Firestore using the user ID
+    // Query Firestore for user details
     db.collection("users").doc(userId).get()
         .then(doc => {
             if (doc.exists) {
                 const userData = doc.data();
                 console.log("User data:", userData); // Debugging
 
-                // Check if modal elements exist
+                // Ensure modal elements exist
                 const modal = document.getElementById("userInfoModal");
                 const nameElem = document.getElementById("userName");
                 const emailElem = document.getElementById("userEmail");
@@ -701,8 +701,8 @@ function showUserInfo(userId) {
                     return;
                 }
 
-                // Update the modal content
-                nameElem.innerText = userData.displayName || userData.email;
+                // Fix: Ensure it displays the username, not just the email
+                nameElem.innerText = userData.displayName ? userData.displayName : "(No Name)";
                 emailElem.innerText = userData.email || "N/A";
                 infoElem.innerText = userData.additionalInfo || "N/A";
 
@@ -716,6 +716,7 @@ function showUserInfo(userId) {
             console.error("Error getting user info:", error);
         });
 }
+
 
 // Update the modal HTML structure
 const modalHtml = `
