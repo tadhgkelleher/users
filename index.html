@@ -438,8 +438,7 @@
 
            
     <script>
-        // Firebase configuration
-     
+       // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
     authDomain: "mandala-5165e.firebaseapp.com",
@@ -450,7 +449,7 @@ const firebaseConfig = {
     measurementId: "G-TER99X7NBT"
 };
 
-// Initialize Firebase (with proper import checks)
+// Initialize Firebase
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
 } else {
@@ -474,7 +473,7 @@ const authSection = document.getElementById("authSection");
 const profileSection = document.getElementById("profileSection");
 const authTitle = document.getElementById("authTitle");
 
-// Show message function (added)
+// Show message function
 function showMessage(message, type) {
     if (messageDisplay) {
         messageDisplay.textContent = message;
@@ -483,17 +482,17 @@ function showMessage(message, type) {
     }
 }
 
-// Update UI functions (added)
+// Update UI functions
 function updateUIForAuthenticatedUser(user) {
     if (authSection && profileSection) {
         authSection.style.display = 'none';
         profileSection.style.display = 'block';
     }
-    
+
     if (usernameDisplay) {
         usernameDisplay.textContent = user.email || user.displayName || 'User';
     }
-    
+
     if (profilePicture && user.photoURL) {
         profilePicture.src = user.photoURL;
     }
@@ -506,7 +505,7 @@ function updateUIForSignedOutUser() {
     }
 }
 
-// Auth state observer (added)
+// Auth state observer
 auth.onAuthStateChanged((user) => {
     if (user) {
         updateUIForAuthenticatedUser(user);
@@ -523,12 +522,12 @@ if (inviteIdFromUrl && authTitle) {
     authTitle.textContent = "Sign Up to Accept Invitation";
 }
 
-// Process invite function (added)
+// Process invite function
 async function processInvite(inviteId, user) {
     try {
         const inviteRef = db.collection('invites').doc(inviteId);
         const inviteDoc = await inviteRef.get();
-        
+
         if (inviteDoc.exists) {
             // Process the invite (implement your logic here)
             showMessage("Invitation processed successfully!", "success");
@@ -540,30 +539,37 @@ async function processInvite(inviteId, user) {
     }
 }
 
-// Google Sign-In
+// Google Sign-In (Redirect)
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Google Sign-In handler
 if (document.getElementById("googleSignInBtn")) {
     document.getElementById("googleSignInBtn").addEventListener("click", () => {
-        auth.signInWithPopup(googleProvider)  // Changed from redirect to popup for better error handling
-            .then((result) => {
-                if (result.user && inviteIdFromUrl) {
-                    processInvite(inviteIdFromUrl, result.user);
-                }
-            })
-            .catch((error) => {
-                showMessage(error.message, "danger");
-            });
+        auth.signInWithRedirect(googleProvider);  // Redirect login
     });
 }
 
-// Login handler
+// Handle the redirect result
+auth.getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            // If login is successful, handle the logged-in user
+            const user = result.user;
+            if (inviteIdFromUrl) {
+                processInvite(inviteIdFromUrl, user);
+            }
+            showMessage("Logged in successfully!", "success");
+        }
+    })
+    .catch((error) => {
+        showMessage("Error during redirect login: " + error.message, "danger");
+    });
+
+// Login handler (Email and Password)
 if (loginBtn) {
     loginBtn.addEventListener("click", () => {
         const email = document.getElementById("email")?.value;
         const password = document.getElementById("password")?.value;
-        
+
         if (!email || !password) {
             showMessage("Please enter both email and password", "danger");
             return;
@@ -603,6 +609,7 @@ if (copyLinkBtn && inviteLinkInput) {
         showMessage("Link copied to clipboard!", "success");
     });
 }
+
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
     if (modal) {
