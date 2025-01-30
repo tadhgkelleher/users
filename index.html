@@ -28,25 +28,42 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
-    // Handle login button click
+    // Check the authentication state to decide if we need a redirect
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // If the user is already signed in, redirect them to the profile page
+        console.log("✅ User is logged in:", user.email);
+        let redirectUrl = "profile.html";
+        if (inviteId) {
+          redirectUrl += `?inviteId=${inviteId}`;
+        }
+        window.location.href = redirectUrl;  // Redirect user to profile.html if they are logged in
+      } else {
+        // If no user is logged in, ensure there's no automatic redirect
+        console.log("🚨 No user logged in.");
+      }
+    });
+
+    // Handle login button click event
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("login-button").addEventListener("click", () => {
-        signInWithRedirect(auth, provider); // Redirect for login
+        // Trigger the redirect login flow when the button is clicked
+        signInWithRedirect(auth, provider);
       });
     });
 
-    // Wait for redirect result after login
+    // Handle the result after the redirect
     window.addEventListener("load", () => {
       getRedirectResult(auth)
         .then((result) => {
           if (result && result.user) {
+            // On successful login, redirect to profile page with inviteId if it exists
             console.log("✅ Login successful:", result.user.email);
-            // Check if inviteId exists and redirect to profile page
             let redirectUrl = "profile.html";
             if (inviteId) {
               redirectUrl += `?inviteId=${inviteId}`;
             }
-            window.location.href = redirectUrl; // Redirect to profile
+            window.location.href = redirectUrl;
           } else {
             console.log("🚨 No user found after redirect.");
           }
@@ -54,20 +71,6 @@
         .catch((error) => {
           console.error("❌ Login error:", error.message);
         });
-    });
-
-    // Listen to authentication state change
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("✅ User is logged in:", user.email);
-        let redirectUrl = "profile.html";
-        if (inviteId) {
-          redirectUrl += `?inviteId=${inviteId}`;
-        }
-        window.location.href = redirectUrl;  // If user is logged in, redirect to profile
-      } else {
-        console.log("🚨 No user logged in yet.");
-      }
     });
 
   </script>
