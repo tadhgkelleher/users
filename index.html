@@ -438,24 +438,21 @@
 
            
    <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+    // Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+    authDomain: "mandala-5165e.firebaseapp.com",
+    projectId: "mandala-5165e",
+    storageBucket: "mandala-5165e.appspot.com",
+    messagingSenderId: "569537405023",
+    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+    measurementId: "G-TER99X7NBT"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        // DOM Elements
-     // Firebase configuration and initialization stays the same...
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // DOM Elements
 const generateLinkBtn = document.getElementById("generateLinkBtn");
@@ -579,7 +576,7 @@ async function processInvite(inviteId, user) {
     }
 }
 
-// Handle Google Sign-In
+// Google Sign-In
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // Check redirect result on page load
@@ -676,15 +673,56 @@ signOutBtn.addEventListener("click", async () => {
         setLoading(false);
     }
 });
-       
 
-        // Copy Invite Link
-        copyLinkBtn.addEventListener("click", () => {
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            showMessage("Link copied to clipboard!", "success");
+// Generate Invite Link
+generateLinkBtn.addEventListener("click", async () => {
+    setLoading(true);
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            showMessage("Please sign in to generate an invite link.", "warning");
+            return;
+        }
+
+        // Create a new invite document
+        const inviteRef = await db.collection("invites").add({
+            createdBy: user.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            claimed: false
         });
 
+        // Generate the invite link
+        const inviteLink = `${window.location.origin}${window.location.pathname}?inviteId=${inviteRef.id}`;
+        inviteLinkInput.value = inviteLink;
+        inviteLinkInput.style.display = "block";
+        copyLinkBtn.style.display = "block";
+        
+        showMessage("Invite link generated successfully!", "success");
+    } catch (error) {
+        console.error("Error generating invite:", error);
+        showMessage("Error generating invite link.", "danger");
+    } finally {
+        setLoading(false);
+    }
+});
+
+// Copy Invite Link
+copyLinkBtn.addEventListener("click", async () => {
+    try {
+        if (navigator.clipboard) {
+            // Use modern clipboard API if available
+            await navigator.clipboard.writeText(inviteLinkInput.value);
+        } else {
+            // Fallback to older method
+            inviteLinkInput.select();
+            document.execCommand("copy");
+        }
+        showMessage("Link copied to clipboard!", "success");
+    } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        showMessage("Error copying link. Please copy manually.", "warning");
+    }
+});
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
     if (modal) {
