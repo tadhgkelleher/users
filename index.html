@@ -438,7 +438,7 @@
 
            
     <script>
-       // Firebase configuration
+   // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
     authDomain: "mandala-5165e.firebaseapp.com",
@@ -548,21 +548,23 @@ if (document.getElementById("googleSignInBtn")) {
     });
 }
 
-// Handle the redirect result
-auth.getRedirectResult()
-    .then((result) => {
-        if (result.user) {
-            // If login is successful, handle the logged-in user
-            const user = result.user;
-            if (inviteIdFromUrl) {
-                processInvite(inviteIdFromUrl, user);
+// Handle the redirect result (this should be called after the page reloads)
+window.onload = () => {
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                // If login is successful, handle the logged-in user
+                const user = result.user;
+                if (inviteIdFromUrl) {
+                    processInvite(inviteIdFromUrl, user);
+                }
+                showMessage("Logged in successfully!", "success");
             }
-            showMessage("Logged in successfully!", "success");
-        }
-    })
-    .catch((error) => {
-        showMessage("Error during redirect login: " + error.message, "danger");
-    });
+        })
+        .catch((error) => {
+            showMessage("Error during redirect login: " + error.message, "danger");
+        });
+}
 
 // Login handler (Email and Password)
 if (loginBtn) {
@@ -609,6 +611,7 @@ if (copyLinkBtn && inviteLinkInput) {
         showMessage("Link copied to clipboard!", "success");
     });
 }
+
 
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
