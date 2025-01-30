@@ -6,7 +6,7 @@
   <title>Login</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
     // Firebase configuration
     const firebaseConfig = {
@@ -28,32 +28,37 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
-    // Wait for Firebase to check authentication state
+    // Check if user is already logged in
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("✅ User is logged in:", user.email);
+        console.log("✅ User logged in:", user.email);
         let redirectUrl = "profile.html";
         if (inviteId) {
           redirectUrl += `?inviteId=${inviteId}`;
         }
-        window.location.href = redirectUrl;  // ✅ Only redirect **after** confirming login
+        window.location.href = redirectUrl;
       } else {
         console.log("🚨 No user logged in yet.");
       }
     });
 
-    // Login function
+    // Handle login button
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("login-button").addEventListener("click", () => {
-        signInWithPopup(auth, provider)
-          .then((result) => {
-            console.log("✅ Login successful:", result.user.email);
-          })
-          .catch((error) => {
-            console.error("❌ Login failed:", error);
-          });
+        signInWithRedirect(auth, provider); // ✅ Redirect instead of popup
       });
     });
+
+    // Handle redirect result (after coming back from Google login)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result.user) {
+          console.log("✅ Redirect login successful:", result.user.email);
+        }
+      })
+      .catch((error) => {
+        console.error("❌ Login error:", error);
+      });
 
   </script>
 </head>
