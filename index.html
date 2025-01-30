@@ -26,29 +26,34 @@
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
-    // Check if the user is logged in after redirect
-    getRedirectResult(auth).then((result) => {
-      if (result) {
-        const user = result.user;
-        document.getElementById("user-details").innerText = `Logged in as ${user.displayName} (${user.email})`;
-        document.getElementById("login-section").style.display = 'none';
-        document.getElementById("user-info").style.display = 'block';
-      }
-    }).catch((error) => {
-      console.error("Error during login:", error);
-    });
+    // Check for a redirect result when the page loads
+    window.onload = () => {
+      getRedirectResult(auth).then((result) => {
+        if (result) {
+          const user = result.user;
+          console.log("User signed in:", user);
+          document.getElementById("user-info").innerHTML = `Logged in as: ${user.displayName} (${user.email})`;
+          document.getElementById("login-section").style.display = 'none';
+          document.getElementById("user-info").style.display = 'block';
+        } else {
+          console.log("No user found after redirect.");
+        }
+      }).catch((error) => {
+        console.error("Error during redirect:", error);
+      });
+    };
 
-    // Trigger login with Google
+    // Trigger Google login
     document.getElementById("login-btn").addEventListener("click", () => {
       signInWithRedirect(auth, provider);
     });
   </script>
 </head>
 <body>
-  <h1>Firebase Login Test</h1>
+  <h1>Firebase Login</h1>
 
   <div id="user-info" style="display: none;">
-    <h2>Logged in!</h2>
+    <h2>Logged In!</h2>
     <p id="user-details"></p>
   </div>
   
