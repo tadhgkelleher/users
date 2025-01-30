@@ -24,16 +24,17 @@
     const auth = getAuth();
     const provider = new GoogleAuthProvider();
 
-    // Handle the login flow after redirect
+    // Check the redirect result and handle login status
     window.addEventListener("load", async () => {
       try {
         const result = await getRedirectResult(auth);
-        const user = result?.user;
         const statusElement = document.getElementById("status");
-
-        if (user) {
+        if (result && result.user) {
+          const user = result.user;
+          console.log("User logged in:", user.email);  // Log the user details for debugging
           statusElement.innerHTML = `Logged in as: ${user.email}`;
         } else {
+          console.log("No user logged in after redirect.");
           statusElement.innerHTML = "Not logged in.";
         }
       } catch (error) {
