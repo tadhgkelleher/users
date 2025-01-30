@@ -18,25 +18,31 @@
 
     // Import Firebase SDK modules
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
 
     // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth();
 
-    // Get user details and invite code
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        document.getElementById("user-name").textContent = user.displayName || "No name available";
-        document.getElementById("user-email").textContent = user.email || "No email available";
+    // Get user details and invite code after redirect
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          const user = result.user;
+          document.getElementById("user-name").textContent = user.displayName || "No name available";
+          document.getElementById("user-email").textContent = user.email || "No email available";
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteCode = urlParams.get('inviteId') || "No invite code provided";
-        document.getElementById("invite-code").textContent = inviteCode;
-      } else {
-        window.location.href = "index.html"; // Redirect if not signed in
-      }
-    });
+          // Get invite code from URL params
+          const urlParams = new URLSearchParams(window.location.search);
+          const inviteCode = urlParams.get('inviteId') || "No invite code provided";
+          document.getElementById("invite-code").textContent = inviteCode;
+        } else {
+          window.location.href = "index.html";  // Redirect to login if no result
+        }
+      })
+      .catch((error) => {
+        console.error("Error getting redirect result: ", error);
+      });
   </script>
 </head>
 <body>
