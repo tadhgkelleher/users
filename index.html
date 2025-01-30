@@ -576,33 +576,46 @@ async function processInvite(inviteId, user) {
     }
 }
 
-// Google Sign-In
+// Initialize Google provider
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Check redirect result on page load
-firebase.auth().getRedirectResult().then((result) => {
-    setLoading(false);
-    if (result.user) {
-        if (inviteIdFromUrl) {
-            processInvite(inviteIdFromUrl, result.user);
-        }
-        updateUIForAuthenticatedUser(result.user);
-    }
-}).catch((error) => {
-    setLoading(false);
-    showMessage(error.message, "danger");
+// Handle Google Sign-In
+document.getElementById("googleSignInBtn").addEventListener("click", () => {
+    setLoading(true);
+    firebase.auth().signInWithRedirect(googleProvider);
 });
 
-// Auth state listener
+// Check for redirect result immediately when page loads
+firebase.auth().getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            // User successfully logged in
+            if (inviteIdFromUrl) {
+                processInvite(inviteIdFromUrl, result.user);
+            }
+            updateUIForAuthenticatedUser(result.user);
+        }
+    })
+    .catch((error) => {
+        console.error("Error after redirect: ", error);
+        showMessage(error.message, "danger");
+    })
+    .finally(() => {
+        setLoading(false);
+    });
+
+// Add auth state listener
 firebase.auth().onAuthStateChanged((user) => {
-    setLoading(false);
     if (user) {
+        // User is signed in
         updateUIForAuthenticatedUser(user);
     } else {
+        // User is signed out
         updateUIForSignedOutUser();
     }
+    setLoading(false);
 });
-
+       
 // Google Sign-In button click handler
 document.getElementById("googleSignInBtn").addEventListener("click", () => {
     setLoading(true);
