@@ -37,7 +37,8 @@
           const inviteCode = urlParams.get('inviteId') || "No invite code provided";
           document.getElementById("invite-code").textContent = inviteCode;
         } else {
-          window.location.href = "index.html";  // Redirect to login if no result
+          // If no user is signed in, redirect to login page
+          window.location.href = "index.html";  // Redirect to login page
         }
       })
       .catch((error) => {
