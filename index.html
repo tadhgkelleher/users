@@ -493,23 +493,26 @@ document.getElementById("googleSignInBtn").addEventListener("click", () => {
         });
 });
 
-        // Handle Sign Up
-        signUpBtn.addEventListener("click", () => {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+     // Handle Google Sign-In
+document.getElementById("googleSignInBtn").addEventListener("click", () => {
+    auth.signInWithRedirect(googleProvider); // No .then() needed here
+});
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    if (inviteIdFromUrl) {
-                        processInvite(inviteIdFromUrl, user);
-                    }
-                    updateUIForAuthenticatedUser(user);
-                })
-                .catch((error) => {
-                    showMessage(error.message, "danger");
-                });
-        });
+// Handle redirect result when the page loads
+auth.getRedirectResult()
+    .then((result) => {
+        if (result.user) {
+            const user = result.user;
+            if (inviteIdFromUrl) {
+                processInvite(inviteIdFromUrl, user);
+            }
+            updateUIForAuthenticatedUser(user);
+        }
+    })
+    .catch((error) => {
+        showMessage(error.message, "danger");
+    });
+
 
         // Handle Login
         loginBtn.addEventListener("click", () => {
