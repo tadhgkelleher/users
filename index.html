@@ -28,10 +28,12 @@
     window.addEventListener("load", async () => {
       try {
         const result = await getRedirectResult(auth);
+        console.log("Redirect result:", result);  // Log the result object
         const statusElement = document.getElementById("status");
+
         if (result && result.user) {
           const user = result.user;
-          console.log("User logged in:", user.email);  // Log the user details for debugging
+          console.log("User logged in:", user.email);  // Log the user details
           statusElement.innerHTML = `Logged in as: ${user.email}`;
         } else {
           console.log("No user logged in after redirect.");
