@@ -5,23 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Firebase Login Test</title>
 
-  <!-- Firebase 8.x CDN (non-module version) -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-</head>
-<body>
-  <h1>Firebase Login Test</h1>
+  <!-- Firebase CDN (9.x Version with module support) -->
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 
-  <div id="user-info" style="display: none;">
-    <h2>Logged in!</h2>
-    <p id="user-details"></p>
-  </div>
-  
-  <div id="login-section">
-    <button id="login-btn">Login with Google</button>
-  </div>
-
-  <script>
     // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -34,8 +23,8 @@
     };
 
     // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
     // Check if the user is already logged in
     auth.onAuthStateChanged(user => {
@@ -51,8 +40,8 @@
 
     // Google login functionality
     document.getElementById("login-btn").addEventListener("click", () => {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).then(result => {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider).then(result => {
         // The signed-in user info
         const user = result.user;
         console.log("Logged in as:", user.displayName);
@@ -61,5 +50,17 @@
       });
     });
   </script>
+</head>
+<body>
+  <h1>Firebase Login Test</h1>
+
+  <div id="user-info" style="display: none;">
+    <h2>Logged in!</h2>
+    <p id="user-details"></p>
+  </div>
+  
+  <div id="login-section">
+    <button id="login-btn">Login with Google</button>
+  </div>
 </body>
 </html>
