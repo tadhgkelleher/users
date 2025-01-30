@@ -437,172 +437,116 @@
 </body>
 
            
-    <script>
+   <script>
         // Firebase configuration
-     
-const firebaseConfig = {
-    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-    authDomain: "mandala-5165e.firebaseapp.com",
-    projectId: "mandala-5165e",
-    storageBucket: "mandala-5165e.appspot.com",
-    messagingSenderId: "569537405023",
-    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-    measurementId: "G-TER99X7NBT"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
 
-// Initialize Firebase (with proper import checks)
-if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
-} else {
-    console.error('Firebase SDK not loaded');
-}
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+        // DOM Elements
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const inviteLinkInput = document.getElementById("inviteLink");
+        const copyLinkBtn = document.getElementById("copyLinkBtn");
+        const messageDisplay = document.getElementById("message");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
+        const signUpBtn = document.getElementById("signUpBtn");
+        const loginBtn = document.getElementById("loginBtn");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const authSection = document.getElementById("authSection");
+        const profileSection = document.getElementById("profileSection");
+        const authTitle = document.getElementById("authTitle");
 
-// DOM Elements with null checks
-const generateLinkBtn = document.getElementById("generateLinkBtn");
-const inviteLinkInput = document.getElementById("inviteLink");
-const copyLinkBtn = document.getElementById("copyLinkBtn");
-const messageDisplay = document.getElementById("message");
-const usernameDisplay = document.getElementById("username");
-const profilePicture = document.getElementById("profilePicture");
-const signUpBtn = document.getElementById("signUpBtn");
-const loginBtn = document.getElementById("loginBtn");
-const signOutBtn = document.getElementById("signOutBtn");
-const authSection = document.getElementById("authSection");
-const profileSection = document.getElementById("profileSection");
-const authTitle = document.getElementById("authTitle");
-
-// Show message function (added)
-function showMessage(message, type) {
-    if (messageDisplay) {
-        messageDisplay.textContent = message;
-        messageDisplay.className = alert alert-${type};
-        messageDisplay.style.display = 'block';
-    }
-}
-
-// Update UI functions (added)
-function updateUIForAuthenticatedUser(user) {
-    if (authSection && profileSection) {
-        authSection.style.display = 'none';
-        profileSection.style.display = 'block';
-    }
-    
-    if (usernameDisplay) {
-        usernameDisplay.textContent = user.email || user.displayName || 'User';
-    }
-    
-    if (profilePicture && user.photoURL) {
-        profilePicture.src = user.photoURL;
-    }
-}
-
-function updateUIForSignedOutUser() {
-    if (authSection && profileSection) {
-        authSection.style.display = 'block';
-        profileSection.style.display = 'none';
-    }
-}
-
-// Auth state observer (added)
-auth.onAuthStateChanged((user) => {
-    if (user) {
-        updateUIForAuthenticatedUser(user);
-    } else {
-        updateUIForSignedOutUser();
-    }
-});
-
-// Check for invitation ID in URL
-const urlParams = new URLSearchParams(window.location.search);
-const inviteIdFromUrl = urlParams.get('inviteId');
-
-if (inviteIdFromUrl && authTitle) {
-    authTitle.textContent = "Sign Up to Accept Invitation";
-}
-
-// Process invite function (added)
-async function processInvite(inviteId, user) {
-    try {
-        const inviteRef = db.collection('invites').doc(inviteId);
-        const inviteDoc = await inviteRef.get();
-        
-        if (inviteDoc.exists) {
-            // Process the invite (implement your logic here)
-            showMessage("Invitation processed successfully!", "success");
-        } else {
-            showMessage("Invalid invitation link.", "danger");
-        }
-    } catch (error) {
-        showMessage("Error processing invitation: " + error.message, "danger");
-    }
-}
-
-// Google Sign-In
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-// Google Sign-In handler
-if (document.getElementById("googleSignInBtn")) {
-    document.getElementById("googleSignInBtn").addEventListener("click", () => {
-        auth.signInWithPopup(googleProvider)  // Changed from redirect to popup for better error handling
-            .then((result) => {
-                if (result.user && inviteIdFromUrl) {
-                    processInvite(inviteIdFromUrl, result.user);
-                }
-            })
-            .catch((error) => {
-                showMessage(error.message, "danger");
-            });
-    });
-}
-
-// Login handler
-if (loginBtn) {
-    loginBtn.addEventListener("click", () => {
-        const email = document.getElementById("email")?.value;
-        const password = document.getElementById("password")?.value;
-        
-        if (!email || !password) {
-            showMessage("Please enter both email and password", "danger");
-            return;
+        // Check for invitation ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteIdFromUrl = urlParams.get('inviteId');
+        if (inviteIdFromUrl) {
+            authTitle.textContent = "Sign Up to Accept Invitation";
         }
 
-        auth.signInWithEmailAndPassword(email, password)
-            .then((userCredential) => {
-                if (inviteIdFromUrl) {
-                    processInvite(inviteIdFromUrl, userCredential.user);
-                }
-            })
-            .catch((error) => {
-                showMessage(error.message, "danger");
-            });
-    });
-}
+        // Google Sign-In
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-// Sign Out handler
-if (signOutBtn) {
-    signOutBtn.addEventListener("click", () => {
-        auth.signOut()
-            .then(() => {
+        // Handle Google Sign-In
+        document.getElementById("googleSignInBtn").addEventListener("click", () => {
+            auth.signInWithPopup(googleProvider)
+                .then((result) => {
+                    const user = result.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        // Handle Sign Up
+        signUpBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        // Handle Login
+        loginBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        
+        // Handle Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
                 updateUIForSignedOutUser();
-                showMessage("Signed out successfully", "success");
-            })
-            .catch((error) => {
+            }).catch((error) => {
                 showMessage(error.message, "danger");
             });
-    });
-}
+        });
 
-// Copy link handler
-if (copyLinkBtn && inviteLinkInput) {
-    copyLinkBtn.addEventListener("click", () => {
-        inviteLinkInput.select();
-        document.execCommand("copy");
-        showMessage("Link copied to clipboard!", "success");
-    });
-}
+       
+
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            showMessage("Link copied to clipboard!", "success");
+        });
 
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
