@@ -439,66 +439,52 @@
            
     <script>
         // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+       // Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+    authDomain: "mandala-5165e.firebaseapp.com",
+    projectId: "mandala-5165e",
+    storageBucket: "mandala-5165e.appspot.com",
+    messagingSenderId: "569537405023",
+    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+    measurementId: "G-TER99X7NBT"
+};
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-        // DOM Elements
-        const generateLinkBtn = document.getElementById("generateLinkBtn");
-        const inviteLinkInput = document.getElementById("inviteLink");
-        const copyLinkBtn = document.getElementById("copyLinkBtn");
-        const messageDisplay = document.getElementById("message");
-        const usernameDisplay = document.getElementById("username");
-        const profilePicture = document.getElementById("profilePicture");
-        const signUpBtn = document.getElementById("signUpBtn");
-        const loginBtn = document.getElementById("loginBtn");
-        const signOutBtn = document.getElementById("signOutBtn");
-        const authSection = document.getElementById("authSection");
-        const profileSection = document.getElementById("profileSection");
-        const authTitle = document.getElementById("authTitle");
+// DOM Elements
+const generateLinkBtn = document.getElementById("generateLinkBtn");
+const inviteLinkInput = document.getElementById("inviteLink");
+const copyLinkBtn = document.getElementById("copyLinkBtn");
+const messageDisplay = document.getElementById("message");
+const usernameDisplay = document.getElementById("username");
+const profilePicture = document.getElementById("profilePicture");
+const signUpBtn = document.getElementById("signUpBtn");
+const loginBtn = document.getElementById("loginBtn");
+const signOutBtn = document.getElementById("signOutBtn");
+const authSection = document.getElementById("authSection");
+const profileSection = document.getElementById("profileSection");
+const authTitle = document.getElementById("authTitle");
 
-        // Check for invitation ID in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteIdFromUrl = urlParams.get('inviteId');
-        if (inviteIdFromUrl) {
-            authTitle.textContent = "Sign Up to Accept Invitation";
-        }
+// Check for invitation ID in URL
+const urlParams = new URLSearchParams(window.location.search);
+const inviteIdFromUrl = urlParams.get('inviteId');
+if (inviteIdFromUrl) {
+    authTitle.textContent = "Sign Up to Accept Invitation";
+}
 
-        // Google Sign-In
-        const googleProvider = new firebase.auth.GoogleAuthProvider();
+// Google Sign-In
+const googleProvider = new firebase.auth.GoogleAuthProvider();
 
-       // Handle Google Sign-In
+// ✅ Handle Google Sign-In (No .then() here)
 document.getElementById("googleSignInBtn").addEventListener("click", () => {
-   auth.signInWithRedirect(googleProvider);
-        .then((result) => {
-            const user = result.user;
-            if (inviteIdFromUrl) {
-                processInvite(inviteIdFromUrl, user);
-            }
-            updateUIForAuthenticatedUser(user);
-        })
-        .catch((error) => {
-            showMessage(error.message, "danger");
-        });
+    auth.signInWithRedirect(googleProvider);
 });
 
-     // Handle Google Sign-In
-document.getElementById("googleSignInBtn").addEventListener("click", () => {
-    auth.signInWithRedirect(googleProvider); // No .then() needed here
-});
-
-// Handle redirect result when the page loads
+// ✅ Handle Redirect Result When the Page Loads
 auth.getRedirectResult()
     .then((result) => {
         if (result.user) {
@@ -513,43 +499,40 @@ auth.getRedirectResult()
         showMessage(error.message, "danger");
     });
 
+// ✅ Handle Login
+loginBtn.addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
-        // Handle Login
-        loginBtn.addEventListener("click", () => {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    if (inviteIdFromUrl) {
-                        processInvite(inviteIdFromUrl, user);
-                    }
-                    updateUIForAuthenticatedUser(user);
-                })
-                .catch((error) => {
-                    showMessage(error.message, "danger");
-                });
+    auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            const user = userCredential.user;
+            if (inviteIdFromUrl) {
+                processInvite(inviteIdFromUrl, user);
+            }
+            updateUIForAuthenticatedUser(user);
+        })
+        .catch((error) => {
+            showMessage(error.message, "danger");
         });
+});
 
-        
-        // Handle Sign Out
-        signOutBtn.addEventListener("click", () => {
-            auth.signOut().then(() => {
-                updateUIForSignedOutUser();
-            }).catch((error) => {
-                showMessage(error.message, "danger");
-            });
-        });
+// ✅ Handle Sign Out
+signOutBtn.addEventListener("click", () => {
+    auth.signOut().then(() => {
+        updateUIForSignedOutUser();
+    }).catch((error) => {
+        showMessage(error.message, "danger");
+    });
+});
 
-       
+// ✅ Copy Invite Link
+copyLinkBtn.addEventListener("click", () => {
+    inviteLinkInput.select();
+    document.execCommand("copy");
+    showMessage("Link copied to clipboard!", "success");
+});
 
-        // Copy Invite Link
-        copyLinkBtn.addEventListener("click", () => {
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            showMessage("Link copied to clipboard!", "success");
-        });
 function closeModal() {
     const modal = document.getElementById("userInfoModal");
     if (modal) {
