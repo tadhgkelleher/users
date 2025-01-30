@@ -1,123 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
-            text-align: center;
-        }
-        button {
-            background-color: #4285f4;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        button:hover {
-            background-color: #357abd;
-        }
-        #error {
-            color: red;
-            margin-top: 20px;
-        }
-    </style>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-        import { 
-            getAuth, 
-            signInWithRedirect, 
-            GoogleAuthProvider, 
-            getRedirectResult,
-            onAuthStateChanged 
-        } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
-        const provider = new GoogleAuthProvider();
-
-        // Handle auth state changes
-        onAuthStateChanged(auth, (user) => {
-            const statusElement = document.getElementById("status");
-            const loginButton = document.getElementById("login-button");
-            const logoutButton = document.getElementById("logout-button");
-            
-            if (user) {
-                statusElement.textContent = `Logged in as: ${user.email}`;
-                loginButton.style.display = 'none';
-                logoutButton.style.display = 'block';
-            } else {
-                statusElement.textContent = 'Not logged in';
-                loginButton.style.display = 'block';
-                logoutButton.style.display = 'none';
-            }
-        });
-
-        // Check redirect result on page load
-        window.addEventListener("load", async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result?.user) {
-                    console.log("Successfully logged in:", result.user.email);
-                }
-            } catch (error) {
-                console.error("Login error:", error);
-                document.getElementById("error").textContent = 
-                    `Error: ${error.message || 'Failed to login'}`;
-            }
-        });
-
-        // Setup event listeners when DOM is ready
-        document.addEventListener("DOMContentLoaded", () => {
-            // Login handler
-            document.getElementById("login-button").addEventListener("click", () => {
-                try {
-                    signInWithRedirect(auth, provider);
-                } catch (error) {
-                    console.error("Error starting login:", error);
-                    document.getElementById("error").textContent = 
-                        `Error: ${error.message || 'Failed to start login process'}`;
-                }
-            });
-
-            // Logout handler
-            document.getElementById("logout-button").addEventListener("click", () => {
-                try {
-                    auth.signOut();
-                } catch (error) {
-                    console.error("Error signing out:", error);
-                    document.getElementById("error").textContent = 
-                        `Error: ${error.message || 'Failed to logout'}`;
-                }
-            });
-        });
-    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Login Test</title>
+  <!-- Firebase App (you can remove this if you use the CDN in your own script) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
 </head>
 <body>
-    <h1>Welcome to My Mandala</h1>
-    <p id="status">Checking login status...</p>
-    <button id="login-button">Login with Google</button>
-    <button id="logout-button" style="display: none;">Logout</button>
-    <p id="error"></p>
+  <h1>Firebase Login Test</h1>
+
+  <div id="user-info" style="display: none;">
+    <h2>Logged in!</h2>
+    <p id="user-details"></p>
+  </div>
+  
+  <div id="login-section">
+    <button id="login-btn">Login with Google</button>
+  </div>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.appspot.com",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Check if the user is already logged in
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("login-section").style.display = 'none';
+        document.getElementById("user-info").style.display = 'block';
+        document.getElementById("user-details").innerText = `Logged in as ${user.displayName} (${user.email})`;
+      } else {
+        document.getElementById("user-info").style.display = 'none';
+        document.getElementById("login-section").style.display = 'block';
+      }
+    });
+
+    // Google login functionality
+    document.getElementById("login-btn").addEventListener("click", () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).then(result => {
+        // The signed-in user info
+        const user = result.user;
+        console.log("Logged in as:", user.displayName);
+      }).catch(error => {
+        console.error("Error during login:", error);
+      });
+    });
+  </script>
 </body>
 </html>
