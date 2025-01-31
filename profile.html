@@ -29,59 +29,67 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
+    // Function to check Cloudflare headers
+    async function checkCloudflareHeaders() {
+      try {
+        const response = await fetch(window.location.href);
+        const headers = response.headers;
+        const coep = headers.get("Cross-Origin-Embedder-Policy") || "Not Set";
+        const coop = headers.get("Cross-Origin-Opener-Policy") || "Not Set";
+        const cors = headers.get("Access-Control-Allow-Origin") || "Not Set";
+        
+        document.getElementById("cloudflare-status").innerText = 
+          `COEP: ${coep}\nCOOP: ${coop}\nCORS: ${cors}`;
+      } catch (error) {
+        console.error("Error fetching headers:", error);
+        document.getElementById("cloudflare-status").innerText = "Error checking headers.";
+      }
+    }
+
+    checkCloudflareHeaders();
+
     // Check authentication state
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("✅ User is logged in:", user.email);
         document.getElementById("user-info").innerText = `Logged in as: ${user.email}`;
-        document.getElementById("login-button").style.display = "none"; // Hide login button if logged in
-        document.getElementById("logout-button").style.display = "inline"; // Show logout button if logged in
-        
-        // Check invite status in Firestore
+        document.getElementById("login-button").style.display = "none";
+        document.getElementById("logout-button").style.display = "inline";
+
         if (inviteId) {
           const inviteRef = doc(db, "invites", inviteId);
           getDoc(inviteRef).then((docSnap) => {
             if (docSnap.exists()) {
               document.getElementById("invite-status").innerText = `Invite Status: ${docSnap.data().status}`;
             } else {
-              console.error("🚨 Invite not found for inviteId:", inviteId);
               document.getElementById("invite-status").innerText = "Invite not found.";
             }
           }).catch((error) => {
             console.error("Error checking invite:", error);
-            document.getElementById("invite-status").innerText = `Error checking invite: ${error.message}`;
+            document.getElementById("invite-status").innerText = "Error checking invite.";
           });
         } else {
           document.getElementById("invite-status").innerText = "No invite code.";
         }
       } else {
-        console.log("🚨 No user logged in.");
         document.getElementById("user-info").innerText = "No user is logged in.";
-        document.getElementById("login-button").style.display = "inline"; // Show login button if not logged in
-        document.getElementById("logout-button").style.display = "none"; // Hide logout button if not logged in
+        document.getElementById("login-button").style.display = "inline";
+        document.getElementById("logout-button").style.display = "none";
       }
     });
 
-    // Google login function with error handling
+    // Google login function
     document.getElementById("login-button").addEventListener("click", () => {
       const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider)
-        .then((result) => {
-          console.log("User logged in:", result.user);
-        })
-        .catch((error) => {
-          console.error("Error during login:", error.code, error.message);
-          alert(`Login failed: ${error.message}`);
-        });
+      signInWithPopup(auth, provider).catch((error) => {
+        alert(`Login failed: ${error.message}`);
+      });
     });
 
-    // Logout function with error handling
+    // Logout function
     document.getElementById("logout-button").addEventListener("click", () => {
       signOut(auth).then(() => {
-        console.log("User signed out.");
         document.getElementById("user-info").innerText = "You have been logged out.";
       }).catch((error) => {
-        console.error("Error signing out:", error.code, error.message);
         alert(`Logout failed: ${error.message}`);
       });
     });
@@ -92,10 +100,11 @@
   <h1>User Profile</h1>
   <p id="user-info">Checking authentication...</p>
   <p id="invite-status">Checking invite status...</p>
+  <p id="cloudflare-status">Checking Cloudflare headers...</p>
   
   <!-- Login button -->
   <button id="login-button">Login with Google</button>
-
+  
   <!-- Logout button -->
   <button id="logout-button" style="display: none;">Logout</button>
 </body>
