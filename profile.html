@@ -44,11 +44,12 @@
             if (docSnap.exists()) {
               document.getElementById("invite-status").innerText = `Invite Status: ${docSnap.data().status}`;
             } else {
+              console.error("🚨 Invite not found for inviteId:", inviteId);
               document.getElementById("invite-status").innerText = "Invite not found.";
             }
           }).catch((error) => {
             console.error("Error checking invite:", error);
-            document.getElementById("invite-status").innerText = "Error checking invite.";
+            document.getElementById("invite-status").innerText = `Error checking invite: ${error.message}`;
           });
         } else {
           document.getElementById("invite-status").innerText = "No invite code.";
@@ -61,7 +62,7 @@
       }
     });
 
-    // Google login function
+    // Google login function with error handling
     document.getElementById("login-button").addEventListener("click", () => {
       const provider = new GoogleAuthProvider();
       signInWithPopup(auth, provider)
@@ -69,17 +70,19 @@
           console.log("User logged in:", result.user);
         })
         .catch((error) => {
-          console.error("Error during login:", error);
+          console.error("Error during login:", error.code, error.message);
+          alert(`Login failed: ${error.message}`);
         });
     });
 
-    // Logout function
+    // Logout function with error handling
     document.getElementById("logout-button").addEventListener("click", () => {
       signOut(auth).then(() => {
         console.log("User signed out.");
         document.getElementById("user-info").innerText = "You have been logged out.";
       }).catch((error) => {
-        console.error("Error signing out:", error);
+        console.error("Error signing out:", error.code, error.message);
+        alert(`Logout failed: ${error.message}`);
       });
     });
 
