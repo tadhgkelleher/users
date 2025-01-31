@@ -34,12 +34,13 @@
       try {
         const response = await fetch(window.location.href);
         const headers = response.headers;
-        const coep = headers.get("Cross-Origin-Embedder-Policy") || "Not Set";
-        const coop = headers.get("Cross-Origin-Opener-Policy") || "Not Set";
-        const cors = headers.get("Access-Control-Allow-Origin") || "Not Set";
         
-        document.getElementById("cloudflare-status").innerText = 
-          `COEP: ${coep}\nCOOP: ${coop}\nCORS: ${cors}`;
+        let headerInfo = '';
+        headers.forEach((value, key) => {
+          headerInfo += `${key}: ${value}\n`;
+        });
+        
+        document.getElementById("cloudflare-status").innerText = headerInfo || "No Cloudflare headers found.";
       } catch (error) {
         console.error("Error fetching headers:", error);
         document.getElementById("cloudflare-status").innerText = "Error checking headers.";
