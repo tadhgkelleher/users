@@ -34,13 +34,20 @@
       try {
         const response = await fetch(window.location.href);
         const headers = response.headers;
-        
-        let headerInfo = '';
-        headers.forEach((value, key) => {
-          headerInfo += `${key}: ${value}\n`;
-        });
-        
-        document.getElementById("cloudflare-status").innerText = headerInfo || "No Cloudflare headers found.";
+        const coep = headers.get("Cross-Origin-Embedder-Policy") || "Not Set";
+        const coop = headers.get("Cross-Origin-Opener-Policy") || "Not Set";
+        const cors = headers.get("Access-Control-Allow-Origin") || "Not Set";
+        const cfRay = headers.get("cf-ray") || "Not Set";
+        const cfCacheStatus = headers.get("cf-cache-status") || "Not Set";
+
+        document.getElementById("cloudflare-status").innerHTML = `
+          <strong>Cloudflare Headers:</strong><br>
+          COEP: ${coep}<br>
+          COOP: ${coop}<br>
+          CORS: ${cors}<br>
+          CF-Ray: ${cfRay}<br>
+          CF-Cache-Status: ${cfCacheStatus}
+        `;
       } catch (error) {
         console.error("Error fetching headers:", error);
         document.getElementById("cloudflare-status").innerText = "Error checking headers.";
@@ -55,6 +62,12 @@
         document.getElementById("user-info").innerText = `Logged in as: ${user.email}`;
         document.getElementById("login-button").style.display = "none";
         document.getElementById("logout-button").style.display = "inline";
+
+        // Display user profile picture
+        if (user.photoURL) {
+          document.getElementById("user-photo").src = user.photoURL;
+          document.getElementById("user-photo").style.display = "inline";
+        }
 
         if (inviteId) {
           const inviteRef = doc(db, "invites", inviteId);
@@ -75,6 +88,7 @@
         document.getElementById("user-info").innerText = "No user is logged in.";
         document.getElementById("login-button").style.display = "inline";
         document.getElementById("logout-button").style.display = "none";
+        document.getElementById("user-photo").style.display = "none";
       }
     });
 
@@ -90,6 +104,7 @@
     document.getElementById("logout-button").addEventListener("click", () => {
       signOut(auth).then(() => {
         document.getElementById("user-info").innerText = "You have been logged out.";
+        document.getElementById("user-photo").style.display = "none";
       }).catch((error) => {
         alert(`Logout failed: ${error.message}`);
       });
@@ -102,7 +117,10 @@
   <p id="user-info">Checking authentication...</p>
   <p id="invite-status">Checking invite status...</p>
   <p id="cloudflare-status">Checking Cloudflare headers...</p>
-  
+
+  <!-- Display user photo -->
+  <img id="user-photo" src="" alt="Profile Picture" style="display: none; width: 50px; height: 50px; border-radius: 50%;"/>
+
   <!-- Login button -->
   <button id="login-button">Login with Google</button>
   
