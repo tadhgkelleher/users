@@ -1,20 +1,439 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <!-- Load Firebase using the UMD CDN (works with GitHub & Cloudflare Pages) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-</head>
-<body>
-    <h1>My Mandala</h1>
-    <p id="status">Checking login status...</p>
-    <button id="login-btn">Login with Google</button>
+    <title>Profile and Invitations</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+<style>
+   body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #1a1a1a; /* Dark background color */
+    color: #f1f1f1; /* Lighter text for contrast */
+    filter: brightness(0.8); /* Optional: slightly dim the content for a sleek effect */
+}
 
+
+    header {
+        background-color: #1a1a1a; /* Dark header */
+        color: #f1f1f1;
+        padding: 1.5rem 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .navbar-brand {
+        font-size: 2rem; /* Larger brand text */
+        font-weight: 700; /* Bold text */
+        text-transform: uppercase;
+    }
+
+    .container {
+        max-width: 960px;
+        padding-top: 3rem; /* Increased top padding */
+    }
+
+    .card {
+        border: none;
+        background: rgba(0, 0, 0, 0.7); /* Dark card background */
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+        margin-bottom: 2rem;
+        border-radius: 12px;
+    }
+
+    .card-header {
+        background-color: #333; /* Dark header */
+        border-bottom: 1px solid #444;
+        padding: 1.5rem 1.75rem;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .card-body {
+        padding: 2rem;
+        background: #222; /* Dark body */
+    }
+
+    .form-group label {
+        font-weight: 600; /* Bold labels */
+        color: #f1f1f1;
+    }
+
+    .btn {
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .btn:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    .btn-primary:hover {
+        background-color: #0069d9;
+        border-color: #0062cc;
+    }
+
+    .btn-secondary {
+        background-color: #5a6268;
+        border-color: #5a6268;
+    }
+
+    .btn-secondary:hover {
+        background-color: #4e555b;
+        border-color: #4e555b;
+    }
+
+    .btn-warning {
+        background-color: #ff9500;
+        border-color: #ff9500;
+        color: #f1f1f1;
+    }
+
+    .btn-warning:hover {
+        background-color: #e88900;
+        border-color: #e88900;
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        border-color: #e74c3c;
+    }
+
+    .btn-danger:hover {
+        background-color: #c0392b;
+        border-color: #c0392b;
+    }
+
+    .btn-info {
+        background-color: #1abc9c;
+        border-color: #1abc9c;
+    }
+
+    .btn-info:hover {
+        background-color: #16a085;
+        border-color: #16a085;
+    }
+
+    .rounded-circle {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .alert {
+        border-radius: 10px;
+        background-color: #333;
+        color: #f1f1f1;
+        margin-top: 2rem;
+    }
+
+    .badge {
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        background-color: #444;
+        color: #fff;
+    }
+
+    .btn-group .btn {
+        width: auto;
+        margin: 0 0.2rem;
+    }
+
+    .btn-group-vertical .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    #invitationsList .border-bottom {
+        border-bottom: 1px solid #444;
+    }
+
+    #invitationsList .mb-3 {
+        margin-bottom: 1.8rem;
+    }
+
+    #shareSection .btn-group .btn {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    #shareSection .btn-group .btn i {
+        font-size: 1.3rem;
+    }
+
+
+</style>
+
+<body>
+    <header class="mb-4">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <h1 class="navbar-brand mb-0">Welcome</h1>
+            <button id="signOutBtn" class="btn btn-danger ml-auto">Sign Out</button>
+        </nav>
+    </header>
+    <main class="container">
+        <div id="authSection">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="card-title" id="authTitle">Sign In</h3>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-control" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Password" required>
+                    </div>
+                    <div class="btn-group-vertical w-100">
+                        <button id="signUpBtn" class="btn btn-primary mb-2">Sign Up</button>
+                        <button id="loginBtn" class="btn btn-secondary mb-2">Login</button>
+                        <button id="googleSignInBtn" class="btn btn-warning">Sign In with Google</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileSection" style="display: none;">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 id="username" class="card-title"></h3>
+                    <img id="profilePicture" src="" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
+                    
+                <!-- Modal Structure -->
+<div id="userInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3 id="userName"></h3>
+        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+        <p><strong>Additional Info:</strong> <span id="userAdditionalInfo"></span></p>
+    </div>
+</div>
+
+                    <!-- Invitation Section -->
+                    <div id="generateLinkSection" class="mt-4">
+                        <h3>Invite</h3>
+                        <button id="generateLinkBtn" class="btn btn-success">Generate Invitation Link</button>
+                        <input type="text" id="inviteLink" class="form-control mt-2" readonly style="display: none;">
+                        <button id="copyLinkBtn" class="btn btn-info mt-2" style="display: none;">Copy Link</button>
+
+                   <!-- Sharing Icons Section -->
+<div id="shareSection" class="mt-4 text-center" style="display: none;">
+    <h4 class="mb-3 text-muted">Share Invitation</h4>
+    <div class="d-flex justify-content-center flex-wrap">
+        <button class="share-btn btn-whatsapp" id="shareWhatsappBtn">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+        </button>
+        <button class="share-btn btn-email" id="shareEmailBtn">
+            <i class="fas fa-envelope"></i> Email
+        </button>
+        <button class="share-btn btn-link" id="shareLinkBtn">
+            <i class="fas fa-link"></i> Copy Link
+        </button>
+        <button class="share-btn btn-x" id="shareXBtn">
+            <i class="fab fa-x-twitter"></i> X (Twitter)
+        </button>
+        <button class="share-btn btn-facebook" id="shareFacebookBtn">
+            <i class="fab fa-facebook-f"></i> Facebook
+        </button>
+    </div>
+</div>
+
+<style>
+    /* Base button styling */
+    .share-btn {
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 25px;
+        color: white;
+        border: none;
+        margin: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        transition: all 0.3s ease-in-out;
+        position: relative;
+    }
+
+    /* Hover effect with subtle scaling and color darkening */
+    .share-btn:hover {
+        transform: translateY(-2px);
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button icons and text styling */
+    .share-btn i {
+        margin-right: 8px;
+    }
+
+    /* Modal Style */
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: relative;
+    background-color: #2a2a2a;
+    margin: 10% auto;
+    padding: 25px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    color: #f1f1f1;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close-btn {
+    position: absolute;
+    right: 20px;
+    top: 15px;
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.user-info-container {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.user-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+    border: 3px solid #3498db;
+    object-fit: cover;
+}
+
+.user-details {
+    text-align: left;
+    margin-top: 20px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.user-details p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.user-details strong {
+    color: #3498db;
+    margin-right: 10px;
+}
+
+    /* Button colors */
+    .btn-whatsapp { background-color: #25D366; }
+    .btn-email { background-color: #D14836; }
+    .btn-link { background-color: #6C757D; }
+    .btn-x { background-color: #1DA1F2; }
+    .btn-facebook { background-color: #1877F2; }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .share-btn {
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+
+
+                    <div id="message" class="alert alert-info" style="display: none;"></div>
+
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h3 class="mb-0">My Mandala</h3>
+                        </div>
+ <svg id="circleLayout" width="500" height="500"></svg>
+                        
+                        <div class="card-body">
+                            <div id="invitationsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+</main>
+    <!-- Add this HTML section just before the closing body tag -->
+    <div id="userInfoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <div class="user-info-container">
+                <img id="modalUserImage" class="user-avatar" src="" alt="User Avatar">
+                <h3 id="modalUserName"></h3>
+                <div class="user-details">
+                    <p><strong>Email:</strong> <span id="modalUserEmail"></span></p>
+                    <p><strong>Joined:</strong> <span id="modalUserJoinDate"></span></p>
+                    <p><strong>Status:</strong> <span id="modalUserStatus"></span></p>
+                    <p><strong>Bio:</strong> <span id="modalUserBio"></span></p>
+                    <div id="debugFields"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+           
     <script>
-        // Firebase config
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -28,28 +447,475 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const db = firebase.firestore();
 
-        // Check if user is logged in
-        auth.onAuthStateChanged(user => {
-            const status = document.getElementById("status");
-            if (user) {
-                status.innerText = `✅ Logged in as ${user.displayName}`;
-                const urlParams = new URLSearchParams(window.location.search);
-                const inviteId = urlParams.get('inviteId');
-                let profileUrl = "profile.html";
-                if (inviteId) profileUrl += `?inviteId=${inviteId}`;
-                window.location.href = profileUrl;
-            } else {
-                status.innerText = "❌ Not logged in.";
-            }
+        // DOM Elements
+        const generateLinkBtn = document.getElementById("generateLinkBtn");
+        const inviteLinkInput = document.getElementById("inviteLink");
+        const copyLinkBtn = document.getElementById("copyLinkBtn");
+        const messageDisplay = document.getElementById("message");
+        const usernameDisplay = document.getElementById("username");
+        const profilePicture = document.getElementById("profilePicture");
+        const signUpBtn = document.getElementById("signUpBtn");
+        const loginBtn = document.getElementById("loginBtn");
+        const signOutBtn = document.getElementById("signOutBtn");
+        const authSection = document.getElementById("authSection");
+        const profileSection = document.getElementById("profileSection");
+        const authTitle = document.getElementById("authTitle");
+
+        // Check for invitation ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteIdFromUrl = urlParams.get('inviteId');
+        if (inviteIdFromUrl) {
+            authTitle.textContent = "Sign Up to Accept Invitation";
+        }
+
+        // Google Sign-In
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        // Handle Google Sign-In
+        document.getElementById("googleSignInBtn").addEventListener("click", () => {
+            auth.signInWithPopup(googleProvider)
+                .then((result) => {
+                    const user = result.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
         });
 
-        // Login with popup
-        document.getElementById("login-btn").addEventListener("click", () => {
-            auth.signInWithPopup(provider)
-                .catch(error => console.error("Login error:", error));
+        // Handle Sign Up
+        signUpBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        // Handle Login
+        loginBtn.addEventListener("click", () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (inviteIdFromUrl) {
+                        processInvite(inviteIdFromUrl, user);
+                    }
+                    updateUIForAuthenticatedUser(user);
+                })
+                .catch((error) => {
+                    showMessage(error.message, "danger");
+                });
+        });
+
+        
+        // Handle Sign Out
+        signOutBtn.addEventListener("click", () => {
+            auth.signOut().then(() => {
+                updateUIForSignedOutUser();
+            }).catch((error) => {
+                showMessage(error.message, "danger");
+            });
+        });
+
+       
+
+        // Copy Invite Link
+        copyLinkBtn.addEventListener("click", () => {
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            showMessage("Link copied to clipboard!", "success");
+        });
+
+function loadInvitations(user) {
+    if (!user) return;
+
+    const svg = d3.select("#circleLayout");
+    svg.selectAll("*").remove(); // Clear previous nodes
+
+    // Query invitations where the current user is the sender
+    db.collection("invitations")
+        .where("fromUserId", "==", user.uid)
+        .orderBy("timestamp", "desc")
+        .get()
+        .then((sentSnapshot) => {
+            const sentInvitations = sentSnapshot.docs.filter(doc => doc.data().status === "accepted");
+            console.log("Sent Invitations:", sentInvitations); // Debug log for sent invitations
+
+            // Query invitations where the current user is the recipient
+            db.collection("invitations")
+                .where("toUserId", "==", user.uid)
+                .orderBy("timestamp", "desc")
+                .get()
+                .then((receivedSnapshot) => {
+                    const receivedInvitations = receivedSnapshot.docs.filter(doc => doc.data().status === "accepted");
+                    console.log("Received Invitations:", receivedInvitations); // Debug log for received invitations
+
+                    // Combine both sent and received accepted invitations
+                    const allInvitations = [...sentInvitations, ...receivedInvitations];
+                    console.log("All Invitations:", allInvitations); // Debug log for combined invitations
+                    
+                    if (allInvitations.length === 0) {
+                        svg.append("text")
+                            .attr("x", svg.attr("width") / 2)
+                            .attr("y", svg.attr("height") / 2)
+                            .attr("text-anchor", "middle")
+                            .attr("fill", "#666")
+                            .attr("font-size", "16px")
+                            .text("No accepted invitations");
+                        return;
+                    }
+
+                    // Collect user info for both sent and received invitations
+                    let userPromises = allInvitations.map((doc) => {
+                        const invitationData = doc.data();
+                        const userId = invitationData.fromUserId === user.uid ? invitationData.toUserId : invitationData.fromUserId;
+                        return userId ? db.collection("users").doc(userId).get() : Promise.resolve(null);
+                    });
+
+                    Promise.all(userPromises).then(userDocs => {
+                        console.log("User Docs:", userDocs); // Debug log for user documents
+
+                        let nodes = userDocs.map(doc => {
+                            if (doc && doc.exists) {
+                                return {
+                                    id: doc.id,
+                                    name: doc.data().displayName || doc.data().email || "Unknown User"
+                                };
+                            } else {
+                                return {
+                                    id: null,
+                                    name: "Unknown User"
+                                };
+                            }
+                        });
+
+                        console.log("Nodes to Render:", nodes); // Debug log for nodes data
+                        renderCircularNodes(nodes);
+                    }).catch(error => {
+                        console.error("Error fetching user data:", error);
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error loading received invitations:", error);
+                });
+        })
+        .catch((error) => {
+            console.error("Error loading sent invitations:", error);
+        });
+}
+
+function renderCircularNodes(nodes) {
+    const width = 500, height = 500, radius = 200;
+    const svg = d3.select("#circleLayout")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.selectAll("*").remove(); // Clear previous rendering
+
+    if (nodes.length === 0) {
+        svg.append("text")
+            .attr("x", width / 2)
+            .attr("y", height / 2)
+            .attr("text-anchor", "middle")
+            .attr("fill", "#666")
+            .attr("font-size", "16px")
+            .text("No accepted invitations");
+        return;
+    }
+
+    const angleStep = (2 * Math.PI) / nodes.length;
+
+    const nodeData = nodes.map((d, i) => ({
+        x: width / 2 + radius * Math.cos(i * angleStep),
+        y: height / 2 + radius * Math.sin(i * angleStep),
+        name: d.name,
+        id: d.id // Keep track of user ID for each node
+    }));
+
+    // Create nodes (circles)
+    const circles = svg.selectAll("circle")
+        .data(nodeData)
+        .enter()
+        .append("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("r", 20)
+        .attr("fill", "steelblue")
+        .style("cursor", "pointer"); // Show pointer cursor on hover
+
+    // Create text labels inside the circles
+    svg.selectAll("text")
+        .data(nodeData)
+        .enter()
+        .append("text")
+        .attr("x", d => d.x)
+        .attr("y", d => d.y)
+        .attr("dy", 5)
+        .attr("text-anchor", "middle")
+        .text(d => d.name)
+        .attr("fill", "white")
+        .attr("font-size", "12px");
+
+    // Add click event listener to the nodes
+    circles.on("click", function(event, d) {
+        console.log("Node clicked, User ID:", d.id); // Debug: Check the userId
+        showUserInfo(d.id); // Show user info in modal
+    });
+}
+
+function showUserInfo(userId) {
+    console.log("showUserInfo called with userId:", userId); // Debug log
+    
+    if (!userId) {
+        console.log("No userId provided");
+        return;
+    }
+
+    const modal = document.getElementById("userInfoModal");
+    const debugFields = document.getElementById("debugFields");
+    
+    // Clear previous content
+    debugFields.innerHTML = 'Loading...';
+    
+    // Get user data from Firebase
+    db.collection("users").doc(userId).get()
+        .then(doc => {
+            console.log("Firebase response:", doc); // Debug log
+            
+            if (doc.exists) {
+                const userData = doc.data();
+                console.log("User data:", userData); // Debug log
+                
+                // Display all available fields
+                let htmlContent = '';
+                
+                Object.entries(userData).forEach(([key, value]) => {
+                    let displayValue = value;
+                    
+                    // Handle different types of values
+                    if (value === null || value === undefined) {
+                        displayValue = 'Not set';
+                    } else if (value instanceof firebase.firestore.Timestamp) {
+                        displayValue = value.toDate().toLocaleString();
+                    } else if (typeof value === 'object') {
+                        displayValue = JSON.stringify(value);
+                    }
+                    
+                    htmlContent += `
+                        <div class="field-row">
+                            <strong>${key}:</strong> ${displayValue}
+                        </div>
+                    `;
+                });
+                
+                debugFields.innerHTML = htmlContent || 'No fields found';
+                
+                // Show the modal
+                modal.style.display = "block";
+            } else {
+                debugFields.innerHTML = 'No user data found';
+                console.log("No user document found");
+            }
+        })
+        .catch(error => {
+            console.error("Error getting user data:", error);
+            debugFields.innerHTML = 'Error loading user data';
+        });
+}
+
+// Update the modal HTML structure
+const modalHtml = `
+<div id="userInfoModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn">&times;</span>
+        <h3>User Information</h3>
+        <div id="userInfoDisplay"></div>
+    </div>
+</div>
+`;
+
+// Add this to your document if not already present
+if (!document.getElementById('userInfoModal')) {
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// Function to get the appropriate CSS class based on invitation status
+function getStatusClass(status) {
+    switch (status) {
+        case 'open':
+            return 'badge-warning';  // For open invitations, yellow badge
+        case 'accepted':
+            return 'badge-success';  // For accepted invitations, green badge
+        case 'rejected':
+            return 'badge-danger';   // For rejected invitations, red badge
+        default:
+            return 'badge-secondary'; // Default for undefined statuses
+    }
+}
+
+ // Handle Generate Invitation Link
+generateLinkBtn.addEventListener("click", () => {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+        db.collection("invitations").doc(uniqueId).set({
+            fromUserId: currentUser.uid,
+            fromUserEmail: currentUser.email,
+            fromUserName: currentUser.displayName || currentUser.email,
+            status: "open",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        }).then(() => {
+            inviteLinkInput.value = inviteLink;
+            inviteLinkInput.style.display = "block";
+            copyLinkBtn.style.display = "inline-block";
+            showMessage("Invitation Link Generated!", "success");
+
+            // Show the social sharing icons
+            document.getElementById("shareSection").style.display = "block";
+        }).catch((error) => {
+            showMessage(error.message, "danger");
+        });
+    } else {
+        showMessage("You must be signed in to generate an invitation.", "warning");
+    }
+});
+
+        // Share via WhatsApp
+document.getElementById("shareWhatsappBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(inviteLink)}`;
+    window.open(whatsappUrl, "_blank");
+});
+
+// Share via Email
+document.getElementById("shareEmailBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const subject = "Check out this invitation!";
+    const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(inviteLink)}`;
+    window.location.href = emailUrl;
+});
+
+// Share via Link (just copy the link)
+document.getElementById("shareLinkBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    navigator.clipboard.writeText(inviteLink).then(() => {
+        showMessage("Link copied to clipboard!", "success");
+    }).catch(() => {
+        showMessage("Failed to copy the link.", "danger");
+    });
+});
+
+// Share via X (Twitter)
+document.getElementById("shareXBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const twitterUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(inviteLink)}`;
+    window.open(twitterUrl, "_blank");
+});
+
+// Share via Facebook
+document.getElementById("shareFacebookBtn").addEventListener("click", () => {
+    const inviteLink = document.getElementById("inviteLink").value;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteLink)}`;
+    window.open(facebookUrl, "_blank");
+});
+
+    // Updated processInvite function to store accepter's info
+    function processInvite(inviteId, user) {
+        if (inviteId) {
+            const inviteRef = db.collection("invitations").doc(inviteId);
+            inviteRef.get().then((doc) => {
+                if (doc.exists) {
+                    const inviteData = doc.data();
+                    if (inviteData.status === "open" && inviteData.fromUserId !== user.uid) {
+                        inviteRef.update({
+                            status: "accepted",
+                            toUserId: user.uid,
+                            toUserEmail: user.email,
+                            toUserName: user.displayName || user.email,
+                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        });
+                        showMessage("Invitation Accepted!", "success");
+                    } else {
+                        showMessage("This invitation is no longer valid.", "warning");
+                    }
+                } else {
+                    showMessage("Invalid invitation link.", "warning");
+                }
+            }).catch((error) => {
+                showMessage("Error processing invitation: " + error.message, "danger");
+            });
+        }
+    }
+        // Helper function to show messages
+        function showMessage(message, type = "info") {
+            messageDisplay.textContent = message;
+            messageDisplay.className = `alert alert-${type}`;
+            messageDisplay.style.display = "block";
+            setTimeout(() => {
+                messageDisplay.style.display = "none";
+            }, 5000);
+        }
+
+       // Update UI for authenticated user
+function updateUIForAuthenticatedUser(user) {
+    authSection.style.display = "none";
+    profileSection.style.display = "block";
+    signOutBtn.style.display = "block";
+    usernameDisplay.textContent = `Hello, ${user.displayName || user.email || 'User'}`;
+
+    // Only display the profile picture if it exists
+    if (user.photoURL) {
+        profilePicture.src = user.photoURL;
+        profilePicture.style.display = "block"; // Make the image visible
+    } else {
+        profilePicture.style.display = "none"; // Hide the profile picture if not available
+    }
+
+    loadInvitations(user);
+}
+
+
+        // Helper function to update UI for signed out user
+        function updateUIForSignedOutUser() {
+            authSection.style.display = "block";
+            profileSection.style.display = "none";
+            signOutBtn.style.display = "none";
+            document.getElementById("email").value = "";
+            document.getElementById("password").value = "";
+        }
+
+      // Handle Auth State Change
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                updateUIForAuthenticatedUser(user);
+                if (inviteIdFromUrl) {
+                    processInvite(inviteIdFromUrl, user);
+                }
+            } else {
+                updateUIForSignedOutUser();
+            }
         });
     </script>
 </body>
 </html>
+
+
