@@ -6,7 +6,7 @@
   <title>Profile</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getAuth, onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
+    import { getAuth, onAuthStateChanged, signOut, signInWithRedirect, GoogleAuthProvider, getRedirectResult } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
     import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
     // Firebase configuration
@@ -97,32 +97,33 @@
       }
     });
 
-    // Google login function with debugging
+    // Google login function with redirect
     document.getElementById("login-button").addEventListener("click", async () => {
       console.log("Attempting login...");
       try {
         const provider = new GoogleAuthProvider();
 
-        // Ensure popups are opened correctly
-        const testPopup = window.open("", "testPopup");
-        if (testPopup) {
-          testPopup.close();
-          console.log("Popup opened successfully, proceeding with login...");
-        } else {
-          console.warn("Popup blocked by the browser.");
-          alert("Popup is blocked. Please enable popups for this site.");
-          return;
-        }
-
-        // Sign-in with popup
-        const result = await signInWithPopup(auth, provider);
-        console.log("User signed in:", result.user);
-
+        // Sign-in with redirect
+        console.log("Redirecting to Google login...");
+        await signInWithRedirect(auth, provider);
       } catch (error) {
-        console.error("Error in signInWithPopup:", error);
+        console.error("Error in signInWithRedirect:", error);
         alert(`Login failed: ${error.code} - ${error.message}`);
       }
     });
+
+    // Handle redirect result
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) {
+          console.log("User signed in:", result.user);
+          alert("Login successful!");
+        }
+      })
+      .catch((error) => {
+        console.error("Error handling redirect result:", error);
+        alert(`Redirect login failed: ${error.code} - ${error.message}`);
+      });
 
     // Logout function
     document.getElementById("logout-button").addEventListener("click", async () => {
