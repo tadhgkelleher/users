@@ -102,15 +102,30 @@
       try {
         console.log('Attempting to sign in...');
         const provider = new GoogleAuthProvider();
+        
+        // Log before calling signInWithPopup
+        console.log('Opening popup...');
+        
         const result = await signInWithPopup(auth, provider);
+        
+        // Log after successful popup
         console.log('User signed in:', result.user);
       } catch (error) {
         console.error("Login failed:", error);
+        
+        // Detailed error logs
+        console.log("Error code:", error.code);
+        console.log("Error message:", error.message);
+        console.log("Error stack:", error.stack);
+
         if (error.code === 'auth/popup-closed-by-user') {
           alert('The popup was closed unexpectedly. Please try again.');
         } else {
           alert(`Login failed: ${error.code} - ${error.message}`);
         }
+        
+        // Display error message on the page
+        document.getElementById("login-error").innerText = `Login failed: ${error.code} - ${error.message}. Please check for popup blockers or try again.`;
       }
     });
 
@@ -133,6 +148,7 @@
   <p id="user-info">Checking authentication...</p>
   <p id="invite-status">Checking invite status...</p>
   <p id="cloudflare-status">Checking Cloudflare headers...</p>
+  <p id="login-error" style="color: red;"></p> <!-- Added error message display -->
 
   <img id="user-photo" src="" alt="Profile Picture" style="display: none; width: 50px; height: 50px; border-radius: 50%;"/>
 
