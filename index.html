@@ -118,6 +118,8 @@
         if (result) {
           console.log("User signed in:", result.user);
           alert("Login successful!");
+        } else {
+          console.log("No result from redirect.");
         }
       })
       .catch((error) => {
