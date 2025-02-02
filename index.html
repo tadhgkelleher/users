@@ -100,11 +100,17 @@
     // Google login function
     document.getElementById("login-button").addEventListener("click", async () => {
       try {
+        console.log('Attempting to sign in...');
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        console.log('User signed in:', result.user);
       } catch (error) {
         console.error("Login failed:", error);
-        alert(`Login failed: ${error.code} - ${error.message}`);
+        if (error.code === 'auth/popup-closed-by-user') {
+          alert('The popup was closed unexpectedly. Please try again.');
+        } else {
+          alert(`Login failed: ${error.code} - ${error.message}`);
+        }
       }
     });
 
