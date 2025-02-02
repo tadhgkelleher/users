@@ -32,7 +32,7 @@
     // Function to check Cloudflare headers
     async function checkCloudflareHeaders() {
       try {
-        const response = await fetch(window.location.href);
+        const response = await fetch(window.location.href, { method: 'HEAD' });
         const headers = response.headers;
         const coep = headers.get("Cross-Origin-Embedder-Policy") || "Not Set";
         const coop = headers.get("Cross-Origin-Opener-Policy") || "Not Set";
@@ -56,17 +56,22 @@
 
     checkCloudflareHeaders();
 
-    // Check authentication state
+    // Authentication state listener
     onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed:", user);
+      const userInfo = document.getElementById("user-info");
+      const loginBtn = document.getElementById("login-button");
+      const logoutBtn = document.getElementById("logout-button");
+      const userPhoto = document.getElementById("user-photo");
+      
       if (user) {
-        document.getElementById("user-info").innerText = `Logged in as: ${user.email}`;
-        document.getElementById("login-button").style.display = "none";
-        document.getElementById("logout-button").style.display = "inline";
+        userInfo.innerText = `Logged in as: ${user.email}`;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "inline";
 
-        // Display user profile picture
         if (user.photoURL) {
-          document.getElementById("user-photo").src = user.photoURL;
-          document.getElementById("user-photo").style.display = "inline";
+          userPhoto.src = user.photoURL;
+          userPhoto.style.display = "inline";
         }
 
         if (inviteId) {
@@ -85,29 +90,34 @@
           document.getElementById("invite-status").innerText = "No invite code.";
         }
       } else {
-        document.getElementById("user-info").innerText = "No user is logged in.";
-        document.getElementById("login-button").style.display = "inline";
-        document.getElementById("logout-button").style.display = "none";
-        document.getElementById("user-photo").style.display = "none";
+        userInfo.innerText = "No user is logged in.";
+        loginBtn.style.display = "inline";
+        logoutBtn.style.display = "none";
+        userPhoto.style.display = "none";
       }
     });
 
     // Google login function
-    document.getElementById("login-button").addEventListener("click", () => {
-      const provider = new GoogleAuthProvider();
-      signInWithPopup(auth, provider).catch((error) => {
-        alert(`Login failed: ${error.message}`);
-      });
+    document.getElementById("login-button").addEventListener("click", async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Login failed:", error);
+        alert(`Login failed: ${error.code} - ${error.message}`);
+      }
     });
 
     // Logout function
-    document.getElementById("logout-button").addEventListener("click", () => {
-      signOut(auth).then(() => {
+    document.getElementById("logout-button").addEventListener("click", async () => {
+      try {
+        await signOut(auth);
         document.getElementById("user-info").innerText = "You have been logged out.";
         document.getElementById("user-photo").style.display = "none";
-      }).catch((error) => {
-        alert(`Logout failed: ${error.message}`);
-      });
+      } catch (error) {
+        console.error("Logout failed:", error);
+        alert(`Logout failed: ${error.code} - ${error.message}`);
+      }
     });
 
   </script>
@@ -118,13 +128,9 @@
   <p id="invite-status">Checking invite status...</p>
   <p id="cloudflare-status">Checking Cloudflare headers...</p>
 
-  <!-- Display user photo -->
   <img id="user-photo" src="" alt="Profile Picture" style="display: none; width: 50px; height: 50px; border-radius: 50%;"/>
 
-  <!-- Login button -->
   <button id="login-button">Login with Google</button>
-  
-  <!-- Logout button -->
   <button id="logout-button" style="display: none;">Logout</button>
 </body>
 </html>
