@@ -103,15 +103,18 @@
       try {
         const provider = new GoogleAuthProvider();
 
-        // Debug: Check for popup issues
-        const isPopupBlocked = !window.open("", "testPopup") ? true : false;
-        if (isPopupBlocked) {
+        // Ensure popups are opened correctly
+        const testPopup = window.open("", "testPopup");
+        if (testPopup) {
+          testPopup.close();
+          console.log("Popup opened successfully, proceeding with login...");
+        } else {
           console.warn("Popup blocked by the browser.");
           alert("Popup is blocked. Please enable popups for this site.");
+          return;
         }
 
         // Sign-in with popup
-        console.log("Opening the sign-in popup...");
         const result = await signInWithPopup(auth, provider);
         console.log("User signed in:", result.user);
 
