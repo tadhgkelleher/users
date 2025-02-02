@@ -29,6 +29,33 @@
     const urlParams = new URLSearchParams(window.location.search);
     const inviteId = urlParams.get('inviteId');
 
+    // Function to check Cloudflare headers
+    async function checkCloudflareHeaders() {
+      try {
+        const response = await fetch(window.location.href, { method: 'HEAD' });
+        const headers = response.headers;
+        const coep = headers.get("Cross-Origin-Embedder-Policy") || "Not Set";
+        const coop = headers.get("Cross-Origin-Opener-Policy") || "Not Set";
+        const cors = headers.get("Access-Control-Allow-Origin") || "Not Set";
+        const cfRay = headers.get("cf-ray") || "Not Set";
+        const cfCacheStatus = headers.get("cf-cache-status") || "Not Set";
+
+        document.getElementById("cloudflare-status").innerHTML = `\
+          <strong>Cloudflare Headers:</strong><br>\
+          COEP: ${coep}<br>\
+          COOP: ${coop}<br>\
+          CORS: ${cors}<br>\
+          CF-Ray: ${cfRay}<br>\
+          CF-Cache-Status: ${cfCacheStatus}
+        `;
+      } catch (error) {
+        console.error("Error fetching headers:", error);
+        document.getElementById("cloudflare-status").innerText = "Error checking headers.";
+      }
+    }
+
+    checkCloudflareHeaders();
+
     // Authentication state listener
     onAuthStateChanged(auth, (user) => {
       console.log("Auth state changed:", user);
@@ -36,7 +63,7 @@
       const loginBtn = document.getElementById("login-button");
       const logoutBtn = document.getElementById("logout-button");
       const userPhoto = document.getElementById("user-photo");
-      
+
       if (user) {
         userInfo.innerText = `Logged in as: ${user.email}`;
         loginBtn.style.display = "none";
@@ -70,50 +97,27 @@
       }
     });
 
-    // Google login function
+    // Google login function with debugging
     document.getElementById("login-button").addEventListener("click", async () => {
+      console.log("Attempting login...");
       try {
-        console.log('Attempting to sign in...');
-
         const provider = new GoogleAuthProvider();
-        console.log('Provider initialized:', provider);
 
-        // Log before opening the popup
-        console.log('Opening the sign-in popup...');
-        
-        // Add a small delay before opening the popup
-        setTimeout(async () => {
-          try {
-            const result = await signInWithPopup(auth, provider);
-            console.log('User signed in:', result.user);
-          } catch (error) {
-            console.error("Error in signInWithPopup:", error);
-            console.log("Error code:", error.code);
-            console.log("Error message:", error.message);
-            console.log("Error stack:", error.stack);
-            
-            if (error.code === 'auth/popup-closed-by-user') {
-              console.error('Popup closed by user or due to an unexpected issue.');
-              alert('The popup was closed unexpectedly. Please try again.');
-            } else {
-              alert(`Login failed: ${error.code} - ${error.message}`);
-            }
-            document.getElementById("login-error").innerText = `Login failed: ${error.code} - ${error.message}. Please check for popup blockers or try again.`;
-          }
-        }, 500); // Add 500ms delay to ensure everything loads before popup
+        // Debug: Check for popup issues
+        const isPopupBlocked = !window.open("", "testPopup") ? true : false;
+        if (isPopupBlocked) {
+          console.warn("Popup blocked by the browser.");
+          alert("Popup is blocked. Please enable popups for this site.");
+        }
+
+        // Sign-in with popup
+        console.log("Opening the sign-in popup...");
+        const result = await signInWithPopup(auth, provider);
+        console.log("User signed in:", result.user);
 
       } catch (error) {
-        console.error("Login failed:", error);
-        console.log("Error code:", error.code);
-        console.log("Error message:", error.message);
-        console.log("Error stack:", error.stack);
-
-        if (error.code === 'auth/popup-closed-by-user') {
-          alert('The popup was closed unexpectedly. Please try again.');
-        } else {
-          alert(`Login failed: ${error.code} - ${error.message}`);
-        }
-        document.getElementById("login-error").innerText = `Login failed: ${error.code} - ${error.message}. Please check for popup blockers or try again.`;
+        console.error("Error in signInWithPopup:", error);
+        alert(`Login failed: ${error.code} - ${error.message}`);
       }
     });
 
@@ -136,7 +140,6 @@
   <p id="user-info">Checking authentication...</p>
   <p id="invite-status">Checking invite status...</p>
   <p id="cloudflare-status">Checking Cloudflare headers...</p>
-  <p id="login-error" style="color: red;"></p> <!-- For displaying additional error info -->
 
   <img id="user-photo" src="" alt="Profile Picture" style="display: none; width: 50px; height: 50px; border-radius: 50%;"/>
 
