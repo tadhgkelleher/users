@@ -1,210 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
-  <style>
-    .status-message {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-    }
-    .error {
-      background-color: #ffebee;
-      color: #c62828;
-      border: 1px solid #ef9a9a;
-    }
-    .success {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #a5d6a7;
-    }
-    .loading {
-      background-color: #e3f2fd;
-      color: #1565c0;
-      border: 1px solid #90caf9;
-    }
-    #loading-spinner {
-      display: none;
-      margin-left: 10px;
-    }
-  </style>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { 
-      getAuth, 
-      onAuthStateChanged, 
-      signOut, 
-      signInWithRedirect, 
-      GoogleAuthProvider, 
-      getRedirectResult,
-      setPersistence,
-      browserLocalPersistence
-    } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
-    import { getFirestore, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
-
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-        authDomain: "mandala-5165e.firebaseapp.com",
-        projectId: "mandala-5165e",
-        storageBucket: "mandala-5165e.appspot.com",
-        messagingSenderId: "569537405023",
-        appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-        measurementId: "G-TER99X7NBT"
-    };
-
-    // Status update function
-    function updateStatus(message, type = 'info') {
-      const statusDiv = document.getElementById('status-messages');
-      const newMessage = document.createElement('div');
-      newMessage.className = `status-message ${type}`;
-      newMessage.textContent = message;
-      statusDiv.insertBefore(newMessage, statusDiv.firstChild);
-
-      // Remove message after 5 seconds if it's a success message
-      if (type === 'success') {
-        setTimeout(() => newMessage.remove(), 5000);
-      }
-    }
-
-    try {
-      // Initialize Firebase
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth();
-      const db = getFirestore();
-
-      // Set persistence to local
-      setPersistence(auth, browserLocalPersistence)
-        .catch((error) => {
-          console.error("Persistence error:", error);
-          updateStatus(`Error setting persistence: ${error.message}`, 'error');
-        });
-
-      // Extract inviteId from URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const inviteId = urlParams.get('inviteId');
-
-      // Authentication state listener
-      onAuthStateChanged(auth, async (user) => {
-        console.log("Auth state changed:", user);
-        const userInfo = document.getElementById("user-info");
-        const loginBtn = document.getElementById("login-button");
-        const logoutBtn = document.getElementById("logout-button");
-        const userPhoto = document.getElementById("user-photo");
-        const loadingSpinner = document.getElementById("loading-spinner");
-
-        try {
-          if (user) {
-            updateStatus(`Successfully logged in as ${user.email}`, 'success');
-            userInfo.innerText = `Logged in as: ${user.email}`;
-            loginBtn.style.display = "none";
-            logoutBtn.style.display = "inline";
-
-            if (user.photoURL) {
-              userPhoto.src = user.photoURL;
-              userPhoto.style.display = "inline";
-            }
-
-            if (inviteId) {
-              loadingSpinner.style.display = "inline";
-              try {
-                const inviteRef = doc(db, "invites", inviteId);
-                const docSnap = await getDoc(inviteRef);
-                
-                if (docSnap.exists()) {
-                  document.getElementById("invite-status").innerText = `Invite Status: ${docSnap.data().status}`;
-                } else {
-                  updateStatus("Invite not found in the database.", 'error');
-                }
-              } catch (error) {
-                console.error("Error checking invite:", error);
-                updateStatus(`Error checking invite: ${error.message}`, 'error');
-              } finally {
-                loadingSpinner.style.display = "none";
-              }
-            }
-          } else {
-            userInfo.innerText = "No user is logged in.";
-            loginBtn.style.display = "inline";
-            logoutBtn.style.display = "none";
-            userPhoto.style.display = "none";
-          }
-        } catch (error) {
-          console.error("Error in auth state change:", error);
-          updateStatus(`Authentication error: ${error.message}`, 'error');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS & Headers Debug</title>
+    <style>
+        .header-info {
+            background: #f5f5f5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
         }
-      });
-
-      // Google login function with redirect
-      document.getElementById("login-button").addEventListener("click", async () => {
-        const loadingSpinner = document.getElementById("loading-spinner");
-        loadingSpinner.style.display = "inline";
-        updateStatus("Initiating login process...", 'loading');
-
-        try {
-          const provider = new GoogleAuthProvider();
-          await signInWithRedirect(auth, provider);
-        } catch (error) {
-          console.error("Error in signInWithRedirect:", error);
-          updateStatus(`Login failed: ${error.message}`, 'error');
-          loadingSpinner.style.display = "none";
-        }
-      });
-
-      // Handle redirect result
-      getRedirectResult(auth)
-        .then((result) => {
-          const loadingSpinner = document.getElementById("loading-spinner");
-          loadingSpinner.style.display = "none";
-          
-          if (result) {
-            console.log("User signed in:", result.user);
-            updateStatus("Login successful!", 'success');
-          }
-        })
-        .catch((error) => {
-          console.error("Error handling redirect result:", error);
-          updateStatus(`Login failed: ${error.message}`, 'error');
-        });
-
-      // Logout function
-      document.getElementById("logout-button").addEventListener("click", async () => {
-        const loadingSpinner = document.getElementById("loading-spinner");
-        loadingSpinner.style.display = "inline";
-        
-        try {
-          await signOut(auth);
-          updateStatus("Successfully logged out", 'success');
-        } catch (error) {
-          console.error("Logout failed:", error);
-          updateStatus(`Logout failed: ${error.message}`, 'error');
-        } finally {
-          loadingSpinner.style.display = "none";
-        }
-      });
-
-    } catch (error) {
-      console.error("Fatal initialization error:", error);
-      updateStatus(`Fatal error initializing application: ${error.message}`, 'error');
-    }
-  </script>
+        .error { color: red; }
+        .success { color: green; }
+    </style>
 </head>
 <body>
-  <h1>User Profile</h1>
-  
-  <div id="status-messages"></div>
-  
-  <p id="user-info">Checking authentication...</p>
-  <p id="invite-status">Checking invite status...</p>
-  
-  <img id="user-photo" src="" alt="Profile Picture" style="display: none; width: 50px; height: 50px; border-radius: 50%;"/>
-  
-  <div>
-    <button id="login-button">Login with Google</button>
-    <button id="logout-button" style="display: none;">Logout</button>
-    <span id="loading-spinner">Loading...</span>
-  </div>
+    <h1>CORS & Cloudflare Headers Debug</h1>
+    <div id="headers-display"></div>
+    <div id="cors-test"></div>
+
+    <script>
+        async function checkHeaders() {
+            const headersDisplay = document.getElementById('headers-display');
+            
+            try {
+                // Test current page headers
+                const pageResponse = await fetch(window.location.href, {
+                    method: 'HEAD',
+                    credentials: 'same-origin'
+                });
+                
+                const criticalHeaders = [
+                    'Cross-Origin-Embedder-Policy',
+                    'Cross-Origin-Opener-Policy',
+                    'Cross-Origin-Resource-Policy',
+                    'Access-Control-Allow-Origin',
+                    'Access-Control-Allow-Methods',
+                    'Access-Control-Allow-Headers',
+                    'cf-ray',
+                    'cf-cache-status',
+                    'Content-Security-Policy'
+                ];
+
+                let headerOutput = '<h2>Current Page Headers:</h2>';
+                let missingCriticalHeaders = [];
+
+                criticalHeaders.forEach(header => {
+                    const value = pageResponse.headers.get(header);
+                    if (value) {
+                        headerOutput += `<div class="header-info success">${header}: ${value}</div>`;
+                    } else {
+                        headerOutput += `<div class="header-info error">${header}: Not Set</div>`;
+                        missingCriticalHeaders.push(header);
+                    }
+                });
+
+                // Add analysis section
+                headerOutput += '<h2>Analysis:</h2>';
+                if (missingCriticalHeaders.length > 0) {
+                    headerOutput += `<div class="error">
+                        <p>Missing critical headers:</p>
+                        <ul>
+                            ${missingCriticalHeaders.map(h => `<li>${h}</li>`).join('')}
+                        </ul>
+                        <p>Recommended Cloudflare settings:</p>
+                        <ul>
+                            <li>Enable "Auto Minify" for JavaScript</li>
+                            <li>Set CORS rule in Cloudflare: Allow All Origins (*)</li>
+                            <li>Add Page Rule for Firebase auth domain</li>
+                        </ul>
+                    </div>`;
+                }
+
+                headersDisplay.innerHTML = headerOutput;
+
+                // Test Firebase auth domain
+                try {
+                    const authDomainResponse = await fetch('https://mandala-5165e.firebaseapp.com/', {
+                        method: 'HEAD',
+                        mode: 'cors'
+                    });
+                    document.getElementById('cors-test').innerHTML += `
+                        <div class="success">
+                            Firebase auth domain accessible
+                        </div>`;
+                } catch (error) {
+                    document.getElementById('cors-test').innerHTML += `
+                        <div class="error">
+                            Firebase auth domain error: ${error.message}<br>
+                            Suggestion: Add CORS rule in Cloudflare for firebaseapp.com
+                        </div>`;
+                }
+
+            } catch (error) {
+                headersDisplay.innerHTML = `
+                    <div class="error">
+                        Error checking headers: ${error.message}<br>
+                        This might indicate a CORS policy blocking the request.
+                    </div>`;
+            }
+        }
+
+        // Run checks immediately
+        checkHeaders();
+    </script>
 </body>
 </html>
