@@ -64,6 +64,7 @@
                         <p>Missing critical headers:</p>
                         <ul>
                             ${missingCriticalHeaders.map(h => `<li>${h}</li>`).join('')}
+
                         </ul>
                         <p>Recommended Cloudflare settings:</p>
                         <ul>
@@ -76,21 +77,21 @@
 
                 headersDisplay.innerHTML = headerOutput;
 
-                // Test Firebase auth domain
+                // Test Firebase Authentication with your custom domain (my-mandala.com)
                 try {
-                    const authDomainResponse = await fetch('https://mandala-5165e.firebaseapp.com/', {
+                    const authDomainResponse = await fetch('https://my-mandala.com/', {
                         method: 'HEAD',
                         mode: 'cors'
                     });
                     document.getElementById('cors-test').innerHTML += `
                         <div class="success">
-                            Firebase auth domain accessible
+                            Firebase auth domain accessible (my-mandala.com)
                         </div>`;
                 } catch (error) {
                     document.getElementById('cors-test').innerHTML += `
                         <div class="error">
                             Firebase auth domain error: ${error.message}<br>
-                            Suggestion: Add CORS rule in Cloudflare for firebaseapp.com
+                            Suggestion: Add CORS rule in Cloudflare for my-mandala.com
                         </div>`;
                 }
 
