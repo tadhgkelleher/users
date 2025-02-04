@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-In</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Sign In with Google</h2>
+        <button id="googleSignInBtn">Sign In with Google</button>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Google sign-in button
+        document.getElementById('googleSignInBtn').addEventListener('click', function () {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // The user is signed in
+                    const user = result.user;
+                    console.log('Google user signed in:', user);
+
+                    // Send the user credentials back to the opener window and close this popup
+                    window.opener.postMessage({
+                        type: 'google-sign-in',
+                        user: {
+                            uid: user.uid,
+                            email: user.email,
+                            displayName: user.displayName,
+                            photoURL: user.photoURL
+                        }
+                    }, '*');  // You can restrict the targetOrigin if needed
+
+                    // Close the popup after the user is authenticated
+                    window.close();
+                })
+                .catch((error) => {
+                    console.error('Error during Google sign-in:', error);
+                    // Send error message back to opener window
+                    window.opener.postMessage({
+                        type: 'google-sign-in-error',
+                        error: error.message
+                    }, '*');
+
+                    // Close the popup after an error
+                    window.close();
+                });
+        });
+    </script>
+</body>
+</html>
