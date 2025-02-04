@@ -79,6 +79,13 @@
     </style>
 </head>
 <body>
+    <!-- Force HTTPS redirection -->
+    <script>
+        if (window.location.protocol !== 'https:') {
+            window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search;
+        }
+    </script>
+
     <div class="container">
         <h1>Sign Up / Log In</h1>
         
@@ -136,10 +143,12 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
+            // Check if the user is signing up without an invite
             if (!inviteId) {
                 auth.createUserWithEmailAndPassword(email, password)
                     .then(userCredential => {
                         const user = userCredential.user;
+                        // Add user to Firestore
                         db.collection('users').doc(user.uid).set({
                             email: user.email,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -158,10 +167,18 @@
 
         // Google login handler
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth?client_id=YOUR_GOOGLE_CLIENT_ID&redirect_uri=https://your-domain.com/oauth2callback&response_type=code&scope=email`;
-
-            // Redirect to Google's OAuth 2.0 endpoint
-            window.location.href = googleAuthUrl;
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log('Google user signed in:', user);
+                    // Optionally, check if they accepted an invite and redirect accordingly
+                    window.location.href = '/welcome.html';
+                })
+                .catch((error) => {
+                    console.error('Error during Google sign-in:', error);
+                    document.getElementById('errorMessage').textContent = error.message;
+                });
         });
 
         // Switch between Sign-Up and Login
