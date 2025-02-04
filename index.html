@@ -76,6 +76,10 @@
             text-align: center;
             margin-bottom: 20px;
         }
+        #openPopupBtn {
+            margin-top: 20px;
+            background-color: #007BFF;
+        }
     </style>
 </head>
 <body>
@@ -98,6 +102,9 @@
 
         <!-- Google Login Button -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
+
+        <!-- Open Custom Popup Button -->
+        <button id="openPopupBtn">Open Custom Popup</button>
 
         <div class="text-center">
             <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
@@ -165,7 +172,6 @@
                 .then((result) => {
                     const user = result.user;
                     console.log('Google user signed in:', user);
-                    // Optionally, check if they accepted an invite and redirect accordingly
                     window.location.href = '/welcome.html';
                 })
                 .catch((error) => {
@@ -182,6 +188,16 @@
             googleSignInBtn.style.display = 'none';
             document.getElementById('errorMessage').textContent = '';
         }
+
+        // Open the custom popup
+        document.getElementById('openPopupBtn').addEventListener('click', function() {
+            const popup = window.open('/popup.html', 'customPopup', 'width=600,height=400');
+
+            // Optionally, send a message to the popup after opening
+            popup.onload = function() {
+                popup.document.body.innerHTML += '<p>Additional content added dynamically.</p>';
+            };
+        });
     </script>
 </body>
 </html>
