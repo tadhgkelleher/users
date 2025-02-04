@@ -144,7 +144,7 @@
         // Fetch invitations from Firestore (corrected collection name)
         function fetchInvitations() {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            db.collection("invitation").get().then(snapshot => {
+            db.collection("invitations").get().then(snapshot => {
                 invitationsTable.innerHTML = ""; // Clear existing rows before adding new ones
                 if (snapshot.empty) {
                     console.log("No invitations found.");
