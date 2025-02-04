@@ -153,8 +153,14 @@
                 }
                 snapshot.forEach(doc => {
                     const data = doc.data();
+                    console.log("Invitation data:", data);  // Log invitation data to inspect it
                     const senderId = data.senderId;
                     const receiverId = data.receiverId;
+
+                    if (!senderId || !receiverId) {
+                        console.error("Missing senderId or receiverId in invitation document:", doc.id);
+                        return; // Skip this invitation if senderId or receiverId is missing
+                    }
 
                     // Fetch sender and receiver details
                     db.collection("users").doc(senderId).get().then(senderDoc => {
