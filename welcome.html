@@ -82,7 +82,9 @@
                     <th>Invite ID</th>
                     <th>Sender</th>
                     <th>Receiver</th>
-                    <th>Created At</th>
+                    <th>Status</th>
+                    <th>Accepted At</th>
+                    <th>Timestamp</th>
                 </tr>
             </thead>
             <tbody>
@@ -154,34 +156,31 @@
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     console.log("Invitation data:", data);  // Log invitation data to inspect it
-                    const senderId = data.senderId;
-                    const receiverId = data.receiverId;
-
-                    if (!senderId || !receiverId) {
-                        console.error("Missing senderId or receiverId in invitation document:", doc.id);
-                        return; // Skip this invitation if senderId or receiverId is missing
-                    }
 
                     // Fetch sender and receiver details
-                    db.collection("users").doc(senderId).get().then(senderDoc => {
+                    db.collection("users").doc(data.fromUserId).get().then(senderDoc => {
                         if (!senderDoc.exists) {
-                            console.log("Sender not found:", senderId);
+                            console.log("Sender not found:", data.fromUserId);
                             return;
                         }
                         const senderData = senderDoc.data();
 
-                        db.collection("users").doc(receiverId).get().then(receiverDoc => {
+                        db.collection("users").doc(data.toUserId).get().then(receiverDoc => {
                             if (!receiverDoc.exists) {
-                                console.log("Receiver not found:", receiverId);
+                                console.log("Receiver not found:", data.toUserId);
                                 return;
                             }
                             const receiverData = receiverDoc.data();
+
+                            // Build the invitation row
                             const row = `
                                 <tr>
                                     <td>${doc.id}</td>
                                     <td>${senderData.email}</td>
                                     <td>${receiverData.email}</td>
-                                    <td>${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                                    <td>${data.status}</td>
+                                    <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                                    <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
                                 </tr>
                             `;
                             invitationsTable.innerHTML += row;
