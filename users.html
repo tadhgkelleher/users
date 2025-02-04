@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invitations List</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Invitations</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Accepted At</th>
+                <th>From User Email</th>
+                <th>From User Name</th>
+                <th>To User Email</th>
+                <th>To User Name</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody id="invitesTable">
+        </tbody>
+    </table>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Fetch invitations from Firestore
+        db.collection("invitations").orderBy("timestamp", "desc").get()
+            .then(snapshot => {
+                const tableBody = document.getElementById("invitesTable");
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const row = `
+                        <tr>
+                            <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                            <td>${data.fromUserEmail}</td>
+                            <td>${data.fromUserName}</td>
+                            <td>${data.toUserEmail}</td>
+                            <td>${data.toUserName}</td>
+                            <td>${data.status}</td>
+                            <td>${new Date(data.timestamp.seconds * 1000).toLocaleString()}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching invitations:", error);
+            });
+    </script>
+</body>
+</html>
