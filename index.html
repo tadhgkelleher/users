@@ -26,14 +26,12 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             max-width: 400px;
             width: 100%;
+            text-align: center;
         }
         h1 {
-            text-align: center;
-            margin-bottom: 20px;
             color: #4CAF50;
         }
-        input[type="email"],
-        input[type="password"] {
+        input, button {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
@@ -42,60 +40,52 @@
             font-size: 14px;
         }
         button {
-            width: 100%;
-            padding: 10px;
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
             cursor: pointer;
         }
         button:hover {
             background-color: #45a049;
         }
         .google-btn {
-            width: 100%;
             background-color: #db4437;
-            border: none;
-            border-radius: 4px;
-            padding: 12px;
             color: white;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
         }
         .google-btn:hover {
             background-color: #c1351d;
         }
-        .text-center {
-            text-align: center;
-        }
         .error-message {
             color: red;
-            text-align: center;
             margin-bottom: 20px;
+        }
+        .open-in-browser {
+            display: none;
+            background-color: #ff9800;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <!-- Force HTTPS redirection -->
-    <script>
-        if (window.location.protocol !== 'https:') {
-            window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search;
-        }
-    </script>
 
     <div class="container">
         <h1>Sign Up / Log In</h1>
-        
+
+        <!-- Open in Browser Message -->
+        <div id="openInBrowser" class="open-in-browser">
+            You're using an in-app browser. Please open this page in <strong>Chrome or Safari</strong> for login to work.
+            <button onclick="openInDefaultBrowser()">Open in Browser</button>
+        </div>
+
         <!-- Invite Message -->
         <div id="inviteMessage"></div>
 
         <!-- Error Message -->
         <div id="errorMessage" class="error-message"></div>
 
-        <!-- Form to Sign Up or Log In -->
+        <!-- Sign Up Form -->
         <form id="signUpForm">
             <input type="email" id="email" placeholder="Enter your email" required>
             <input type="password" id="password" placeholder="Enter your password" required>
@@ -103,16 +93,14 @@
             <button type="submit">Sign Up</button>
         </form>
 
-        <!-- Google Login Button -->
+        <!-- Google Login -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
 
-        <div class="text-center">
-            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
-        </div>
+        <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -122,13 +110,28 @@
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
             measurementId: "G-TER99X7NBT"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Handle inviteId from URL
+        // Detect in-app browser
+        function isInAppBrowser() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            return /FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|LinkedIn/i.test(userAgent);
+        }
+
+        // Show Open in Browser message
+        if (isInAppBrowser()) {
+            document.getElementById('openInBrowser').style.display = 'block';
+        }
+
+        // Open in default browser
+        function openInDefaultBrowser() {
+            const url = window.location.href;
+            window.open(url, "_blank"); // Open in new tab (forces system browser on most devices)
+        }
+
+        // Handle inviteId
         const urlParams = new URLSearchParams(window.location.search);
         const inviteId = urlParams.get('inviteId');
         if (inviteId) {
@@ -136,75 +139,51 @@
             document.getElementById('inviteId').value = inviteId;
         }
 
-        // Handle form submission for sign-up
+        // Sign Up Form Submission
         document.getElementById('signUpForm').addEventListener('submit', function (event) {
             event.preventDefault();
+            if (isInAppBrowser()) return; // Prevent login in unsupported browsers
+
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const inviteId = document.getElementById('inviteId').value;
 
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
                     const user = userCredential.user;
-
-                    // Store user in Firestore
-                    db.collection('users').doc(user.uid).set({
+                    return db.collection('users').doc(user.uid).set({
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        inviteId: inviteId || null
-                    }).then(() => {
-                        console.log('User signed up');
-                        window.location.href = inviteId ? '/welcome.html' : '/dashboard.html';
-                    }).catch(error => {
-                        document.getElementById('errorMessage').textContent = error.message;
                     });
+                })
+                .then(() => {
+                    window.location.href = '/welcome.html';
                 })
                 .catch(error => {
                     document.getElementById('errorMessage').textContent = error.message;
                 });
         });
 
-        // Google login handler (Redirect instead of popup)
+        // Google Sign-In
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
+            if (isInAppBrowser()) return; // Prevent login in unsupported browsers
+
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithRedirect(provider);
-        });
-
-        // Handle redirect results after Google login
-        auth.getRedirectResult().then(result => {
-            if (result.user) {
-                const user = result.user;
-                console.log('Google user signed in:', user);
-
-                // Check if user exists in Firestore
-                db.collection('users').doc(user.uid).get().then(doc => {
-                    if (!doc.exists) {
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            inviteId: inviteId || null
-                        }).then(() => {
-                            console.log("User added to Firestore");
-                        });
-                    }
+            auth.signInWithPopup(provider)
+                .then(() => {
+                    window.location.href = '/welcome.html';
+                })
+                .catch(error => {
+                    document.getElementById('errorMessage').textContent = error.message;
                 });
-
-                // Redirect after login
-                window.location.href = inviteId ? '/welcome.html' : '/dashboard.html';
-            }
-        }).catch(error => {
-            console.error('Error during redirect sign-in:', error);
-            document.getElementById('errorMessage').textContent = error.message;
         });
 
-        // Switch between Sign-Up and Login
+        // Switch to Log In (Hides Sign-Up)
         function switchToLoginForm() {
-            document.getElementById('signUpForm').innerHTML = `
-                <input type="email" id="email" placeholder="Enter your email" required>
-                <input type="password" id="password" placeholder="Enter your password" required>
-                <button type="submit">Log In</button>
-            `;
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('googleSignInBtn').style.display = 'none';
+            document.getElementById('errorMessage').textContent = '';
         }
     </script>
+
 </body>
 </html>
