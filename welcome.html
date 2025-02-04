@@ -157,20 +157,19 @@
                     const data = doc.data();
                     console.log("Invitation data:", data);  // Log invitation data to inspect it
 
-                    // Fetch sender and receiver details
+                    // Handle missing sender
+                    const senderData = { email: "Sender not found" };
+                    const receiverData = { email: "Receiver not found" };
+
                     db.collection("users").doc(data.fromUserId).get().then(senderDoc => {
-                        if (!senderDoc.exists) {
-                            console.log("Sender not found:", data.fromUserId);
-                            return;
+                        if (senderDoc.exists) {
+                            senderData.email = senderDoc.data().email;
                         }
-                        const senderData = senderDoc.data();
 
                         db.collection("users").doc(data.toUserId).get().then(receiverDoc => {
-                            if (!receiverDoc.exists) {
-                                console.log("Receiver not found:", data.toUserId);
-                                return;
+                            if (receiverDoc.exists) {
+                                receiverData.email = receiverDoc.data().email;
                             }
-                            const receiverData = receiverDoc.data();
 
                             // Build the invitation row
                             const row = `
