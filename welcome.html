@@ -3,67 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to My Mandala</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f9f9f9;
-        }
-        header {
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            padding: 1rem 0;
-        }
-        main {
-            max-width: 800px;
-            margin: 2rem auto;
-            padding: 1rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .message {
-            margin-top: 1rem;
-            font-weight: bold;
-            text-align: center;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-        button {
-            padding: 0.5rem 1rem;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <title>Welcome</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Mandala</h1>
-    </header>
-    <main>
-        <div id="message" class="message"></div>
-        <h2>Please Sign In to Continue</h2>
-        <button id="signInBtn">Sign In with Google</button>
-    </main>
+    <h1>Welcome to Your New Account!</h1>
+    <p id="welcomeMessage"></p>
+    <p id="senderMessage"></p>
 
     <script>
-        // Firebase Configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -71,7 +22,7 @@
             storageBucket: "mandala-5165e.appspot.com",
             messagingSenderId: "569537405023",
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT",
+            measurementId: "G-TER99X7NBT"
         };
 
         // Initialize Firebase
@@ -79,66 +30,38 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // DOM Elements
-        const messageDisplay = document.getElementById("message");
-        const signInBtn = document.getElementById("signInBtn");
-
-        // Handle URL Parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteId = urlParams.get('inviteId');
-
-        if (!inviteId) {
-            messageDisplay.textContent = "Invalid invitation link.";
-            messageDisplay.className = "error";
-        }
-
-        // Function to display messages
-        function displayMessage(type, text) {
-            messageDisplay.textContent = text;
-            messageDisplay.className = `message ${type}`;
-        }
-
-        // Sign In with Google
-        signInBtn.addEventListener('click', async () => {
-            try {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                const userCredential = await auth.signInWithPopup(provider);
-                const user = userCredential.user;
-
-                // Check if the invite exists and mark it as accepted
-                const inviteRef = db.collection("invitations").doc(inviteId);
-                const inviteDoc = await inviteRef.get();
-                
-                if (inviteDoc.exists) {
-                    const inviteData = inviteDoc.data();
-
-                    if (inviteData.status === "pending") {
-                        // Update invite status to accepted and link user to invite
-                        await inviteRef.update({
-                            status: "accepted",
-                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            inviteeEmail: user.email, // Associate the user with the invite
-                        });
-
-                        displayMessage("success", "You have successfully accepted the invitation!");
-
-                        // Redirect to the user's profile or home page
-                        window.location.href = "profile.html";  // Adjust to your profile page
-                    } else {
-                        displayMessage("error", "This invitation has already been accepted.");
-                    }
-                } else {
-                    displayMessage("error", "Invitation not found.");
-                }
-            } catch (error) {
-                displayMessage("error", "Sign in failed: " + error.message);
-            }
-        });
-
-        // Check if user is already signed in
-        auth.onAuthStateChanged((user) => {
+        // Function to fetch user info and sender details
+        auth.onAuthStateChanged(user => {
             if (user) {
-                window.location.href = "profile.html";  // Redirect to profile page
+                // Show welcome message with user's email
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}! Welcome to the platform.`;
+
+                // Fetch the inviteId associated with the user
+                db.collection("users").doc(user.uid).get().then(doc => {
+                    const userData = doc.data();
+                    if (userData && userData.inviteId) {
+                        // Fetch the sender (who sent the invite)
+                        db.collection("invites").doc(userData.inviteId).get().then(inviteDoc => {
+                            const inviteData = inviteDoc.data();
+                            if (inviteData && inviteData.senderId) {
+                                // Fetch the sender's details
+                                db.collection("users").doc(inviteData.senderId).get().then(senderDoc => {
+                                    const senderData = senderDoc.data();
+                                    document.getElementById("senderMessage").textContent = `You were invited by: ${senderData.email}`;
+                                }).catch(err => {
+                                    console.error("Error fetching sender details:", err);
+                                });
+                            }
+                        }).catch(err => {
+                            console.error("Error fetching invite details:", err);
+                        });
+                    }
+                }).catch(err => {
+                    console.error("Error fetching user data:", err);
+                });
+            } else {
+                // If not authenticated, redirect to sign-up page
+                window.location.href = '/index.html';
             }
         });
     </script>
