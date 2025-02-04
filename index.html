@@ -76,10 +76,6 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        #openPopupBtn {
-            margin-top: 20px;
-            background-color: #007BFF;
-        }
     </style>
 </head>
 <body>
@@ -102,9 +98,6 @@
 
         <!-- Google Login Button -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
-
-        <!-- Open Custom Popup Button -->
-        <button id="openPopupBtn">Open Custom Popup</button>
 
         <div class="text-center">
             <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
@@ -143,12 +136,10 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
-            // Check if the user is signing up without an invite
             if (!inviteId) {
                 auth.createUserWithEmailAndPassword(email, password)
                     .then(userCredential => {
                         const user = userCredential.user;
-                        // Add user to Firestore
                         db.collection('users').doc(user.uid).set({
                             email: user.email,
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -165,19 +156,24 @@
             }
         });
 
-        // Google login handler
+        // Custom Google Sign-In with Popup
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log('Google user signed in:', user);
-                    window.location.href = '/welcome.html';
-                })
-                .catch((error) => {
-                    console.error('Error during Google sign-in:', error);
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
+            const popup = window.open('/google-auth-popup.html', 'googleAuthPopup', 'width=500,height=600');
+
+            // Wait for the popup to be closed and authenticate
+            const checkPopup = setInterval(function () {
+                if (popup.closed) {
+                    clearInterval(checkPopup);
+                    // Here, we can check if the user was authenticated after popup closure
+                    // You can perform any action needed to confirm the authentication
+                    firebase.auth().onAuthStateChanged(function (user) {
+                        if (user) {
+                            console.log('Google user signed in:', user);
+                            window.location.href = '/welcome.html';
+                        }
+                    });
+                }
+            }, 1000);
         });
 
         // Switch between Sign-Up and Login
@@ -188,16 +184,6 @@
             googleSignInBtn.style.display = 'none';
             document.getElementById('errorMessage').textContent = '';
         }
-
-        // Open the custom popup
-        document.getElementById('openPopupBtn').addEventListener('click', function() {
-            const popup = window.open('/popup.html', 'customPopup', 'width=600,height=400');
-
-            // Optionally, send a message to the popup after opening
-            popup.onload = function() {
-                popup.document.body.innerHTML += '<p>Additional content added dynamically.</p>';
-            };
-        });
     </script>
 </body>
 </html>
