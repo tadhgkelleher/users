@@ -10,137 +10,130 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
         }
-
         .container {
-            background-color: #fff;
+            background-color: white;
             padding: 30px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             max-width: 400px;
+            width: 100%;
         }
-
         h1 {
             text-align: center;
-            color: #333;
+            margin-bottom: 20px;
+            color: #4CAF50;
         }
-
-        .google-btn {
+        input[type="email"],
+        input[type="password"] {
             width: 100%;
             padding: 10px;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            display: block;
-            margin-top: 20px;
-        }
-
-        .google-btn:hover {
-            background-color: #357AE8;
-        }
-
-        #errorMessage {
-            color: red;
-            text-align: center;
-            margin-top: 15px;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        input[type="email"], input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
+            margin: 10px 0;
+            border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
         }
-
-        input[type="submit"] {
+        button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
-            cursor: pointer;
             font-size: 16px;
+            cursor: pointer;
         }
-
-        input[type="submit"]:hover {
+        button:hover {
             background-color: #45a049;
         }
-
-        .text-center a {
-            color: #4285F4;
-            text-decoration: none;
+        .google-btn {
+            width: 100%;
+            background-color: #db4437;
+            border: none;
+            border-radius: 4px;
+            padding: 12px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
         }
-
-        .text-center a:hover {
-            text-decoration: underline;
+        .google-btn:hover {
+            background-color: #c1351d;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
+    <!-- Force HTTPS redirection -->
+    <script>
+        if (window.location.protocol !== 'https:') {
+            window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search;
+        }
+    </script>
+
     <div class="container">
         <h1>Sign Up / Log In</h1>
+        
+        <!-- Invite Message -->
         <div id="inviteMessage"></div>
+
+        <!-- Error Message -->
         <div id="errorMessage" class="error-message"></div>
+
+        <!-- Form to Sign Up or Log In -->
         <form id="signUpForm">
             <input type="email" id="email" placeholder="Enter your email" required>
             <input type="password" id="password" placeholder="Enter your password" required>
             <input type="hidden" id="inviteId">
             <button type="submit">Sign Up</button>
         </form>
+
+        <!-- Google Login Button -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
+
         <div class="text-center">
             <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
         </div>
     </div>
 
     <script>
-        // Firebase config setup
+        // Firebase configuration
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
         };
+
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Check if user is in an in-app browser
-        function isInAppBrowser() {
-            const userAgent = navigator.userAgent.toLowerCase();
-            return (
-                userAgent.includes('fb') || // Facebook Messenger
-                userAgent.includes('instagram') || // Instagram
-                userAgent.includes('line') || // Line
-                userAgent.includes('twitter') || // Twitter
-                userAgent.includes('whatsapp') // WhatsApp
-            );
-        }
-
-        // Disable Google Sign-In if in-app browser
-        if (isInAppBrowser()) {
-            document.getElementById('googleSignInBtn').style.display = 'none';
-            document.getElementById('errorMessage').textContent = 'Please open this link in a proper browser (Chrome/Safari) to sign in with Google.';
+        // Handle inviteId from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteId = urlParams.get('inviteId');
+        if (inviteId) {
+            document.getElementById('inviteMessage').textContent = `You have been invited! Please sign up to accept the invite.`;
+            document.getElementById('inviteId').value = inviteId;
         }
 
         // Handle form submission for sign-up
@@ -150,39 +143,39 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
-            if (!inviteId) {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(userCredential => {
-                        const user = userCredential.user;
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        }).then(() => {
-                            window.location.href = '/welcome.html';
-                        }).catch(error => {
-                            document.getElementById('errorMessage').textContent = error.message;
-                        });
-                    })
-                    .catch(error => {
-                        document.getElementById('errorMessage').textContent = error.message;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+                    const userRef = db.collection('users').doc(user.uid);
+
+                    // Add user to Firestore
+                    return userRef.set({
+                        email: user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        inviteAccepted: inviteId ? inviteId : null
                     });
-            }
+                })
+                .then(() => {
+                    console.log('User signed up');
+                    window.location.href = '/welcome.html';
+                })
+                .catch(error => {
+                    document.getElementById('errorMessage').textContent = error.message;
+                });
         });
 
         // Google login handler
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            if (isInAppBrowser()) {
-                document.getElementById('errorMessage').textContent = 'Please open this link in a proper browser (Chrome/Safari) to sign in with Google.';
-                return;
-            }
-
             const provider = new firebase.auth.GoogleAuthProvider();
+
             auth.signInWithPopup(provider)
                 .then((result) => {
                     const user = result.user;
+                    console.log('Google user signed in:', user);
                     window.location.href = '/welcome.html';
                 })
                 .catch((error) => {
+                    console.error('Error during Google sign-in:', error);
                     document.getElementById('errorMessage').textContent = error.message;
                 });
         });
@@ -190,7 +183,20 @@
         // Switch between Sign-Up and Login
         function switchToLoginForm() {
             const signUpForm = document.getElementById('signUpForm');
-            signUpForm.style.display = 'none';
+            signUpForm.innerHTML = `
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="password" id="password" placeholder="Enter your password" required>
+                <button type="button" onclick="logIn()">Log In</button>
+            `;
+        }
+
+        function logIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => window.location.href = '/welcome.html')
+                .catch(error => document.getElementById('errorMessage').textContent = error.message);
         }
     </script>
 </body>
