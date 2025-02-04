@@ -143,51 +143,67 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
-            // Check if the user is signing up without an invite
-            if (!inviteId) {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(userCredential => {
-                        const user = userCredential.user;
-                        // Add user to Firestore
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        }).then(() => {
-                            console.log('User signed up');
-                            window.location.href = '/welcome.html';
-                        }).catch(error => {
-                            document.getElementById('errorMessage').textContent = error.message;
-                        });
-                    })
-                    .catch(error => {
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(userCredential => {
+                    const user = userCredential.user;
+
+                    // Store user in Firestore
+                    db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        inviteId: inviteId || null
+                    }).then(() => {
+                        console.log('User signed up');
+                        window.location.href = inviteId ? '/welcome.html' : '/dashboard.html';
+                    }).catch(error => {
                         document.getElementById('errorMessage').textContent = error.message;
                     });
-            }
-        });
-
-        // Google login handler
-        document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log('Google user signed in:', user);
-                    // Optionally, check if they accepted an invite and redirect accordingly
-                    window.location.href = '/welcome.html';
                 })
-                .catch((error) => {
-                    console.error('Error during Google sign-in:', error);
+                .catch(error => {
                     document.getElementById('errorMessage').textContent = error.message;
                 });
         });
 
+        // Google login handler (Redirect instead of popup)
+        document.getElementById('googleSignInBtn').addEventListener('click', function () {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithRedirect(provider);
+        });
+
+        // Handle redirect results after Google login
+        auth.getRedirectResult().then(result => {
+            if (result.user) {
+                const user = result.user;
+                console.log('Google user signed in:', user);
+
+                // Check if user exists in Firestore
+                db.collection('users').doc(user.uid).get().then(doc => {
+                    if (!doc.exists) {
+                        db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            inviteId: inviteId || null
+                        }).then(() => {
+                            console.log("User added to Firestore");
+                        });
+                    }
+                });
+
+                // Redirect after login
+                window.location.href = inviteId ? '/welcome.html' : '/dashboard.html';
+            }
+        }).catch(error => {
+            console.error('Error during redirect sign-in:', error);
+            document.getElementById('errorMessage').textContent = error.message;
+        });
+
         // Switch between Sign-Up and Login
         function switchToLoginForm() {
-            const signUpForm = document.getElementById('signUpForm');
-            const googleSignInBtn = document.getElementById('googleSignInBtn');
-            signUpForm.style.display = 'none';
-            googleSignInBtn.style.display = 'none';
-            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('signUpForm').innerHTML = `
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="password" id="password" placeholder="Enter your password" required>
+                <button type="submit">Log In</button>
+            `;
         }
     </script>
 </body>
