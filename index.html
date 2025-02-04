@@ -128,7 +128,8 @@
         // Open in default browser
         function openInDefaultBrowser() {
             const url = window.location.href;
-            window.open(url, "_blank"); // Open in new tab (forces system browser on most devices)
+            const encodedUrl = encodeURIComponent(url);
+            window.location.href = `https://www.google.com/search?q=${encodedUrl}`;
         }
 
         // Handle inviteId
