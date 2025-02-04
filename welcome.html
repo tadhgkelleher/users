@@ -141,7 +141,7 @@
             });
         }
 
-        // Fetch invitations from Firestore (corrected collection name)
+        // Fetch invitations from Firestore
         function fetchInvitations() {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
             db.collection("invitations").get().then(snapshot => {
