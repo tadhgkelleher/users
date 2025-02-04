@@ -3,26 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitations List</title>
+    <title>Registered Users</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <h1>Invitations</h1>
+    <h1>Registered Users</h1>
     <table border="1">
         <thead>
             <tr>
-                <th>Accepted At</th>
-                <th>From User Email</th>
-                <th>From User Name</th>
-                <th>To User Email</th>
-                <th>To User Name</th>
-                <th>Status</th>
-                <th>Timestamp</th>
+                <th>User ID</th>
+                <th>Email</th>
+                <th>Created At</th>
             </tr>
         </thead>
-        <tbody id="invitesTable">
+        <tbody id="usersTable">
         </tbody>
     </table>
 
@@ -43,46 +39,38 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Listen for authentication state
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                console.log("User authenticated:", user.email || "Anonymous");
-                fetchInvitations();
-            } else {
-                console.log("User not authenticated, signing in anonymously...");
-                signInAnonymously(); // Auto-login for testing
-            }
-        });
+        // Admin SDK required for listing users - alternative Firestore method
+        function fetchUsers() {
+            const usersTable = document.getElementById("usersTable");
 
-        // Function to sign in anonymously (for testing)
-        function signInAnonymously() {
-            auth.signInAnonymously().catch(error => {
-                console.error("Auth error:", error);
-            });
-        }
-
-        // Function to fetch invitations
-        function fetchInvitations() {
-            const tableBody = document.getElementById("invitesTable");
-            db.collection("invitations").orderBy("timestamp", "desc").onSnapshot(snapshot => {
-                tableBody.innerHTML = ""; // Clear table
+            // Assuming users are stored in Firestore under 'users' collection
+            db.collection("users").get().then(snapshot => {
+                usersTable.innerHTML = ""; // Clear table before updating
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const row = `
                         <tr>
-                            <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                            <td>${data.fromUserEmail || "N/A"}</td>
-                            <td>${data.fromUserName || "N/A"}</td>
-                            <td>${data.toUserEmail || "N/A"}</td>
-                            <td>${data.toUserName || "N/A"}</td>
-                            <td>${data.status || "N/A"}</td>
-                            <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                            <td>${doc.id}</td>
+                            <td>${data.email || "N/A"}</td>
+                            <td>${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "N/A"}</td>
                         </tr>
                     `;
-                    tableBody.innerHTML += row;
+                    usersTable.innerHTML += row;
                 });
-            }, error => console.error("Error fetching invitations:", error));
+            }).catch(error => {
+                console.error("Error fetching users:", error);
+            });
         }
+
+        // Fetch users when authenticated
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                fetchUsers();
+            } else {
+                console.log("User not authenticated. Signing in...");
+                auth.signInAnonymously().catch(error => console.error("Auth error:", error));
+            }
+        });
     </script>
 </body>
 </html>
