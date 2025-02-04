@@ -8,183 +8,108 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-        h1 {
-            color: #4CAF50;
-        }
-        input, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .google-btn {
-            background-color: #db4437;
-            color: white;
-        }
-        .google-btn:hover {
-            background-color: #c1351d;
-        }
-        .error-message {
-            color: red;
-            margin-bottom: 20px;
-        }
-        .open-in-browser {
-            display: none;
-            background-color: #ff9800;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 16px;
-        }
+        /* Add your styles here */
     </style>
 </head>
 <body>
-
     <div class="container">
         <h1>Sign Up / Log In</h1>
-
-        <!-- Open in Browser Message -->
-        <div id="openInBrowser" class="open-in-browser">
-            You're using an in-app browser. Please open this page in <strong>Chrome or Safari</strong> for login to work.
-            <button onclick="openInDefaultBrowser()">Open in Browser</button>
-        </div>
-
-        <!-- Invite Message -->
         <div id="inviteMessage"></div>
-
-        <!-- Error Message -->
         <div id="errorMessage" class="error-message"></div>
-
-        <!-- Sign Up Form -->
         <form id="signUpForm">
             <input type="email" id="email" placeholder="Enter your email" required>
             <input type="password" id="password" placeholder="Enter your password" required>
             <input type="hidden" id="inviteId">
             <button type="submit">Sign Up</button>
         </form>
-
-        <!-- Google Login -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
-
-        <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
+        <div class="text-center">
+            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
+        </div>
     </div>
 
     <script>
-        // Firebase Config
+        // Firebase config setup
         const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
         };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Detect in-app browser
+        // Check if user is in an in-app browser
         function isInAppBrowser() {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            return /FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|LinkedIn/i.test(userAgent);
+            const userAgent = navigator.userAgent.toLowerCase();
+            return (
+                userAgent.includes('fb') || // Facebook Messenger
+                userAgent.includes('instagram') || // Instagram
+                userAgent.includes('line') || // Line
+                userAgent.includes('twitter') || // Twitter
+                userAgent.includes('whatsapp') // WhatsApp
+            );
         }
 
-        // Show Open in Browser message
+        // Disable Google Sign-In if in-app browser
         if (isInAppBrowser()) {
-            document.getElementById('openInBrowser').style.display = 'block';
+            document.getElementById('googleSignInBtn').style.display = 'none';
+            document.getElementById('errorMessage').textContent = 'Please open this link in a proper browser (Chrome/Safari) to sign in with Google.';
         }
 
-        // Open in default browser
-        function openInDefaultBrowser() {
-            const url = window.location.href;
-            const encodedUrl = encodeURIComponent(url);
-            window.location.href = `https://www.google.com/search?q=${encodedUrl}`;
-        }
-
-        // Handle inviteId
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteId = urlParams.get('inviteId');
-        if (inviteId) {
-            document.getElementById('inviteMessage').textContent = `You have been invited! Please sign up to accept the invite.`;
-            document.getElementById('inviteId').value = inviteId;
-        }
-
-        // Sign Up Form Submission
+        // Handle form submission for sign-up
         document.getElementById('signUpForm').addEventListener('submit', function (event) {
             event.preventDefault();
-            if (isInAppBrowser()) return; // Prevent login in unsupported browsers
-
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const inviteId = document.getElementById('inviteId').value;
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-                    return db.collection('users').doc(user.uid).set({
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            if (!inviteId) {
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(userCredential => {
+                        const user = userCredential.user;
+                        db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        }).then(() => {
+                            window.location.href = '/welcome.html';
+                        }).catch(error => {
+                            document.getElementById('errorMessage').textContent = error.message;
+                        });
+                    })
+                    .catch(error => {
+                        document.getElementById('errorMessage').textContent = error.message;
                     });
-                })
-                .then(() => {
-                    window.location.href = '/welcome.html';
-                })
-                .catch(error => {
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
+            }
         });
 
-        // Google Sign-In
+        // Google login handler
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            if (isInAppBrowser()) return; // Prevent login in unsupported browsers
+            if (isInAppBrowser()) {
+                document.getElementById('errorMessage').textContent = 'Please open this link in a proper browser (Chrome/Safari) to sign in with Google.';
+                return;
+            }
 
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider)
-                .then(() => {
+                .then((result) => {
+                    const user = result.user;
                     window.location.href = '/welcome.html';
                 })
-                .catch(error => {
+                .catch((error) => {
                     document.getElementById('errorMessage').textContent = error.message;
                 });
         });
 
-        // Switch to Log In (Hides Sign-Up)
+        // Switch between Sign-Up and Login
         function switchToLoginForm() {
-            document.getElementById('signUpForm').style.display = 'none';
-            document.getElementById('googleSignInBtn').style.display = 'none';
-            document.getElementById('errorMessage').textContent = '';
+            const signUpForm = document.getElementById('signUpForm');
+            signUpForm.style.display = 'none';
         }
     </script>
-
 </body>
 </html>
