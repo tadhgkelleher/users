@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth 2.0 Callback</title>
+</head>
+<body>
+    <script>
+        // Get the authorization code from the URL query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get('code');
+
+        if (authCode) {
+            // Exchange the authorization code for an access token
+            fetch('/exchange_code_for_token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ code: authCode }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    // Process the user data or sign them into your system
+                    console.log('User successfully logged in with Google');
+                    window.location.href = '/welcome.html'; // Redirect to welcome page
+                } else {
+                    console.error('Error: Token not received');
+                }
+            })
+            .catch(error => {
+                console.error('Error exchanging code:', error);
+            });
+        }
+    </script>
+</body>
+</html>
