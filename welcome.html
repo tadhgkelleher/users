@@ -194,59 +194,48 @@
             });
         }
 
-        // Fetch invitations
-        function fetchInvitations() {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            const currentUser = auth.currentUser;
-            if (!currentUser) {
-                document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
+      function fetchInvitations() {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
+        return;
+    }
+
+    invitationsTable.innerHTML = ""; // Clear previous results
+
+    db.collection("invitations")
+        .where("status", "==", "accepted") // Only fetch accepted invitations
+        .get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                document.getElementById("errorMessage").textContent = "No accepted invitations found.";
                 return;
             }
 
-            invitationsTable.innerHTML = ""; // Clear previous results
-            const invitations = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                console.log("Accepted invitation data:", data);
 
-            const fetchSenderInvites = db.collection("invitations")
-                .where("fromUserId", "==", currentUser.uid)
-                .get();
-
-            const fetchAcceptedInvites = db.collection("invitations")
-                .where("toUserId", "==", currentUser.uid)
-                .where("status", "==", "accepted")
-                .get();
-
-            Promise.all([fetchSenderInvites, fetchAcceptedInvites]).then(results => {
-                results.forEach(snapshot => {
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        console.log("Invitation data:", data);
-                        invitations.push({ id: doc.id, ...data });
-                    });
-                });
-
-                if (invitations.length === 0) {
-                    document.getElementById("errorMessage").textContent = "No invitations found.";
-                    return;
-                }
-
-                invitations.forEach(invite => {
-                    const row = `
-                        <tr>
-                            <td>${invite.id}</td>
-                            <td>${invite.fromUserEmail || "Unknown"}</td>
-                            <td>${invite.toUserEmail || "Unknown"}</td>
-                            <td>${invite.status}</td>
-                            <td>${invite.acceptedAt ? new Date(invite.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                            <td>${invite.timestamp ? new Date(invite.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
-                        </tr>
-                    `;
-                    invitationsTable.innerHTML += row;
-                });
-            }).catch(error => {
-                console.error("Error fetching invitations:", error);
-                document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
+                const row = `
+                    <tr>
+                        <td>${doc.id}</td>
+                        <td>${data.fromUserEmail || "Unknown"}</td>
+                        <td>${data.toUserEmail || "Unknown"}</td>
+                        <td>${data.status}</td>
+                        <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                        <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                    </tr>
+                `;
+                invitationsTable.innerHTML += row;
             });
-        }
+        })
+        .catch(error => {
+            console.error("Error fetching accepted invitations:", error);
+            document.getElementById("errorMessage").textContent = "There was an error fetching accepted invitations.";
+        });
+}
+
     </script>
 </body>
 </html>
