@@ -204,7 +204,7 @@
             });
     }
 
-   function displayAcceptedInvitesByUser(acceptedUser, invitations) {
+  function displayAcceptedInvitesByUser(acceptedUser, invitations) {
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
@@ -214,13 +214,15 @@
     // Create new section
     section = document.createElement('div');
     section.id = sectionId;
+    const userName = acceptedUser.firstName && acceptedUser.lastName ? `${acceptedUser.firstName} ${acceptedUser.lastName}` : acceptedUser.email;  // Combine first and last names or use email
     section.innerHTML = `
-        <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.name})</h3>
+        <h3>Invites Accepted by ${userName} (${userName})</h3>
         <table>
             <thead>
                 <tr>
                     <th>Invite From</th>
                     <th>Status</th>
+                    <th>Created At</th>
                 </tr>
             </thead>
             <tbody id="${sectionId}-tbody"></tbody>
@@ -231,18 +233,23 @@
     // Populate sub-table
     const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
-        invite.acceptedByUser.some(u => u.email === acceptedUser.email)
+        invite.acceptedByUser.some(u => u.email === acceptedUser.email)  // Check if acceptedUser is in acceptedByUser array
     );
 
     userInvitations.forEach(invite => {
+        const fromUserName = invite.firstName && invite.lastName ? `${invite.firstName} ${invite.lastName}` : invite.email;  // Combine first and last names or use email
+        const createdAt = new Date(invite.createdAt).toLocaleString();  // Format the created timestamp
+        
         tbody.innerHTML += `
             <tr>
-                <td>${invite.fromUserName}</td>
-                <td>${invite.status}</td>
+                <td>${fromUserName}</td>
+                <td>${invite.inviteAccepted ? 'Accepted' : 'Pending'}</td>
+                <td>${createdAt}</td>
             </tr>
         `;
     });
 }
+
 
     // Remaining code (generate link, sign out) remains unchanged
     document.getElementById("generateLinkBtn").addEventListener("click", () => {
