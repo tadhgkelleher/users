@@ -389,29 +389,53 @@
             }
         });
 
-        function fetchAcceptedInvitations() {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            db.collection("invitations")
-                .where("status", "==", "accepted")
-                .get()
-                .then(snapshot => {
-                    invitationsTable.innerHTML = "";
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const row = `
-                            <tr>
-                                <td>${doc.id}</td>
-                                <td>${data.fromUserEmail}</td>
-                                <td>${data.toUserEmail}</td>
-                                <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                                <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
-                            </tr>
-                        `;
-                        invitationsTable.innerHTML += row;
-                    });
-                })
-                .catch(error => console.error("Error fetching invitations:", error));
-        }
+      function fetchAcceptedInvitations() {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    db.collection("invitations")
+        .get()
+        .then(snapshot => {
+            invitationsTable.innerHTML = "";
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const row = `
+                    <tr>
+                        <td>${doc.id}</td>
+                        <td>${data.fromUserEmail || 'N/A'}</td>
+                        <td>${data.fromUserId || 'N/A'}</td>
+                        <td>${data.acceptedByUser ? 
+                            `Email: ${data.acceptedByUser.email}<br>
+                             ID: ${data.acceptedByUser.id}<br>
+                             Name: ${data.acceptedByUser.name}` 
+                            : 'N/A'}</td>
+                        <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                        <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                        <td>${data.status}</td>
+                    </tr>
+                `;
+                invitationsTable.innerHTML += row;
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching invitations:", error);
+            document.getElementById("errorMessage").textContent = "Error loading invitations";
+        });
+}
+
+// Update table headers:
+<table id="invitationsTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>From Email</th>
+            <th>From User ID</th>
+            <th>Accepted By</th>
+            <th>Accepted At</th>
+            <th>Created At</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
 
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
