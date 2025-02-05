@@ -184,13 +184,13 @@
 
                     allInvitations.forEach(doc => {
                         const data = doc.data();
-                        const acceptedByUser = data.acceptedByUser;
+                        const acceptedAt = data.acceptedAt;
 
                         // Display invitations where the current user is involved
                         const row = `
                             <tr>
                                 <td>
-                                    ${acceptedByUser && acceptedByUser.length > 0 ? acceptedByUser[0].email : 'Not Accepted Yet'}
+                                    ${acceptedAt ? `Accepted on: ${new Date(acceptedAt.seconds * 1000).toLocaleString()}` : 'Not Accepted Yet'}
                                 </td>
                             </tr>
                         `;
