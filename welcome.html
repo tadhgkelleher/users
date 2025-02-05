@@ -188,12 +188,59 @@
                                 </tr>
                             `;
                             invitationsTable.innerHTML += row;
+
+                            // Now, fetch a list of invites accepted by this user
+                            displayAcceptedInvitesByUser(acceptedBy);
                         }
                     });
                 })
                 .catch(error => {
                     console.error("Error fetching invitations:", error);
                     document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+                });
+        }
+
+        function displayAcceptedInvitesByUser(acceptedUser) {
+            // Create a new section in the table for this user's accepted invites
+            const userSection = document.createElement("div");
+            userSection.innerHTML = `
+                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invite From</th>
+                            <th>Invite Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userAcceptedInvites-${acceptedUser.uid}">
+                    </tbody>
+                </table>
+            `;
+            document.querySelector(".container").appendChild(userSection);
+
+            // Fetch invites accepted by this user
+            db.collection("invitations")
+                .where("acceptedByUser", "array-contains", acceptedUser.email)
+                .get()
+                .then(snapshot => {
+                    const userAcceptedInvitesTable = document.getElementById(`userAcceptedInvites-${acceptedUser.uid}`);
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const inviteFromUser = data.fromUserEmail || "Unknown"; // Or any other field you wish to display
+                        const inviteStatus = data.status || "Unknown";
+
+                        const row = `
+                            <tr>
+                                <td>${inviteFromUser}</td>
+                                <td>${inviteStatus}</td>
+                            </tr>
+                        `;
+                        userAcceptedInvitesTable.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching accepted invites for user:", error);
                 });
         }
 
