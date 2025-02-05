@@ -122,7 +122,6 @@
             <thead>
                 <tr>
                     <th>Accepted By</th>
-                    <th>Action</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -172,26 +171,26 @@
                         const data = doc.data();
                         
                         // Check if the current user is either the sender or the receiver
-                        const isSender = data.fromUserId === user.uid;
-                        const isReceiver = data.toUserId === user.uid;
-                        const hasAccepted = data.acceptedAt && data.acceptedAt !== null;
+                        const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
+
+                        // Check if the invitation has been accepted
+                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
 
                         // Only display the invitation if it's accepted and the current user is involved
-                        if ((isSender || isReceiver) && hasAccepted) {
-                            const acceptedBy = isSender ? data.toUserName : data.fromUserName;
-                            const acceptedByEmail = isSender ? data.toUserEmail : data.fromUserEmail;
-
+                        if (isSenderOrReceiver && hasAccepted) {
+                            const acceptedBy = data.acceptedByUser[0];  // Assuming the first element is the accepted user
                             const row = `
                                 <tr>
                                     <td>
-                                        ${acceptedBy} (${acceptedByEmail})
-                                    </td>
-                                    <td>
-                                        <button onclick="viewAcceptedInvites('${data.fromUserId}', '${data.toUserId}')">View Invites</button>
+                                        ${acceptedBy.email}<br>
+                                        ${acceptedBy.name}
                                     </td>
                                 </tr>
                             `;
                             invitationsTable.innerHTML += row;
+
+                            // Now, fetch a list of invites accepted by this user
+                            displayAcceptedInvitesByUser(acceptedBy);
                         }
                     });
                 })
@@ -201,27 +200,44 @@
                 });
         }
 
-        function viewAcceptedInvites(fromUserId, toUserId) {
-            // Fetch and display invites for the selected user
-            const user = auth.currentUser;
-            if (!user) return;
+        function displayAcceptedInvitesByUser(acceptedUser) {
+            // Create a new section in the table for this user's accepted invites
+            const userSection = document.createElement("div");
+            userSection.innerHTML = `
+                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invite From</th>
+                            <th>Invite Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userAcceptedInvites-${acceptedUser.uid}">
+                    </tbody>
+                </table>
+            `;
+            document.querySelector(".container").appendChild(userSection);
 
-            const currentUserIsSender = fromUserId === user.uid;
-            const userIdToCheck = currentUserIsSender ? toUserId : fromUserId;
-
+            // Fetch invites accepted by this user
             db.collection("invitations")
-                .where("fromUserId", "==", userIdToCheck)
-                .where("status", "==", "accepted")
+                .where("acceptedByUser", "array-contains", acceptedUser.email)
                 .get()
                 .then(snapshot => {
-                    let acceptedInvitesList = "Invites Accepted by this User:<br>";
+                    const userAcceptedInvitesTable = document.getElementById(`userAcceptedInvites-${acceptedUser.uid}`);
 
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        acceptedInvitesList += `${data.fromUserEmail} → ${data.toUserEmail}<br>`;
-                    });
+                        const inviteFromUser = data.fromUserEmail || "Unknown"; // Or any other field you wish to display
+                        const inviteStatus = data.status || "Unknown";
 
-                    alert(acceptedInvitesList);
+                        const row = `
+                            <tr>
+                                <td>${inviteFromUser}</td>
+                                <td>${inviteStatus}</td>
+                            </tr>
+                        `;
+                        userAcceptedInvitesTable.innerHTML += row;
+                    });
                 })
                 .catch(error => {
                     console.error("Error fetching accepted invites for user:", error);
