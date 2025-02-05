@@ -121,11 +121,7 @@
         <table id="invitationsTable">
             <thead>
                 <tr>
-                 
-                   
-                   
                     <th>Accepted By</th>
-                   
                 </tr>
             </thead>
             <tbody></tbody>
@@ -135,8 +131,6 @@
         <button id="generateLinkBtn">Generate Link</button>
         <input type="text" id="inviteLink" readonly>
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-
-     
     </div>
 
     <script>
@@ -163,63 +157,45 @@
             }
         });
 
-function fetchAcceptedInvitations() {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    const user = auth.currentUser;
-    if (!user) return;
+        function fetchAcceptedInvitations() {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            const user = auth.currentUser;
+            if (!user) return;
 
-    db.collection("invitations")
-        .get()
-        .then(snapshot => {
-            invitationsTable.innerHTML = "";  // Clear the table before populating
+            db.collection("invitations")
+                .get()
+                .then(snapshot => {
+                    invitationsTable.innerHTML = "";  // Clear the table before populating
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                
-                // Check if the current user is either the sender or the receiver
-                const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
-                
-                // Check if the invitation has been accepted
-                const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
 
-                // Check if the current user is the one who accepted the invitation
-                const acceptedByCurrentUser = hasAccepted && data.acceptedByUser[0].id === user.uid;
+                        // Check if the invitation has been accepted
+                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
 
-                // Only display the invitation if it's accepted and the current user is involved
-                if ((isSenderOrReceiver && hasAccepted) || acceptedByCurrentUser) {
-                    const row = `
-                        <tr>
-                            <td>${doc.id}</td>
-                            <td>${data.fromUserEmail || 'N/A'}</td>
-                            <td>${data.fromUserId || 'N/A'}</td>
-                            <td>${hasAccepted ? 
-                                `Email: ${data.acceptedByUser[0].email}<br>
-                                 ID: ${data.acceptedByUser[0].id}<br>
-                                 Name: ${data.acceptedByUser[0].name}` 
-                                : 'N/A'}</td>
-                            <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
-                            <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
-                            <td>${data.status || 'N/A'}</td>
-                        </tr>
-                    `;
-                    invitationsTable.innerHTML += row;
-                }
-            });
-        })
-        .catch(error => {
-            console.error("Error fetching invitations:", error);
-            document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
-        });
-}
-
-
-        
-
+                        // Only display the invitation if it's accepted
+                        if (hasAccepted) {
+                            const row = `
+                                <tr>
+                                    <td>
+                                        ${data.acceptedByUser[0].email} (ID: ${data.acceptedByUser[0].id}, Name: ${data.acceptedByUser[0].name})
+                                    </td>
+                                </tr>
+                            `;
+                            invitationsTable.innerHTML += row;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching invitations:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+                });
+        }
 
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
             if (!user) return;
-            
+
             const uniqueId = Math.random().toString(36).substr(2, 9);
             const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
@@ -233,7 +209,6 @@ function fetchAcceptedInvitations() {
                 inviteLinkInput.value = inviteLink;
                 inviteLinkInput.style.display = "block";
                 document.getElementById("copyLinkBtn").style.display = "inline-block";
-                document.getElementById("shareSection").style.display = "block";
             });
         });
 
@@ -242,21 +217,6 @@ function fetchAcceptedInvitations() {
             inviteLinkInput.select();
             document.execCommand("copy");
             alert("Link copied to clipboard!");
-        });
-
-        document.getElementById("shareWhatsappBtn").addEventListener("click", () => {
-            const link = document.getElementById("inviteLink").value;
-            window.open(`https://wa.me/?text=${encodeURIComponent(link)}`);
-        });
-
-        document.getElementById("shareEmailBtn").addEventListener("click", () => {
-            const link = document.getElementById("inviteLink").value;
-            window.location.href = `mailto:?subject=Invitation&body=${encodeURIComponent(link)}`;
-        });
-
-        document.getElementById("shareXBtn").addEventListener("click", () => {
-            const link = document.getElementById("inviteLink").value;
-            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(link)}`);
         });
 
         document.getElementById("signOutBtn").addEventListener("click", () => {
