@@ -204,45 +204,45 @@
             });
     }
 
-    function displayAcceptedInvitesByUser(acceptedUser, invitations) {
-        const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
-        let section = document.getElementById(sectionId);
+   function displayAcceptedInvitesByUser(acceptedUser, invitations) {
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+    let section = document.getElementById(sectionId);
 
-        // Remove existing section to prevent duplicates
-        if (section) section.remove();
+    // Remove existing section to prevent duplicates
+    if (section) section.remove();
 
-        // Create new section
-        section = document.createElement('div');
-        section.id = sectionId;
-        section.innerHTML = `
-            <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Invite From</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="${sectionId}-tbody"></tbody>
-            </table>
-        `;
-        document.querySelector('.container').appendChild(section);
-
-        // Populate sub-table
-        const tbody = document.getElementById(`${sectionId}-tbody`);
-        const userInvitations = invitations.filter(invite => 
-            invite.acceptedByUser.some(u => u.email === acceptedUser.email)
-        );
-
-        userInvitations.forEach(invite => {
-            tbody.innerHTML += `
+    // Create new section
+    section = document.createElement('div');
+    section.id = sectionId;
+    section.innerHTML = `
+        <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.name})</h3>
+        <table>
+            <thead>
                 <tr>
-                    <td>${invite.fromUserEmail}</td>
-                    <td>${invite.status}</td>
+                    <th>Invite From</th>
+                    <th>Status</th>
                 </tr>
-            `;
-        });
-    }
+            </thead>
+            <tbody id="${sectionId}-tbody"></tbody>
+        </table>
+    `;
+    document.querySelector('.container').appendChild(section);
+
+    // Populate sub-table
+    const tbody = document.getElementById(`${sectionId}-tbody`);
+    const userInvitations = invitations.filter(invite => 
+        invite.acceptedByUser.some(u => u.email === acceptedUser.email)
+    );
+
+    userInvitations.forEach(invite => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${invite.fromUserName}</td>
+                <td>${invite.status}</td>
+            </tr>
+        `;
+    });
+}
 
     // Remaining code (generate link, sign out) remains unchanged
     document.getElementById("generateLinkBtn").addEventListener("click", () => {
