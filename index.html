@@ -33,13 +33,21 @@
             color: #4CAF50;
         }
         input[type="email"],
-        input[type="password"] {
+        input[type="password"],
+        input[type="text"] {
             width: 100%;
             padding: 10px;
             margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+        .name-fields {
+            display: flex;
+            gap: 10px;
+        }
+        .name-fields input {
+            flex: 1;
         }
         button {
             width: 100%;
@@ -97,6 +105,10 @@
 
         <!-- Form to Sign Up or Log In -->
         <form id="signUpForm">
+            <div class="name-fields">
+                <input type="text" id="firstName" placeholder="First Name" required>
+                <input type="text" id="lastName" placeholder="Last Name" required>
+            </div>
             <input type="email" id="email" placeholder="Enter your email" required>
             <input type="password" id="password" placeholder="Enter your password" required>
             <input type="hidden" id="inviteId">
@@ -139,6 +151,8 @@
         // Handle form submission for sign-up
         document.getElementById('signUpForm').addEventListener('submit', function (event) {
             event.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
@@ -148,8 +162,10 @@
                     const user = userCredential.user;
                     const userRef = db.collection('users').doc(user.uid);
 
-                    // Add user to Firestore
+                    // Add user to Firestore with first and last name
                     return userRef.set({
+                        firstName: firstName,
+                        lastName: lastName,
                         email: user.email,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                         inviteAccepted: inviteId ? inviteId : null
@@ -164,14 +180,27 @@
                 });
         });
 
-        // Google login handler
+        // Google login handler with name capture
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
             const provider = new firebase.auth.GoogleAuthProvider();
 
             auth.signInWithPopup(provider)
                 .then((result) => {
                     const user = result.user;
-                    console.log('Google user signed in:', user);
+                    const displayName = user.displayName || '';
+                    const names = displayName.split(' ');
+                    const firstName = names[0] || '';
+                    const lastName = names.slice(1).join(' ') || '';
+
+                    // Store user data in Firestore
+                    return db.collection('users').doc(user.uid).set({
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                })
+                .then(() => {
                     window.location.href = '/welcome.html';
                 })
                 .catch((error) => {
