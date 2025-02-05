@@ -8,89 +8,52 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #4CAF50;
-        }
-        input[type="email"],
-        input[type="password"],
-        input[type="text"] {
-            width: 100%;
+        /* ... (keep existing styles) ... */
+        .debug-info {
+            margin-top: 20px;
             padding: 10px;
-            margin: 10px 0;
+            background-color: #f8f9fa;
             border: 1px solid #ddd;
             border-radius: 4px;
-            font-size: 14px;
-        }
-        .name-fields {
-            display: flex;
-            gap: 10px;
-        }
-        .name-fields input {
-            flex: 1;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .google-btn {
-            width: 100%;
-            background-color: #db4437;
-            border: none;
-            border-radius: 4px;
-            padding: 12px;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .google-btn:hover {
-            background-color: #c1351d;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .invite-info {
-            text-align: center;
-            margin-bottom: 20px;
+            font-size: 12px;
+            display: none;
         }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Sign Up / Log In</h1>
+        
+        <!-- Invite Message -->
+        <div id="inviteMessage"></div>
+        <div id="inviteInfo" class="invite-info"></div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message"></div>
+
+        <!-- Debug Info -->
+        <div id="debugInfo" class="debug-info"></div>
+
+        <!-- Form to Sign Up or Log In -->
+        <form id="signUpForm">
+            <div class="name-fields">
+                <input type="text" id="firstName" placeholder="First Name" required>
+                <input type="text" id="lastName" placeholder="Last Name" required>
+            </div>
+            <input type="email" id="email" placeholder="Enter your email" required>
+            <input type="password" id="password" placeholder="Enter your password" required>
+            <input type="hidden" id="inviteId">
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <!-- Google Login Button -->
+        <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
+
+        <div class="text-center">
+            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
+        </div>
+    </div>
+
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -108,10 +71,25 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
 
+        // Debug function
+        function logDebug(message, data = null) {
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.style.display = 'block';
+            const timestamp = new Date().toISOString();
+            const debugMessage = `${timestamp}: ${message}${data ? '\nData: ' + JSON.stringify(data) : ''}`;
+            debugInfo.innerHTML += debugMessage + '<br>';
+            console.log(debugMessage, data);
+        }
+
         // Handle inviteId from URL
         const urlParams = new URLSearchParams(window.location.search);
         const inviteId = urlParams.get('inviteId');
+        
+        // Set inviteId in the hidden input
+        document.getElementById('inviteId').value = inviteId || '';
+
         if (inviteId) {
+            logDebug('Invite ID found:', inviteId);
             const inviteMessage = document.getElementById('inviteMessage');
             const inviteInfo = document.getElementById('inviteInfo');
 
@@ -120,25 +98,27 @@
             invitationRef.get().then((docSnapshot) => {
                 if (docSnapshot.exists) {
                     const invitationData = docSnapshot.data();
+                    logDebug('Invitation data retrieved:', invitationData);
                     const sender = invitationData.fromUserName || invitationData.fromUserEmail;
                     inviteMessage.textContent = `You have been invited by ${sender}. Please sign up to accept the invite.`;
                     inviteInfo.innerHTML = `Sender: ${sender}<br>Email: ${invitationData.fromUserEmail}`;
 
-                    // Check if the invitation is already accepted
                     if (invitationData.acceptedAt) {
                         inviteMessage.textContent = `This invite has already been accepted by another user.`;
                         inviteInfo.innerHTML = `Sender: ${sender}<br>Email: ${invitationData.fromUserEmail}<br>Accepted At: ${invitationData.acceptedAt.toDate()}`;
                     }
                 } else {
+                    logDebug('Invalid invite ID - document does not exist');
                     inviteMessage.textContent = "Invalid invite link.";
                 }
             }).catch((error) => {
+                logDebug('Error fetching invitation:', error);
                 console.error("Error fetching invitation:", error);
             });
         }
 
         // Handle form submission for sign-up
-        document.getElementById('signUpForm').addEventListener('submit', function (event) {
+        document.getElementById('signUpForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const firstName = document.getElementById('firstName').value;
             const lastName = document.getElementById('lastName').value;
@@ -146,133 +126,132 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-                    const userRef = db.collection('users').doc(user.uid);
+            logDebug('Starting sign-up process', { email, inviteId });
 
-                    // Add user to Firestore with first and last name
-                    return userRef.set({
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        inviteAccepted: inviteId ? inviteId : null
-                    }).then(() => {
-                        // Now mark the invite as accepted after login
-                        if (inviteId) {
-                            const invitationRef = db.collection('invitations').doc(inviteId);
-                            return invitationRef.update({
-                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                acceptedByUser: {
-                                    id: user.uid,
-                                    name: `${firstName} ${lastName}`,
-                                    email: email
-                                }
-                            });
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                logDebug('User created successfully', { uid: user.uid });
+
+                const userData = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    inviteAccepted: inviteId || null
+                };
+
+                await db.collection('users').doc(user.uid).set(userData);
+                logDebug('User data saved to Firestore');
+
+                if (inviteId) {
+                    logDebug('Processing invitation acceptance');
+                    const invitationRef = db.collection('invitations').doc(inviteId);
+                    await invitationRef.update({
+                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        acceptedByUser: {
+                            id: user.uid,
+                            name: `${firstName} ${lastName}`,
+                            email: email
                         }
                     });
-                })
-                .then(() => {
-                    console.log('User signed up and invitation accepted');
-                    window.location.href = '/welcome.html';
-                })
-                .catch(error => {
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
+                    logDebug('Invitation marked as accepted');
+                }
+
+                window.location.href = '/welcome.html';
+            } catch (error) {
+                logDebug('Error during sign-up:', error);
+                document.getElementById('errorMessage').textContent = error.message;
+            }
         });
 
-        // Google login handler with name capture
-        document.getElementById('googleSignInBtn').addEventListener('click', function () {
+        // Google login handler
+        document.getElementById('googleSignInBtn').addEventListener('click', async function () {
             const provider = new firebase.auth.GoogleAuthProvider();
+            
+            try {
+                logDebug('Starting Google sign-in process');
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                const displayName = user.displayName || '';
+                const names = displayName.split(' ');
+                const firstName = names[0] || '';
+                const lastName = names.slice(1).join(' ') || '';
 
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    const displayName = user.displayName || '';
-                    const names = displayName.split(' ');
-                    const firstName = names[0] || '';
-                    const lastName = names.slice(1).join(' ') || '';
+                logDebug('Google sign-in successful', { uid: user.uid });
 
-                    // Store user data in Firestore
-                    return db.collection('users').doc(user.uid).set({
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        // Mark the invitation as accepted after Google login
-                        const inviteId = document.getElementById('inviteId').value;
-                        if (inviteId) {
-                            const invitationRef = db.collection('invitations').doc(inviteId);
-                            return invitationRef.update({
-                                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                acceptedByUser: {
-                                    id: user.uid,
-                                    name: `${firstName} ${lastName}`,
-                                    email: user.email
-                                }
-                            });
+                await db.collection('users').doc(user.uid).set({
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                logDebug('User data saved to Firestore');
+
+                const inviteId = document.getElementById('inviteId').value;
+                if (inviteId) {
+                    logDebug('Processing invitation acceptance for Google sign-in');
+                    const invitationRef = db.collection('invitations').doc(inviteId);
+                    await invitationRef.update({
+                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        acceptedByUser: {
+                            id: user.uid,
+                            name: `${firstName} ${lastName}`,
+                            email: user.email
                         }
                     });
-                })
-                .then(() => {
-                    window.location.href = '/welcome.html';
-                })
-                .catch((error) => {
-                    console.error('Error during Google sign-in:', error);
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
+                    logDebug('Invitation marked as accepted');
+                }
+
+                window.location.href = '/welcome.html';
+            } catch (error) {
+                logDebug('Error during Google sign-in:', error);
+                document.getElementById('errorMessage').textContent = error.message;
+            }
         });
 
-        // Switch between Sign-Up and Login
+        // Switch to login form
         function switchToLoginForm() {
             const signUpForm = document.getElementById('signUpForm');
             signUpForm.innerHTML = `
                 <input type="email" id="email" placeholder="Enter your email" required>
                 <input type="password" id="password" placeholder="Enter your password" required>
+                <input type="hidden" id="inviteId" value="${inviteId || ''}">
                 <button type="button" onclick="logIn()">Log In</button>
             `;
+            logDebug('Switched to login form');
         }
 
-        function logIn() {
+        // Login function
+        async function logIn() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const inviteId = document.getElementById('inviteId').value;
 
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => window.location.href = '/welcome.html')
-                .catch(error => document.getElementById('errorMessage').textContent = error.message);
+            try {
+                logDebug('Starting login process');
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                logDebug('Login successful', { uid: userCredential.user.uid });
+
+                if (inviteId) {
+                    logDebug('Processing invitation acceptance for login');
+                    const invitationRef = db.collection('invitations').doc(inviteId);
+                    await invitationRef.update({
+                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        acceptedByUser: {
+                            id: userCredential.user.uid,
+                            email: email
+                        }
+                    });
+                    logDebug('Invitation marked as accepted');
+                }
+
+                window.location.href = '/welcome.html';
+            } catch (error) {
+                logDebug('Error during login:', error);
+                document.getElementById('errorMessage').textContent = error.message;
+            }
         }
     </script>
-
-    <div class="container">
-        <h1>Sign Up / Log In</h1>
-        
-        <!-- Invite Message -->
-        <div id="inviteMessage"></div>
-        <div id="inviteInfo" class="invite-info"></div>
-
-        <!-- Error Message -->
-        <div id="errorMessage" class="error-message"></div>
-
-        <!-- Form to Sign Up or Log In -->
-        <form id="signUpForm">
-            <div class="name-fields">
-                <input type="text" id="firstName" placeholder="First Name" required>
-                <input type="text" id="lastName" placeholder="Last Name" required>
-            </div>
-            <input type="email" id="email" placeholder="Enter your email" required>
-            <input type="password" id="password" placeholder="Enter your password" required>
-            <input type="hidden" id="inviteId" value="${inviteId || ''}">
-            <button type="submit">Sign Up</button>
-        </form>
-
-        <!-- Google Login Button -->
-        <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
-
-        <div class="text-center">
-            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
-        </div>
-    </div>
 </body>
 </html>
