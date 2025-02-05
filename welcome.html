@@ -19,6 +19,7 @@
             align-items: center;
             flex-direction: column;
             padding-top: 20px;
+            position: relative;
         }
         .container {
             background-color: white;
@@ -69,14 +70,32 @@
         .nav-links a:hover {
             text-decoration: underline;
         }
+        .sign-out-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .sign-out-btn:hover {
+            background-color: #cc0000;
+        }
     </style>
 </head>
 <body>
+
     <!-- Navigation links -->
     <div class="nav-links">
         <a href="invite.html">Invite</a>
         <a href="profile.html">Profile</a>
     </div>
+
+    <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
 
     <div class="container">
         <h1>Welcome to the Platform!</h1>
@@ -133,7 +152,7 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Display user info and invitation details
+        // Handle user authentication and fetch data
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}! Welcome to the platform.`;
@@ -143,6 +162,15 @@
                 window.location.href = '/index.html'; // Redirect to sign-up page if not authenticated
             }
         });
+
+        // Sign out function
+        function signOut() {
+            auth.signOut().then(() => {
+                window.location.href = "/index.html"; // Redirect to login page
+            }).catch(error => {
+                console.error("Sign-out error:", error);
+            });
+        }
 
         // Fetch users from Firestore
         function fetchUsers() {
@@ -166,59 +194,59 @@
             });
         }
 
-    function fetchInvitations() {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-        document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
-        return;
-    }
+        // Fetch invitations
+        function fetchInvitations() {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
+                return;
+            }
 
-    invitationsTable.innerHTML = ""; // Clear previous results
-    const invitations = []; // Store all invitations
+            invitationsTable.innerHTML = ""; // Clear previous results
+            const invitations = [];
 
-    const fetchSenderInvites = db.collection("invitations")
-        .where("fromUserId", "==", currentUser.uid)
-        .get();
+            const fetchSenderInvites = db.collection("invitations")
+                .where("fromUserId", "==", currentUser.uid)
+                .get();
 
-    const fetchAcceptedInvites = db.collection("invitations")
-        .where("toUserId", "==", currentUser.uid)
-        .where("status", "==", "accepted")
-        .get();
+            const fetchAcceptedInvites = db.collection("invitations")
+                .where("toUserId", "==", currentUser.uid)
+                .where("status", "==", "accepted")
+                .get();
 
-    Promise.all([fetchSenderInvites, fetchAcceptedInvites]).then(results => {
-        results.forEach(snapshot => {
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                console.log("Invitation data:", data);
-                invitations.push({ id: doc.id, ...data });
+            Promise.all([fetchSenderInvites, fetchAcceptedInvites]).then(results => {
+                results.forEach(snapshot => {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        console.log("Invitation data:", data);
+                        invitations.push({ id: doc.id, ...data });
+                    });
+                });
+
+                if (invitations.length === 0) {
+                    document.getElementById("errorMessage").textContent = "No invitations found.";
+                    return;
+                }
+
+                invitations.forEach(invite => {
+                    const row = `
+                        <tr>
+                            <td>${invite.id}</td>
+                            <td>${invite.fromUserEmail || "Unknown"}</td>
+                            <td>${invite.toUserEmail || "Unknown"}</td>
+                            <td>${invite.status}</td>
+                            <td>${invite.acceptedAt ? new Date(invite.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                            <td>${invite.timestamp ? new Date(invite.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                        </tr>
+                    `;
+                    invitationsTable.innerHTML += row;
+                });
+            }).catch(error => {
+                console.error("Error fetching invitations:", error);
+                document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
             });
-        });
-
-        if (invitations.length === 0) {
-            document.getElementById("errorMessage").textContent = "No invitations found.";
-            return;
         }
-
-        invitations.forEach(invite => {
-            const row = `
-                <tr>
-                    <td>${invite.id}</td>
-                    <td>${invite.fromUserEmail || "Unknown"}</td>
-                    <td>${invite.toUserEmail || "Unknown"}</td>
-                    <td>${invite.status}</td>
-                    <td>${invite.acceptedAt ? new Date(invite.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                    <td>${invite.timestamp ? new Date(invite.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
-                </tr>
-            `;
-            invitationsTable.innerHTML += row;
-        });
-    }).catch(error => {
-        console.error("Error fetching invitations:", error);
-        document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
-    });
-}
-
     </script>
 </body>
 </html>
