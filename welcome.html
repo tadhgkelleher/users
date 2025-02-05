@@ -163,53 +163,55 @@
             }
         });
 
-        function fetchAcceptedInvitations() {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            const user = auth.currentUser;
-            if (!user) return;
+      <script>
+    // Firebase initialization and auth setup here...
 
-            db.collection("invitations")
-                .get()
-                .then(snapshot => {
-                    invitationsTable.innerHTML = "";  // Clear the table before populating
+    function fetchAcceptedInvitations() {
+        const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+        const user = auth.currentUser;
+        if (!user) return;
 
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        
-                        // Check if the current user is either the sender or the receiver
-                        const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
+        db.collection("invitations")
+            .get()
+            .then(snapshot => {
+                invitationsTable.innerHTML = "";  // Clear the table before populating
 
-                        // Check if the invitation has been accepted
-                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    
+                    // Check if the current user is either the sender or the receiver
+                    const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
 
-                        // Only display the invitation if it's accepted and the current user is involved
-                        if (isSenderOrReceiver && hasAccepted) {
-                            const acceptedBy = data.acceptedByUser[0];
-                            const row = `
-                                <tr>
-                                    <td>${doc.id}</td>
-                                    <td>${data.fromUserEmail || 'N/A'}</td>
-                                    <td>${data.fromUserId || 'N/A'}</td>
-                                    <td>${hasAccepted ? 
-                                        `Email: ${acceptedBy.email}<br>
-                                         ID: ${acceptedBy.id}<br>
-                                         Name: ${acceptedBy.name}` 
-                                        : 'N/A'}</td>
-                                    <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
-                                    <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
-                                    <td>${data.status || 'N/A'}</td>
-                                </tr>
-                            `;
-                            invitationsTable.innerHTML += row;
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching invitations:", error);
-                    document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+                    // Check if the invitation has been accepted (i.e., there are entries in acceptedByUser array)
+                    const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
+
+                    // Only display the invitation if it's accepted and the current user is involved
+                    if (isSenderOrReceiver && hasAccepted) {
+                        const acceptedBy = data.acceptedByUser[0];  // Assuming the first element is the accepted user
+                        const row = `
+                            <tr>
+                                <td>${doc.id}</td>
+                                <td>${data.fromUserEmail || 'N/A'}</td>
+                                <td>${data.fromUserId || 'N/A'}</td>
+                                <td>${hasAccepted ? 
+                                    `Email: ${acceptedBy.email}<br>
+                                     ID: ${acceptedBy.id}<br>
+                                     Name: ${acceptedBy.name}` 
+                                    : 'N/A'}</td>
+                                <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                <td>${data.status || 'N/A'}</td>
+                            </tr>
+                        `;
+                        invitationsTable.innerHTML += row;
+                    }
                 });
-        }
-
+            })
+            .catch(error => {
+                console.error("Error fetching invitations:", error);
+                document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+            });
+    }
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
             if (!user) return;
