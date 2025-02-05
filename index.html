@@ -87,7 +87,6 @@
     </style>
 </head>
 <body>
-    <!-- Force HTTPS redirection -->
     <script>
         if (window.location.protocol !== 'https:') {
             window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search;
@@ -97,13 +96,10 @@
     <div class="container">
         <h1>Sign Up / Log In</h1>
         
-        <!-- Invite Message -->
         <div id="inviteMessage"></div>
-
-        <!-- Error Message -->
+        <div id="senderInfo"></div>
         <div id="errorMessage" class="error-message"></div>
 
-        <!-- Form to Sign Up or Log In -->
         <form id="signUpForm">
             <div class="name-fields">
                 <input type="text" id="firstName" placeholder="First Name" required>
@@ -115,7 +111,6 @@
             <button type="submit">Sign Up</button>
         </form>
 
-        <!-- Google Login Button -->
         <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
 
         <div class="text-center">
@@ -124,7 +119,6 @@
     </div>
 
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -134,21 +128,39 @@
             appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
             measurementId: "G-TER99X7NBT"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // Handle inviteId from URL
         const urlParams = new URLSearchParams(window.location.search);
         const inviteId = urlParams.get('inviteId');
         if (inviteId) {
             document.getElementById('inviteMessage').textContent = `You have been invited! Please sign up to accept the invite.`;
             document.getElementById('inviteId').value = inviteId;
+
+            // Retrieve invitation details to show the sender's info
+            const invitationRef = db.collection('invitations').doc(inviteId);
+            invitationRef.get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const sender = doc.data().fromUserName || "Unknown Sender";
+                        const senderEmail = doc.data().fromUserEmail || "No email provided";
+                        
+                        document.getElementById('senderInfo').innerHTML = `
+                            <p><strong>Sender:</strong> ${sender}</p>
+                            <p><strong>Email:</strong> ${senderEmail}</p>
+                        `;
+                    } else {
+                        console.error('Invitation not found!');
+                        document.getElementById('errorMessage').textContent = 'Invitation not found!';
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error retrieving invitation:', error);
+                    document.getElementById('errorMessage').textContent = `Error retrieving invitation: ${error.message}`;
+                });
         }
 
-        // Handle form submission for sign-up
         document.getElementById('signUpForm').addEventListener('submit', function (event) {
             event.preventDefault();
             const firstName = document.getElementById('firstName').value;
@@ -162,7 +174,6 @@
                     const user = userCredential.user;
                     const userRef = db.collection('users').doc(user.uid);
 
-                    // Add user to Firestore with first and last name
                     return userRef.set({
                         firstName: firstName,
                         lastName: lastName,
@@ -172,26 +183,53 @@
                     });
                 })
                 .then(() => {
-                    // If there's an inviteId, update the invitation document
                     if (inviteId) {
-                        db.collection('invitations').doc(inviteId).update({
-                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        })
-                        .then(() => {
-                            console.log('Invitation marked as accepted');
-                        })
-                        .catch((error) => {
-                            console.error('Error updating invitation:', error);
-                        });
+                        console.log(`Attempting to mark invitation ${inviteId} as accepted...`);
+
+                        // Get invitation document
+                        const invitationRef = db.collection('invitations').doc(inviteId);
+                        invitationRef.get()
+                            .then((doc) => {
+                                if (doc.exists) {
+                                    console.log(`Invitation found: `, doc.data());
+                                    
+                                    // Mark the invitation as accepted
+                                    invitationRef.update({
+                                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                        acceptedByUser: {
+                                            id: user.uid,
+                                            name: `${firstName} ${lastName}`,
+                                            email: email
+                                        }
+                                    })
+                                    .then(() => {
+                                        console.log('Invitation marked as accepted:', {
+                                            acceptedAt: new Date(),
+                                            acceptedByUser: { id: user.uid, name: `${firstName} ${lastName}`, email: email }
+                                        });
+                                    })
+                                    .catch((error) => {
+                                        console.error('Error updating invitation:', error);
+                                        document.getElementById('errorMessage').textContent = `Error updating invitation: ${error.message}`;
+                                    });
+                                } else {
+                                    console.error('Invitation not found!');
+                                    document.getElementById('errorMessage').textContent = 'Invitation not found!';
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error retrieving invitation:', error);
+                                document.getElementById('errorMessage').textContent = `Error retrieving invitation: ${error.message}`;
+                            });
                     }
                     window.location.href = '/welcome.html';
                 })
                 .catch(error => {
+                    console.error('Error during sign-up:', error);
                     document.getElementById('errorMessage').textContent = error.message;
                 });
         });
 
-        // Google login handler with name capture
         document.getElementById('googleSignInBtn').addEventListener('click', function () {
             const provider = new firebase.auth.GoogleAuthProvider();
 
@@ -203,7 +241,6 @@
                     const firstName = names[0] || '';
                     const lastName = names.slice(1).join(' ') || '';
 
-                    // Store user data in Firestore
                     return db.collection('users').doc(user.uid).set({
                         firstName: firstName,
                         lastName: lastName,
@@ -220,7 +257,6 @@
                 });
         });
 
-        // Switch between Sign-Up and Login
         function switchToLoginForm() {
             const signUpForm = document.getElementById('signUpForm');
             signUpForm.innerHTML = `
