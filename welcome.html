@@ -19,7 +19,6 @@
             align-items: center;
             flex-direction: column;
             padding-top: 20px;
-            position: relative;
         }
         .container {
             background-color: white;
@@ -70,73 +69,56 @@
         .nav-links a:hover {
             text-decoration: underline;
         }
-        .sign-out-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #ff4d4d;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
+        #inviteLink {
+            display: none;
+            margin-top: 10px;
+            padding: 5px;
+            width: 100%;
         }
-        .sign-out-btn:hover {
-            background-color: #cc0000;
+        .share-buttons button {
+            margin: 5px;
         }
     </style>
 </head>
 <body>
-
-    <!-- Navigation links -->
     <div class="nav-links">
         <a href="invite.html">Invite</a>
         <a href="profile.html">Profile</a>
+        <button id="signOutBtn">Sign Out</button>
     </div>
-
-    <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
 
     <div class="container">
         <h1>Welcome to the Platform!</h1>
         <p id="welcomeMessage"></p>
-
         <div class="error-message" id="errorMessage"></div>
 
-        <h2>Users List</h2>
-        <table id="usersTable">
-            <thead>
-                <tr>
-                    <th>User ID</th>
-                    <th>Email</th>
-                    <th>Created At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- User data will go here -->
-            </tbody>
-        </table>
-
-        <h2>Invitations List</h2>
+        <h2>Accepted Invitations</h2>
         <table id="invitationsTable">
             <thead>
                 <tr>
                     <th>Invite ID</th>
                     <th>Sender</th>
                     <th>Receiver</th>
-                    <th>Status</th>
                     <th>Accepted At</th>
                     <th>Timestamp</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- Invitation data will go here -->
-            </tbody>
+            <tbody></tbody>
         </table>
+
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+
+        <div id="shareSection" class="share-buttons" style="display: none;">
+            <button id="shareWhatsappBtn">Share on WhatsApp</button>
+            <button id="shareEmailBtn">Share via Email</button>
+            <button id="shareXBtn">Share on X</button>
+        </div>
     </div>
 
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -147,95 +129,61 @@
             measurementId: "G-TER99X7NBT"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Handle user authentication and fetch data
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}! Welcome to the platform.`;
-                fetchUsers();
-                fetchInvitations();
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+                fetchAcceptedInvitations();
             } else {
-                window.location.href = '/index.html'; // Redirect to sign-up page if not authenticated
+                window.location.href = '/index.html';
             }
         });
 
-        // Sign out function
-        function signOut() {
-            auth.signOut().then(() => {
-                window.location.href = "/index.html"; // Redirect to login page
-            }).catch(error => {
-                console.error("Sign-out error:", error);
-            });
+        function fetchAcceptedInvitations() {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            db.collection("invitations")
+                .where("status", "==", "accepted")
+                .get()
+                .then(snapshot => {
+                    invitationsTable.innerHTML = "";
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const row = `
+                            <tr>
+                                <td>${doc.id}</td>
+                                <td>${data.fromUserEmail}</td>
+                                <td>${data.toUserEmail}</td>
+                                <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                                <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                            </tr>
+                        `;
+                        invitationsTable.innerHTML += row;
+                    });
+                })
+                .catch(error => console.error("Error fetching invitations:", error));
         }
 
-        // Fetch users from Firestore
-        function fetchUsers() {
-            const usersTable = document.getElementById("usersTable").getElementsByTagName('tbody')[0];
-            db.collection("users").get().then(snapshot => {
-                usersTable.innerHTML = ""; // Clear existing rows before adding new ones
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const row = `
-                        <tr>
-                            <td>${doc.id}</td>
-                            <td>${data.email}</td>
-                            <td>${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                        </tr>
-                    `;
-                    usersTable.innerHTML += row;
-                });
-            }).catch(error => {
-                console.error("Error fetching users:", error);
-                document.getElementById("errorMessage").textContent = "There was an error fetching users.";
+        document.getElementById("generateLinkBtn").addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+            db.collection("invitations").doc(uniqueId).set({
+                fromUserId: user.uid,
+                fromUserEmail: user.email,
+                status: "open",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(() => {
+                document.getElementById("inviteLink").value = inviteLink;
+                document.getElementById("inviteLink").style.display = "block";
+                document.getElementById("copyLinkBtn").style.display = "inline-block";
+                document.getElementById("shareSection").style.display = "block";
             });
-        }
-
-      function fetchInvitations() {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-        document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
-        return;
-    }
-
-    invitationsTable.innerHTML = ""; // Clear previous results
-
-    db.collection("invitations")
-        .where("status", "==", "accepted") // Only fetch accepted invitations
-        .get()
-        .then(snapshot => {
-            if (snapshot.empty) {
-                document.getElementById("errorMessage").textContent = "No accepted invitations found.";
-                return;
-            }
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                console.log("Accepted invitation data:", data);
-
-                const row = `
-                    <tr>
-                        <td>${doc.id}</td>
-                        <td>${data.fromUserEmail || "Unknown"}</td>
-                        <td>${data.toUserEmail || "Unknown"}</td>
-                        <td>${data.status}</td>
-                        <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                        <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
-                    </tr>
-                `;
-                invitationsTable.innerHTML += row;
-            });
-        })
-        .catch(error => {
-            console.error("Error fetching accepted invitations:", error);
-            document.getElementById("errorMessage").textContent = "There was an error fetching accepted invitations.";
         });
-}
-
     </script>
 </body>
 </html>
