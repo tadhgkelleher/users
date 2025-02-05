@@ -133,149 +133,150 @@
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
     </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+   <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+        authDomain: "mandala-5165e.firebaseapp.com",
+        projectId: "mandala-5165e",
+        storageBucket: "mandala-5165e.appspot.com",
+        messagingSenderId: "569537405023",
+        appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+        measurementId: "G-TER99X7NBT"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchAcceptedInvitations();
-            } else {
-                window.location.href = '/index.html';
-            }
-        });
-
-        function fetchAcceptedInvitations() {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            const user = auth.currentUser;
-            if (!user) return;
-
-            db.collection("invitations")
-                .get()
-                .then(snapshot => {
-                    invitationsTable.innerHTML = "";  // Clear the table before populating
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        
-                        // Check if the current user is either the sender or the receiver
-                        const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
-
-                        // Check if the invitation has been accepted
-                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
-
-                        // Only display the invitation if it's accepted and the current user is involved
-                        if (isSenderOrReceiver && hasAccepted) {
-                            const acceptedBy = data.acceptedByUser[0];  // Assuming the first element is the accepted user
-                            const row = `
-                                <tr>
-                                    <td>
-                                        ${acceptedBy.email}<br>
-                                        ${acceptedBy.name}
-                                    </td>
-                                </tr>
-                            `;
-                            invitationsTable.innerHTML += row;
-
-                            // Now, fetch a list of invites accepted by this user
-                            displayAcceptedInvitesByUser(acceptedBy);
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching invitations:", error);
-                    document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
-                });
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+            fetchAcceptedInvitations(user);
+        } else {
+            window.location.href = '/index.html';
         }
+    });
 
-        function displayAcceptedInvitesByUser(acceptedUser) {
-            // Create a new section in the table for this user's accepted invites
-            const userSection = document.createElement("div");
-            userSection.innerHTML = `
-                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
-                <table>
-                    <thead>
+    function fetchAcceptedInvitations(currentUser) {
+        const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+        invitationsTable.innerHTML = "";
+
+        db.collection("invitations").get()
+            .then(snapshot => {
+                const allInvitations = [];
+                const acceptedUsersMap = new Map(); // Track unique accepted users
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const isSender = data.fromUserId === currentUser.uid;
+                    const hasAccepted = data.acceptedByUser?.length > 0;
+                    const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
+
+                    // Include invitations sent by the user or accepted by the user
+                    if ((isSender || isAcceptor) && hasAccepted) {
+                        allInvitations.push(data);
+                        data.acceptedByUser.forEach(user => {
+                            const key = user.email;
+                            if (!acceptedUsersMap.has(key)) {
+                                acceptedUsersMap.set(key, user);
+                            }
+                        });
+                    }
+                });
+
+                // Populate main table
+                acceptedUsersMap.forEach(user => {
+                    invitationsTable.innerHTML += `
                         <tr>
-                            <th>Invite From</th>
-                            <th>Invite Status</th>
+                            <td>${user.email}<br>${user.name}</td>
                         </tr>
-                    </thead>
-                    <tbody id="userAcceptedInvites-${acceptedUser.uid}">
-                    </tbody>
-                </table>
-            `;
-            document.querySelector(".container").appendChild(userSection);
-
-            // Fetch invites accepted by this user
-            db.collection("invitations")
-                .where("acceptedByUser", "array-contains", acceptedUser.email)
-                .get()
-                .then(snapshot => {
-                    const userAcceptedInvitesTable = document.getElementById(`userAcceptedInvites-${acceptedUser.uid}`);
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const inviteFromUser = data.fromUserEmail || "Unknown"; // Or any other field you wish to display
-                        const inviteStatus = data.status || "Unknown";
-
-                        const row = `
-                            <tr>
-                                <td>${inviteFromUser}</td>
-                                <td>${inviteStatus}</td>
-                            </tr>
-                        `;
-                        userAcceptedInvitesTable.innerHTML += row;
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching accepted invites for user:", error);
+                    `;
                 });
-        }
 
-        document.getElementById("generateLinkBtn").addEventListener("click", () => {
-            const user = auth.currentUser;
-            if (!user) return;
-            
-            const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-
-            db.collection("invitations").doc(uniqueId).set({
-                fromUserId: user.uid,
-                fromUserEmail: user.email,
-                status: "open",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(() => {
-                const inviteLinkInput = document.getElementById("inviteLink");
-                inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                document.getElementById("copyLinkBtn").style.display = "inline-block";
+                // Display sub-tables for each accepted user
+                acceptedUsersMap.forEach(user => {
+                    displayAcceptedInvitesByUser(user, allInvitations);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching invitations:", error);
+                document.getElementById("errorMessage").textContent = "Error loading invitations.";
             });
-        });
+    }
 
-        document.getElementById("copyLinkBtn").addEventListener("click", () => {
+    function displayAcceptedInvitesByUser(acceptedUser, invitations) {
+        const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+        let section = document.getElementById(sectionId);
+
+        // Remove existing section to prevent duplicates
+        if (section) section.remove();
+
+        // Create new section
+        section = document.createElement('div');
+        section.id = sectionId;
+        section.innerHTML = `
+            <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Invite From</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="${sectionId}-tbody"></tbody>
+            </table>
+        `;
+        document.querySelector('.container').appendChild(section);
+
+        // Populate sub-table
+        const tbody = document.getElementById(`${sectionId}-tbody`);
+        const userInvitations = invitations.filter(invite => 
+            invite.acceptedByUser.some(u => u.email === acceptedUser.email)
+        );
+
+        userInvitations.forEach(invite => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${invite.fromUserEmail}</td>
+                    <td>${invite.status}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // Remaining code (generate link, sign out) remains unchanged
+    document.getElementById("generateLinkBtn").addEventListener("click", () => {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+        db.collection("invitations").doc(uniqueId).set({
+            fromUserId: user.uid,
+            fromUserEmail: user.email,
+            status: "open",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        }).then(() => {
             const inviteLinkInput = document.getElementById("inviteLink");
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            alert("Link copied to clipboard!");
+            inviteLinkInput.value = inviteLink;
+            inviteLinkInput.style.display = "block";
+            document.getElementById("copyLinkBtn").style.display = "inline-block";
         });
+    });
 
-        document.getElementById("signOutBtn").addEventListener("click", () => {
-            auth.signOut().then(() => {
-                window.location.href = '/index.html';
-            });
+    document.getElementById("copyLinkBtn").addEventListener("click", () => {
+        const inviteLinkInput = document.getElementById("inviteLink");
+        inviteLinkInput.select();
+        document.execCommand("copy");
+        alert("Link copied to clipboard!");
+    });
+
+    document.getElementById("signOutBtn").addEventListener("click", () => {
+        auth.signOut().then(() => {
+            window.location.href = '/index.html';
         });
-    </script>
+    });
+</script>
 </body>
 </html>
