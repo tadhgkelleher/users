@@ -161,28 +161,40 @@
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
             if (!userId) return;
 
-            db.collection("invitations")
-                .where("fromUserId", "==", userId) // Check if user is the inviter
-                .orWhere("toUserId", "==", userId) // Check if user is the invitee
-                .get()
-                .then(snapshot => {
-                    invitationsTable.innerHTML = "";  // Clear the table before populating
+            // Initialize an array to store the invitations
+            let allInvitations = [];
 
-                    snapshot.forEach(doc => {
+            // Query for invitations where the user is the inviter
+            const inviterQuery = db.collection("invitations")
+                .where("fromUserId", "==", userId)
+                .get();
+
+            // Query for invitations where the user is the invitee
+            const inviteeQuery = db.collection("invitations")
+                .where("toUserId", "==", userId)
+                .get();
+
+            // Combine both queries and display results
+            Promise.all([inviterQuery, inviteeQuery])
+                .then(([inviterSnapshot, inviteeSnapshot]) => {
+                    allInvitations = [...inviterSnapshot.docs, ...inviteeSnapshot.docs];
+
+                    // Clear the table before populating
+                    invitationsTable.innerHTML = "";  
+
+                    allInvitations.forEach(doc => {
                         const data = doc.data();
                         const acceptedByUser = data.acceptedByUser;
 
                         // Display invitations where the current user is involved
-                        if (data.fromUserId === userId || data.toUserId === userId) {
-                            const row = `
-                                <tr>
-                                    <td>
-                                        ${acceptedByUser && acceptedByUser.length > 0 ? acceptedByUser[0].email : 'Not Accepted Yet'}
-                                    </td>
-                                </tr>
-                            `;
-                            invitationsTable.innerHTML += row;
-                        }
+                        const row = `
+                            <tr>
+                                <td>
+                                    ${acceptedByUser && acceptedByUser.length > 0 ? acceptedByUser[0].email : 'Not Accepted Yet'}
+                                </td>
+                            </tr>
+                        `;
+                        invitationsTable.innerHTML += row;
                     });
                 })
                 .catch(error => {
