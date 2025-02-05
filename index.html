@@ -172,7 +172,18 @@
                     });
                 })
                 .then(() => {
-                    console.log('User signed up');
+                    // If there's an inviteId, update the invitation document
+                    if (inviteId) {
+                        db.collection('invitations').doc(inviteId).update({
+                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        })
+                        .then(() => {
+                            console.log('Invitation marked as accepted');
+                        })
+                        .catch((error) => {
+                            console.error('Error updating invitation:', error);
+                        });
+                    }
                     window.location.href = '/welcome.html';
                 })
                 .catch(error => {
