@@ -157,56 +157,51 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchUserInvitations(user.uid);
+                fetchAcceptedInvitations();
             } else {
                 window.location.href = '/index.html';
             }
         });
 
-        function fetchUserInvitations(userId) {
+        function fetchAcceptedInvitations() {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            if (!userId) return;
+            const user = auth.currentUser;
+            if (!user) return;
 
-            // Initialize an array to store the invitations
-            let allInvitations = [];
+            db.collection("invitations")
+                .get()
+                .then(snapshot => {
+                    invitationsTable.innerHTML = "";  // Clear the table before populating
 
-            // Query for invitations where the user is the inviter
-            const inviterQuery = db.collection("invitations")
-                .where("fromUserId", "==", userId)
-                .get();
-
-            // Query for invitations where the user is the invitee
-            const inviteeQuery = db.collection("invitations")
-                .where("toUserId", "==", userId)
-                .get();
-
-            // Combine both queries and display results
-            Promise.all([inviterQuery, inviteeQuery])
-                .then(([inviterSnapshot, inviteeSnapshot]) => {
-                    allInvitations = [...inviterSnapshot.docs, ...inviteeSnapshot.docs];
-
-                    // Clear the table before populating
-                    invitationsTable.innerHTML = "";  
-
-                    allInvitations.forEach(doc => {
+                    snapshot.forEach(doc => {
                         const data = doc.data();
-                        const acceptedAt = data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "Not Accepted Yet";
-                        const createdAt = new Date(data.timestamp.seconds * 1000).toLocaleString();
-                        const acceptedBy = data.acceptedByUser ? `Email: ${data.acceptedByUser.email}<br>ID: ${data.acceptedByUser.id}<br>Name: ${data.acceptedByUser.name}` : "Not Accepted Yet";
-                        const status = data.status || "open";
+                        
+                        // Check if the current user is either the sender or the receiver
+                        const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
 
-                        const row = `
-                            <tr>
-                                <td>${doc.id}</td>
-                                <td>${data.fromUserEmail}</td>
-                                <td>${data.fromUserId}</td>
-                                <td>${acceptedBy}</td>
-                                <td>${acceptedAt}</td>
-                                <td>${createdAt}</td>
-                                <td>${status}</td>
-                            </tr>
-                        `;
-                        invitationsTable.innerHTML += row;
+                        // Check if the invitation has been accepted
+                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
+
+                        // Only display the invitation if it's accepted and the current user is involved
+                        if (isSenderOrReceiver && hasAccepted) {
+                            const acceptedBy = data.acceptedByUser[0];
+                            const row = `
+                                <tr>
+                                    <td>${doc.id}</td>
+                                    <td>${data.fromUserEmail || 'N/A'}</td>
+                                    <td>${data.fromUserId || 'N/A'}</td>
+                                    <td>${hasAccepted ? 
+                                        `Email: ${acceptedBy.email}<br>
+                                         ID: ${acceptedBy.id}<br>
+                                         Name: ${acceptedBy.name}` 
+                                        : 'N/A'}</td>
+                                    <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                    <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                    <td>${data.status || 'N/A'}</td>
+                                </tr>
+                            `;
+                            invitationsTable.innerHTML += row;
+                        }
                     });
                 })
                 .catch(error => {
@@ -218,7 +213,7 @@
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
             if (!user) return;
-
+            
             const uniqueId = Math.random().toString(36).substr(2, 9);
             const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
