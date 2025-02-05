@@ -178,20 +178,26 @@ function fetchAcceptedInvitations() {
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // Check if the current user is either the sender or the receiver and if the invitation has been accepted
-                if ((data.fromUserId === user.uid || data.toUserId === user.uid) && data.acceptedByUser) {
-                    // Check if the current user is the one who accepted the invite
-                    const acceptedByCurrentUser = (data.acceptedByUser.id === user.uid);
-                    
+                // Check if the current user is either the sender or the receiver
+                const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
+                
+                // Check if the invitation has been accepted
+                const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
+
+                // Check if the current user is the one who accepted the invitation
+                const acceptedByCurrentUser = hasAccepted && data.acceptedByUser[0].id === user.uid;
+
+                // Only display the invitation if it's accepted and the current user is involved
+                if ((isSenderOrReceiver && hasAccepted) || acceptedByCurrentUser) {
                     const row = `
                         <tr>
                             <td>${doc.id}</td>
                             <td>${data.fromUserEmail || 'N/A'}</td>
                             <td>${data.fromUserId || 'N/A'}</td>
-                            <td>${data.acceptedByUser ? 
-                                `Email: ${data.acceptedByUser.email}<br>
-                                 ID: ${data.acceptedByUser.id}<br>
-                                 Name: ${data.acceptedByUser.name}` 
+                            <td>${hasAccepted ? 
+                                `Email: ${data.acceptedByUser[0].email}<br>
+                                 ID: ${data.acceptedByUser[0].id}<br>
+                                 Name: ${data.acceptedByUser[0].name}` 
                                 : 'N/A'}</td>
                             <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
                             <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
