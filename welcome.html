@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,7 +150,7 @@
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById("welcomeMessage").textContent = Hello, ${user.email}!;
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
                 fetchAcceptedInvitations();
             } else {
                 window.location.href = '/index.html';
@@ -180,15 +179,18 @@
                         // Only display the invitation if it's accepted and the current user is involved
                         if (isSenderOrReceiver && hasAccepted) {
                             const acceptedBy = data.acceptedByUser[0];  // Assuming the first element is the accepted user
-                            const row = 
+                            const row = `
                                 <tr>
                                     <td>
                                         ${acceptedBy.email}<br>
                                         ${acceptedBy.name}
                                     </td>
                                 </tr>
-                            ;
+                            `;
                             invitationsTable.innerHTML += row;
+
+                            // Now, fetch a list of invites accepted by this user
+                            displayAcceptedInvitesByUser(acceptedBy);
                         }
                     });
                 })
@@ -198,12 +200,56 @@
                 });
         }
 
+        function displayAcceptedInvitesByUser(acceptedUser) {
+            // Create a new section in the table for this user's accepted invites
+            const userSection = document.createElement("div");
+            userSection.innerHTML = `
+                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invite From</th>
+                            <th>Invite Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userAcceptedInvites-${acceptedUser.uid}">
+                    </tbody>
+                </table>
+            `;
+            document.querySelector(".container").appendChild(userSection);
+
+            // Fetch invites accepted by this user
+            db.collection("invitations")
+                .where("acceptedByUser", "array-contains", acceptedUser.email)
+                .get()
+                .then(snapshot => {
+                    const userAcceptedInvitesTable = document.getElementById(`userAcceptedInvites-${acceptedUser.uid}`);
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const inviteFromUser = data.fromUserEmail || "Unknown"; // Or any other field you wish to display
+                        const inviteStatus = data.status || "Unknown";
+
+                        const row = `
+                            <tr>
+                                <td>${inviteFromUser}</td>
+                                <td>${inviteStatus}</td>
+                            </tr>
+                        `;
+                        userAcceptedInvitesTable.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching accepted invites for user:", error);
+                });
+        }
+
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
             if (!user) return;
             
             const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = https://my-mandala.com/?inviteId=${uniqueId};
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
             db.collection("invitations").doc(uniqueId).set({
                 fromUserId: user.uid,
