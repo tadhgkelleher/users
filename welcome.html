@@ -79,30 +79,6 @@
         .nav-links a:hover, .nav-links button:hover {
             text-decoration: underline;
         }
-        #inviteLink {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .share-buttons {
-            margin-top: 20px;
-        }
-        .share-buttons button, #generateLinkBtn, #copyLinkBtn {
-            margin: 5px;
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-            background-color: #45a049;
-        }
     </style>
 </head>
 <body>
@@ -117,11 +93,12 @@
         <p id="welcomeMessage"></p>
         <div class="error-message" id="errorMessage"></div>
 
-        <h2>Accepted Invitations</h2>
-        <table id="invitationsTable">
+        <h2>Connections</h2>
+        <table id="connectionsTable">
             <thead>
                 <tr>
-                    <th>Accepted By</th>
+                    <th>Your Connections</th>
+                    <th>Connections of Your Connections</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -151,49 +128,63 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchAcceptedInvitations();
+                fetchConnections();
             } else {
                 window.location.href = '/index.html';
             }
         });
 
-        function fetchAcceptedInvitations() {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+        function fetchConnections() {
+            const connectionsTable = document.getElementById("connectionsTable").getElementsByTagName('tbody')[0];
             const user = auth.currentUser;
             if (!user) return;
 
+            // Fetch the current user's accepted invitations
             db.collection("invitations")
+                .where("fromUserId", "==", user.uid)
+                .where("status", "==", "accepted")
                 .get()
                 .then(snapshot => {
-                    invitationsTable.innerHTML = "";  // Clear the table before populating
+                    connectionsTable.innerHTML = "";  // Clear the table before populating
 
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        
-                        // Check if the current user is either the sender or the receiver
-                        const isSenderOrReceiver = (data.fromUserId === user.uid || data.toUserId === user.uid);
+                        const connectionEmail = data.toUserEmail || 'N/A';
+                        const connectionName = data.toUserName || 'N/A';
 
-                        // Check if the invitation has been accepted
-                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
-
-                        // Only display the invitation if it's accepted and the current user is involved
-                        if (isSenderOrReceiver && hasAccepted) {
-                            const acceptedBy = data.acceptedByUser[0];  // Assuming the first element is the accepted user
-                            const row = `
-                                <tr>
-                                    <td>
-                                        ${acceptedBy.email}<br>
-                                        ${acceptedBy.name}
-                                    </td>
-                                </tr>
-                            `;
-                            invitationsTable.innerHTML += row;
-                        }
+                        // Now fetch the connections of this user (the current connection)
+                        fetchConnectionsOfUser(data.toUserId, connectionEmail, connectionName, connectionsTable);
                     });
                 })
                 .catch(error => {
-                    console.error("Error fetching invitations:", error);
-                    document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+                    console.error("Error fetching connections:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading connections. Please try again.";
+                });
+        }
+
+        function fetchConnectionsOfUser(userId, connectionEmail, connectionName, table) {
+            db.collection("invitations")
+                .where("fromUserId", "==", userId)
+                .where("status", "==", "accepted")
+                .get()
+                .then(snapshot => {
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const innerConnectionEmail = data.toUserEmail || 'N/A';
+                        const innerConnectionName = data.toUserName || 'N/A';
+
+                        // Populate the table with connections and their connections
+                        const row = `
+                            <tr>
+                                <td>${connectionEmail} (${connectionName})</td>
+                                <td>${innerConnectionEmail} (${innerConnectionName})</td>
+                            </tr>
+                        `;
+                        table.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching connections of connection:", error);
                 });
         }
 
