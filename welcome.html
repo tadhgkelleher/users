@@ -166,67 +166,57 @@
             });
         }
 
-      // Fetch invitations from Firestore where the sender is the current user
-function fetchInvitations() {
+    function fetchInvitations() {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    const currentUser = auth.currentUser; // Get the current authenticated user
+    const currentUser = auth.currentUser;
     if (!currentUser) {
         document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
         return;
     }
 
-    db.collection("invitations")
-        .where("fromUserId", "==", currentUser.uid) // Filter by the current user's ID
-        .get()
-        .then(snapshot => {
-            invitationsTable.innerHTML = ""; // Clear existing rows before adding new ones
-            if (snapshot.empty) {
-                console.log("No invitations found.");
-                document.getElementById("errorMessage").textContent = "No invitations found.";
-                return;
-            }
+    invitationsTable.innerHTML = ""; // Clear previous results
+    const invitations = []; // Store all invitations
 
+    const fetchSenderInvites = db.collection("invitations")
+        .where("fromUserId", "==", currentUser.uid)
+        .get();
+
+    const fetchAcceptedInvites = db.collection("invitations")
+        .where("toUserId", "==", currentUser.uid)
+        .where("status", "==", "accepted")
+        .get();
+
+    Promise.all([fetchSenderInvites, fetchAcceptedInvites]).then(results => {
+        results.forEach(snapshot => {
             snapshot.forEach(doc => {
                 const data = doc.data();
-                console.log("Invitation data:", data); // Log invitation data to inspect it
-
-                // Handle missing sender and receiver data
-                const senderData = { email: "Sender not found" };
-                const receiverData = { email: "Receiver not found" };
-
-                db.collection("users").doc(data.fromUserId).get().then(senderDoc => {
-                    if (senderDoc.exists) {
-                        senderData.email = senderDoc.data().email;
-                    }
-
-                    db.collection("users").doc(data.toUserId).get().then(receiverDoc => {
-                        if (receiverDoc.exists) {
-                            receiverData.email = receiverDoc.data().email;
-                        }
-
-                        // Build the invitation row
-                        const row = `
-                            <tr>
-                                <td>${doc.id}</td>
-                                <td>${senderData.email}</td>
-                                <td>${receiverData.email}</td>
-                                <td>${data.status}</td>
-                                <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
-                                <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
-                            </tr>
-                        `;
-                        invitationsTable.innerHTML += row;
-                    }).catch(error => {
-                        console.error("Error fetching receiver data:", error);
-                    });
-                }).catch(error => {
-                    console.error("Error fetching sender data:", error);
-                });
+                console.log("Invitation data:", data);
+                invitations.push({ id: doc.id, ...data });
             });
-        }).catch(error => {
-            console.error("Error fetching invitations:", error);
-            document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
         });
+
+        if (invitations.length === 0) {
+            document.getElementById("errorMessage").textContent = "No invitations found.";
+            return;
+        }
+
+        invitations.forEach(invite => {
+            const row = `
+                <tr>
+                    <td>${invite.id}</td>
+                    <td>${invite.fromUserEmail || "Unknown"}</td>
+                    <td>${invite.toUserEmail || "Unknown"}</td>
+                    <td>${invite.status}</td>
+                    <td>${invite.acceptedAt ? new Date(invite.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                    <td>${invite.timestamp ? new Date(invite.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                </tr>
+            `;
+            invitationsTable.innerHTML += row;
+        });
+    }).catch(error => {
+        console.error("Error fetching invitations:", error);
+        document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
+    });
 }
 
     </script>
