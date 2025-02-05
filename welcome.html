@@ -1,7 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8"><!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding-top: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 1000px;
+            width: 90%;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a, .nav-links button {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .nav-links a:hover, .nav-links button:hover {
+            text-decoration: underline;
+        }
+        #inviteLink {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .share-buttons {
+            margin-top: 20px;
+        }
+        .share-buttons button, #generateLinkBtn, #copyLinkBtn {
+            margin: 5px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="invite.html">Invite</a>
+        <a href="profile.html">Profile</a>
+        <button id="signOutBtn">Sign Out</button>
+    </div>
+
+    <div class="container">
+        <h1>Welcome to the Platform!</h1>
+        <p id="welcomeMessage"></p>
+        <div class="error-message" id="errorMessage"></div>
+
+        <h2>Invitations</h2>
+        <table id="invitationsTable">
+            <thead>
+                <tr>
+                    <th>Invite ID</th>
+                    <th>From</th>
+                    <th>Accepted By</th>
+                    <th>Accepted At</th>
+                    <th>Created At</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+
+        <div id="shareSection" class="share-buttons" style="display: none;">
+            <button id="shareWhatsappBtn">Share on WhatsApp</button>
+            <button id="shareEmailBtn">Share via Email</button>
+            <button id="shareXBtn">Share on X</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+                fetchAcceptedInvitations();
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        function fetchAcceptedInvitations() {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            db.collection("invitations")
+                .get()
+                .then(snapshot => {
+                    invitationsTable.innerHTML = "";
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const row = `
+                            <tr>
+                                <td>${doc.id}</td>
+                                <td>${data.fromUserEmail || 'N/A'}</td>
+                                <td>${data.acceptedByUser ? data.acceptedByUser.email : 'N/A'}</td>
+                                <td>${data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                <td>${data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleString() : 'N/A'}</td>
+                                <td>${data.status}</td>
+                            </tr>
+                        `;
+                        invitationsTable.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching invitations:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading invitations. Please try again.";
+                });
+        }
+
+        document.getElementById("generateLinkBtn").addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+            db.collection("invitations").doc(uniqueId).set({
+                fromUserId: user.uid,
+                fromUserEmail: user.email,
+                status: "open",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(() => {
+                const inviteLinkInput = document.getElementById("inviteLink");
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                document.getElementById("copyLinkBtn").style.display = "inline-block";
+                document.getElementById("shareSection").style.display = "block";
+            });
+        });
+
+        document.getElementById("copyLinkBtn").addEventListener("click", () => {
+            const inviteLinkInput = document.getElementById("inviteLink");
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            alert("Link copied to clipboard!");
+        });
+
+        document.getElementById("shareWhatsappBtn").addEventListener("click", () => {
+            const link = document.getElementById("inviteLink").value;
+            window.open(`https://wa.me/?text=${encodeURIComponent(link)}`);
+        });
+
+        document.getElementById("shareEmailBtn").addEventListener("click", () => {
+            const link = document.getElementById("inviteLink").value;
+            window.location.href = `mailto:?subject=Invitation&body=${encodeURIComponent(link)}`;
+        });
+
+        document.getElementById("shareXBtn").addEventListener("click", () => {
+            const link = document.getElementById("inviteLink").value;
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(link)}`);
+        });
+
+        document.getElementById("signOutBtn").addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.href = '/index.html';
+            });
+        });
+    </script>
+</body>
+</html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
