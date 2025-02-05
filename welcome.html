@@ -121,7 +121,13 @@
         <table id="invitationsTable">
             <thead>
                 <tr>
+                    <th>Invite ID</th>
+                    <th>From Email</th>
+                    <th>From User ID</th>
                     <th>Accepted By</th>
+                    <th>Accepted At</th>
+                    <th>Created At</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -184,14 +190,20 @@
 
                     allInvitations.forEach(doc => {
                         const data = doc.data();
-                        const acceptedAt = data.acceptedAt;
+                        const acceptedAt = data.acceptedAt ? new Date(data.acceptedAt.seconds * 1000).toLocaleString() : "Not Accepted Yet";
+                        const createdAt = new Date(data.timestamp.seconds * 1000).toLocaleString();
+                        const acceptedBy = data.acceptedByUser ? `Email: ${data.acceptedByUser.email}<br>ID: ${data.acceptedByUser.id}<br>Name: ${data.acceptedByUser.name}` : "Not Accepted Yet";
+                        const status = data.status || "open";
 
-                        // Display invitations where the current user is involved
                         const row = `
                             <tr>
-                                <td>
-                                    ${acceptedAt ? `Accepted on: ${new Date(acceptedAt.seconds * 1000).toLocaleString()}` : 'Not Accepted Yet'}
-                                </td>
+                                <td>${doc.id}</td>
+                                <td>${data.fromUserEmail}</td>
+                                <td>${data.fromUserId}</td>
+                                <td>${acceptedBy}</td>
+                                <td>${acceptedAt}</td>
+                                <td>${createdAt}</td>
+                                <td>${status}</td>
                             </tr>
                         `;
                         invitationsTable.innerHTML += row;
