@@ -151,34 +151,33 @@
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchAcceptedInvitations();
+                fetchUserInvitations(user.uid);
             } else {
                 window.location.href = '/index.html';
             }
         });
 
-        function fetchAcceptedInvitations() {
+        function fetchUserInvitations(userId) {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            const user = auth.currentUser;
-            if (!user) return;
+            if (!userId) return;
 
             db.collection("invitations")
+                .where("fromUserId", "==", userId) // Check if user is the inviter
+                .orWhere("toUserId", "==", userId) // Check if user is the invitee
                 .get()
                 .then(snapshot => {
                     invitationsTable.innerHTML = "";  // Clear the table before populating
 
                     snapshot.forEach(doc => {
                         const data = doc.data();
+                        const acceptedByUser = data.acceptedByUser;
 
-                        // Check if the invitation has been accepted
-                        const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
-
-                        // Only display the invitation if it's accepted
-                        if (hasAccepted) {
+                        // Display invitations where the current user is involved
+                        if (data.fromUserId === userId || data.toUserId === userId) {
                             const row = `
                                 <tr>
                                     <td>
-                                        ${data.acceptedByUser[0].email} (ID: ${data.acceptedByUser[0].id}, Name: ${data.acceptedByUser[0].name})
+                                        ${acceptedByUser && acceptedByUser.length > 0 ? acceptedByUser[0].email : 'Not Accepted Yet'}
                                     </td>
                                 </tr>
                             `;
