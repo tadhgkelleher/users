@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up / Log In</title>
+    <title>Welcome</title>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,110 +17,103 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            flex-direction: column;
+            padding-top: 20px;
         }
         .container {
             background-color: white;
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
+            max-width: 1000px;
+            width: 90%;
         }
         h1 {
             text-align: center;
             margin-bottom: 20px;
             color: #4CAF50;
         }
-        input[type="email"],
-        input[type="password"],
-        input[type="text"] {
+        table {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            border-collapse: collapse;
+            margin-bottom: 30px;
         }
-        .name-fields {
-            display: flex;
-            gap: 10px;
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
         }
-        .name-fields input {
-            flex: 1;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
+        th {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        .google-btn {
-            width: 100%;
-            background-color: #db4437;
-            border: none;
-            border-radius: 4px;
-            padding: 12px;
-            color: white;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .google-btn:hover {
-            background-color: #c1351d;
-        }
-        .text-center {
-            text-align: center;
         }
         .error-message {
             color: red;
             text-align: center;
             margin-bottom: 20px;
         }
+        .nav-links {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .nav-links a {
+            color: white;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
-    <!-- Force HTTPS redirection -->
-    <script>
-        if (window.location.protocol !== 'https:') {
-            window.location.href = 'https://' + window.location.hostname + window.location.pathname + window.location.search;
-        }
-    </script>
+    <!-- Navigation links -->
+    <div class="nav-links">
+        <a href="invite.html">Invite</a>
+        <a href="profile.html">Profile</a>
+    </div>
 
     <div class="container">
-        <h1>Sign Up / Log In</h1>
-        
-        <!-- Invite Message -->
-        <div id="inviteMessage"></div>
+        <h1>Welcome to the Platform!</h1>
+        <p id="welcomeMessage"></p>
 
-        <!-- Error Message -->
-        <div id="errorMessage" class="error-message"></div>
+        <div class="error-message" id="errorMessage"></div>
 
-        <!-- Form to Sign Up or Log In -->
-        <form id="signUpForm">
-            <div class="name-fields">
-                <input type="text" id="firstName" placeholder="First Name" required>
-                <input type="text" id="lastName" placeholder="Last Name" required>
-            </div>
-            <input type="email" id="email" placeholder="Enter your email" required>
-            <input type="password" id="password" placeholder="Enter your password" required>
-            <input type="hidden" id="inviteId">
-            <button type="submit">Sign Up</button>
-        </form>
+        <h2>Users List</h2>
+        <table id="usersTable">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Email</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- User data will go here -->
+            </tbody>
+        </table>
 
-        <!-- Google Login Button -->
-        <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
-
-        <div class="text-center">
-            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
-        </div>
+        <h2>Invitations List</h2>
+        <table id="invitationsTable">
+            <thead>
+                <tr>
+                    <th>Invite ID</th>
+                    <th>Sender</th>
+                    <th>Receiver</th>
+                    <th>Status</th>
+                    <th>Accepted At</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Invitation data will go here -->
+            </tbody>
+        </table>
     </div>
 
     <script>
@@ -137,96 +130,95 @@
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
-        // Handle inviteId from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const inviteId = urlParams.get('inviteId');
-        if (inviteId) {
-            document.getElementById('inviteMessage').textContent = `You have been invited! Please sign up to accept the invite.`;
-            document.getElementById('inviteId').value = inviteId;
+        // Display user info and invitation details
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}! Welcome to the platform.`;
+                fetchUsers();
+                fetchInvitations();
+            } else {
+                window.location.href = '/index.html'; // Redirect to sign-up page if not authenticated
+            }
+        });
+
+        // Fetch users from Firestore
+        function fetchUsers() {
+            const usersTable = document.getElementById("usersTable").getElementsByTagName('tbody')[0];
+            db.collection("users").get().then(snapshot => {
+                usersTable.innerHTML = ""; // Clear existing rows before adding new ones
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const row = `
+                        <tr>
+                            <td>${doc.id}</td>
+                            <td>${data.email}</td>
+                            <td>${data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                        </tr>
+                    `;
+                    usersTable.innerHTML += row;
+                });
+            }).catch(error => {
+                console.error("Error fetching users:", error);
+                document.getElementById("errorMessage").textContent = "There was an error fetching users.";
+            });
         }
 
-        // Handle form submission for sign-up
-        document.getElementById('signUpForm').addEventListener('submit', function (event) {
-            event.preventDefault();
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const inviteId = document.getElementById('inviteId').value;
+    function fetchInvitations() {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        document.getElementById("errorMessage").textContent = "You need to be logged in to view invitations.";
+        return;
+    }
 
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(userCredential => {
-                    const user = userCredential.user;
-                    const userRef = db.collection('users').doc(user.uid);
+    invitationsTable.innerHTML = ""; // Clear previous results
+    const invitations = []; // Store all invitations
 
-                    // Add user to Firestore with first and last name
-                    return userRef.set({
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        inviteAccepted: inviteId ? inviteId : null
-                    });
-                })
-                .then(() => {
-                    console.log('User signed up');
-                    window.location.href = '/welcome.html';
-                })
-                .catch(error => {
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
+    const fetchSenderInvites = db.collection("invitations")
+        .where("fromUserId", "==", currentUser.uid)
+        .get();
+
+    const fetchAcceptedInvites = db.collection("invitations")
+        .where("toUserId", "==", currentUser.uid)
+        .where("status", "==", "accepted")
+        .get();
+
+    Promise.all([fetchSenderInvites, fetchAcceptedInvites]).then(results => {
+        results.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                console.log("Invitation data:", data);
+                invitations.push({ id: doc.id, ...data });
+            });
         });
 
-        // Google login handler with name capture
-        document.getElementById('googleSignInBtn').addEventListener('click', function () {
-            const provider = new firebase.auth.GoogleAuthProvider();
+        if (invitations.length === 0) {
+            document.getElementById("errorMessage").textContent = "No invitations found.";
+            return;
+        }
 
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    const user = result.user;
-                    const displayName = user.displayName || '';
-                    const names = displayName.split(' ');
-                    const firstName = names[0] || '';
-                    const lastName = names.slice(1).join(' ') || '';
-
-                    // Store user data in Firestore
-                    return db.collection('users').doc(user.uid).set({
-                        firstName: firstName,
-                        lastName: lastName,
-                        email: user.email,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                })
-                .then(() => {
-                    window.location.href = '/welcome.html';
-                })
-                .catch((error) => {
-                    console.error('Error during Google sign-in:', error);
-                    document.getElementById('errorMessage').textContent = error.message;
-                });
-        });
-
-        // Switch between Sign-Up and Login
-        function switchToLoginForm() {
-            const signUpForm = document.getElementById('signUpForm');
-            signUpForm.innerHTML = `
-                <input type="email" id="email" placeholder="Enter your email" required>
-                <input type="password" id="password" placeholder="Enter your password" required>
-                <button type="button" onclick="logIn()">Log In</button>
+        invitations.forEach(invite => {
+            const row = `
+                <tr>
+                    <td>${invite.id}</td>
+                    <td>${invite.fromUserEmail || "Unknown"}</td>
+                    <td>${invite.toUserEmail || "Unknown"}</td>
+                    <td>${invite.status}</td>
+                    <td>${invite.acceptedAt ? new Date(invite.acceptedAt.seconds * 1000).toLocaleString() : "N/A"}</td>
+                    <td>${invite.timestamp ? new Date(invite.timestamp.seconds * 1000).toLocaleString() : "N/A"}</td>
+                </tr>
             `;
-        }
+            invitationsTable.innerHTML += row;
+        });
+    }).catch(error => {
+        console.error("Error fetching invitations:", error);
+        document.getElementById("errorMessage").textContent = "There was an error fetching invitations.";
+    });
+}
 
-        function logIn() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => window.location.href = '/welcome.html')
-                .catch(error => document.getElementById('errorMessage').textContent = error.message);
-        }
     </script>
 </body>
 </html>
