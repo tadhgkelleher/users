@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* ... (keep existing styles) ... */
         .debug-info {
             margin-top: 20px;
             padding: 10px;
@@ -23,7 +22,7 @@
 <body>
     <div class="container">
         <h1>Sign Up / Log In</h1>
-        
+
         <!-- Invite Message -->
         <div id="inviteMessage"></div>
         <div id="inviteInfo" class="invite-info"></div>
@@ -35,7 +34,7 @@
         <div id="debugInfo" class="debug-info"></div>
 
         <!-- Form to Sign Up or Log In -->
-        <form id="signUpForm">
+        <form id="authForm">
             <div class="name-fields">
                 <input type="text" id="firstName" placeholder="First Name" required>
                 <input type="text" id="lastName" placeholder="Last Name" required>
@@ -117,8 +116,8 @@
             });
         }
 
-        // Handle form submission for sign-up
-        document.getElementById('signUpForm').addEventListener('submit', async function (event) {
+        // Handle form submission for sign-up / login
+        document.getElementById('authForm').addEventListener('submit', async function (event) {
             event.preventDefault();
             const firstName = document.getElementById('firstName').value;
             const lastName = document.getElementById('lastName').value;
@@ -126,49 +125,80 @@
             const password = document.getElementById('password').value;
             const inviteId = document.getElementById('inviteId').value;
 
-            logDebug('Starting sign-up process', { email, inviteId });
+            if (document.querySelector('button[type="submit"]').textContent === 'Sign Up') {
+                // Sign up flow
+                logDebug('Starting sign-up process', { email, inviteId });
 
-            try {
-                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                const user = userCredential.user;
-                logDebug('User created successfully', { uid: user.uid });
+                try {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    logDebug('User created successfully', { uid: user.uid });
 
-                const userData = {
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: user.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    inviteAccepted: inviteId || null
-                };
+                    const userData = {
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: user.email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        inviteAccepted: inviteId || null
+                    };
 
-                await db.collection('users').doc(user.uid).set(userData);
-                logDebug('User data saved to Firestore');
+                    await db.collection('users').doc(user.uid).set(userData);
+                    logDebug('User data saved to Firestore');
 
-                if (inviteId) {
-                    logDebug('Processing invitation acceptance');
-                    const invitationRef = db.collection('invitations').doc(inviteId);
-                    await invitationRef.update({
-                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        acceptedByUser: {
-                            id: user.uid,
-                            name: `${firstName} ${lastName}`,
-                            email: email
-                        }
-                    });
-                    logDebug('Invitation marked as accepted');
+                    if (inviteId) {
+                        logDebug('Processing invitation acceptance');
+                        const invitationRef = db.collection('invitations').doc(inviteId);
+                        await invitationRef.update({
+                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            acceptedByUser: {
+                                id: user.uid,
+                                name: `${firstName} ${lastName}`,
+                                email: email
+                            }
+                        });
+                        logDebug('Invitation marked as accepted');
+                    }
+
+                    window.location.href = '/welcome.html';
+                } catch (error) {
+                    logDebug('Error during sign-up:', error);
+                    document.getElementById('errorMessage').textContent = error.message;
                 }
+            } else {
+                // Login flow
+                logDebug('Starting login process', { email });
 
-                window.location.href = '/welcome.html';
-            } catch (error) {
-                logDebug('Error during sign-up:', error);
-                document.getElementById('errorMessage').textContent = error.message;
+                try {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    const user = userCredential.user;
+                    logDebug('Login successful', { uid: user.uid });
+
+                    const inviteId = document.getElementById('inviteId').value;
+                    if (inviteId) {
+                        logDebug('Processing invitation acceptance for login');
+                        const invitationRef = db.collection('invitations').doc(inviteId);
+                        await invitationRef.update({
+                            acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            acceptedByUser: {
+                                id: user.uid,
+                                email: email
+                            }
+                        });
+                        logDebug('Invitation marked as accepted');
+                    }
+
+                    window.location.href = '/welcome.html';
+                } catch (error) {
+                    logDebug('Error during login:', error);
+                    document.getElementById('errorMessage').textContent = error.message;
+                }
             }
         });
 
         // Google login handler
         document.getElementById('googleSignInBtn').addEventListener('click', async function () {
             const provider = new firebase.auth.GoogleAuthProvider();
-            
+
             try {
                 logDebug('Starting Google sign-in process');
                 const result = await auth.signInWithPopup(provider);
@@ -212,45 +242,15 @@
 
         // Switch to login form
         function switchToLoginForm() {
-            const signUpForm = document.getElementById('signUpForm');
-            signUpForm.innerHTML = `
+            const authForm = document.getElementById('authForm');
+            authForm.innerHTML = `
                 <input type="email" id="email" placeholder="Enter your email" required>
                 <input type="password" id="password" placeholder="Enter your password" required>
                 <input type="hidden" id="inviteId" value="${inviteId || ''}">
-                <button type="button" onclick="logIn()">Log In</button>
+                <button type="submit">Log In</button>
             `;
+            document.querySelector('button[type="submit"]').textContent = 'Log In'; // Change button text to 'Log In'
             logDebug('Switched to login form');
-        }
-
-        // Login function
-        async function logIn() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const inviteId = document.getElementById('inviteId').value;
-
-            try {
-                logDebug('Starting login process');
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                logDebug('Login successful', { uid: userCredential.user.uid });
-
-                if (inviteId) {
-                    logDebug('Processing invitation acceptance for login');
-                    const invitationRef = db.collection('invitations').doc(inviteId);
-                    await invitationRef.update({
-                        acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        acceptedByUser: {
-                            id: userCredential.user.uid,
-                            email: email
-                        }
-                    });
-                    logDebug('Invitation marked as accepted');
-                }
-
-                window.location.href = '/welcome.html';
-            } catch (error) {
-                logDebug('Error during login:', error);
-                document.getElementById('errorMessage').textContent = error.message;
-            }
         }
     </script>
 </body>
