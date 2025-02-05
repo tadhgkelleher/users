@@ -165,7 +165,7 @@
             }
         });
 
- function fetchAcceptedInvitations() {
+function fetchAcceptedInvitations() {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     const user = auth.currentUser;
     if (!user) return;
@@ -178,8 +178,11 @@
             snapshot.forEach(doc => {
                 const data = doc.data();
                 
-                // Check if the current user is either the sender or the receiver, and if the invite has been accepted
+                // Check if the current user is either the sender or the receiver and if the invitation has been accepted
                 if ((data.fromUserId === user.uid || data.toUserId === user.uid) && data.acceptedByUser) {
+                    // Check if the current user is the one who accepted the invite
+                    const acceptedByCurrentUser = (data.acceptedByUser.id === user.uid);
+                    
                     const row = `
                         <tr>
                             <td>${doc.id}</td>
@@ -205,6 +208,8 @@
         });
 }
 
+
+        
 
 
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
