@@ -9,101 +9,132 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding-top: 20px;
-        }
-        .container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 1000px;
-            width: 90%;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #4CAF50;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        .error-message {
-            color: red;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nav-links {
-            width: 100%;
-            padding: 10px;
-            background-color: #4CAF50;
-            color: white;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .nav-links a, .nav-links button {
-            color: white;
-            margin: 0 15px;
-            text-decoration: none;
-            font-weight: bold;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .nav-links a:hover, .nav-links button:hover {
-            text-decoration: underline;
-        }
-        #inviteLink {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .share-buttons {
-            margin-top: 20px;
-        }
-        .share-buttons button, #generateLinkBtn, #copyLinkBtn {
-            margin: 5px;
-            padding: 8px 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-            background-color: #45a049;
-        }
+    body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-top: 20px;
+}
+
+.container {
+    background-color: #1e1e1e;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 1000px;
+    width: 90%;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #4db6ac;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: #242424;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+th {
+    background-color: #4db6ac;
+    color: #121212;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+tr:hover {
+    background-color: #333;
+}
+
+.error-message {
+    color: #e57373;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.nav-links {
+    width: 100%;
+    padding: 15px;
+    background-color: #263238;
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+
+.nav-links a, .nav-links button {
+    color: #80cbc4;
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover, .nav-links button:hover {
+    color: #4db6ac;
+}
+
+#inviteLink {
+    display: none;
+    margin-top: 10px;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+.share-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.share-buttons button, #generateLinkBtn, #copyLinkBtn {
+    padding: 10px 18px;
+    background-color: #4db6ac;
+    color: #121212;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+    background-color: #388e8e;
+}
+
     </style>
 </head>
 <body>
@@ -118,7 +149,22 @@
         <p id="welcomeMessage"></p>
         <div class="error-message" id="errorMessage"></div>
 
-        <h2>Accepted Invitations</h2>
+   
+
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+    </div>
+
+   <!-- Visualization Container -->
+<div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
+    <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
+</div>
+
+
+         <h2>Accepted Invitations</h2>
         <table id="invitationsTable">
             <thead>
                 <tr>
@@ -127,18 +173,6 @@
             </thead>
             <tbody></tbody>
         </table>
-
-        <h2>Generate Invitation Link</h2>
-        <button id="generateLinkBtn">Generate Link</button>
-        <input type="text" id="inviteLink" readonly>
-        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-    </div>
-
-    <!-- Visualization Container -->
-    <div id="visualization-container" style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 2rem; max-width: 1000px; width: 90%;">
-        <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; text-align: center;">Network Visualization</h2>
-        <div id="visualization"></div>
-    </div>
 
     <script>
         const firebaseConfig = {
