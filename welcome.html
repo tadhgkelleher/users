@@ -133,150 +133,262 @@
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
     </div>
 
-   <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-        authDomain: "mandala-5165e.firebaseapp.com",
-        projectId: "mandala-5165e",
-        storageBucket: "mandala-5165e.appspot.com",
-        messagingSenderId: "569537405023",
-        appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-        measurementId: "G-TER99X7NBT"
-    };
+    <!-- Add React dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+    <!-- Add visualization container -->
+    <div id="visualization-root"></div>
 
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-            fetchAcceptedInvitations(user);
-        } else {
-            window.location.href = '/index.html';
+    <!-- Firebase initialization and main functionality -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+                fetchAcceptedInvitations(user);
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        function fetchAcceptedInvitations(currentUser) {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            invitationsTable.innerHTML = "";
+
+            db.collection("invitations").get()
+                .then(snapshot => {
+                    const allInvitations = [];
+                    const acceptedUsersMap = new Map();
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isSender = data.fromUserId === currentUser.uid;
+                        const hasAccepted = data.acceptedByUser?.length > 0;
+                        const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
+
+                        if ((isSender || isAcceptor) && hasAccepted) {
+                            allInvitations.push(data);
+                            data.acceptedByUser.forEach(user => {
+                                const key = user.email;
+                                if (!acceptedUsersMap.has(key)) {
+                                    acceptedUsersMap.set(key, user);
+                                }
+                            });
+                        }
+                    });
+
+                    acceptedUsersMap.forEach(user => {
+                        invitationsTable.innerHTML += `
+                            <tr>
+                                <td>${user.email}<br>${user.name}</td>
+                            </tr>
+                        `;
+                    });
+
+                    acceptedUsersMap.forEach(user => {
+                        displayAcceptedInvitesByUser(user, allInvitations);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching invitations:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading invitations.";
+                });
         }
-    });
 
-    function fetchAcceptedInvitations(currentUser) {
-        const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-        invitationsTable.innerHTML = "";
+        function displayAcceptedInvitesByUser(acceptedUser, invitations) {
+            const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+            let section = document.getElementById(sectionId);
 
-        db.collection("invitations").get()
-            .then(snapshot => {
-                const allInvitations = [];
-                const acceptedUsersMap = new Map(); // Track unique accepted users
+            if (section) section.remove();
 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const isSender = data.fromUserId === currentUser.uid;
-                    const hasAccepted = data.acceptedByUser?.length > 0;
-                    const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
+            section = document.createElement('div');
+            section.id = sectionId;
+            section.innerHTML = `
+                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invite From</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="${sectionId}-tbody"></tbody>
+                </table>
+            `;
+            document.querySelector('.container').appendChild(section);
 
-                    // Include invitations sent by the user or accepted by the user
-                    if ((isSender || isAcceptor) && hasAccepted) {
-                        allInvitations.push(data);
-                        data.acceptedByUser.forEach(user => {
-                            const key = user.email;
-                            if (!acceptedUsersMap.has(key)) {
-                                acceptedUsersMap.set(key, user);
+            const tbody = document.getElementById(`${sectionId}-tbody`);
+            const userInvitations = invitations.filter(invite => 
+                invite.acceptedByUser.some(u => u.email === acceptedUser.email)
+            );
+
+            userInvitations.forEach(invite => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${invite.fromUserEmail}</td>
+                        <td>${invite.status}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById("generateLinkBtn").addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+            db.collection("invitations").doc(uniqueId).set({
+                fromUserId: user.uid,
+                fromUserEmail: user.email,
+                status: "open",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(() => {
+                const inviteLinkInput = document.getElementById("inviteLink");
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                document.getElementById("copyLinkBtn").style.display = "inline-block";
+            });
+        });
+
+        document.getElementById("copyLinkBtn").addEventListener("click", () => {
+            const inviteLinkInput = document.getElementById("inviteLink");
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            alert("Link copied to clipboard!");
+        });
+
+        document.getElementById("signOutBtn").addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.href = '/index.html';
+            });
+        });
+    </script>
+
+    <!-- Visualization Component -->
+    <script type="text/babel">
+        const CircularNodesVisualization = () => {
+            const [nodes, setNodes] = React.useState([]);
+            
+            React.useEffect(() => {
+                const observer = new MutationObserver((mutations) => {
+                    const newNodes = [];
+                    
+                    // Get nodes from main invitation table
+                    const mainTable = document.querySelector('#invitationsTable tbody');
+                    if (mainTable) {
+                        Array.from(mainTable.querySelectorAll('tr')).forEach(row => {
+                            const email = row.querySelector('td')?.textContent?.split('\n')[0];
+                            if (email) {
+                                newNodes.push({ id: email, label: email, type: 'main' });
                             }
                         });
                     }
+                    
+                    // Get nodes from user sections
+                    document.querySelectorAll('[id^="userSection-"]').forEach(section => {
+                        const tbody = section.querySelector('tbody');
+                        if (tbody) {
+                            Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+                                const email = row.querySelector('td')?.textContent;
+                                if (email) {
+                                    newNodes.push({ id: email, label: email, type: 'sub' });
+                                }
+                            });
+                        }
+                    });
+                    
+                    setNodes([...new Map(newNodes.map(node => [node.id, node])).values()]);
                 });
-
-                // Populate main table
-                acceptedUsersMap.forEach(user => {
-                    invitationsTable.innerHTML += `
-                        <tr>
-                            <td>${user.email}<br>${user.name}</td>
-                        </tr>
-                    `;
+                
+                observer.observe(document.querySelector('.container'), {
+                    subtree: true,
+                    childList: true
                 });
+                
+                return () => observer.disconnect();
+            }, []);
+            
+            const radius = 200;
+            const centerX = 300;
+            const centerY = 250;
+            
+            return (
+                <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', textAlign: 'center' }}>Network Visualization</h2>
+                    <svg viewBox="0 0 600 500" style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'block' }}>
+                        {/* Draw connecting lines */}
+                        {nodes.map((node, i) => (
+                            <line
+                                key={`line-${i}`}
+                                x1={centerX}
+                                y1={centerY}
+                                x2={centerX + radius * Math.cos(i * 2 * Math.PI / nodes.length)}
+                                y2={centerY + radius * Math.sin(i * 2 * Math.PI / nodes.length)}
+                                stroke="#4CAF50"
+                                strokeWidth="1"
+                                opacity="0.3"
+                            />
+                        ))}
+                        
+                        {/* Draw center node */}
+                        <circle
+                            cx={centerX}
+                            cy={centerY}
+                            r="8"
+                            fill="#4CAF50"
+                        />
+                        
+                        {/* Draw outer nodes */}
+                        {nodes.map((node, i) => {
+                            const angle = i * 2 * Math.PI / nodes.length;
+                            const x = centerX + radius * Math.cos(angle);
+                            const y = centerY + radius * Math.sin(angle);
+                            
+                            return (
+                                <g key={`node-${i}`}>
+                                    <circle
+                                        cx={x}
+                                        cy={y}
+                                        r="6"
+                                        fill={node.type === 'main' ? '#4CAF50' : '#45a049'}
+                                    />
+                                    <text
+                                        x={x}
+                                        y={y + 20}
+                                        textAnchor="middle"
+                                        fontSize="12"
+                                        fill="#333"
+                                        transform={`rotate(${angle * 180 / Math.PI + (angle > Math.PI ? 180 : 0)}, ${x}, ${y})`}
+                                    >
+                                        {node.label}
+                                    </text>
+                                </g>
+                            );
+                        })}
+                    </svg>
+                </div>
+            );
+        };
 
-                // Display sub-tables for each accepted user
-                acceptedUsersMap.forEach(user => {
-                    displayAcceptedInvitesByUser(user, allInvitations);
-                });
-            })
-            .catch(error => {
-                console.error("Error fetching invitations:", error);
-                document.getElementById("errorMessage").textContent = "Error loading invitations.";
-            });
-    }
-
-    function displayAcceptedInvitesByUser(acceptedUser, invitations) {
-    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
-    let section = document.getElementById(sectionId);
-
-    // Remove existing section to prevent duplicates
-    if (section) section.remove();
-
-    // Create new section
-    section = document.createElement('div');
-    section.id = sectionId;
-    section.innerHTML = `
-        <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Invite From</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="${sectionId}-tbody"></tbody>
-        </table>
-    `;
-    document.querySelector('.container').appendChild(section);
-
-    // Populate sub-table
-    const tbody = document.getElementById(`${sectionId}-tbody`);
-    const userInvitations = invitations.filter(invite => 
-        invite.acceptedByUser.some(u => u.email === acceptedUser.email)
-    );
-
-    userInvitations.forEach(invite => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${invite.fromUserEmail}</td>
-                <td>${invite.status}</td>
-            </tr>
-        `;
-    });
-}
-
-    // Remaining code (generate link, sign out) remains unchanged
-    document.getElementById("generateLinkBtn").addEventListener("click", () => {
-        const user = auth.currentUser;
-        if (!user) return;
-        
-        const uniqueId = Math.random().toString(36).substr(2, 9);
-        const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-
-        db.collection("invitations").doc(uniqueId).set({
-            fromUserId: user.uid,
-            fromUserEmail: user.email,
-            status: "open",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        }).then(() => {
-            const inviteLinkInput = document.getElementById("inviteLink");
-            inviteLinkInput.value = inviteLink;
-            inviteLinkInput.style.display = "block";
-            document.getElementById("copyLinkBtn").style.display = "inline-block";
-        });
-    });
-
-    document.getElementById("copyLinkBtn").addEventListener("click", () => {
-        const inviteLinkInput = document.getElementById("inviteLink");
-        inviteLinkInput.select();
-        document.execCommand("copy");
-        alert("Link copied to clipboard!");
-    });
-
-    document.getElementById("signOutBtn").addEventListener("click", () => {
-        auth.signOut().then(() => {
-            window.location.href = '/index.html';
-        });
-    });
-</script>
+        // Render the component
+        ReactDOM.createRoot(document.getElementById('visualization-root')).render(<CircularNodesVisualization />);
+    </script>
 </body>
 </html>
