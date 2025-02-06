@@ -7,6 +7,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -133,15 +134,12 @@
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
     </div>
 
-    <!-- Add React dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <!-- Visualization Container -->
+    <div id="visualization-container" style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); margin-top: 2rem; max-width: 1000px; width: 90%;">
+        <h2 style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; text-align: center;">Network Visualization</h2>
+        <div id="visualization"></div>
+    </div>
 
-    <!-- Add visualization container -->
-    <div id="visualization-root"></div>
-
-    <!-- Firebase initialization and main functionality -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
@@ -245,6 +243,106 @@
                     </tr>
                 `;
             });
+
+            // Update visualization after adding new data
+            createVisualization();
+        }
+
+        function createVisualization() {
+            // Clear previous visualization
+            d3.select("#visualization").html("");
+            
+            // Get nodes from tables
+            const nodes = [];
+            
+            // Get nodes from main invitation table
+            const mainTable = document.querySelector('#invitationsTable tbody');
+            if (mainTable) {
+                mainTable.querySelectorAll('tr').forEach(row => {
+                    const email = row.querySelector('td')?.textContent?.split('\n')[0];
+                    if (email) {
+                        nodes.push({ id: email, label: email, type: 'main' });
+                    }
+                });
+            }
+            
+            // Get nodes from user sections
+            document.querySelectorAll('[id^="userSection-"]').forEach(section => {
+                const tbody = section.querySelector('tbody');
+                if (tbody) {
+                    tbody.querySelectorAll('tr').forEach(row => {
+                        const email = row.querySelector('td')?.textContent;
+                        if (email) {
+                            nodes.push({ id: email, label: email, type: 'sub' });
+                        }
+                    });
+                }
+            });
+            
+            // Remove duplicates
+            const uniqueNodes = Array.from(new Map(nodes.map(node => [node.id, node])).values());
+            
+            // Set up the SVG
+            const width = 600;
+            const height = 500;
+            const radius = 200;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const svg = d3.select("#visualization")
+                .append("svg")
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .style("width", "100%")
+                .style("max-width", "600px")
+                .style("margin", "0 auto")
+                .style("display", "block");
+            
+            // Draw connecting lines
+            uniqueNodes.forEach((node, i) => {
+                const angle = i * 2 * Math.PI / uniqueNodes.length;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                svg.append("line")
+                    .attr("x1", centerX)
+                    .attr("y1", centerY)
+                    .attr("x2", x)
+                    .attr("y2", y)
+                    .attr("stroke", "#4CAF50")
+                    .attr("stroke-width", 1)
+                    .attr("opacity", 0.3);
+            });
+            
+            // Draw center node
+            svg.append("circle")
+                .attr("cx", centerX)
+                .attr("cy", centerY)
+                .attr("r", 8)
+                .attr("fill", "#4CAF50");
+            
+            // Draw outer nodes
+            uniqueNodes.forEach((node, i) => {
+                const angle = i * 2 * Math.PI / uniqueNodes.length;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                const nodeGroup = svg.append("g");
+                
+                nodeGroup.append("circle")
+                    .attr("cx", x)
+                    .attr("cy", y)
+                    .attr("r", 6)
+                    .attr("fill", node.type === 'main' ? '#4CAF50' : '#45a049');
+                
+                nodeGroup.append("text")
+                    .attr("x", x)
+                    .attr("y", y + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12")
+                    .attr("fill", "#333")
+                    .attr("transform", `rotate(${angle * 180 / Math.PI + (angle > Math.PI ? 180 : 0)}, ${x}, ${y})`)
+                    .text(node.label);
+            });
         }
 
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
@@ -279,116 +377,19 @@
                 window.location.href = '/index.html';
             });
         });
-    </script>
 
-    <!-- Visualization Component -->
-    <script type="text/babel">
-        const CircularNodesVisualization = () => {
-            const [nodes, setNodes] = React.useState([]);
-            
-            React.useEffect(() => {
-                const observer = new MutationObserver((mutations) => {
-                    const newNodes = [];
-                    
-                    // Get nodes from main invitation table
-                    const mainTable = document.querySelector('#invitationsTable tbody');
-                    if (mainTable) {
-                        Array.from(mainTable.querySelectorAll('tr')).forEach(row => {
-                            const email = row.querySelector('td')?.textContent?.split('\n')[0];
-                            if (email) {
-                                newNodes.push({ id: email, label: email, type: 'main' });
-                            }
-                        });
-                    }
-                    
-                    // Get nodes from user sections
-                    document.querySelectorAll('[id^="userSection-"]').forEach(section => {
-                        const tbody = section.querySelector('tbody');
-                        if (tbody) {
-                            Array.from(tbody.querySelectorAll('tr')).forEach(row => {
-                                const email = row.querySelector('td')?.textContent;
-                                if (email) {
-                                    newNodes.push({ id: email, label: email, type: 'sub' });
-                                }
-                            });
-                        }
-                    });
-                    
-                    setNodes([...new Map(newNodes.map(node => [node.id, node])).values()]);
-                });
-                
-                observer.observe(document.querySelector('.container'), {
-                    subtree: true,
-                    childList: true
-                });
-                
-                return () => observer.disconnect();
-            }, []);
-            
-            const radius = 200;
-            const centerX = 300;
-            const centerY = 250;
-            
-            return (
-                <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: 'white', borderRadius: '0.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem', textAlign: 'center' }}>Network Visualization</h2>
-                    <svg viewBox="0 0 600 500" style={{ width: '100%', maxWidth: '600px', margin: '0 auto', display: 'block' }}>
-                        {/* Draw connecting lines */}
-                        {nodes.map((node, i) => (
-                            <line
-                                key={`line-${i}`}
-                                x1={centerX}
-                                y1={centerY}
-                                x2={centerX + radius * Math.cos(i * 2 * Math.PI / nodes.length)}
-                                y2={centerY + radius * Math.sin(i * 2 * Math.PI / nodes.length)}
-                                stroke="#4CAF50"
-                                strokeWidth="1"
-                                opacity="0.3"
-                            />
-                        ))}
-                        
-                        {/* Draw center node */}
-                        <circle
-                            cx={centerX}
-                            cy={centerY}
-                            r="8"
-                            fill="#4CAF50"
-                        />
-                        
-                        {/* Draw outer nodes */}
-                        {nodes.map((node, i) => {
-                            const angle = i * 2 * Math.PI / nodes.length;
-                            const x = centerX + radius * Math.cos(angle);
-                            const y = centerY + radius * Math.sin(angle);
-                            
-                            return (
-                                <g key={`node-${i}`}>
-                                    <circle
-                                        cx={x}
-                                        cy={y}
-                                        r="6"
-                                        fill={node.type === 'main' ? '#4CAF50' : '#45a049'}
-                                    />
-                                    <text
-                                        x={x}
-                                        y={y + 20}
-                                        textAnchor="middle"
-                                        fontSize="12"
-                                        fill="#333"
-                                        transform={`rotate(${angle * 180 / Math.PI + (angle > Math.PI ? 180 : 0)}, ${x}, ${y})`}
-                                    >
-                                        {node.label}
-                                    </text>
-                                </g>
-                            );
-                        })}
-                    </svg>
-                </div>
-            );
-        };
+        // Initialize visualization
+        createVisualization();
 
-        // Render the component
-        ReactDOM.createRoot(document.getElementById('visualization-root')).render(<CircularNodesVisualization />);
+        // Update visualization when tables change
+        const observer = new MutationObserver(() => {
+            createVisualization();
+        });
+
+        observer.observe(document.querySelector('.container'), {
+            subtree: true,
+            childList: true
+        });
     </script>
 </body>
 </html>
