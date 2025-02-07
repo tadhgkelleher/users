@@ -300,14 +300,18 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
         let role, otherParties;
         if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
+            // Exclude acceptedUser (sender) and currentUser from other parties
             otherParties = invite.acceptedByUser ? 
-                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email && u.email !== currentUser.email) : [];
         } else {
             role = "Received";
-            otherParties = [{ 
-                email: invite.fromUserEmail, 
-                name: invite.fromUserName || invite.fromUserEmail 
-            }];
+            // Exclude invitations where sender is the current user
+            otherParties = invite.fromUserEmail !== currentUser.email 
+                ? [{ 
+                    email: invite.fromUserEmail, 
+                    name: invite.fromUserName || invite.fromUserEmail 
+                  }] 
+                : [];
         }
 
         if (otherParties.length === 0) {
