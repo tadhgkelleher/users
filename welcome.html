@@ -215,190 +215,132 @@ tr:hover {
         });
 
 function fetchAcceptedInvitations(currentUser) {
-  const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-  invitationsTable.innerHTML = "";
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    invitationsTable.innerHTML = "";
 
-  db.collection("invitations")
-    .get()
-    .then(snapshot => {
-      const allInvitations = [];
-      const participantMap = new Map(); // Will hold all unique participants
-      const connections = new Set();    // Will hold all unique connection strings
+    db.collection("invitations").get()
+        .then(snapshot => {
+            const allInvitations = [];
+            const acceptedUsersMap = new Map();
+            const connections = new Set();
 
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const isSender = data.fromUserId === currentUser.uid;
-        const hasAccepted = data.acceptedByUser?.length > 0;
-        const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const isSender = data.fromUserId === currentUser.uid;
+                const hasAccepted = data.acceptedByUser?.length > 0;
+                const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
 
-        if ((isSender || isAcceptor) && hasAccepted) {
-          allInvitations.push(data);
+                if ((isSender || isAcceptor) && hasAccepted) {
+                    allInvitations.push(data);
+                    
+                    data.acceptedByUser.forEach(user => {
+                        const connection = [data.fromUserEmail, user.email].sort().join('-');
+                        connections.add(connection);
+                        
+                        const key = user.email;
+                        if (!acceptedUsersMap.has(key)) {
+                            acceptedUsersMap.set(key, user);
+                        }
+                    });
+                }
+            });
 
-          // Create an array of all participants in this invitation:
-          // Always include the sender.
-          const participants = [{
-            email: data.fromUserEmail,
-            name: data.fromUserName || data.fromUserEmail
-          }];
+            acceptedUsersMap.forEach(user => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
+                invitationsTable.appendChild(tr);
+                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+            });
 
-          // Include each accepted user.
-          data.acceptedByUser.forEach(user => {
-            participants.push(user);
-          });
-
-          // Add each participant to the participantMap (avoiding duplicates)
-          participants.forEach(participant => {
-            if (!participantMap.has(participant.email)) {
-              participantMap.set(participant.email, participant);
-            }
-          });
-
-          // Create a connection for every unique pair of participants
-          for (let i = 0; i < participants.length; i++) {
-            for (let j = i + 1; j < participants.length; j++) {
-              const connection = [participants[i].email, participants[j].email].sort().join('-');
-              connections.add(connection);
-            }
-          }
-        }
-      });
-
-      // Optionally, update your invitations table and display details per user.
-      participantMap.forEach(user => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
-        invitationsTable.appendChild(tr);
-        displayAcceptedInvitesByUser(currentUser, user, allInvitations);
-      });
-
-      // Pass the array of participants and connections to your visualization.
-      createVisualization(Array.from(participantMap.values()), Array.from(connections));
-    })
-    .catch(error => {
-      console.error("Error fetching invitations:", error);
-      document.getElementById("errorMessage").textContent = "Error loading invitations.";
-    });
-}
-
-/**
- * Displays a section for a given listedUser that shows all connection candidates—
- * that is, every other user who has appeared in an invitation with listedUser.
- *
- * The function scans all invitations to build a unique set of candidates.
- * For each invitation that involves listedUser, the role is determined:
- *   - "Sent" if listedUser is the sender (invite.fromUserEmail === listedUser.email)
- *   - "Received" otherwise.
- * If the same candidate appears in multiple invitations (perhaps with different roles),
- * their roles are aggregated (e.g. "Sent, Received").
- *
- * @param {object} currentUser - The currently logged-in user (used when adding connections).
- * @param {object} listedUser - The user for whom we want to display connection candidates.
- *                              This user comes from the overall accepted users list.
- * @param {Array} invitations - The complete array of invitation objects.
- */
-function displayConnectionsForUser(currentUser, listedUser, invitations) {
-  // Create a unique section ID based on the listed user's email.
-  const sectionId = `userSection-${listedUser.email.replace(/[@.]/g, '_')}`;
-  let section = document.getElementById(sectionId);
-  if (section) section.remove();
-
-  // Create the container section.
-  section = document.createElement('div');
-  section.id = sectionId;
-  section.style.marginTop = "2rem";
-  section.innerHTML = `
-    <h3 style="color: #4db6ac; text-transform: uppercase;">
-      Connections for ${listedUser.name} (${listedUser.email})
-    </h3>
-    <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
-      <thead>
-        <tr>
-          <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Role</th>
-          <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Other Party</th>
-          <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Action</th>
-        </tr>
-      </thead>
-      <tbody id="${sectionId}-tbody"></tbody>
-    </table>
-  `;
-  document.querySelector('.container').appendChild(section);
-  const tbody = document.getElementById(`${sectionId}-tbody`);
-
-  // Build a mapping of candidate email to an object { candidate, roles: Set }
-  const candidateMap = new Map();
-
-  // Loop over every invitation.
-  invitations.forEach(invite => {
-    // Build a list of participants in this invitation.
-    // (We assume each invitation has a sender and an array of accepted users.)
-    const participants = [];
-    if (invite.fromUserEmail) {
-      participants.push({
-        email: invite.fromUserEmail,
-        name: invite.fromUserName || invite.fromUserEmail
-      });
-    }
-    if (invite.acceptedByUser && Array.isArray(invite.acceptedByUser)) {
-      invite.acceptedByUser.forEach(u => {
-        participants.push({
-          email: u.email,
-          name: u.name
+            createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
+        })
+        .catch(error => {
+            console.error("Error fetching invitations:", error);
+            document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
-      });
-    }
-
-    // Skip this invitation if the listedUser isn’t a participant.
-    const isListedUserPresent = participants.some(p => p.email === listedUser.email);
-    if (!isListedUserPresent) return;
-
-    // Determine the role for listedUser in this invitation.
-    // (If the listedUser is the sender, we call it "Sent"; otherwise "Received".)
-    const roleForListedUser = (invite.fromUserEmail === listedUser.email) ? "Sent" : "Received";
-
-    // For every other participant in this invitation, add them as a candidate.
-    participants.forEach(p => {
-      if (p.email === listedUser.email) return; // skip self
-      if (!candidateMap.has(p.email)) {
-        candidateMap.set(p.email, { candidate: p, roles: new Set() });
-      }
-      // For this invitation, record the role from the perspective of listedUser.
-      candidateMap.get(p.email).roles.add(roleForListedUser);
-    });
-  });
-
-  // Convert candidateMap values to an array.
-  const connectionCandidates = Array.from(candidateMap.values());
-
-  // If no connection candidates were found, show a message.
-  if (connectionCandidates.length === 0) {
-    tbody.innerHTML = `<tr>
-      <td colspan="3" style="padding: 12px; text-align: center;">No connections found.</td>
-    </tr>`;
-    return;
-  }
-
-  // For each candidate, add a row to the table.
-  connectionCandidates.forEach(item => {
-    const candidate = item.candidate;
-    // Join the roles (if multiple invitations yielded different roles).
-    const rolesText = Array.from(item.roles).join(', ');
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td style="padding: 12px; border-bottom: 1px solid #333;">${rolesText}</td>
-      <td style="padding: 12px; border-bottom: 1px solid #333;">${candidate.name} (${candidate.email})</td>
-      <td style="padding: 12px; border-bottom: 1px solid #333;">
-        <button class="add-connection-btn">Add Connection</button>
-      </td>
-    `;
-    // When clicked, the Add Connection button calls handleAddConnection with the current user and candidate.
-    row.querySelector('.add-connection-btn').addEventListener('click', () => {
-      handleAddConnection(currentUser, candidate);
-    });
-    tbody.appendChild(row);
-  });
 }
 
+function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+    let section = document.getElementById(sectionId);
 
+    if (section) section.remove();
+
+    section = document.createElement('div');
+    section.id = sectionId;
+    section.style.marginTop = "2rem";
+    section.innerHTML = `
+        <h3 style="color: #4db6ac; text-transform: uppercase;">
+            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Role</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Other Party</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="${sectionId}-tbody"></tbody>
+        </table>
+    `;
+    document.querySelector('.container').appendChild(section);
+
+    const tbody = document.getElementById(`${sectionId}-tbody`);
+    const userInvitations = invitations.filter(invite => 
+        invite.fromUserEmail === acceptedUser.email ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+    );
+
+    if (userInvitations.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
+    }
+
+    userInvitations.forEach(invite => {
+        let role, otherParties;
+        if (invite.fromUserEmail === acceptedUser.email) {
+            role = "Sent";
+            otherParties = invite.acceptedByUser ? 
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
+        } else {
+            role = "Received";
+            otherParties = [{ 
+                email: invite.fromUserEmail, 
+                name: invite.fromUserName || invite.fromUserEmail 
+            }];
+        }
+
+        if (otherParties.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+            `;
+            tbody.appendChild(row);
+        } else {
+            otherParties.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${user.name} (${user.email})
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        <button class="add-connection-btn">
+                            Add Connection
+                        </button>
+                    </td>
+                `;
+
+                const button = row.querySelector('.add-connection-btn');
+                button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                
+                tbody.appendChild(row);
+            });
+        }
+    });
+}
 
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
@@ -469,7 +411,7 @@ function handleAddConnection(currentUser, targetUser) {
 }
 
 
-   function createVisualization(users, connections) {
+    function createVisualization(users, connections) {
   // Clear previous visualization
   d3.select("#visualization").html("");
 
@@ -494,7 +436,7 @@ function handleAddConnection(currentUser, targetUser) {
     name: user.name
   }));
 
-  // Calculate node positions evenly distributed around a circle.
+  // Calculate node positions around a circle.
   const nodePositions = new Map();
   nodes.forEach((node, i) => {
     const angle = i * 2 * Math.PI / nodes.length;
@@ -523,19 +465,39 @@ function handleAddConnection(currentUser, targetUser) {
     }
   });
 
-  // Draw the outer nodes and their labels.
+  // (Optional) Remove the center node and spokes if you don’t want them.
+  // If you wish to keep them, you can leave this section as is.
+  nodes.forEach((node) => {
+    const pos = nodePositions.get(node.id);
+    svg.append("line")
+      .attr("x1", centerX)
+      .attr("y1", centerY)
+      .attr("x2", pos.x)
+      .attr("y2", pos.y)
+      .attr("stroke", "#4CAF50")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.2);
+  });
+
+  svg.append("circle")
+    .attr("cx", centerX)
+    .attr("cy", centerY)
+    .attr("r", 8)
+    .attr("fill", "#4CAF50");
+
+  // Draw outer nodes and labels.
   nodes.forEach((node) => {
     const pos = nodePositions.get(node.id);
     const nodeGroup = svg.append("g");
 
-    // Draw the node circle.
+    // Draw node circle.
     nodeGroup.append("circle")
       .attr("cx", pos.x)
       .attr("cy", pos.y)
       .attr("r", 6)
       .attr("fill", "#4CAF50");
 
-    // Draw the node label.
+    // Draw node label.
     nodeGroup.append("text")
       .attr("x", pos.x)
       .attr("y", pos.y + 20)
@@ -595,3 +557,5 @@ function handleAddConnection(currentUser, targetUser) {
     </script>
 </body>
 </html>
+
+
