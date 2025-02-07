@@ -265,7 +265,9 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
     section.id = sectionId;
     section.style.marginTop = "2rem";
     section.innerHTML = `
-        <h3 style="color: #4db6ac; text-transform: uppercase;">Invitations for ${acceptedUser.name} (${acceptedUser.email})</h3>
+        <h3 style="color: #4db6ac; text-transform: uppercase;">
+            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+        </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
                 <tr>
@@ -298,12 +300,16 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
             // Sent invitation: list the accepted users (if any)
             role = "Sent";
             if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
-                otherParty = invite.acceptedByUser.map(u => u.email).join(", ");
+                // Filter out the current user from the acceptedByUser array
+                const otherParties = invite.acceptedByUser.filter(u => u.email !== acceptedUser.email);
+                otherParty = otherParties.length > 0 
+                    ? otherParties.map(u => `${u.name} (${u.email})`).join(", ") 
+                    : "No one yet";
             } else {
                 otherParty = "No one yet";
             }
         } else {
-            // Received invitation: display the sender
+            // Received invitation: display the sender as the other party
             role = "Received";
             otherParty = invite.fromUserEmail;
         }
@@ -317,6 +323,8 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
         `;
     });
 }
+
+        
 
        function createVisualization(users, connections) {
             // Clear previous visualization
