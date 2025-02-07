@@ -223,9 +223,7 @@ function fetchAcceptedInvitations(currentUser) {
             const allInvitations = [];
             const acceptedUsersMap = new Map();
             const connections = new Set();
-            const directConnections = new Set();
 
-            // Collect all invitations and identify direct connections
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const isSender = data.fromUserId === currentUser.uid;
@@ -234,19 +232,11 @@ function fetchAcceptedInvitations(currentUser) {
 
                 if ((isSender || isAcceptor) && hasAccepted) {
                     allInvitations.push(data);
-
-                    // Collect direct connections
-                    if (isSender) {
-                        directConnections.add(data.toUserEmail);
-                    }
-                    if (isAcceptor) {
-                        directConnections.add(data.fromUserEmail);
-                    }
-
+                    
                     data.acceptedByUser.forEach(user => {
                         const connection = [data.fromUserEmail, user.email].sort().join('-');
                         connections.add(connection);
-
+                        
                         const key = user.email;
                         if (!acceptedUsersMap.has(key)) {
                             acceptedUsersMap.set(key, user);
@@ -255,12 +245,11 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-            // Display accepted users (friends of friends)
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                displayConnectionsForUser(currentUser, user, allInvitations, directConnections);
+                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
             });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
@@ -271,8 +260,8 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-function displayConnectionsForUser(currentUser, user, allInvitations, directConnections) {
-    const sectionId = `userSection-${user.email.replace(/[@.]/g, '_')}`;
+function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     if (section) section.remove();
@@ -282,7 +271,7 @@ function displayConnectionsForUser(currentUser, user, allInvitations, directConn
     section.style.marginTop = "2rem";
     section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
-            Connections for ${user.name} (${user.email})
+            Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
@@ -298,24 +287,21 @@ function displayConnectionsForUser(currentUser, user, allInvitations, directConn
     document.querySelector('.container').appendChild(section);
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
-
-    // Find all invitations related to this user (both sent and received)
-    const userInvitations = allInvitations.filter(invite =>
-        invite.fromUserEmail === user.email || 
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === user.email))
+    const userInvitations = invitations.filter(invite => 
+        invite.fromUserEmail === acceptedUser.email ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
     }
 
-    // For each invitation, display the connections they've made or received
     userInvitations.forEach(invite => {
         let role, otherParties;
-        if (invite.fromUserEmail === user.email) {
+        if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
             otherParties = invite.acceptedByUser ? 
-                invite.acceptedByUser.filter(u => u.email !== user.email) : [];
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
         } else {
             role = "Received";
             otherParties = [{ 
@@ -324,13 +310,21 @@ function displayConnectionsForUser(currentUser, user, allInvitations, directConn
             }];
         }
 
-        otherParties.forEach(otherUser => {
-            if (otherUser.email !== currentUser.email && !directConnections.has(otherUser.email)) {
+        if (otherParties.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+            `;
+            tbody.appendChild(row);
+        } else {
+            otherParties.forEach(user => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        ${otherUser.name} (${otherUser.email})
+                        ${user.name} (${user.email})
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
                         <button class="add-connection-btn">
@@ -340,11 +334,11 @@ function displayConnectionsForUser(currentUser, user, allInvitations, directConn
                 `;
 
                 const button = row.querySelector('.add-connection-btn');
-                button.addEventListener('click', () => handleAddConnection(currentUser, otherUser));
-
+                button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                
                 tbody.appendChild(row);
-            }
-        });
+            });
+        }
     });
 }
 
@@ -374,6 +368,7 @@ function handleAddConnection(currentUser, targetUser) {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }).then(() => {
+        // Check if an invite already exists from the current user to the target user
         return db.collection("invitations")
             .where("fromUserEmail", "==", currentUser.email)
             .where("toUserEmail", "==", targetUser.email)
@@ -381,6 +376,7 @@ function handleAddConnection(currentUser, targetUser) {
             .get();
     }).then(snapshot => {
         if (!snapshot.empty) {
+            // Update existing invitation
             const inviteDoc = snapshot.docs[0];
             const inviteRef = db.collection("invitations").doc(inviteDoc.id);
             const inviteData = inviteDoc.data();
@@ -392,11 +388,12 @@ function handleAddConnection(currentUser, targetUser) {
 
             return inviteRef.update({ acceptedByUser: updatedAcceptedBy, status: "accepted" });
         } else {
+            // Create a new invitation if none exists
             return db.collection("invitations").add({
                 fromUserId: currentUser.uid,
                 fromUserEmail: currentUser.email,
                 fromUserName: currentUser.displayName,
-                toUserId: targetUser.uid || null,
+                toUserId: targetUser.uid || null, // if available
                 toUserEmail: targetUser.email,
                 toUserName: targetUser.name,
                 status: "accepted",
@@ -412,11 +409,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
-
-        
-
-
 
 
     function createVisualization(users, connections) {
@@ -565,3 +557,5 @@ function handleAddConnection(currentUser, targetUser) {
     </script>
 </body>
 </html>
+
+
