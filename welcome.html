@@ -281,18 +281,17 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, listedUser, invitations) {
+  // Create (or replace) a section for the listed user.
   const sectionId = `userSection-${listedUser.email.replace(/[@.]/g, '_')}`;
   let section = document.getElementById(sectionId);
-
   if (section) section.remove();
 
-  // Create a section for the listed user
   section = document.createElement('div');
   section.id = sectionId;
   section.style.marginTop = "2rem";
   section.innerHTML = `
       <h3 style="color: #4db6ac; text-transform: uppercase;">
-          Invitations for ${listedUser.name} (${listedUser.email})
+          Connections for ${listedUser.name} (${listedUser.email})
       </h3>
       <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
           <thead>
@@ -308,72 +307,78 @@ function displayAcceptedInvitesByUser(currentUser, listedUser, invitations) {
   document.querySelector('.container').appendChild(section);
 
   const tbody = document.getElementById(`${sectionId}-tbody`);
-  
-  // Filter invitations in which the listedUser is involved either as sender or recipient
-  const userInvitations = invitations.filter(invite =>
-      invite.fromUserEmail === listedUser.email ||
-      (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === listedUser.email))
-  );
+
+  // Get all invitations where the listed user is involved (as sender or as an accepted user)
+  const userInvitations = invitations.filter(invite => {
+    const isSender = invite.fromUserEmail === listedUser.email;
+    const isRecipient = invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === listedUser.email);
+    return isSender || isRecipient;
+  });
 
   if (userInvitations.length === 0) {
-      tbody.innerHTML = `<tr>
-        <td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td>
-      </tr>`;
+    tbody.innerHTML = `<tr>
+      <td colspan="3" style="padding: 12px; text-align: center;">No connections found.</td>
+    </tr>`;
+    return;
   }
 
+  // For each invitation that involves the listed user...
   userInvitations.forEach(invite => {
-      // Determine whether this invitation was sent or received by the listed user
-      const role = (invite.fromUserEmail === listedUser.email) ? "Sent" : "Received";
-      
-      // Build an array of all participants for this invitation:
-      // Include the sender...
-      let participants = [{
-          email: invite.fromUserEmail,
-          name: invite.fromUserName || invite.fromUserEmail
-      }];
-      // ...and any accepted users
-      if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
-          participants = participants.concat(invite.acceptedByUser);
-      }
-      
-      // Remove duplicate entries (in case the sender appears among accepted users)
-      participants = participants.filter((user, index, self) =>
-          index === self.findIndex(u => u.email === user.email)
-      );
-      
-      // Remove the listed user from the list to obtain the "other party/parties"
-      const otherParties = participants.filter(user => user.email !== listedUser.email);
+    // Determine the role for the listed user in this invitation.
+    const role = (invite.fromUserEmail === listedUser.email) ? "Sent" : "Received";
 
-      // For each "other party" in this invitation, add a row
-      if (otherParties.length === 0) {
-          // In case there are no other participants, show a placeholder.
-          const row = document.createElement('tr');
-          row.innerHTML = `
-              <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-              <td style="padding: 12px; border-bottom: 1px solid #333;">No other parties</td>
-              <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-          `;
-          tbody.appendChild(row);
-      } else {
-          otherParties.forEach(user => {
-              const row = document.createElement('tr');
-              row.innerHTML = `
-                  <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                  <td style="padding: 12px; border-bottom: 1px solid #333;">
-                      ${user.name} (${user.email})
-                  </td>
-                  <td style="padding: 12px; border-bottom: 1px solid #333;">
-                      <button class="add-connection-btn">Add Connection</button>
-                  </td>
-              `;
-              // Wire up the action button
-              const button = row.querySelector('.add-connection-btn');
-              button.addEventListener('click', () => handleAddConnection(currentUser, user));
-              tbody.appendChild(row);
-          });
-      }
+    // Build a list of all participants in the invitation.
+    let participants = [];
+
+    // Always include the sender.
+    participants.push({
+      email: invite.fromUserEmail,
+      name: invite.fromUserName || invite.fromUserEmail
+    });
+
+    // Add all accepted users (if any).
+    if (invite.acceptedByUser && Array.isArray(invite.acceptedByUser)) {
+      participants = participants.concat(invite.acceptedByUser);
+    }
+
+    // Remove duplicates based on email.
+    const uniqueParticipants = participants.filter((user, index, self) =>
+      index === self.findIndex(u => u.email === user.email)
+    );
+
+    // The "connection candidates" for the listed user are all participants except themselves.
+    const otherParties = uniqueParticipants.filter(u => u.email !== listedUser.email);
+
+    // For each connection candidate, add a row to the table.
+    if (otherParties.length === 0) {
+      // In case there are no other participants (which is unlikely, but safe to handle)
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #333;">No other party</td>
+        <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+      `;
+      tbody.appendChild(row);
+    } else {
+      otherParties.forEach(other => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #333;">${other.name} (${other.email})</td>
+          <td style="padding: 12px; border-bottom: 1px solid #333;">
+            <button class="add-connection-btn">Add Connection</button>
+          </td>
+        `;
+        // Attach the event handler for adding a connection.
+        row.querySelector('.add-connection-btn').addEventListener('click', () => {
+          handleAddConnection(currentUser, other);
+        });
+        tbody.appendChild(row);
+      });
+    }
   });
 }
+
 
 
 function handleAddConnection(currentUser, targetUser) {
