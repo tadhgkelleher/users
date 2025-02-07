@@ -237,9 +237,8 @@ function fetchAcceptedInvitations(currentUser) {
                         const connection = [data.fromUserEmail, user.email].sort().join('-');
                         connections.add(connection);
                         
-                        const key = user.email;
-                        if (!acceptedUsersMap.has(key)) {
-                            acceptedUsersMap.set(key, user);
+                        if (!acceptedUsersMap.has(user.email)) {
+                            acceptedUsersMap.set(user.email, user);
                         }
                     });
                 }
@@ -249,7 +248,8 @@ function fetchAcceptedInvitations(currentUser) {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+                
+                displayInvitesByUser(currentUser, user, allInvitations); // ✅ Fixed function name
             });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
@@ -324,6 +324,7 @@ function displayInvitesByUser(currentUser, acceptedUser, invitations) {
         tbody.appendChild(row);
     });
 }
+
 
 
 function handleAddConnection(currentUser, targetUser) {
