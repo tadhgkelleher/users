@@ -247,12 +247,12 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-            acceptedUsersMap.forEach(user => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = <td>${user.email}<br>${user.name}</td>;
-                invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
-            });
+       acceptedUsersMap.forEach(user => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
+    invitationsTable.appendChild(tr);
+    displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+});
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
         })
