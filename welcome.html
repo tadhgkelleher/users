@@ -130,10 +130,6 @@ tr:hover {
     font-weight: bold;
     transition: background 0.3s ease;
 }
-
-.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-    background-color: #388e8e;
-}
  .add-connection-btn {
         background-color: #4db6ac;
         color: #121212;
@@ -151,6 +147,10 @@ tr:hover {
     .add-connection-btn:active {
         transform: scale(0.98);
     }
+.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+    background-color: #388e8e;
+}
+
     </style>
 </head>
 <body>
@@ -160,16 +160,49 @@ tr:hover {
         <button id="signOutBtn">Sign Out</button>
     </div>
 
+  <!-- Previous content remains the same until the tables section -->
     <div class="container">
         <h1>Welcome</h1>
         <p id="welcomeMessage"></p>
         <div class="error-message" id="errorMessage"></div>
 
-      <!-- Visualization Container -->
+        <h2>Direct Connections</h2>
+        <table id="invitationsTable">
+            <thead>
+                <tr>
+                    <th>Connected Users</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Friends of Friends</h2>
+        <table id="secondDegreeTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Connected Through</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+
+   
+
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+    </div>
+
+   <!-- Visualization Container -->
 <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
     <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
     <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
 </div>
+
+
          <h2>Accepted Invitations</h2>
         <table id="invitationsTable">
             <thead>
@@ -179,16 +212,6 @@ tr:hover {
             </thead>
             <tbody></tbody>
         </table>
-
-        <h2>Generate Invitation Link</h2>
-        <button id="generateLinkBtn">Generate Link</button>
-        <input type="text" id="inviteLink" readonly>
-        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-    </div>
-
-
-
-
 
     <script>
         const firebaseConfig = {
@@ -214,9 +237,7 @@ tr:hover {
             }
         });
 
-
-
-function fetchAcceptedInvitations(currentUser) {
+        function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
@@ -247,12 +268,12 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-       acceptedUsersMap.forEach(user => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
-    invitationsTable.appendChild(tr);
-    displayAcceptedInvitesByUser(currentUser, user, allInvitations);
-});
+            acceptedUsersMap.forEach(user => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
+                invitationsTable.appendChild(tr);
+                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+            });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
         })
@@ -263,7 +284,7 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
-    const sectionId = userSection-${acceptedUser.email.replace(/[@.]/g, '_')};
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     if (section) section.remove();
@@ -271,7 +292,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
     section = document.createElement('div');
     section.id = sectionId;
     section.style.marginTop = "2rem";
-    section.innerHTML = 
+    section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
             Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
@@ -285,17 +306,17 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
             </thead>
             <tbody id="${sectionId}-tbody"></tbody>
         </table>
-    ;
+    `;
     document.querySelector('.container').appendChild(section);
 
-    const tbody = document.getElementById(${sectionId}-tbody);
+    const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
         invite.fromUserEmail === acceptedUser.email ||
         (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
     if (userInvitations.length === 0) {
-        tbody.innerHTML = <tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>;
+        tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
     }
 
     userInvitations.forEach(invite => {
@@ -314,16 +335,16 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
 
         if (otherParties.length === 0) {
             const row = document.createElement('tr');
-            row.innerHTML = 
+            row.innerHTML = `
                 <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-            ;
+            `;
             tbody.appendChild(row);
         } else {
             otherParties.forEach(user => {
                 const row = document.createElement('tr');
-                row.innerHTML = 
+                row.innerHTML = `
                     <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
                         ${user.name} (${user.email})
@@ -333,7 +354,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
                             Add Connection
                         </button>
                     </td>
-                ;
+                `;
 
                 const button = row.querySelector('.add-connection-btn');
                 button.addEventListener('click', () => handleAddConnection(currentUser, user));
@@ -359,8 +380,9 @@ function handleAddConnection(currentUser, targetUser) {
         if (doc.exists) {
             alert('Connection already exists!');
             return;
-       }
-         return connectionRef.set({
+        }
+
+        return connectionRef.set({
             users: sortedEmails,
             usersInfo: [{
                 email: currentUser.email,
@@ -379,8 +401,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
-
 
        function createVisualization(users, connections) {
             // Clear previous visualization
