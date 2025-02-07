@@ -263,65 +263,87 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
-    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
-    
-    return db.collection('connections').get().then(connectionsSnapshot => {
-        const existingConnections = new Set();
-        connectionsSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.users.includes(currentUser.email)) {
-                data.users.forEach(email => existingConnections.add(email));
-            }
-        });
+    const sectionId = userSection-${acceptedUser.email.replace(/[@.]/g, '_')};
+    let section = document.getElementById(sectionId);
 
-        let section = document.createElement('div');
-        section.id = sectionId;
-        section.style.marginTop = "2rem";
-        section.innerHTML = `
-            <h3 style="color: #4db6ac; text-transform: uppercase;">
-                ${acceptedUser.name} (${acceptedUser.email})
-            </h3>
-            <table style="width: 100%; border-collapse: collapse; background-color: #242424;">
-                <thead>
-                    <tr>
-                        <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Role</th>
-                        <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Other Party</th>
-                        <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Action</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        `;
-        
-        const tbody = section.querySelector('tbody');
-        const displayedInvites = new Set();
-        
-        invitations.forEach(invite => {
-            if (invite.fromUserEmail === acceptedUser.email) {
-                invite.acceptedByUser?.forEach(user => {
-                    if (!existingConnections.has(user.email) && 
-                        user.email !== currentUser.email &&
-                        !displayedInvites.has(`${acceptedUser.email}-${user.email}`)) {
-                        displayedInvites.add(`${acceptedUser.email}-${user.email}`);
-                        addRow(tbody, "Sent", user, currentUser);
-                    }
-                });
-            } else if (invite.acceptedByUser?.some(u => u.email === acceptedUser.email)) {
-                if (!existingConnections.has(invite.fromUserEmail) && 
-                    invite.fromUserEmail !== currentUser.email &&
-                    !displayedInvites.has(`${invite.fromUserEmail}-${acceptedUser.email}`)) {
-                    displayedInvites.add(`${invite.fromUserEmail}-${acceptedUser.email}`);
-                    addRow(tbody, "Received", {
-                        email: invite.fromUserEmail,
-                        name: invite.fromUserName || invite.fromUserEmail
-                    }, currentUser);
-                }
-            }
-        });
-        
-        return section;
+    if (section) section.remove();
+
+    section = document.createElement('div');
+    section.id = sectionId;
+    section.style.marginTop = "2rem";
+    section.innerHTML = 
+        <h3 style="color: #4db6ac; text-transform: uppercase;">
+            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Role</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Other Party</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="${sectionId}-tbody"></tbody>
+        </table>
+    ;
+    document.querySelector('.container').appendChild(section);
+
+    const tbody = document.getElementById(${sectionId}-tbody);
+    const userInvitations = invitations.filter(invite => 
+        invite.fromUserEmail === acceptedUser.email ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+    );
+
+    if (userInvitations.length === 0) {
+        tbody.innerHTML = <tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>;
+    }
+
+    userInvitations.forEach(invite => {
+        let role, otherParties;
+        if (invite.fromUserEmail === acceptedUser.email) {
+            role = "Sent";
+            otherParties = invite.acceptedByUser ? 
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
+        } else {
+            role = "Received";
+            otherParties = [{ 
+                email: invite.fromUserEmail, 
+                name: invite.fromUserName || invite.fromUserEmail 
+            }];
+        }
+
+        if (otherParties.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = 
+                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+            ;
+            tbody.appendChild(row);
+        } else {
+            otherParties.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = 
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${user.name} (${user.email})
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        <button class="add-connection-btn">
+                            Add Connection
+                        </button>
+                    </td>
+                ;
+
+                const button = row.querySelector('.add-connection-btn');
+                button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                
+                tbody.appendChild(row);
+            });
+        }
     });
 }
+
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
         alert('Cannot add yourself as a connection.');
@@ -357,7 +379,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
        function createVisualization(users, connections) {
             // Clear previous visualization
             d3.select("#visualization").html("");
