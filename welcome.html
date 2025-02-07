@@ -214,42 +214,45 @@ tr:hover {
             }
         });
 
-function fetchInvitations(currentUser) {
+function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
     db.collection("invitations").get()
         .then(snapshot => {
             const allInvitations = [];
-            const usersMap = new Map(); 
-            const connections = new Set(); 
+            const acceptedUsersMap = new Map();
+            const connections = new Set();
 
             snapshot.forEach(doc => {
                 const data = doc.data();
-                allInvitations.push(data);
+                const isSender = data.fromUserId === currentUser.uid;
+                const hasAccepted = data.acceptedByUser?.length > 0;
+                const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
 
-                // Collect all unique users involved in invitations
-                if (!usersMap.has(data.fromUserEmail)) {
-                    usersMap.set(data.fromUserEmail, { email: data.fromUserEmail, name: data.fromUserName || data.fromUserEmail });
+                if ((isSender || isAcceptor) && hasAccepted) {
+                    allInvitations.push(data);
+                    
+                    data.acceptedByUser.forEach(user => {
+                        const connection = [data.fromUserEmail, user.email].sort().join('-');
+                        connections.add(connection);
+                        
+                        const key = user.email;
+                        if (!acceptedUsersMap.has(key)) {
+                            acceptedUsersMap.set(key, user);
+                        }
+                    });
                 }
-                if (!usersMap.has(data.toUserEmail)) {
-                    usersMap.set(data.toUserEmail, { email: data.toUserEmail, name: data.toUserName || data.toUserEmail });
-                }
-
-                // Track unique connections
-                const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                connections.add(connection);
             });
 
-            usersMap.forEach(user => {
+            acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${user.name} (${user.email})</td>`;
+                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                
-                displayInvitesByUser(currentUser, user, allInvitations);
+                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
             });
 
-            createVisualization(Array.from(usersMap.values()), Array.from(connections));
+            createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
         })
         .catch(error => {
             console.error("Error fetching invitations:", error);
@@ -257,8 +260,8 @@ function fetchInvitations(currentUser) {
         });
 }
 
-function displayInvitesByUser(currentUser, user, invitations) {
-    const sectionId = `userSection-${user.email.replace(/[@.]/g, '_')}`;
+function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     if (section) section.remove();
@@ -268,7 +271,7 @@ function displayInvitesByUser(currentUser, user, invitations) {
     section.style.marginTop = "2rem";
     section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
-            Invitations for ${user.name} (${user.email})
+            Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
@@ -285,44 +288,59 @@ function displayInvitesByUser(currentUser, user, invitations) {
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === user.email || invite.toUserEmail === user.email
+        invite.fromUserEmail === acceptedUser.email ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
-        return;
     }
 
     userInvitations.forEach(invite => {
-        let role, otherParty;
-
-        if (invite.fromUserEmail === user.email) {
+        let role, otherParties;
+        if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
-            otherParty = { email: invite.toUserEmail, name: invite.toUserName || invite.toUserEmail };
+            otherParties = invite.acceptedByUser ? 
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
         } else {
             role = "Received";
-            otherParty = { email: invite.fromUserEmail, name: invite.fromUserName || invite.fromUserEmail };
+            otherParties = [{ 
+                email: invite.fromUserEmail, 
+                name: invite.fromUserName || invite.fromUserEmail 
+            }];
         }
 
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #333;">
-                ${otherParty.name} (${otherParty.email})
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #333;">
-                <button class="add-connection-btn">Add Connection</button>
-            </td>
-        `;
+        if (otherParties.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
+                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+            `;
+            tbody.appendChild(row);
+        } else {
+            otherParties.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${user.name} (${user.email})
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        <button class="add-connection-btn">
+                            Add Connection
+                        </button>
+                    </td>
+                `;
 
-        const button = row.querySelector('.add-connection-btn');
-        button.addEventListener('click', () => handleAddConnection(currentUser, otherParty));
-
-        tbody.appendChild(row);
+                const button = row.querySelector('.add-connection-btn');
+                button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                
+                tbody.appendChild(row);
+            });
+        }
     });
 }
-
-
 
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
