@@ -165,6 +165,9 @@ tr:hover {
         <p id="welcomeMessage"></p>
         <div class="error-message" id="errorMessage"></div>
 
+        <button id="toggle-physics">Toggle Physics</button>
+<div id="visualization"></div>
+        
       <!-- Visualization Container -->
 <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
     <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
@@ -442,7 +445,7 @@ function handleAddConnection(currentUser, targetUser) {
 }
 
 
-    function createVisualization(users, connections) {
+   function createVisualization(users, connections) {
   // Clear previous visualization
   d3.select("#visualization").html("");
 
@@ -496,49 +499,111 @@ function handleAddConnection(currentUser, targetUser) {
     }
   });
 
-  // (Optional) Remove the center node and spokes if you don’t want them.
-  // If you wish to keep them, you can leave this section as is.
-  nodes.forEach((node) => {
-    const pos = nodePositions.get(node.id);
-    svg.append("line")
-      .attr("x1", centerX)
-      .attr("y1", centerY)
-      .attr("x2", pos.x)
-      .attr("y2", pos.y)
+  // Create the circle layout.
+  function drawCircleLayout() {
+    nodes.forEach((node) => {
+      const pos = nodePositions.get(node.id);
+      svg.append("circle")
+        .attr("cx", pos.x)
+        .attr("cy", pos.y)
+        .attr("r", 6)
+        .attr("fill", "#4CAF50");
+
+      svg.append("text")
+        .attr("x", pos.x)
+        .attr("y", pos.y + 20)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "12")
+        .attr("fill", "#333")
+        .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
+        .text(node.label);
+    });
+  }
+
+  // Force-directed layout function.
+  function drawForceLayout() {
+    const simulation = d3.forceSimulation(nodes)
+      .force("charge", d3.forceManyBody().strength(-200))
+      .force("link", d3.forceLink(connections.map(conn => {
+        const [email1, email2] = conn.split('-');
+        return { source: email1, target: email2 };
+      })).id(d => d.id).distance(100))
+      .force("center", d3.forceCenter(width / 2, height / 2));
+
+    const link = svg.selectAll(".link")
+      .data(connections)
+      .enter().append("line")
+      .attr("class", "link")
       .attr("stroke", "#4CAF50")
-      .attr("stroke-width", 1)
-      .attr("opacity", 0.2);
-  });
+      .attr("stroke-width", 2)
+      .attr("opacity", 0.5);
 
-  svg.append("circle")
-    .attr("cx", centerX)
-    .attr("cy", centerY)
-    .attr("r", 8)
-    .attr("fill", "#4CAF50");
+    const node = svg.selectAll(".node")
+      .data(nodes)
+      .enter().append("g")
+      .attr("class", "node")
+      .call(d3.drag()
+        .on("start", dragStart)
+        .on("drag", dragged)
+        .on("end", dragEnd));
 
-  // Draw outer nodes and labels.
-  nodes.forEach((node) => {
-    const pos = nodePositions.get(node.id);
-    const nodeGroup = svg.append("g");
-
-    // Draw node circle.
-    nodeGroup.append("circle")
-      .attr("cx", pos.x)
-      .attr("cy", pos.y)
+    node.append("circle")
       .attr("r", 6)
       .attr("fill", "#4CAF50");
 
-    // Draw node label.
-    nodeGroup.append("text")
-      .attr("x", pos.x)
-      .attr("y", pos.y + 20)
-      .attr("text-anchor", "middle")
+    node.append("text")
+      .attr("dx", 10)
+      .attr("dy", 3)
       .attr("font-size", "12")
       .attr("fill", "#333")
-      .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
-      .text(node.label);
+      .text(d => d.label);
+
+    simulation.on("tick", () => {
+      link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
+
+      node
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+  }
+
+  // Handle drag events for force-directed layout
+  function dragStart(event, d) {
+    if (!event.active) d3.select(event.sourceEvent.target).classed("active", true);
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragEnd(event, d) {
+    if (!event.active) d3.select(event.sourceEvent.target).classed("active", false);
+    d.fx = null;
+    d.fy = null;
+  }
+
+  // Initial layout (circle)
+  drawCircleLayout();
+
+  // Toggle physics button functionality
+  let isPhysicsEnabled = false;
+  d3.select("#toggle-physics").on("click", function() {
+    isPhysicsEnabled = !isPhysicsEnabled;
+    svg.selectAll("*").remove(); // Clear current visualization
+    if (isPhysicsEnabled) {
+      drawForceLayout(); // Draw force-directed layout
+    } else {
+      drawCircleLayout(); // Draw circle layout
+    }
   });
 }
+
 
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
