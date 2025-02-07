@@ -223,7 +223,9 @@ function fetchAcceptedInvitations(currentUser) {
             const allInvitations = [];
             const acceptedUsersMap = new Map();
             const connections = new Set();
+            const directConnections = new Set();
 
+            // Collect all invitations and identify direct connections
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const isSender = data.fromUserId === currentUser.uid;
@@ -232,11 +234,19 @@ function fetchAcceptedInvitations(currentUser) {
 
                 if ((isSender || isAcceptor) && hasAccepted) {
                     allInvitations.push(data);
-                    
+
+                    // Collect direct connections
+                    if (isSender) {
+                        directConnections.add(data.toUserEmail);
+                    }
+                    if (isAcceptor) {
+                        directConnections.add(data.fromUserEmail);
+                    }
+
                     data.acceptedByUser.forEach(user => {
                         const connection = [data.fromUserEmail, user.email].sort().join('-');
                         connections.add(connection);
-                        
+
                         const key = user.email;
                         if (!acceptedUsersMap.has(key)) {
                             acceptedUsersMap.set(key, user);
@@ -245,11 +255,12 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
+            // Display accepted users
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+                displayAcceptedInvitesByUser(currentUser, user, allInvitations, directConnections);
             });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
@@ -260,7 +271,7 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, directConnections) {
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
@@ -320,27 +331,99 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
             tbody.appendChild(row);
         } else {
             otherParties.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        ${user.name} (${user.email})
-                    </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        <button class="add-connection-btn">
-                            Add Connection
-                        </button>
-                    </td>
-                `;
+                // Check if user is a friend of a friend (i.e., is not a direct connection)
+                if (!directConnections.has(user.email)) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">
+                            ${user.name} (${user.email})
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">
+                            <button class="add-connection-btn">
+                                Add Connection
+                            </button>
+                        </td>
+                    `;
 
-                const button = row.querySelector('.add-connection-btn');
-                button.addEventListener('click', () => handleAddConnection(currentUser, user));
-                
-                tbody.appendChild(row);
+                    const button = row.querySelector('.add-connection-btn');
+                    button.addEventListener('click', () => handleAddConnection(currentUser, user));
+
+                    tbody.appendChild(row);
+                }
             });
         }
     });
 }
+
+function handleAddConnection(currentUser, targetUser) {
+    if (currentUser.email === targetUser.email) {
+        alert('Cannot add yourself as a connection.');
+        return;
+    }
+
+    const sortedEmails = [currentUser.email, targetUser.email].sort();
+    const connectionId = sortedEmails.join('-');
+
+    const connectionRef = db.collection('connections').doc(connectionId);
+
+    connectionRef.get().then(doc => {
+        if (doc.exists) {
+            alert('Connection already exists!');
+            return;
+        }
+
+        return connectionRef.set({
+            users: sortedEmails,
+            usersInfo: [
+                { email: currentUser.email, name: currentUser.displayName },
+                { email: targetUser.email, name: targetUser.name }
+            ],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }).then(() => {
+        return db.collection("invitations")
+            .where("fromUserEmail", "==", currentUser.email)
+            .where("toUserEmail", "==", targetUser.email)
+            .limit(1)
+            .get();
+    }).then(snapshot => {
+        if (!snapshot.empty) {
+            const inviteDoc = snapshot.docs[0];
+            const inviteRef = db.collection("invitations").doc(inviteDoc.id);
+            const inviteData = inviteDoc.data();
+
+            const updatedAcceptedBy = inviteData.acceptedByUser || [];
+            if (!updatedAcceptedBy.some(user => user.email === targetUser.email)) {
+                updatedAcceptedBy.push({ email: targetUser.email, name: targetUser.name });
+            }
+
+            return inviteRef.update({ acceptedByUser: updatedAcceptedBy, status: "accepted" });
+        } else {
+            return db.collection("invitations").add({
+                fromUserId: currentUser.uid,
+                fromUserEmail: currentUser.email,
+                fromUserName: currentUser.displayName,
+                toUserId: targetUser.uid || null,
+                toUserEmail: targetUser.email,
+                toUserName: targetUser.name,
+                status: "accepted",
+                acceptedByUser: [{ email: targetUser.email, name: targetUser.name }],
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }).then(() => {
+        alert('Connection added successfully!');
+        fetchAcceptedInvitations(currentUser);
+    }).catch(error => {
+        console.error('Error adding connection:', error);
+        alert('Failed to add connection.');
+    });
+}
+
+
+
+        
 
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
