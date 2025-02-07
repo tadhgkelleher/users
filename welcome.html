@@ -221,7 +221,7 @@ tr:hover {
             }
         });
 
-         function fetchAcceptedInvitations(currentUser) {
+   function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     const secondDegreeTable = document.getElementById("secondDegreeTable").getElementsByTagName('tbody')[0];
     
@@ -233,12 +233,11 @@ tr:hover {
             const allInvitations = [];
             const directConnections = new Set();
             const secondDegreeConnections = new Map();
-            const connections = new Set();
+            const connections = [];  // Changed from Set to Array
 
             // First pass: identify direct connections
             snapshot.forEach(doc => {
                 const data = doc.data();
-                // Ensure acceptedByUser is an array
                 const acceptedByUser = Array.isArray(data.acceptedByUser) ? data.acceptedByUser : [];
                 
                 const isSender = data.fromUserId === currentUser.uid;
@@ -252,16 +251,22 @@ tr:hover {
                         acceptedByUser.forEach(user => {
                             if (user && user.email) {
                                 directConnections.add(user.email);
-                                const connection = [data.fromUserEmail, user.email].sort().join('-');
-                                connections.add(connection);
+                                // Store connections as objects directly
+                                connections.push({
+                                    from: data.fromUserEmail,
+                                    to: user.email
+                                });
                             }
                         });
                     } else if (isAcceptor) {
                         directConnections.add(data.fromUserEmail);
                         acceptedByUser.forEach(user => {
                             if (user && user.email === currentUser.email) {
-                                const connection = [data.fromUserEmail, user.email].sort().join('-');
-                                connections.add(connection);
+                                // Store connections as objects directly
+                                connections.push({
+                                    from: data.fromUserEmail,
+                                    to: user.email
+                                });
                             }
                         });
                     }
@@ -319,19 +324,15 @@ tr:hover {
                 `;
             });
 
-            // Update visualization with proper data structure
+            // Create nodes array for visualization
             const nodes = Array.from(directConnections).map(email => ({
                 id: email,
                 label: email,
                 name: email
             }));
 
-            const connectionArray = Array.from(connections).map(conn => {
-                const [from, to] = conn.split('-');
-                return { source: from, target: to };
-            });
-
-            createVisualization(nodes, connectionArray);
+            // Pass nodes and connections directly to visualization
+            createVisualization(nodes, connections);
         })
         .catch(error => {
             console.error("Detailed error:", error);
