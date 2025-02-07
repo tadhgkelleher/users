@@ -250,27 +250,27 @@ tr:hover {
         });
 }
 
-function displayAcceptedInvitesByUser(acceptedUser, invitations) {
-    // Create a unique section ID based on the user email
-    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+function displayUniqueInvitesByUser(user, invitations) {
+    // Create a unique section ID based on the user's first and last name.
+    // (Note: if first/last names might not be unique, you could still incorporate the email.)
+    const sectionId = `userSection-${(user.firstName + user.lastName).replace(/\s|[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     // Remove any existing section for this user to avoid duplicates
     if (section) section.remove();
 
-    // Create a new section container
+    // Create a new section container with a header using first and last names only
     section = document.createElement('div');
     section.id = sectionId;
     section.style.marginTop = "2rem";
     section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
-            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+            Invitations for ${user.firstName} ${user.lastName}
         </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
                 <tr>
-                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Role</th>
-                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Other Party</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Invitation Partner</th>
                     <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Status</th>
                 </tr>
             </thead>
@@ -281,45 +281,73 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
 
-    // Filter invitations where the acceptedUser is either the sender or a receiver
-    const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === acceptedUser.email ||
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+    // Filter invitations where the user is either the sender or one of the accepted users.
+    const userInvitations = invitations.filter(invite =>
+        (invite.fromUser.email === user.email) ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === user.email))
     );
 
-    if (userInvitations.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
-    }
+    // Use a Map to accumulate unique invitation partners.
+    // We use the partner's email as the unique key.
+    const uniquePartners = new Map();
 
     userInvitations.forEach(invite => {
-        // Determine the role and the "other party"
-        let role, otherParty;
-        if (invite.fromUserEmail === acceptedUser.email) {
-            // Sent invitation: list the accepted users (if any)
-            role = "Sent";
+        // Case 1: The user is the sender.
+        if (invite.fromUser.email === user.email) {
+            // Loop through all accepted users (if any) to register them as invitation partners.
             if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
-                // Exclude the current user if they appear in the accepted list.
-                const otherParties = invite.acceptedByUser.filter(u => u.email !== acceptedUser.email);
-                otherParty = otherParties.length > 0 
-                    ? otherParties.map(u => `${u.name} (${u.email})`).join(", ") 
-                    : "No one yet";
-            } else {
-                otherParty = "No one yet";
+                invite.acceptedByUser.forEach(partner => {
+                    // Skip if the partner is the user themself.
+                    if (partner.email === user.email) return;
+                    const key = partner.email;
+                    if (!uniquePartners.has(key)) {
+                        uniquePartners.set(key, {
+                            firstName: partner.firstName,
+                            lastName: partner.lastName,
+                            statuses: new Set([invite.status])
+                        });
+                    } else {
+                        uniquePartners.get(key).statuses.add(invite.status);
+                    }
+                });
             }
+            // (Optional) If no one has accepted, you might decide to show an entry like "No one yet."
         } else {
-            // Received invitation: display the sender
-            role = "Received";
-            otherParty = invite.fromUserEmail;
+            // Case 2: The user is a receiver.
+            // The invitation partner is the sender.
+            const partner = invite.fromUser;
+            const key = partner.email;
+            if (!uniquePartners.has(key)) {
+                uniquePartners.set(key, {
+                    firstName: partner.firstName,
+                    lastName: partner.lastName,
+                    statuses: new Set([invite.status])
+                });
+            } else {
+                uniquePartners.get(key).statuses.add(invite.status);
+            }
         }
-
-        tbody.innerHTML += `
-            <tr>
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${otherParty}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${invite.status}</td>
-            </tr>
-        `;
     });
+
+    // If no invitation partners were found, display a message.
+    if (uniquePartners.size === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
+    } else {
+        // Otherwise, display each unique partner.
+        uniquePartners.forEach((partner, key) => {
+            const statusText = Array.from(partner.statuses).join(", ");
+            tbody.innerHTML += `
+                <tr>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${partner.firstName} ${partner.lastName}
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${statusText}
+                    </td>
+                </tr>
+            `;
+        });
+    }
 }
 
         
