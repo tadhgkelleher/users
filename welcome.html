@@ -220,36 +220,64 @@ function fetchAcceptedInvitations(currentUser) {
 
     db.collection("invitations").get()
         .then(snapshot => {
-            const allInvitations = [];
-            const acceptedUsersMap = new Map();
-            const connections = new Set();
-
+            const allAcceptedInvitations = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                const isSender = data.fromUserId === currentUser.uid;
-                const hasAccepted = data.acceptedByUser?.length > 0;
-                const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
-
-                if ((isSender || isAcceptor) && hasAccepted) {
-                    allInvitations.push(data);
-                    
-                    data.acceptedByUser.forEach(user => {
-                        const connection = [data.fromUserEmail, user.email].sort().join('-');
-                        connections.add(connection);
-                        
-                        const key = user.email;
-                        if (!acceptedUsersMap.has(key)) {
-                            acceptedUsersMap.set(key, user);
-                        }
-                    });
+                if (data.acceptedByUser?.length > 0) {
+                    allAcceptedInvitations.push(data);
                 }
             });
 
+            // Identify direct connections (current user's invitations)
+            const directConnectionsEmails = new Set();
+            const directInvitations = allAcceptedInvitations.filter(data => {
+                const isSender = data.fromUserId === currentUser.uid;
+                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
+                return isSender || isAcceptor;
+            });
+
+            directInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    if (user.email !== currentUser.email) {
+                        directConnectionsEmails.add(user.email);
+                    }
+                });
+            });
+
+            // Identify second-degree invitations (involving direct connections)
+            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
+                const senderEmail = data.fromUserEmail;
+                const acceptorEmails = data.acceptedByUser.map(u => u.email);
+                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
+            });
+
+            // Combine and deduplicate invitations
+            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
+
+            // Process combined invitations to build maps
+            const acceptedUsersMap = new Map();
+            const connections = new Set();
+
+            combinedInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    const key = user.email;
+                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
+                        acceptedUsersMap.set(key, user);
+                    }
+                });
+
+                data.acceptedByUser.forEach(user => {
+                    const connection = [data.fromUserEmail, user.email].sort().join('-');
+                    connections.add(connection);
+                });
+            });
+
+            // Display users and their invitations
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+                displayAcceptedInvitesByUser(currentUser, user, allAcceptedInvitations); // Pass all accepted
             });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
