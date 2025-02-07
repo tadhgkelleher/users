@@ -260,7 +260,7 @@ function fetchAcceptedInvitations(currentUser) {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations, directConnections);
+                displayConnectionsForUser(currentUser, user, allInvitations, directConnections);
             });
 
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
@@ -271,8 +271,8 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, directConnections) {
-    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+function displayConnectionsForUser(currentUser, user, allInvitations, directConnections) {
+    const sectionId = `userSection-${user.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     if (section) section.remove();
@@ -282,7 +282,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, di
     section.style.marginTop = "2rem";
     section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
-            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+            Connections for ${user.name} (${user.email})
         </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
@@ -298,21 +298,24 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, di
     document.querySelector('.container').appendChild(section);
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
-    const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === acceptedUser.email ||
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+
+    // Find all invitations related to this user (both sent and received)
+    const userInvitations = allInvitations.filter(invite =>
+        invite.fromUserEmail === user.email || 
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === user.email))
     );
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
     }
 
+    // For each invitation, display the connections they've made or received
     userInvitations.forEach(invite => {
         let role, otherParties;
-        if (invite.fromUserEmail === acceptedUser.email) {
+        if (invite.fromUserEmail === user.email) {
             role = "Sent";
             otherParties = invite.acceptedByUser ? 
-                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
+                invite.acceptedByUser.filter(u => u.email !== user.email) : [];
         } else {
             role = "Received";
             otherParties = [{ 
@@ -321,43 +324,29 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, di
             }];
         }
 
-        if (otherParties.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-            `;
-            tbody.appendChild(row);
-        } else {
-            otherParties.forEach(user => {
-                // Check if the other party is not the current user and not a direct connection
-                if (user.email !== currentUser.email && !directConnections.has(user.email)) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                        <td style="padding: 12px; border-bottom: 1px solid #333;">
-                            ${user.name} (${user.email})
-                        </td>
-                        <td style="padding: 12px; border-bottom: 1px solid #333;">
-                            <button class="add-connection-btn">
-                                Add Connection
-                            </button>
-                        </td>
-                    `;
+        otherParties.forEach(otherUser => {
+            if (otherUser.email !== currentUser.email && !directConnections.has(otherUser.email)) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        ${otherUser.name} (${otherUser.email})
+                    </td>
+                    <td style="padding: 12px; border-bottom: 1px solid #333;">
+                        <button class="add-connection-btn">
+                            Add Connection
+                        </button>
+                    </td>
+                `;
 
-                    const button = row.querySelector('.add-connection-btn');
-                    button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                const button = row.querySelector('.add-connection-btn');
+                button.addEventListener('click', () => handleAddConnection(currentUser, otherUser));
 
-                    tbody.appendChild(row);
-                }
-            });
-        }
+                tbody.appendChild(row);
+            }
+        });
     });
 }
-
-
-
 
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
@@ -423,7 +412,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
 
 
         
