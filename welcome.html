@@ -288,7 +288,13 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations) {
+    // Existing code remains the same, but uses allInvitations which now includes all accepted
+    const userInvitations = allInvitations.filter(invite => 
+        invite.fromUserEmail === acceptedUser.email ||
+        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+    );
+    
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
