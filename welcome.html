@@ -416,73 +416,7 @@ function handleAddConnection(currentUser, targetUser) {
 
         
 
-function handleAddConnection(currentUser, targetUser) {
-    if (currentUser.email === targetUser.email) {
-        alert('Cannot add yourself as a connection.');
-        return;
-    }
 
-    const sortedEmails = [currentUser.email, targetUser.email].sort();
-    const connectionId = sortedEmails.join('-');
-
-    const connectionRef = db.collection('connections').doc(connectionId);
-
-    connectionRef.get().then(doc => {
-        if (doc.exists) {
-            alert('Connection already exists!');
-            return;
-        }
-
-        return connectionRef.set({
-            users: sortedEmails,
-            usersInfo: [
-                { email: currentUser.email, name: currentUser.displayName },
-                { email: targetUser.email, name: targetUser.name }
-            ],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }).then(() => {
-        // Check if an invite already exists from the current user to the target user
-        return db.collection("invitations")
-            .where("fromUserEmail", "==", currentUser.email)
-            .where("toUserEmail", "==", targetUser.email)
-            .limit(1)
-            .get();
-    }).then(snapshot => {
-        if (!snapshot.empty) {
-            // Update existing invitation
-            const inviteDoc = snapshot.docs[0];
-            const inviteRef = db.collection("invitations").doc(inviteDoc.id);
-            const inviteData = inviteDoc.data();
-
-            const updatedAcceptedBy = inviteData.acceptedByUser || [];
-            if (!updatedAcceptedBy.some(user => user.email === targetUser.email)) {
-                updatedAcceptedBy.push({ email: targetUser.email, name: targetUser.name });
-            }
-
-            return inviteRef.update({ acceptedByUser: updatedAcceptedBy, status: "accepted" });
-        } else {
-            // Create a new invitation if none exists
-            return db.collection("invitations").add({
-                fromUserId: currentUser.uid,
-                fromUserEmail: currentUser.email,
-                fromUserName: currentUser.displayName,
-                toUserId: targetUser.uid || null, // if available
-                toUserEmail: targetUser.email,
-                toUserName: targetUser.name,
-                status: "accepted",
-                acceptedByUser: [{ email: targetUser.email, name: targetUser.name }],
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    }).then(() => {
-        alert('Connection added successfully!');
-        fetchAcceptedInvitations(currentUser);
-    }).catch(error => {
-        console.error('Error adding connection:', error);
-        alert('Failed to add connection.');
-    });
-}
 
 
     function createVisualization(users, connections) {
