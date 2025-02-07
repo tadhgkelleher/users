@@ -280,18 +280,19 @@ function fetchAcceptedInvitations(currentUser) {
     });
 }
 
-function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
-  const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+function displayAcceptedInvitesByUser(currentUser, listedUser, invitations) {
+  const sectionId = `userSection-${listedUser.email.replace(/[@.]/g, '_')}`;
   let section = document.getElementById(sectionId);
 
   if (section) section.remove();
 
+  // Create a section for the listed user
   section = document.createElement('div');
   section.id = sectionId;
   section.style.marginTop = "2rem";
   section.innerHTML = `
       <h3 style="color: #4db6ac; text-transform: uppercase;">
-          Invitations for ${acceptedUser.name} (${acceptedUser.email})
+          Invitations for ${listedUser.name} (${listedUser.email})
       </h3>
       <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
           <thead>
@@ -307,53 +308,70 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
   document.querySelector('.container').appendChild(section);
 
   const tbody = document.getElementById(`${sectionId}-tbody`);
+  
+  // Filter invitations in which the listedUser is involved either as sender or recipient
   const userInvitations = invitations.filter(invite =>
-    invite.fromUserEmail === acceptedUser.email ||
-    (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+      invite.fromUserEmail === listedUser.email ||
+      (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === listedUser.email))
   );
 
   if (userInvitations.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
+      tbody.innerHTML = `<tr>
+        <td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td>
+      </tr>`;
   }
 
   userInvitations.forEach(invite => {
-    // Determine the role based on whether the acceptedUser is the sender.
-    const role = (invite.fromUserEmail === acceptedUser.email) ? "Sent" : "Received";
+      // Determine whether this invitation was sent or received by the listed user
+      const role = (invite.fromUserEmail === listedUser.email) ? "Sent" : "Received";
+      
+      // Build an array of all participants for this invitation:
+      // Include the sender...
+      let participants = [{
+          email: invite.fromUserEmail,
+          name: invite.fromUserName || invite.fromUserEmail
+      }];
+      // ...and any accepted users
+      if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
+          participants = participants.concat(invite.acceptedByUser);
+      }
+      
+      // Remove duplicate entries (in case the sender appears among accepted users)
+      participants = participants.filter((user, index, self) =>
+          index === self.findIndex(u => u.email === user.email)
+      );
+      
+      // Remove the listed user from the list to obtain the "other party/parties"
+      const otherParties = participants.filter(user => user.email !== listedUser.email);
 
-    // Create an array of all participants (sender plus accepted users)
-    const participants = [{
-      email: invite.fromUserEmail,
-      name: invite.fromUserName || invite.fromUserEmail
-    }].concat(invite.acceptedByUser || []);
-
-    // Remove the current acceptedUser from the list of other parties.
-    const otherParties = participants.filter(user => user.email !== acceptedUser.email);
-
-    if (otherParties.length === 0) {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-          <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-          <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
-          <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-      `;
-      tbody.appendChild(row);
-    } else {
-      otherParties.forEach(user => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #333;">
-                ${user.name} (${user.email})
-            </td>
-            <td style="padding: 12px; border-bottom: 1px solid #333;">
-                <button class="add-connection-btn">Add Connection</button>
-            </td>
-        `;
-        const button = row.querySelector('.add-connection-btn');
-        button.addEventListener('click', () => handleAddConnection(currentUser, user));
-        tbody.appendChild(row);
-      });
-    }
+      // For each "other party" in this invitation, add a row
+      if (otherParties.length === 0) {
+          // In case there are no other participants, show a placeholder.
+          const row = document.createElement('tr');
+          row.innerHTML = `
+              <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+              <td style="padding: 12px; border-bottom: 1px solid #333;">No other parties</td>
+              <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
+          `;
+          tbody.appendChild(row);
+      } else {
+          otherParties.forEach(user => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                  <td style="padding: 12px; border-bottom: 1px solid #333;">
+                      ${user.name} (${user.email})
+                  </td>
+                  <td style="padding: 12px; border-bottom: 1px solid #333;">
+                      <button class="add-connection-btn">Add Connection</button>
+                  </td>
+              `;
+              // Wire up the action button
+              const button = row.querySelector('.add-connection-btn');
+              button.addEventListener('click', () => handleAddConnection(currentUser, user));
+              tbody.appendChild(row);
+          });
+      }
   });
 }
 
