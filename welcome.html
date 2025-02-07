@@ -352,13 +352,14 @@ function handleAddConnection(currentUser, targetUser) {
     const connectionId = sortedEmails.join('-');
 
     const connectionRef = db.collection('connections').doc(connectionId);
-
+    
     connectionRef.get().then(doc => {
         if (doc.exists) {
             alert('Connection already exists!');
             return;
-       }
-         return connectionRef.set({
+        }
+        
+        return connectionRef.set({
             users: sortedEmails,
             usersInfo: [{
                 email: currentUser.email,
@@ -369,6 +370,28 @@ function handleAddConnection(currentUser, targetUser) {
             }],
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+    }).then(() => {
+        // Find the relevant invitation document
+        return db.collection("invitations")
+            .where("fromUserEmail", "in", [currentUser.email, targetUser.email])
+            .where("acceptedByUser", "array-contains", { email: targetUser.email })
+            .get();
+    }).then(snapshot => {
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            const inviteRef = db.collection("invitations").doc(doc.id);
+            const data = doc.data();
+
+            // Ensure the targetUser is not already in the acceptedByUser list
+            const updatedAcceptedBy = data.acceptedByUser || [];
+            if (!updatedAcceptedBy.some(user => user.email === currentUser.email)) {
+                updatedAcceptedBy.push({ email: currentUser.email, name: currentUser.displayName });
+            }
+
+            batch.update(inviteRef, { acceptedByUser: updatedAcceptedBy });
+        });
+
+        return batch.commit();
     }).then(() => {
         alert('Connection added successfully!');
         fetchAcceptedInvitations(currentUser);
