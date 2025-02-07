@@ -260,7 +260,7 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
+function displayInvitesByUser(currentUser, acceptedUser, invitations) {
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
@@ -288,61 +288,40 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === acceptedUser.email ||
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
+        invite.fromUserEmail === acceptedUser.email || invite.toUserEmail === acceptedUser.email
     );
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
+        return;
     }
 
     userInvitations.forEach(invite => {
-        let role, otherParties;
+        let role, otherParty;
+
         if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
-            // Exclude acceptedUser (sender) and currentUser from other parties
-            otherParties = invite.acceptedByUser ? 
-                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email && u.email !== currentUser.email) : [];
+            otherParty = { email: invite.toUserEmail, name: invite.toUserName || invite.toUserEmail };
         } else {
             role = "Received";
-            // Exclude invitations where sender is the current user
-            otherParties = invite.fromUserEmail !== currentUser.email 
-                ? [{ 
-                    email: invite.fromUserEmail, 
-                    name: invite.fromUserName || invite.fromUserEmail 
-                  }] 
-                : [];
+            otherParty = { email: invite.fromUserEmail, name: invite.fromUserName || invite.fromUserEmail };
         }
 
-        if (otherParties.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
-                <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-            `;
-            tbody.appendChild(row);
-        } else {
-            otherParties.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        ${user.name} (${user.email})
-                    </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        <button class="add-connection-btn">
-                            Add Connection
-                        </button>
-                    </td>
-                `;
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #333;">
+                ${otherParty.name} (${otherParty.email})
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #333;">
+                <button class="add-connection-btn">Add Connection</button>
+            </td>
+        `;
 
-                const button = row.querySelector('.add-connection-btn');
-                button.addEventListener('click', () => handleAddConnection(currentUser, user));
-                
-                tbody.appendChild(row);
-            });
-        }
+        const button = row.querySelector('.add-connection-btn');
+        button.addEventListener('click', () => handleAddConnection(currentUser, otherParty));
+
+        tbody.appendChild(row);
     });
 }
 
