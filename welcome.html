@@ -298,15 +298,21 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
 
     userInvitations.forEach(invite => {
         let role, otherParties;
+
         if (invite.fromUserEmail === acceptedUser.email) {
+            // Invitation sent by acceptedUser.
             role = "Sent";
-            otherParties = invite.acceptedByUser ? 
-                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
+            // Change the filter here: remove the current user instead of the acceptedUser.
+            otherParties = invite.acceptedByUser ?
+                invite.acceptedByUser.filter(u => u.email !== currentUser.email) : [];
         } else {
+            // Invitation received by acceptedUser.
             role = "Received";
-            otherParties = [{ 
-                email: invite.fromUserEmail, 
-                name: invite.fromUserName || invite.fromUserEmail 
+            // In this branch, the sender is the "other party".
+            // Optionally, you can check if invite.fromUserEmail is the current user and decide how to handle it.
+            otherParties = [{
+                email: invite.fromUserEmail,
+                name: invite.fromUserName || invite.fromUserEmail
             }];
         }
 
@@ -335,12 +341,13 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
 
                 const button = row.querySelector('.add-connection-btn');
                 button.addEventListener('click', () => handleAddConnection(currentUser, user));
-                
+
                 tbody.appendChild(row);
             });
         }
     });
 }
+
 
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
