@@ -255,7 +255,7 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-            // Display accepted users
+            // Display accepted users (friends of friends)
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
@@ -331,8 +331,8 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations, di
             tbody.appendChild(row);
         } else {
             otherParties.forEach(user => {
-                // Check if user is a friend of a friend (i.e., is not a direct connection)
-                if (!directConnections.has(user.email)) {
+                // Check if the other party is not the current user and not a direct connection
+                if (user.email !== currentUser.email && !directConnections.has(user.email)) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
