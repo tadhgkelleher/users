@@ -261,15 +261,15 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
-    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+    const sectionId = userSection-${acceptedUser.email.replace(/[@.]/g, '_')};
     let section = document.getElementById(sectionId);
+
     if (section) section.remove();
 
-    // Create a section to display this friend's invitations
     section = document.createElement('div');
     section.id = sectionId;
     section.style.marginTop = "2rem";
-    section.innerHTML = `
+    section.innerHTML = 
         <h3 style="color: #4db6ac; text-transform: uppercase;">
             Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
@@ -283,82 +283,70 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
             </thead>
             <tbody id="${sectionId}-tbody"></tbody>
         </table>
-    `;
+    ;
     document.querySelector('.container').appendChild(section);
 
-    const tbody = document.getElementById(`${sectionId}-tbody`);
-
-    // Filter invitations in which the acceptedUser is involved.
-    const userInvitations = invitations.filter(invite =>
+    const tbody = document.getElementById(${sectionId}-tbody);
+    const userInvitations = invitations.filter(invite => 
         invite.fromUserEmail === acceptedUser.email ||
         (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
     if (userInvitations.length === 0) {
-        tbody.innerHTML = `<tr>
-            <td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td>
-        </tr>`;
+        tbody.innerHTML = <tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>;
     }
 
     userInvitations.forEach(invite => {
-        let role, otherParties = [];
+        let role, otherParties;
 
         if (invite.fromUserEmail === acceptedUser.email) {
-            // Case 1: acceptedUser SENT the invitation.
+            // Invitation sent by acceptedUser.
             role = "Sent";
-            // In the acceptedByUser array, filter out:
-            //   - acceptedUser (the sender) and
-            //   - currentUser (since we want friend-of-friend only)
-            if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
-                otherParties = invite.acceptedByUser.filter(u =>
-                    u.email !== acceptedUser.email && u.email !== currentUser.email
-                );
-            }
+            // Change the filter here: remove the current user instead of the acceptedUser.
+            otherParties = invite.acceptedByUser ?
+                invite.acceptedByUser.filter(u => u.email !== currentUser.email) : [];
         } else {
-            // Case 2: acceptedUser RECEIVED the invitation.
-            // The other party is the sender.
-            // But if the sender is currentUser then this is a direct connection
-            // and not a friend-of-friend so we ignore it.
-            if (invite.fromUserEmail !== currentUser.email) {
-                role = "Received";
-                otherParties = [{
-                    email: invite.fromUserEmail,
-                    name: invite.fromUserName || invite.fromUserEmail
-                }];
-            }
+            // Invitation received by acceptedUser.
+            role = "Received";
+            // In this branch, the sender is the "other party".
+            // Optionally, you can check if invite.fromUserEmail is the current user and decide how to handle it.
+            otherParties = [{
+                email: invite.fromUserEmail,
+                name: invite.fromUserName || invite.fromUserEmail
+            }];
         }
 
-        // If, after filtering, there are no "other parties" to show, display a placeholder.
         if (otherParties.length === 0) {
             const row = document.createElement('tr');
-            row.innerHTML = `
-                <td style="padding: 12px; border-bottom: 1px solid #333;">${role || ''}</td>
+            row.innerHTML = 
+                <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-            `;
+            ;
             tbody.appendChild(row);
         } else {
-            // For each other party (i.e. a friend-of-a-friend), display a row.
             otherParties.forEach(user => {
                 const row = document.createElement('tr');
-                row.innerHTML = `
+                row.innerHTML = 
                     <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
                         ${user.name} (${user.email})
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        <button class="add-connection-btn">Add Connection</button>
+                        <button class="add-connection-btn">
+                            Add Connection
+                        </button>
                     </td>
-                `;
-                // When clicking the button, pass currentUser and the friend-of-friend user.
+                ;
+
                 const button = row.querySelector('.add-connection-btn');
                 button.addEventListener('click', () => handleAddConnection(currentUser, user));
+
                 tbody.appendChild(row);
             });
         }
     });
 }
-
 
 
 function handleAddConnection(currentUser, targetUser) {
