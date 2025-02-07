@@ -221,9 +221,10 @@ tr:hover {
             }
         });
 
-          function fetchAcceptedInvitations(currentUser) {
+         function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     const secondDegreeTable = document.getElementById("secondDegreeTable").getElementsByTagName('tbody')[0];
+    
     invitationsTable.innerHTML = "";
     secondDegreeTable.innerHTML = "";
 
@@ -231,30 +232,34 @@ tr:hover {
         .then(snapshot => {
             const allInvitations = [];
             const directConnections = new Set();
-            const secondDegreeConnections = new Map(); // email -> Set of connecting friends
-            const connections = new Set(); // Track connections between users
+            const secondDegreeConnections = new Map();
+            const connections = new Set();
 
             // First pass: identify direct connections
             snapshot.forEach(doc => {
                 const data = doc.data();
+                // Ensure acceptedByUser is an array
+                const acceptedByUser = Array.isArray(data.acceptedByUser) ? data.acceptedByUser : [];
+                
                 const isSender = data.fromUserId === currentUser.uid;
-                const hasAccepted = data.acceptedByUser?.length > 0;
-                const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
+                const hasAccepted = acceptedByUser.length > 0;
+                const isAcceptor = hasAccepted && acceptedByUser.some(u => u && u.email === currentUser.email);
 
                 if ((isSender || isAcceptor) && hasAccepted) {
                     allInvitations.push(data);
                     
-                    // Add direct connections
                     if (isSender) {
-                        data.acceptedByUser.forEach(user => {
-                            directConnections.add(user.email);
-                            const connection = [data.fromUserEmail, user.email].sort().join('-');
-                            connections.add(connection);
+                        acceptedByUser.forEach(user => {
+                            if (user && user.email) {
+                                directConnections.add(user.email);
+                                const connection = [data.fromUserEmail, user.email].sort().join('-');
+                                connections.add(connection);
+                            }
                         });
                     } else if (isAcceptor) {
                         directConnections.add(data.fromUserEmail);
-                        data.acceptedByUser.forEach(user => {
-                            if (user.email === currentUser.email) {
+                        acceptedByUser.forEach(user => {
+                            if (user && user.email === currentUser.email) {
                                 const connection = [data.fromUserEmail, user.email].sort().join('-');
                                 connections.add(connection);
                             }
@@ -266,11 +271,12 @@ tr:hover {
             // Second pass: find friends of friends
             snapshot.forEach(doc => {
                 const data = doc.data();
+                const acceptedByUser = Array.isArray(data.acceptedByUser) ? data.acceptedByUser : [];
                 
-                // If sender is a direct connection, check their accepted users
                 if (directConnections.has(data.fromUserEmail)) {
-                    data.acceptedByUser?.forEach(user => {
-                        if (!directConnections.has(user.email) && user.email !== currentUser.email) {
+                    acceptedByUser.forEach(user => {
+                        if (user && user.email && !directConnections.has(user.email) && 
+                            user.email !== currentUser.email) {
                             if (!secondDegreeConnections.has(user.email)) {
                                 secondDegreeConnections.set(user.email, new Set());
                             }
@@ -279,15 +285,14 @@ tr:hover {
                     });
                 }
 
-                // If any acceptor is a direct connection, check the sender
-                if (data.acceptedByUser?.some(u => directConnections.has(u.email))) {
+                if (acceptedByUser.some(u => u && u.email && directConnections.has(u.email))) {
                     if (!directConnections.has(data.fromUserEmail) && 
                         data.fromUserEmail !== currentUser.email) {
                         if (!secondDegreeConnections.has(data.fromUserEmail)) {
                             secondDegreeConnections.set(data.fromUserEmail, new Set());
                         }
-                        data.acceptedByUser
-                            .filter(u => directConnections.has(u.email))
+                        acceptedByUser
+                            .filter(u => u && u.email && directConnections.has(u.email))
                             .forEach(u => {
                                 secondDegreeConnections.get(data.fromUserEmail).add(u.email);
                             });
@@ -314,19 +319,25 @@ tr:hover {
                 `;
             });
 
-            // Update visualization
-            createVisualization(Array.from(directConnections).map(email => ({
+            // Update visualization with proper data structure
+            const nodes = Array.from(directConnections).map(email => ({
                 id: email,
-                label: email
-            })), Array.from(connections));
+                label: email,
+                name: email
+            }));
+
+            const connectionArray = Array.from(connections).map(conn => {
+                const [from, to] = conn.split('-');
+                return { source: from, target: to };
+            });
+
+            createVisualization(nodes, connectionArray);
         })
         .catch(error => {
-            console.error("Error fetching invitations:", error);
-            document.getElementById("errorMessage").textContent = "Error loading invitations.";
+            console.error("Detailed error:", error);
+            document.getElementById("errorMessage").textContent = `Error loading invitations: ${error.message}`;
         });
 }
-
-
         
         function displayAcceptedInvitesByUser(acceptedUser, invitations) {
             const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
