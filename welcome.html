@@ -234,6 +234,9 @@ function fetchAcceptedInvitations(currentUser) {
                     allInvitations.push(data);
                     
                     data.acceptedByUser.forEach(user => {
+                        // Skip adding current user to acceptedUsersMap
+                        if (user.email === currentUser.email) return;
+
                         const connection = [data.fromUserEmail, user.email].sort().join('-');
                         connections.add(connection);
                         
@@ -269,7 +272,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
     section = document.createElement('div');
     section.id = sectionId;
     section.style.marginTop = "2rem";
-    section.innerHTML = ` 
+    section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
             Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
@@ -288,7 +291,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === acceptedUser.email || 
+        invite.fromUserEmail === acceptedUser.email ||
         (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
@@ -300,14 +303,18 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
         let role, otherParties;
         if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
+            // Exclude current user and accepted user from other parties
             otherParties = invite.acceptedByUser ? 
                 invite.acceptedByUser.filter(u => u.email !== acceptedUser.email && u.email !== currentUser.email) : [];
         } else {
             role = "Received";
-            otherParties = [{ 
-                email: invite.fromUserEmail, 
-                name: invite.fromUserName || invite.fromUserEmail 
-            }];
+            // Exclude invitations where the sender is the current user
+            otherParties = invite.fromUserEmail === currentUser.email 
+                ? [] 
+                : [{ 
+                    email: invite.fromUserEmail, 
+                    name: invite.fromUserName || invite.fromUserEmail 
+                }];
         }
 
         if (otherParties.length === 0) {
@@ -341,7 +348,6 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
         }
     });
 }
-
 function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
         alert('Cannot add yourself as a connection.');
