@@ -214,51 +214,7 @@ tr:hover {
             }
         });
 
-function fetchAcceptedInvitations(currentUser) {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    invitationsTable.innerHTML = "";
 
-    db.collection("invitations").get()
-        .then(snapshot => {
-            const allInvitations = [];
-            const acceptedUsersMap = new Map();
-            const connections = new Set();
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const isSender = data.fromUserId === currentUser.uid;
-                const hasAccepted = data.acceptedByUser?.length > 0;
-                const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
-
-                if ((isSender || isAcceptor) && hasAccepted) {
-                    allInvitations.push(data);
-                    
-                    data.acceptedByUser.forEach(user => {
-                        const connection = [data.fromUserEmail, user.email].sort().join('-');
-                        connections.add(connection);
-                        
-                        const key = user.email;
-                        if (!acceptedUsersMap.has(key)) {
-                            acceptedUsersMap.set(key, user);
-                        }
-                    });
-                }
-            });
-
-            acceptedUsersMap.forEach(user => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
-                invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allInvitations);
-            });
-
-            createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
-        })
-        .catch(error => {
-            console.error("Error fetching invitations:", error);
-            document.getElementById("errorMessage").textContent = "Error loading invitations.";
-        });
-}
 
 function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
