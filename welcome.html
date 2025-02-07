@@ -321,10 +321,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
     document.querySelector('.container').appendChild(section);
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
-    const userInvitations = invitations.filter(invite => 
-        invite.fromUserEmail === acceptedUser.email ||
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
-    );
+  
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
