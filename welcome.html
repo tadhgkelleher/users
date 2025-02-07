@@ -261,7 +261,7 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
-    const sectionId = userSection-${acceptedUser.email.replace(/[@.]/g, '_')};
+    const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
     if (section) section.remove();
@@ -269,7 +269,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
     section = document.createElement('div');
     section.id = sectionId;
     section.style.marginTop = "2rem";
-    section.innerHTML = 
+    section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
             Invitations for ${acceptedUser.name} (${acceptedUser.email})
         </h3>
@@ -283,51 +283,45 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
             </thead>
             <tbody id="${sectionId}-tbody"></tbody>
         </table>
-    ;
+    `;
     document.querySelector('.container').appendChild(section);
 
-    const tbody = document.getElementById(${sectionId}-tbody);
+    const tbody = document.getElementById(`${sectionId}-tbody`);
     const userInvitations = invitations.filter(invite => 
         invite.fromUserEmail === acceptedUser.email ||
         (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
 
     if (userInvitations.length === 0) {
-        tbody.innerHTML = <tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>;
+        tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
     }
 
     userInvitations.forEach(invite => {
         let role, otherParties;
-
         if (invite.fromUserEmail === acceptedUser.email) {
-            // Invitation sent by acceptedUser.
             role = "Sent";
-            // Change the filter here: remove the current user instead of the acceptedUser.
-            otherParties = invite.acceptedByUser ?
-                invite.acceptedByUser.filter(u => u.email !== currentUser.email) : [];
+            otherParties = invite.acceptedByUser ? 
+                invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
         } else {
-            // Invitation received by acceptedUser.
             role = "Received";
-            // In this branch, the sender is the "other party".
-            // Optionally, you can check if invite.fromUserEmail is the current user and decide how to handle it.
-            otherParties = [{
-                email: invite.fromUserEmail,
-                name: invite.fromUserName || invite.fromUserEmail
+            otherParties = [{ 
+                email: invite.fromUserEmail, 
+                name: invite.fromUserName || invite.fromUserEmail 
             }];
         }
 
         if (otherParties.length === 0) {
             const row = document.createElement('tr');
-            row.innerHTML = 
+            row.innerHTML = `
                 <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;">No one yet</td>
                 <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
-            ;
+            `;
             tbody.appendChild(row);
         } else {
             otherParties.forEach(user => {
                 const row = document.createElement('tr');
-                row.innerHTML = 
+                row.innerHTML = `
                     <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
                         ${user.name} (${user.email})
@@ -337,11 +331,11 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
                             Add Connection
                         </button>
                     </td>
-                ;
+                `;
 
                 const button = row.querySelector('.add-connection-btn');
                 button.addEventListener('click', () => handleAddConnection(currentUser, user));
-
+                
                 tbody.appendChild(row);
             });
         }
