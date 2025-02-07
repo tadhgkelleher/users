@@ -1,457 +1,436 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome</title>
-  <!-- Firebase Libraries -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-  <!-- D3 Library -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #121212;
-      color: #e0e0e0;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      padding-top: 20px;
-    }
-    .container {
-      background-color: #1e1e1e;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      max-width: 1000px;
-      width: 90%;
-      margin-bottom: 2rem;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #4db6ac;
-      font-weight: bold;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 30px;
-      background-color: #242424;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    th,
-    td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #333;
-    }
-    th {
-      background-color: #4db6ac;
-      color: #121212;
-      font-weight: bold;
-    }
-    tr:nth-child(even) {
-      background-color: #2a2a2a;
-    }
-    tr:hover {
-      background-color: #333;
-    }
-    .error-message {
-      color: #e57373;
-      text-align: center;
-      margin-bottom: 20px;
-      font-weight: bold;
-    }
-    .nav-links {
-      width: 100%;
-      padding: 15px;
-      background-color: #263238;
-      color: white;
-      text-align: center;
-      margin-bottom: 20px;
-      border-radius: 6px;
-    }
-    .nav-links a,
-    .nav-links button {
-      color: #80cbc4;
-      margin: 0 15px;
-      text-decoration: none;
-      font-weight: bold;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      transition: color 0.3s ease;
-    }
-    .nav-links a:hover,
-    .nav-links button:hover {
-      color: #4db6ac;
-    }
-    #inviteLink {
-      display: none;
-      margin-top: 10px;
-      padding: 12px;
-      width: 100%;
-      box-sizing: border-box;
-      border: 1px solid #555;
-      border-radius: 6px;
-      background-color: #1e1e1e;
-      color: #e0e0e0;
-    }
-    .share-buttons {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .share-buttons button,
-    #generateLinkBtn,
-    #copyLinkBtn {
-      padding: 10px 18px;
-      background-color: #4db6ac;
-      color: #121212;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s ease;
-    }
-    .share-buttons button:hover,
-    #generateLinkBtn:hover,
-    #copyLinkBtn:hover {
-      background-color: #388e8e;
-    }
-  </style>
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding-top: 20px;
+}
+
+.container {
+    background-color: #1e1e1e;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    max-width: 1000px;
+    width: 90%;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #4db6ac;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: #242424;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+th {
+    background-color: #4db6ac;
+    color: #121212;
+    font-weight: bold;
+}
+
+tr:nth-child(even) {
+    background-color: #2a2a2a;
+}
+
+tr:hover {
+    background-color: #333;
+}
+
+.error-message {
+    color: #e57373;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.nav-links {
+    width: 100%;
+    padding: 15px;
+    background-color: #263238;
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    border-radius: 6px;
+}
+
+.nav-links a, .nav-links button {
+    color: #80cbc4;
+    margin: 0 15px;
+    text-decoration: none;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover, .nav-links button:hover {
+    color: #4db6ac;
+}
+
+#inviteLink {
+    display: none;
+    margin-top: 10px;
+    padding: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+}
+
+.share-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.share-buttons button, #generateLinkBtn, #copyLinkBtn {
+    padding: 10px 18px;
+    background-color: #4db6ac;
+    color: #121212;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+    background-color: #388e8e;
+}
+
+    </style>
 </head>
 <body>
-  <!-- Navigation -->
-  <div class="nav-links">
-    <a href="invite.html">Invite</a>
-    <a href="profile.html">Profile</a>
-    <button id="signOutBtn">Sign Out</button>
-  </div>
+    <div class="nav-links">
+        <a href="invite.html">Invite</a>
+        <a href="profile.html">Profile</a>
+        <button id="signOutBtn">Sign Out</button>
+    </div>
 
-  <!-- Main Container -->
-  <div class="container">
-    <h1>Welcome</h1>
-    <p id="welcomeMessage"></p>
-    <div class="error-message" id="errorMessage"></div>
+    <div class="container">
+        <h1>Welcome</h1>
+        <p id="welcomeMessage"></p>
+        <div class="error-message" id="errorMessage"></div>
 
-    <h2>Generate Invitation Link</h2>
-    <button id="generateLinkBtn">Generate Link</button>
-    <input type="text" id="inviteLink" readonly />
-    <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-  </div>
+   
 
-  <!-- Visualization Container -->
-  <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+    </div>
+
+   <!-- Visualization Container -->
+<div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
     <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
     <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
-  </div>
+</div>
 
-  <!-- Accepted Invitations Table -->
-  <h2>Accepted Invitations</h2>
-  <table id="invitationsTable">
-    <thead>
-      <tr>
-        <th>Accepted By</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 
-  <!-- Friend-of-Friend List -->
-  <h2>People Connected to Your Connections</h2>
-  <ul id="friendOfFriendsList" style="list-style: none; padding: 0;"></ul>
+         <h2>Accepted Invitations</h2>
+        <table id="invitationsTable">
+            <thead>
+                <tr>
+                    <th>Accepted By</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
 
-  <script>
-    // Firebase configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-      authDomain: "mandala-5165e.firebaseapp.com",
-      projectId: "mandala-5165e",
-      storageBucket: "mandala-5165e.appspot.com",
-      messagingSenderId: "569537405023",
-      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-      measurementId: "G-TER99X7NBT"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-
-    // Check authentication state
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-        fetchAcceptedInvitations(user);
-      } else {
-        window.location.href = '/index.html';
-      }
-    });
-
-    // === Friend-of-Friend Helper Functions ===
-
-    // Build an adjacency list (graph) from connection pairs.
-    function buildGraph(connections) {
-      const graph = {};
-      connections.forEach(connection => {
-        const [email1, email2] = connection.split('-');
-        if (!graph[email1]) { graph[email1] = new Set(); }
-        if (!graph[email2]) { graph[email2] = new Set(); }
-        graph[email1].add(email2);
-        graph[email2].add(email1);
-      });
-      return graph;
-    }
-
-    // Retrieve second-degree (friend-of-friend) connections for the current user.
-    function getFriendOfFriends(graph, currentEmail) {
-      const directFriends = graph[currentEmail] ? Array.from(graph[currentEmail]) : [];
-      const friendOfFriendsSet = new Set();
-      directFriends.forEach(friend => {
-        if (graph[friend]) {
-          graph[friend].forEach(fof => {
-            // Exclude yourself and already-direct connections.
-            if (fof !== currentEmail && !graph[currentEmail].has(fof)) {
-              friendOfFriendsSet.add(fof);
-            }
-          });
-        }
-      });
-      return Array.from(friendOfFriendsSet);
-    }
-
-    // Display the friend-of-friend suggestions in the designated list.
-    function displayFriendOfFriendsList(friendOfFriends) {
-      const listElement = document.getElementById("friendOfFriendsList");
-      listElement.innerHTML = "";
-      if (friendOfFriends.length === 0) {
-        const li = document.createElement("li");
-        li.textContent = "No friend-of-friend suggestions available.";
-        listElement.appendChild(li);
-        return;
-      }
-      friendOfFriends.forEach(email => {
-        const li = document.createElement("li");
-        li.style.padding = "8px";
-        li.style.backgroundColor = "#2a2a2a";
-        li.style.marginBottom = "6px";
-        li.style.borderRadius = "4px";
-
-        // Create a label and a button to allow adding this person as a connection.
-        const label = document.createElement("span");
-        label.textContent = email;
-
-        const addButton = document.createElement("button");
-        addButton.textContent = "Add Connection";
-        addButton.style.marginLeft = "10px";
-        addButton.onclick = () => {
-          // Implement your add connection logic here.
-          alert(`Add connection functionality for ${email} not implemented yet.`);
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
         };
 
-        li.appendChild(label);
-        li.appendChild(addButton);
-        listElement.appendChild(li);
-      });
-    }
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
 
-    // === Fetch and Process Invitation Data ===
-
-    function fetchAcceptedInvitations(currentUser) {
-      const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName("tbody")[0];
-      invitationsTable.innerHTML = "";
-
-      db.collection("invitations")
-        .get()
-        .then(snapshot => {
-          const acceptedUsersMap = new Map();
-          const connections = new Set(); // Track direct connections
-
-          snapshot.forEach(doc => {
-            const data = doc.data();
-            const isSender = data.fromUserId === currentUser.uid;
-            const hasAccepted = data.acceptedByUser && data.acceptedByUser.length > 0;
-            const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
-
-            if ((isSender || isAcceptor) && hasAccepted) {
-              // Record each accepted invitation as a connection.
-              data.acceptedByUser.forEach(user => {
-                const connection = [data.fromUserEmail, user.email].sort().join("-");
-                connections.add(connection);
-
-                // Save the accepted user (if not the current user)
-                if (user.email !== currentUser.email && !acceptedUsersMap.has(user.email)) {
-                  acceptedUsersMap.set(user.email, user);
-                }
-              });
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+                fetchAcceptedInvitations(user);
+            } else {
+                window.location.href = '/index.html';
             }
-          });
-
-          // Update the invitations table.
-          acceptedUsersMap.forEach(user => {
-            invitationsTable.innerHTML += `<tr>
-              <td>${user.email}<br>${user.name}</td>
-            </tr>`;
-          });
-
-          // Build the graph and display friend-of-friend suggestions.
-          const graph = buildGraph(connections);
-          const friendOfFriends = getFriendOfFriends(graph, currentUser.email);
-          displayFriendOfFriendsList(friendOfFriends);
-
-          // Update the visualization with the current nodes and connections.
-          createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
-        })
-        .catch(error => {
-          console.error("Error fetching invitations:", error);
-          document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
-    }
 
-    // === D3 Visualization ===
+        function fetchAcceptedInvitations(currentUser) {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            invitationsTable.innerHTML = "";
 
-    function createVisualization(users = [], connections = []) {
-      // Clear any previous visualization.
-      d3.select("#visualization").html("");
-      const width = 600;
-      const height = 500;
-      const radius = 200;
-      const centerX = width / 2;
-      const centerY = height / 2;
+            db.collection("invitations").get()
+                .then(snapshot => {
+                    const allInvitations = [];
+                    const acceptedUsersMap = new Map();
+                    const connections = new Set(); // Track connections between users
 
-      const svg = d3.select("#visualization")
-        .append("svg")
-        .attr("viewBox", `0 0 ${width} ${height}`)
-        .style("width", "100%")
-        .style("max-width", "600px")
-        .style("margin", "0 auto")
-        .style("display", "block");
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isSender = data.fromUserId === currentUser.uid;
+                        const hasAccepted = data.acceptedByUser?.length > 0;
+                        const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
 
-      // Create nodes from the user data.
-      const nodes = users.map(user => ({
-        id: user.email,
-        label: user.email,
-        name: user.name
-      }));
+                        if ((isSender || isAcceptor) && hasAccepted) {
+                            allInvitations.push(data);
+                            
+                            // Create connections between sender and acceptors
+                            data.acceptedByUser.forEach(user => {
+                                const connection = [data.fromUserEmail, user.email].sort().join('-');
+                                connections.add(connection);
+                                
+                                const key = user.email;
+                                if (!acceptedUsersMap.has(key)) {
+                                    acceptedUsersMap.set(key, user);
+                                }
+                            });
+                        }
+                    });
 
-      // Calculate positions for each node.
-      const nodePositions = new Map();
-      nodes.forEach((node, i) => {
-        const angle = i * 2 * Math.PI / nodes.length;
-        nodePositions.set(node.id, {
-          x: centerX + radius * Math.cos(angle),
-          y: centerY + radius * Math.sin(angle),
-          angle: angle
-        });
-      });
+                    // Update table display code remains the same
+                    acceptedUsersMap.forEach(user => {
+                        invitationsTable.innerHTML += `
+                            <tr>
+                                <td>${user.email}<br>${user.name}</td>
+                            </tr>
+                        `;
+                    });
 
-      // Draw lines for direct connections.
-      connections.forEach(connection => {
-        const [email1, email2] = connection.split("-");
-        const pos1 = nodePositions.get(email1);
-        const pos2 = nodePositions.get(email2);
-        if (pos1 && pos2) {
-          svg.append("line")
-            .attr("x1", pos1.x)
-            .attr("y1", pos1.y)
-            .attr("x2", pos2.x)
-            .attr("y2", pos2.y)
-            .attr("stroke", "#4CAF50")
-            .attr("stroke-width", 2)
-            .attr("opacity", 0.5);
+                    // Pass connections to visualization
+                    createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
+                })
+                .catch(error => {
+                    console.error("Error fetching invitations:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading invitations.";
+                });
         }
-      });
+        function displayAcceptedInvitesByUser(acceptedUser, invitations) {
+            const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
+            let section = document.getElementById(sectionId);
 
-      // Draw spokes from the center to each node.
-      nodes.forEach(node => {
-        const pos = nodePositions.get(node.id);
-        svg.append("line")
-          .attr("x1", centerX)
-          .attr("y1", centerY)
-          .attr("x2", pos.x)
-          .attr("y2", pos.y)
-          .attr("stroke", "#4CAF50")
-          .attr("stroke-width", 1)
-          .attr("opacity", 0.2);
-      });
+            if (section) section.remove();
 
-      // Draw the center node.
-      svg.append("circle")
-        .attr("cx", centerX)
-        .attr("cy", centerY)
-        .attr("r", 8)
-        .attr("fill", "#4CAF50");
+            section = document.createElement('div');
+            section.id = sectionId;
+            section.innerHTML = `
+                <h3>Invites Accepted by ${acceptedUser.name} (${acceptedUser.email})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invite From</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="${sectionId}-tbody"></tbody>
+                </table>
+            `;
+            document.querySelector('.container').appendChild(section);
 
-      // Draw each outer node and its label.
-      nodes.forEach(node => {
-        const pos = nodePositions.get(node.id);
-        const nodeGroup = svg.append("g");
+            const tbody = document.getElementById(`${sectionId}-tbody`);
+            const userInvitations = invitations.filter(invite => 
+                invite.acceptedByUser.some(u => u.email === acceptedUser.email)
+            );
 
-        // Draw the node circle.
-        nodeGroup.append("circle")
-          .attr("cx", pos.x)
-          .attr("cy", pos.y)
-          .attr("r", 6)
-          .attr("fill", "#4CAF50");
+            userInvitations.forEach(invite => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${invite.fromUserEmail}</td>
+                        <td>${invite.status}</td>
+                    </tr>
+                `;
+            });
 
-        // Draw the node label.
-        nodeGroup.append("text")
-          .attr("x", pos.x)
-          .attr("y", pos.y + 20)
-          .attr("text-anchor", "middle")
-          .attr("font-size", "12")
-          .attr("fill", "#333")
-          .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
-          .text(node.label);
-      });
-    }
+            // Update visualization after adding new data
+            createVisualization();
+        }
 
-    // === Invitation Link Generation & Copy ===
+       function createVisualization(users, connections) {
+            // Clear previous visualization
+            d3.select("#visualization").html("");
+            
+            const width = 600;
+            const height = 500;
+            const radius = 200;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const svg = d3.select("#visualization")
+                .append("svg")
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .style("width", "100%")
+                .style("max-width", "600px")
+                .style("margin", "0 auto")
+                .style("display", "block");
 
-    document.getElementById("generateLinkBtn").addEventListener("click", () => {
-      const user = auth.currentUser;
-      if (!user) return;
+            // Create nodes array from users
+            const nodes = users.map(user => ({
+                id: user.email,
+                label: user.email,
+                name: user.name
+            }));
 
-      const uniqueId = Math.random().toString(36).substr(2, 9);
-      const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+            // Calculate node positions
+            const nodePositions = new Map();
+            nodes.forEach((node, i) => {
+                const angle = i * 2 * Math.PI / nodes.length;
+                nodePositions.set(node.id, {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle),
+                    angle: angle
+                });
+            });
 
-      db.collection("invitations").doc(uniqueId).set({
-        fromUserId: user.uid,
-        fromUserEmail: user.email,
-        status: "open",
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      }).then(() => {
-        const inviteLinkInput = document.getElementById("inviteLink");
-        inviteLinkInput.value = inviteLink;
-        inviteLinkInput.style.display = "block";
-        document.getElementById("copyLinkBtn").style.display = "inline-block";
-      });
-    });
+            // Draw connections between nodes
+            connections.forEach(connection => {
+                const [email1, email2] = connection.split('-');
+                const pos1 = nodePositions.get(email1);
+                const pos2 = nodePositions.get(email2);
+                
+                if (pos1 && pos2) {
+                    svg.append("line")
+                        .attr("x1", pos1.x)
+                        .attr("y1", pos1.y)
+                        .attr("x2", pos2.x)
+                        .attr("y2", pos2.y)
+                        .attr("stroke", "#4CAF50")
+                        .attr("stroke-width", 2)
+                        .attr("opacity", 0.5);
+                }
+            });
 
-    document.getElementById("copyLinkBtn").addEventListener("click", () => {
-      const inviteLinkInput = document.getElementById("inviteLink");
-      inviteLinkInput.select();
-      document.execCommand("copy");
-      alert("Link copied to clipboard!");
-    });
+            // Draw center node and spokes
+            nodes.forEach((node) => {
+                const pos = nodePositions.get(node.id);
+                
+                // Draw spoke
+                svg.append("line")
+                    .attr("x1", centerX)
+                    .attr("y1", centerY)
+                    .attr("x2", pos.x)
+                    .attr("y2", pos.y)
+                    .attr("stroke", "#4CAF50")
+                    .attr("stroke-width", 1)
+                    .attr("opacity", 0.2);
+            });
 
-    // === Sign Out ===
+            // Draw center node
+            svg.append("circle")
+                .attr("cx", centerX)
+                .attr("cy", centerY)
+                .attr("r", 8)
+                .attr("fill", "#4CAF50");
 
-    document.getElementById("signOutBtn").addEventListener("click", () => {
-      auth.signOut().then(() => {
-        window.location.href = '/index.html';
-      });
-    });
-  </script>
+            // Draw outer nodes and labels
+            nodes.forEach((node) => {
+                const pos = nodePositions.get(node.id);
+                const nodeGroup = svg.append("g");
+                
+                // Node circle
+                nodeGroup.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 6)
+                    .attr("fill", "#4CAF50");
+
+                // Node label
+                nodeGroup.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "12")
+                    .attr("fill", "#333")
+                    .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
+                    .text(node.label);
+            });
+        }
+        document.getElementById("generateLinkBtn").addEventListener("click", () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const uniqueId = Math.random().toString(36).substr(2, 9);
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+            db.collection("invitations").doc(uniqueId).set({
+                fromUserId: user.uid,
+                fromUserEmail: user.email,
+                status: "open",
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            }).then(() => {
+                const inviteLinkInput = document.getElementById("inviteLink");
+                inviteLinkInput.value = inviteLink;
+                inviteLinkInput.style.display = "block";
+                document.getElementById("copyLinkBtn").style.display = "inline-block";
+            });
+        });
+
+        document.getElementById("copyLinkBtn").addEventListener("click", () => {
+            const inviteLinkInput = document.getElementById("inviteLink");
+            inviteLinkInput.select();
+            document.execCommand("copy");
+            alert("Link copied to clipboard!");
+        });
+
+        document.getElementById("signOutBtn").addEventListener("click", () => {
+            auth.signOut().then(() => {
+                window.location.href = '/index.html';
+            });
+        });
+
+        // Initialize visualization
+        createVisualization();
+
+        // Update visualization when tables change
+        const observer = new MutationObserver(() => {
+            createVisualization();
+        });
+
+        observer.observe(document.querySelector('.container'), {
+            subtree: true,
+            childList: true
+        });
+    </script>
 </body>
 </html>
