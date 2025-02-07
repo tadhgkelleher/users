@@ -431,7 +431,7 @@ function handleAddConnection(currentUser, targetUser) {
 }
 
 
-    function createVisualization(users, connections) {
+   function createVisualization(users, connections) {
   // Clear previous visualization
   d3.select("#visualization").html("");
 
@@ -456,7 +456,7 @@ function handleAddConnection(currentUser, targetUser) {
     name: user.name
   }));
 
-  // Calculate node positions around a circle.
+  // Calculate node positions evenly distributed around a circle.
   const nodePositions = new Map();
   nodes.forEach((node, i) => {
     const angle = i * 2 * Math.PI / nodes.length;
@@ -485,39 +485,19 @@ function handleAddConnection(currentUser, targetUser) {
     }
   });
 
-  // (Optional) Remove the center node and spokes if you don’t want them.
-  // If you wish to keep them, you can leave this section as is.
-  nodes.forEach((node) => {
-    const pos = nodePositions.get(node.id);
-    svg.append("line")
-      .attr("x1", centerX)
-      .attr("y1", centerY)
-      .attr("x2", pos.x)
-      .attr("y2", pos.y)
-      .attr("stroke", "#4CAF50")
-      .attr("stroke-width", 1)
-      .attr("opacity", 0.2);
-  });
-
-  svg.append("circle")
-    .attr("cx", centerX)
-    .attr("cy", centerY)
-    .attr("r", 8)
-    .attr("fill", "#4CAF50");
-
-  // Draw outer nodes and labels.
+  // Draw the outer nodes and their labels.
   nodes.forEach((node) => {
     const pos = nodePositions.get(node.id);
     const nodeGroup = svg.append("g");
 
-    // Draw node circle.
+    // Draw the node circle.
     nodeGroup.append("circle")
       .attr("cx", pos.x)
       .attr("cy", pos.y)
       .attr("r", 6)
       .attr("fill", "#4CAF50");
 
-    // Draw node label.
+    // Draw the node label.
     nodeGroup.append("text")
       .attr("x", pos.x)
       .attr("y", pos.y + 20)
