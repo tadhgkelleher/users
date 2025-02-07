@@ -198,7 +198,7 @@ tr:hover {
             }
         });
 
-      function fetchAcceptedInvitations(currentUser) {
+    function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
@@ -230,16 +230,15 @@ tr:hover {
                 }
             });
 
-            // For each accepted user, create a table row that listens for clicks
+            // For each accepted user, create a summary table row and immediately display details.
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
-                tr.style.cursor = "pointer";
-                tr.addEventListener("click", () => {
-                    // When the row is clicked, display their invitation details
-                    displayAcceptedInvitesByUser(user, allInvitations);
-                });
+                // No longer adding a click event – details will display automatically.
                 invitationsTable.appendChild(tr);
+
+                // Immediately display this user's invitation details below the table.
+                displayAcceptedInvitesByUser(user, allInvitations);
             });
 
             // Pass connections to visualization (if needed)
@@ -250,7 +249,6 @@ tr:hover {
             document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
 }
-
 
 function displayAcceptedInvitesByUser(acceptedUser, invitations) {
     // Create a unique section ID based on the user email
@@ -300,7 +298,7 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
             // Sent invitation: list the accepted users (if any)
             role = "Sent";
             if (invite.acceptedByUser && invite.acceptedByUser.length > 0) {
-                // Filter out the current user from the acceptedByUser array
+                // Exclude the current user if they appear in the accepted list.
                 const otherParties = invite.acceptedByUser.filter(u => u.email !== acceptedUser.email);
                 otherParty = otherParties.length > 0 
                     ? otherParties.map(u => `${u.name} (${u.email})`).join(", ") 
@@ -309,7 +307,7 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
                 otherParty = "No one yet";
             }
         } else {
-            // Received invitation: display the sender as the other party
+            // Received invitation: display the sender
             role = "Received";
             otherParty = invite.fromUserEmail;
         }
@@ -323,6 +321,7 @@ function displayAcceptedInvitesByUser(acceptedUser, invitations) {
         `;
     });
 }
+
 
         
 
