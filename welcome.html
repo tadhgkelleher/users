@@ -358,7 +358,25 @@ function handleAddConnection(currentUser, targetUser) {
             alert('Connection already exists!');
             return;
        }
-        
+         return connectionRef.set({
+            users: sortedEmails,
+            usersInfo: [{
+                email: currentUser.email,
+                name: currentUser.displayName
+            }, {
+                email: targetUser.email,
+                name: targetUser.name
+            }],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }).then(() => {
+        alert('Connection added successfully!');
+        fetchAcceptedInvitations(currentUser);
+    }).catch(error => {
+        console.error('Error adding connection:', error);
+        alert('Failed to add connection.');
+    });
+}
 
        function createVisualization(users, connections) {
             // Clear previous visualization
