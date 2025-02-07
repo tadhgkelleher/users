@@ -230,13 +230,16 @@ function fetchAcceptedInvitations(currentUser) {
                 const hasAccepted = data.acceptedByUser?.length > 0;
                 const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
 
+                // Collect all accepted invitations related to the current user
                 if ((isSender || isAcceptor) && hasAccepted) {
                     allInvitations.push(data);
-                    
+
+                    // Process connections between users involved in the invitations
                     data.acceptedByUser.forEach(user => {
                         const connection = [data.fromUserEmail, user.email].sort().join('-');
                         connections.add(connection);
-                        
+
+                        // Map users to their email for unique representation
                         const key = user.email;
                         if (!acceptedUsersMap.has(key)) {
                             acceptedUsersMap.set(key, user);
@@ -245,6 +248,7 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
+            // Process direct connections
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
@@ -252,6 +256,9 @@ function fetchAcceptedInvitations(currentUser) {
                 displayAcceptedInvitesByUser(currentUser, user, allInvitations);
             });
 
+            // Find users connected to those users already connected to the current user
+            const connectedToCurrentUser = Array.from(acceptedUsersMap.values());
+            findConnectionsOfConnections(currentUser, connectedToCurrentUser, allInvitations);
             createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
         })
         .catch(error => {
@@ -259,6 +266,52 @@ function fetchAcceptedInvitations(currentUser) {
             document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
 }
+
+function findConnectionsOfConnections(currentUser, directConnections, allInvitations) {
+    const connectionsOfConnectionsMap = new Map();
+
+    // For each direct connection, find the other users they're connected to
+    directConnections.forEach(connection => {
+        const userInvitations = allInvitations.filter(invite =>
+            invite.fromUserEmail === connection.email || 
+            (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === connection.email))
+        );
+
+        userInvitations.forEach(invite => {
+            let role, otherParties;
+            if (invite.fromUserEmail === connection.email) {
+                role = "Sent";
+                otherParties = invite.acceptedByUser ? 
+                    invite.acceptedByUser.filter(u => u.email !== connection.email) : [];
+            } else {
+                role = "Received";
+                otherParties = [{ 
+                    email: invite.fromUserEmail, 
+                    name: invite.fromUserName || invite.fromUserEmail 
+                }];
+            }
+
+            otherParties.forEach(user => {
+                // Skip if the user is already the current user or a direct connection
+                if (user.email !== currentUser.email && !directConnections.some(c => c.email === user.email)) {
+                    const key = user.email;
+                    if (!connectionsOfConnectionsMap.has(key)) {
+                        connectionsOfConnectionsMap.set(key, user);
+                    }
+                }
+            });
+        });
+    });
+
+    // Now display the users connected to the users connected to the current user
+    connectionsOfConnectionsMap.forEach(user => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
+        invitationsTable.appendChild(tr);
+        displayAcceptedInvitesByUser(currentUser, user, allInvitations);
+    });
+}
+
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, invitations) {
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
