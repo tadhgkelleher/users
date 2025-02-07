@@ -445,7 +445,7 @@ function handleAddConnection(currentUser, targetUser) {
 }
 
 
-   function createVisualization(users, connections) {
+ function createVisualization(users, connections) {
   // Clear previous visualization
   d3.select("#visualization").html("");
 
@@ -508,8 +508,10 @@ function handleAddConnection(currentUser, targetUser) {
       .force("charge", d3.forceManyBody().strength(-200))
       .force("link", d3.forceLink(connections.map(conn => {
         const [email1, email2] = conn.split('-');
-        return { source: email1, target: email2 };
-      })).id(d => d.id).distance(100)) // Link uses node id
+        return { source: email1, target: email2 }; // Ensure correct source/target IDs
+      }))
+      .id(d => d.id) // Use `id` from node for forceLink
+      .distance(100))
       .force("center", d3.forceCenter(width / 2, height / 2));
 
     const link = svg.selectAll(".link")
