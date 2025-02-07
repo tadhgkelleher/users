@@ -144,33 +144,10 @@ tr:hover {
         <button id="signOutBtn">Sign Out</button>
     </div>
 
-  <!-- Previous content remains the same until the tables section -->
     <div class="container">
         <h1>Welcome</h1>
         <p id="welcomeMessage"></p>
         <div class="error-message" id="errorMessage"></div>
-
-        <h2>Direct Connections</h2>
-        <table id="invitationsTable">
-            <thead>
-                <tr>
-                    <th>Connected Users</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
-        <h2>Friends of Friends</h2>
-        <table id="secondDegreeTable">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Connected Through</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-
 
    
 
@@ -221,125 +198,55 @@ tr:hover {
             }
         });
 
-   function fetchAcceptedInvitations(currentUser) {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    const secondDegreeTable = document.getElementById("secondDegreeTable").getElementsByTagName('tbody')[0];
-    
-    invitationsTable.innerHTML = "";
-    secondDegreeTable.innerHTML = "";
+        function fetchAcceptedInvitations(currentUser) {
+            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+            invitationsTable.innerHTML = "";
 
-    db.collection("invitations").get()
-        .then(snapshot => {
-            const allInvitations = [];
-            const directConnections = new Set();
-            const secondDegreeConnections = new Map();
-            const connections = [];  // Changed from Set to Array
+            db.collection("invitations").get()
+                .then(snapshot => {
+                    const allInvitations = [];
+                    const acceptedUsersMap = new Map();
+                    const connections = new Set(); // Track connections between users
 
-            // First pass: identify direct connections
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const acceptedByUser = Array.isArray(data.acceptedByUser) ? data.acceptedByUser : [];
-                
-                const isSender = data.fromUserId === currentUser.uid;
-                const hasAccepted = acceptedByUser.length > 0;
-                const isAcceptor = hasAccepted && acceptedByUser.some(u => u && u.email === currentUser.email);
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const isSender = data.fromUserId === currentUser.uid;
+                        const hasAccepted = data.acceptedByUser?.length > 0;
+                        const isAcceptor = hasAccepted && data.acceptedByUser.some(u => u.email === currentUser.email);
 
-                if ((isSender || isAcceptor) && hasAccepted) {
-                    allInvitations.push(data);
-                    
-                    if (isSender) {
-                        acceptedByUser.forEach(user => {
-                            if (user && user.email) {
-                                directConnections.add(user.email);
-                                // Store connections as objects directly
-                                connections.push({
-                                    from: data.fromUserEmail,
-                                    to: user.email
-                                });
-                            }
-                        });
-                    } else if (isAcceptor) {
-                        directConnections.add(data.fromUserEmail);
-                        acceptedByUser.forEach(user => {
-                            if (user && user.email === currentUser.email) {
-                                // Store connections as objects directly
-                                connections.push({
-                                    from: data.fromUserEmail,
-                                    to: user.email
-                                });
-                            }
-                        });
-                    }
-                }
-            });
-
-            // Second pass: find friends of friends
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const acceptedByUser = Array.isArray(data.acceptedByUser) ? data.acceptedByUser : [];
-                
-                if (directConnections.has(data.fromUserEmail)) {
-                    acceptedByUser.forEach(user => {
-                        if (user && user.email && !directConnections.has(user.email) && 
-                            user.email !== currentUser.email) {
-                            if (!secondDegreeConnections.has(user.email)) {
-                                secondDegreeConnections.set(user.email, new Set());
-                            }
-                            secondDegreeConnections.get(user.email).add(data.fromUserEmail);
+                        if ((isSender || isAcceptor) && hasAccepted) {
+                            allInvitations.push(data);
+                            
+                            // Create connections between sender and acceptors
+                            data.acceptedByUser.forEach(user => {
+                                const connection = [data.fromUserEmail, user.email].sort().join('-');
+                                connections.add(connection);
+                                
+                                const key = user.email;
+                                if (!acceptedUsersMap.has(key)) {
+                                    acceptedUsersMap.set(key, user);
+                                }
+                            });
                         }
                     });
-                }
 
-                if (acceptedByUser.some(u => u && u.email && directConnections.has(u.email))) {
-                    if (!directConnections.has(data.fromUserEmail) && 
-                        data.fromUserEmail !== currentUser.email) {
-                        if (!secondDegreeConnections.has(data.fromUserEmail)) {
-                            secondDegreeConnections.set(data.fromUserEmail, new Set());
-                        }
-                        acceptedByUser
-                            .filter(u => u && u.email && directConnections.has(u.email))
-                            .forEach(u => {
-                                secondDegreeConnections.get(data.fromUserEmail).add(u.email);
-                            });
-                    }
-                }
-            });
+                    // Update table display code remains the same
+                    acceptedUsersMap.forEach(user => {
+                        invitationsTable.innerHTML += `
+                            <tr>
+                                <td>${user.email}<br>${user.name}</td>
+                            </tr>
+                        `;
+                    });
 
-            // Display direct connections
-            directConnections.forEach(email => {
-                invitationsTable.innerHTML += `
-                    <tr>
-                        <td>${email}</td>
-                    </tr>
-                `;
-            });
-
-            // Display second degree connections
-            secondDegreeConnections.forEach((connectingFriends, email) => {
-                secondDegreeTable.innerHTML += `
-                    <tr>
-                        <td>${email}</td>
-                        <td>${Array.from(connectingFriends).join(', ')}</td>
-                    </tr>
-                `;
-            });
-
-            // Create nodes array for visualization
-            const nodes = Array.from(directConnections).map(email => ({
-                id: email,
-                label: email,
-                name: email
-            }));
-
-            // Pass nodes and connections directly to visualization
-            createVisualization(nodes, connections);
-        })
-        .catch(error => {
-            console.error("Detailed error:", error);
-            document.getElementById("errorMessage").textContent = `Error loading invitations: ${error.message}`;
-        });
-}
-        
+                    // Pass connections to visualization
+                    createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
+                })
+                .catch(error => {
+                    console.error("Error fetching invitations:", error);
+                    document.getElementById("errorMessage").textContent = "Error loading invitations.";
+                });
+        }
         function displayAcceptedInvitesByUser(acceptedUser, invitations) {
             const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
             let section = document.getElementById(sectionId);
