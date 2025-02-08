@@ -247,7 +247,7 @@ tr:hover {
 
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById("welcomeMessage").textContent = `Hello, ${displayName}!`;
+                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
                 fetchAcceptedInvitations(user);
             } else {
                 window.location.href = '/index.html';
