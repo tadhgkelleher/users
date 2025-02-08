@@ -468,23 +468,23 @@ function createVisualization(users = [], connections = [], enablePhysics = false
     return;
   }
 
-//  Clear previous visualization
-const container = d3.select("#visualization");
-container.html("");
-if (simulation) simulation.stop();
+ // Clear previous visualization
+  const container = d3.select("#visualization");
+  container.html("");
+  if (simulation) simulation.stop();
 
-const width = 600;  // Increased from 600
-const height = 500; // Increased from 500
-const centerX = width / 2;
-const centerY = height / 2;
+  const width = 600;  // Increased from 600
+  const height = 500; // Increased from 500
+  const centerX = width / 2;
+  const centerY = height / 2;
 
-const svg = container.append("svg")
-.attr("viewBox", 0 0 ${width} ${height}`)
+  const svg = container.append("svg")
+    .attr("viewBox", `0 0 ${width} ${height}`)
+    .style("width", "100%")
+    .style("max-width", "600px") // Increased from 600px
+    .style("margin", "0 auto");
 
-.style("width", "100%")
-.style("max-width", "600px") // Increased from 600px
-.style("margin", "0 auto");
-
+    
   // Format display name function
   const getDisplayName = user => {
     const name = user.name || user.email;
