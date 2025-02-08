@@ -284,7 +284,15 @@ function fetchAcceptedInvitations(currentUser) {
                 displayAcceptedInvitesByUser(currentUser, user, allAcceptedInvitations); // Pass all accepted
             });
 
-            createVisualization(Array.from(acceptedUsersMap.values()), Array.from(connections));
+            // Convert maps to arrays before passing to createVisualization
+            const usersArray = Array.from(acceptedUsersMap.values());
+            const connectionsArray = Array.from(connections);
+
+            // Update currentUsers and currentConnections
+            currentUsers = usersArray;
+            currentConnections = connectionsArray;
+
+            createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
         })
         .catch(error => {
             console.error("Error fetching invitations:", error);
@@ -449,7 +457,8 @@ function handleAddConnection(currentUser, targetUser) {
 let simulation = null;
 let currentPhysics = false;
 
-let currentUsers = []; 
+// Store the current users and connections
+let currentUsers = [];
 let currentConnections = [];
 
 function createVisualization(users = [], connections = [], enablePhysics = false) {
@@ -458,10 +467,6 @@ function createVisualization(users = [], connections = [], enablePhysics = false
     return;
   }
 
-  // Clear previous visualization
-  const container = d3.select("#visualization");
-  container.html("");
-  if (simulation) simulation.stop();
   // Clear previous visualization
   const container = d3.select("#visualization");
   container.html("");
@@ -626,7 +631,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  createVisualization(currentUsers, currentConnections, currentPhysics);
+  // Initial visualization with physics disabled
+  fetchAcceptedInvitations(auth.currentUser);
 
   toggleButton.addEventListener('click', () => {
     currentPhysics = !currentPhysics;
@@ -667,19 +673,6 @@ document.addEventListener('DOMContentLoaded', () => {
         auth.signOut().then(() => {
             window.location.href = '/index.html';
         });
-    });
-
-    // Initialize visualization
-    createVisualization();
-
-    // Update visualization when tables change
-    const observer = new MutationObserver(() => {
-        createVisualization();
-    });
-
-    observer.observe(document.querySelector('.container'), {
-        subtree: true,
-        childList: true
     });
 
 </script>
