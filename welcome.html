@@ -219,8 +219,10 @@ tr:hover {
         });
 
 function fetchAcceptedInvitations(currentUser) {
-    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    invitationsTable.innerHTML = "";
+    if (!currentUser) {
+        console.warn("currentUser is null in fetchAcceptedInvitations.  Aborting.");
+        return;
+    }
 
     db.collection("invitations").get()
         .then(snapshot => {
@@ -232,72 +234,107 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-            // Identify direct connections (current user's invitations)
-            const directConnectionsEmails = new Set();
-            const directInvitations = allAcceptedInvitations.filter(data => {
-                const isSender = data.fromUserId === currentUser.uid;
-                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
-                return isSender || isAcceptor;
-            });
-
-            directInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    if (user.email !== currentUser.email) {
-                        directConnectionsEmails.add(user.email);
-                    }
-                });
-            });
-
-            // Identify second-degree invitations (involving direct connections)
-            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
-                const senderEmail = data.fromUserEmail;
-                const acceptorEmails = data.acceptedByUser.map(u => u.email);
-                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
-            });
-
-            // Combine and deduplicate invitations
-            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
-
-            // Process combined invitations to build maps
-            const acceptedUsersMap = new Map();
-            const connections = new Set();
-
-            combinedInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    const key = user.email;
-                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
-                        acceptedUsersMap.set(key, user);
-                    }
-                });
-
-                data.acceptedByUser.forEach(user => {
-                    const connection = [data.fromUserEmail, user.email].sort().join('-');
-                    connections.add(connection);
-                });
-            });
-
-            // Display users and their invitations
-            acceptedUsersMap.forEach(user => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
-                invitationsTable.appendChild(tr);
-                displayAcceptedInvitesByUser(currentUser, user, allAcceptedInvitations); // Pass all accepted
-            });
-
-            // Convert maps to arrays before passing to createVisualization
-            const usersArray = Array.from(acceptedUsersMap.values());
-            const connectionsArray = Array.from(connections);
-
-            // Update currentUsers and currentConnections
-            currentUsers = usersArray;
-            currentConnections = connectionsArray;
-
-            createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
+            displayAcceptedInvitesAsUniqueList(currentUser, allAcceptedInvitations);
         })
         .catch(error => {
             console.error("Error fetching invitations:", error);
             document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
+}
+
+
+function displayAcceptedInvitesAsUniqueList(currentUser, allInvitations) {
+    const uniqueUserEmails = new Set();
+    const connections = [];
+
+    // Extract unique user emails from invitations
+    allInvitations.forEach(invite => {
+        if (invite.fromUserEmail === currentUser.email && invite.acceptedByUser) {
+            invite.acceptedByUser.forEach(user => {
+                if (user.email !== currentUser.email) {
+                    uniqueUserEmails.add(user.email);
+                    connections.push(user)
+                }
+            });
+        }
+
+        if (invite.toUserEmail === currentUser.email && invite.fromUserEmail) {
+            uniqueUserEmails.add(invite.fromUserEmail);
+            connections.push({
+                email: invite.fromUserEmail,
+                name: invite.fromUserName || invite.fromUserEmail
+            })
+        }
+
+         if (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === currentUser.email) && invite.fromUserEmail !== currentUser.email) {
+            uniqueUserEmails.add(invite.fromUserEmail);
+             connections.push({
+                email: invite.fromUserEmail,
+                name: invite.fromUserName || invite.fromUserEmail
+            })
+         }
+    });
+
+    // Convert the Set to an array of user objects
+    const uniqueUsers = Array.from(uniqueUserEmails).map(email => {
+        const connection = connections.find(conn => conn.email === email)
+        return {
+            email: email,
+            name: connection.name
+        }
+    });
+    
+
+    const sectionId = 'uniqueConnectionsSection';
+    let section = document.getElementById(sectionId);
+
+    if (section) section.remove();
+
+    section = document.createElement('div');
+    section.id = sectionId;
+    section.style.marginTop = "2rem";
+    section.innerHTML = `
+        <h3 style="color: #4db6ac; text-transform: uppercase;">
+            Unique Accepted Connections
+        </h3>
+        <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
+            <thead>
+                <tr>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">User</th>
+                    <th style="background-color: #4db6ac; color: #121212; padding: 12px;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="${sectionId}-tbody"></tbody>
+        </table>
+    `;
+    document.querySelector('.container').appendChild(section);
+
+    const tbody = document.getElementById(`${sectionId}-tbody`);
+
+    if (uniqueUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" style="padding: 12px; text-align: center;">No accepted connections found.</td></tr>`;
+    }
+
+    tbody.innerHTML = ""; // Clear existing content
+
+    uniqueUsers.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="padding: 12px; border-bottom: 1px solid #333;">
+                ${user.name} (${user.email})
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #333;">
+                <button class="add-connection-btn">
+                    Add Connection
+                </button>
+            </td>
+        `;
+
+        const button = row.querySelector('.add-connection-btn');
+        button.addEventListener('click', () => handleAddConnection(currentUser, user));
+
+        tbody.appendChild(row);
+    });
 }
 
 function displayAcceptedInvitesAsUniqueList(currentUser, allInvitations) {
