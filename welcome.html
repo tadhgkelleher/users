@@ -263,7 +263,7 @@ function fetchAcceptedInvitations(currentUser) {
             const allAcceptedInvitations = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.acceptedByUser?.length > 0) {
+                if (data.acceptedByUser?.length > 0 || data.status === "sent" && data.toUserEmail) {
                     allAcceptedInvitations.push(data);
                 }
             });
@@ -271,12 +271,17 @@ function fetchAcceptedInvitations(currentUser) {
             // Identify direct connections (current user's invitations)
             const directConnectionsEmails = new Set();
             const directInvitations = allAcceptedInvitations.filter(data => {
-                const isSender = data.fromUserId === currentUser.uid;
+                const isSender = data.fromUserEmail === currentUser.email;
                 const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
-                return isSender || isAcceptor;
+                const isReciever = data.toUserEmail === currentUser.email && data.status === "sent";
+                return isSender || isAcceptor || isReciever;
             });
 
             directInvitations.forEach(data => {
+                if (data.fromUserEmail !== currentUser.email){
+                    directConnectionsEmails.add(data.fromUserEmail);
+                }
+
                 data.acceptedByUser.forEach(user => {
                     if (user.email !== currentUser.email) {
                         directConnectionsEmails.add(user.email);
@@ -284,21 +289,52 @@ function fetchAcceptedInvitations(currentUser) {
                 });
             });
 
-            // Identify second-degree invitations (involving direct connections)
-            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
-                const senderEmail = data.fromUserEmail;
-                const acceptorEmails = data.acceptedByUser.map(u => u.email);
-                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
-            });
 
-            // Combine and deduplicate invitations
-            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
+            //Identify potential Connections from other users
+            const potentialConnectionsEmails = new Set();
+
+            allAcceptedInvitations.forEach(data => {
+                if(directConnectionsEmails.has(data.fromUserEmail)){
+                    data.acceptedByUser.forEach(user => {
+                        if(user.email !== currentUser.email && !directConnectionsEmails.has(user.email)){
+                            potentialConnectionsEmails.add(user.email);
+                        }
+                    });
+                }
+                if(directConnectionsEmails.has(data.toUserEmail)){
+                   if (data.fromUserEmail !== currentUser.email && !directConnectionsEmails.has(data.fromUserEmail)){
+                       potentialConnectionsEmails.add(data.fromUserEmail);
+                   }
+                }
+            })
+
+
+            const potentialConnections = [];
+
+            allAcceptedInvitations.forEach(data => {
+                if (potentialConnectionsEmails.has(data.fromUserEmail)){
+                    if(!potentialConnections.some(connection => connection.email === data.fromUserEmail)){
+                        potentialConnections.push({email: data.fromUserEmail, name: data.fromUserName});
+                    }
+                }
+
+                data.acceptedByUser.forEach(user => {
+                    if(potentialConnectionsEmails.has(user.email)){
+                        if(!potentialConnections.some(connection => connection.email === user.email)){
+                            potentialConnections.push(user);
+                        }
+                    }
+                })
+            })
+
+
+
 
             // Process combined invitations to build maps
             const acceptedUsersMap = new Map();
             const connections = new Set();
 
-            combinedInvitations.forEach(data => {
+            directInvitations.forEach(data => {
                 data.acceptedByUser.forEach(user => {
                     const key = user.email;
                     if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
@@ -323,7 +359,7 @@ function fetchAcceptedInvitations(currentUser) {
             createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
 
             // Display potential connections in the table
-            displayPotentialConnections(currentUser, usersArray, connections);
+            displayPotentialConnections(currentUser, potentialConnections);
 
         })
         .catch(error => {
@@ -332,13 +368,13 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-async function displayPotentialConnections(currentUser, users, connections) {
+async function displayPotentialConnections(currentUser, potentialConnections) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = ""; // Clear the table
 
     const existingConnections = await fetchExistingConnections(currentUser);
 
-    users.forEach(user => {
+    potentialConnections.forEach(user => {
         const connectionKey = [currentUser.email, user.email].sort().join('-');
         const alreadyConnected = existingConnections.has(connectionKey);
 
@@ -448,7 +484,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
 
         
 
