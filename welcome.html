@@ -183,27 +183,6 @@ tr:hover {
     <p id="welcomeMessage"></p>
 
 
-<button id="togglePhysics" style="
-  background-color: #4CAF50; /* Green */
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 12px; /* Rounded corners */
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); /* Slight shadow */
-  transition: all 0.3s ease 0s; /* Smooth transition for hover effect */
-
-  &:hover {
-    background-color: #3e8e41; /* Darker green on hover */
-    box-shadow: 0 6px 10px 0 rgba(0,0,0,0.24); /* Bigger shadow on hover */
-    transform: translateY(-2px); /* Lift the button slightly */
-  }
-">Push Button</button>
 
     <!-- Visualization Container -->
     <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
@@ -212,6 +191,32 @@ tr:hover {
     </div>
 </div>
 
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 300px; width: 100%; padding: 20px; box-sizing: border-box;">
+
+    <button id="togglePhysics" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Push Button</button>
+
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
+        <h2 style="text-align: center;">Generate Invitation Link</h2>
+        <button id="generateLinkBtn" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Generate Link</button>
+        <input type="text" id="inviteLink" readonly style="margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; text-align: center;">
+        <button id="copyLinkBtn" style="display: none; background-color: #008CBA; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Copy Link</button>
+    </div>
+
+    <button id="signOutBtn" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Sign Out</button>
+
+</div>
+
+<style>
+    /* hover effects here because it can't be placed inline*/
+    button:hover {
+      background-color: #3e8e41;
+      box-shadow: 0 6px 10px 0 rgba(0,0,0,0.24);
+      transform: translateY(-2px);
+    }
+     #copyLinkBtn:hover {
+      background-color: #005f73;
+    }
+</style>
 
          <h2>Accepted Invitations</h2>
         <table id="invitationsTable">
@@ -223,14 +228,7 @@ tr:hover {
             <tbody></tbody>
         </table>
 
-        <h2>Generate Invitation Link</h2>
-        <button id="generateLinkBtn">Generate Link</button>
-        <input type="text" id="inviteLink" readonly>
-        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-    </div>
-
-
-  <button id="signOutBtn">Sign Out</button>
+ 
 
 
     <script>
