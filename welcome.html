@@ -301,12 +301,11 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations) {
-    // Existing code remains the same, but uses allInvitations which now includes all accepted
-    const userInvitations = allInvitations.filter(invite => 
+    const userInvitations = allInvitations.filter(invite =>
         invite.fromUserEmail === acceptedUser.email ||
         (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
     );
-    
+
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
 
@@ -333,22 +332,23 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
     document.querySelector('.container').appendChild(section);
 
     const tbody = document.getElementById(`${sectionId}-tbody`);
-  
 
     if (userInvitations.length === 0) {
         tbody.innerHTML = `<tr><td colspan="3" style="padding: 12px; text-align: center;">No invitations found.</td></tr>`;
     }
 
+    const displayedConnections = new Set(); // Track connections to avoid duplicates
+
     userInvitations.forEach(invite => {
         let role, otherParties;
         if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
-            otherParties = invite.acceptedByUser ? 
+            otherParties = invite.acceptedByUser ?
                 invite.acceptedByUser.filter(u => u.email !== acceptedUser.email) : [];
         } else {
             role = "Received";
-            otherParties = [{ 
-                email: invite.fromUserEmail, 
+            otherParties = [{
+                email: invite.fromUserEmail,
                 name: invite.fromUserName || invite.fromUserEmail,
                 firstName: invite.fromUserFirstName || invite.fromUserName,
                 lastName: invite.fromUserLastName || invite.fromUserLastName
@@ -365,23 +365,29 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
             tbody.appendChild(row);
         } else {
             otherParties.forEach(user => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        ${user.name}
-                    </td>
-                    <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        <button class="add-connection-btn">
-                            Add Connection
-                        </button>
-                    </td>
-                `;
+                const connectionKey = [acceptedUser.email, user.email].sort().join('-'); // Unique key
 
-                const button = row.querySelector('.add-connection-btn');
-                button.addEventListener('click', () => handleAddConnection(currentUser, user));
-                
-                tbody.appendChild(row);
+                if (!displayedConnections.has(connectionKey)) {
+                    displayedConnections.add(connectionKey);
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">
+                            ${user.name}
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #333;">
+                            <button class="add-connection-btn">
+                                Add Connection
+                            </button>
+                        </td>
+                    `;
+
+                    const button = row.querySelector('.add-connection-btn');
+                    button.addEventListener('click', () => handleAddConnection(currentUser, user));
+
+                    tbody.appendChild(row);
+                }
             });
         }
     });
@@ -454,7 +460,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
 
 let simulation = null;
 let currentPhysics = false;
