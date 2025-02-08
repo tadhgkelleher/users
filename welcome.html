@@ -452,7 +452,16 @@ let currentPhysics = false;
 let currentUsers = []; 
 let currentConnections = [];
 
-function createVisualization(users, connections, enablePhysics = false) {
+function createVisualization(users = [], connections = [], enablePhysics = false) {
+  if (!Array.isArray(users) || !Array.isArray(connections)) {
+    console.error("Invalid data received:", { users, connections });
+    return;
+  }
+
+  // Clear previous visualization
+  const container = d3.select("#visualization");
+  container.html("");
+  if (simulation) simulation.stop();
   // Clear previous visualization
   const container = d3.select("#visualization");
   container.html("");
