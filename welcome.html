@@ -449,8 +449,8 @@ function handleAddConnection(currentUser, targetUser) {
 let simulation = null;
 let currentPhysics = false;
 
-        let currentUsers = currentUsers || []; 
-let currentConnections = currentConnections || [];
+let currentUsers = []; 
+let currentConnections = [];
 
 function createVisualization(users, connections, enablePhysics = false) {
   // Clear previous visualization
