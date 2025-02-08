@@ -96,6 +96,26 @@ tr:hover {
     transition: color 0.3s ease;
 }
 
+        .node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: 0.6;
+}
+
+.label-background {
+  fill: white; /* or any color you prefer */
+  opacity: 0.7; /* adjust as needed */
+}
+
+.label {
+  font-size: 12px;
+  font-family: sans-serif;
+  fill: #333;
+  pointer-events
 .nav-links a:hover, .nav-links button:hover {
     color: #4db6ac;
 }
@@ -545,7 +565,8 @@ function createVisualization(users = [], connections = [], enablePhysics = false
           .attr("cy", d => d.y);
 
       label.attr("x", d => d.x)
-           .attr("y", d => d.y + 20);
+           .attr("y", d => d.y + 20)
+           .attr("transform", ""); // remove any transformations to stop labels from being upside down
 
       labelBackground
         .attr("x", d => d.x - (d.bbox.width / 2) - 5)
@@ -635,7 +656,6 @@ function createVisualization(users = [], connections = [], enablePhysics = false
         .attr("text-anchor", "middle")
         .attr("font-size", "14")
         .attr("font-weight", "500")
-        .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
         .text(node.label);
     });
   }
