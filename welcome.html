@@ -458,10 +458,7 @@ function createVisualization(users = [], connections = [], enablePhysics = false
     return;
   }
 
-  // Clear previous visualization
-  const container = d3.select("#visualization");
-  container.html("");
-  if (simulation) simulation.stop();
+ 
   // Clear previous visualization
   const container = d3.select("#visualization");
   container.html("");
