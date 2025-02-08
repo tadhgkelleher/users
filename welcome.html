@@ -232,54 +232,96 @@ function fetchAcceptedInvitations(currentUser) {
                 }
             });
 
-            // Identify potential connections
-            const potentialConnections = new Map(); // Use a Map to store unique users
-
-            allAcceptedInvitations.forEach(invite => {
-                // Check if the current user is the sender
-                if (invite.fromUserEmail === currentUser.email) {
-                    invite.acceptedByUser.forEach(user => {
-                        if (user.email !== currentUser.email) {
-                            potentialConnections.set(user.email, user); // Use email as key
-                        }
-                    });
-                } else {
-                    // If the current user is a recipient, add the sender as a potential connection
-                    potentialConnections.set(invite.fromUserEmail, {
-                        email: invite.fromUserEmail,
-                        name: invite.fromUserName || invite.fromUserEmail,
-                        // Add any other properties you need from the sender
-                    });
-                }
+            // Identify direct connections (current user's invitations)
+            const directConnectionsEmails = new Set();
+            const directInvitations = allAcceptedInvitations.filter(data => {
+                const isSender = data.fromUserId === currentUser.uid;
+                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
+                return isSender || isAcceptor;
             });
 
-            // Fetch existing connections
-            fetchExistingConnections(currentUser).then(existingConnections => {
-                // Display potential connections
-                potentialConnections.forEach(user => {
-                    const connectionKey = [currentUser.email, user.email].sort().join('-');
-                    if (!existingConnections.has(connectionKey)) {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${user.name}</td>
-                            <td>
-                                <button class="add-connection-btn">
-                                    Add Connection
-                                </button>
-                            </td>
-                        `;
-                        invitationsTable.appendChild(tr);
-
-                        const button = tr.querySelector('.add-connection-btn');
-                        button.addEventListener('click', () => handleAddConnection(currentUser, user));
+            directInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    if (user.email !== currentUser.email) {
+                        directConnectionsEmails.add(user.email);
                     }
                 });
             });
+
+            // Identify second-degree invitations (involving direct connections)
+            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
+                const senderEmail = data.fromUserEmail;
+                const acceptorEmails = data.acceptedByUser.map(u => u.email);
+                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
+            });
+
+            // Combine and deduplicate invitations
+            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
+
+            // Process combined invitations to build maps
+            const acceptedUsersMap = new Map();
+            const connections = new Set();
+
+            combinedInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    const key = user.email;
+                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
+                        acceptedUsersMap.set(key, user);
+                    }
+                });
+
+                data.acceptedByUser.forEach(user => {
+                    const connection = [data.fromUserEmail, user.email].sort().join('-');
+                    connections.add(connection);
+                });
+            });
+
+            // Convert maps to arrays before passing to createVisualization
+            const usersArray = Array.from(acceptedUsersMap.values());
+            const connectionsArray = Array.from(connections);
+
+            // Update currentUsers and currentConnections
+            currentUsers = usersArray;
+            currentConnections = connectionsArray;
+
+            createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
+
+            // Display potential connections in the table
+            displayPotentialConnections(currentUser, usersArray, connections);
+
         })
         .catch(error => {
             console.error("Error fetching invitations:", error);
             document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
+}
+
+async function displayPotentialConnections(currentUser, users, connections) {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    invitationsTable.innerHTML = ""; // Clear the table
+
+    const existingConnections = await fetchExistingConnections(currentUser);
+
+    users.forEach(user => {
+        const connectionKey = [currentUser.email, user.email].sort().join('-');
+        const alreadyConnected = existingConnections.has(connectionKey);
+
+        if (user.email !== currentUser.email && !alreadyConnected) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${user.name}</td>
+                <td>
+                    <button class="add-connection-btn">
+                        Add Connection
+                    </button>
+                </td>
+            `;
+            invitationsTable.appendChild(tr);
+
+            const button = tr.querySelector('.add-connection-btn');
+            button.addEventListener('click', () => handleAddConnection(currentUser, user));
+        }
+    });
 }
 
 async function fetchExistingConnections(currentUser) {
@@ -370,7 +412,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
 
 
         
