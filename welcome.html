@@ -179,7 +179,7 @@ tr:hover {
         <button id="signOutBtn">Sign Out</button>
     </div>
 <div class="container">
-    <h1>Welcome</h1>
+    <h1></h1>
     <p id="welcomeMessage"></p>
 
 
@@ -468,21 +468,25 @@ function createVisualization(users = [], connections = [], enablePhysics = false
     return;
   }
 
-  // Clear previous visualization
+/ Clear previous visualization
   const container = d3.select("#visualization");
   container.html("");
   if (simulation) simulation.stop();
 
-  const width = 800;  // Increased from 600
-  const height = 700; // Increased from 500
+  const width = 800;
+  const height = 700;
   const centerX = width / 2;
   const centerY = height / 2;
 
-  const svg = container.append("svg")
+  // Add a wrapper div to center the SVG
+  const wrapper = container.append("div")
+    .style("display", "flex")
+    .style("justify-content", "center");
+
+  const svg = wrapper.append("svg")
     .attr("viewBox", `0 0 ${width} ${height}`)
-    .style("width", "100%")
-    .style("max-width", "800px") // Increased from 600px
-    .style("margin", "0 auto");
+    .attr("width", width) // Fixed width for consistent rendering
+    .attr("height", height); // Fixed height for consistent rendering
 
   // Format display name function
   const getDisplayName = user => {
