@@ -616,7 +616,6 @@ function createVisualization(users, connections, enablePhysics = false) {
     });
   }
 }
-
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', () => {
     // Ensure elements exist before accessing them
@@ -628,52 +627,52 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
         
+    document.getElementById("generateLinkBtn").addEventListener("click", () => {
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        const uniqueId = Math.random().toString(36).substr(2, 9);
+        const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
-        document.getElementById("generateLinkBtn").addEventListener("click", () => {
-            const user = auth.currentUser;
-            if (!user) return;
-            
-            const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
-
-            db.collection("invitations").doc(uniqueId).set({
-                fromUserId: user.uid,
-                fromUserEmail: user.email,
-                status: "open",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(() => {
-                const inviteLinkInput = document.getElementById("inviteLink");
-                inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                document.getElementById("copyLinkBtn").style.display = "inline-block";
-            });
-        });
-
-        document.getElementById("copyLinkBtn").addEventListener("click", () => {
+        db.collection("invitations").doc(uniqueId).set({
+            fromUserId: user.uid,
+            fromUserEmail: user.email,
+            status: "open",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        }).then(() => {
             const inviteLinkInput = document.getElementById("inviteLink");
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            alert("Link copied to clipboard!");
+            inviteLinkInput.value = inviteLink;
+            inviteLinkInput.style.display = "block";
+            document.getElementById("copyLinkBtn").style.display = "inline-block";
         });
+    });
 
-        document.getElementById("signOutBtn").addEventListener("click", () => {
-            auth.signOut().then(() => {
-                window.location.href = '/index.html';
-            });
+    document.getElementById("copyLinkBtn").addEventListener("click", () => {
+        const inviteLinkInput = document.getElementById("inviteLink");
+        inviteLinkInput.select();
+        document.execCommand("copy");
+        alert("Link copied to clipboard!");
+    });
+
+    document.getElementById("signOutBtn").addEventListener("click", () => {
+        auth.signOut().then(() => {
+            window.location.href = '/index.html';
         });
+    });
 
-        // Initialize visualization
+    // Initialize visualization
+    createVisualization();
+
+    // Update visualization when tables change
+    const observer = new MutationObserver(() => {
         createVisualization();
+    });
 
-        // Update visualization when tables change
-        const observer = new MutationObserver(() => {
-            createVisualization();
-        });
-
-        observer.observe(document.querySelector('.container'), {
-            subtree: true,
-            childList: true
-        });
-    </script>
+    observer.observe(document.querySelector('.container'), {
+        subtree: true,
+        childList: true
+    });
+}); // <-- This closing brace and parenthesis were missing
+</script>
 </body>
 </html>
