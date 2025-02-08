@@ -422,6 +422,12 @@ let currentPhysics = false;
 let currentUsers = [];
 let currentConnections = [];
 
+let simulation = null;
+let currentPhysics = false;
+
+let currentUsers = [];
+let currentConnections = [];
+
 function createVisualization(users = [], connections = [], enablePhysics = false) {
   if (!Array.isArray(users) || !Array.isArray(connections)) {
     console.error("Invalid data received:", { users, connections });
@@ -433,46 +439,52 @@ function createVisualization(users = [], connections = [], enablePhysics = false
   container.html("");
   if (simulation) simulation.stop();
 
-  const width = 600;
-  const height = 500;
+  const width = 800;  // Increased from 600
+  const height = 700; // Increased from 500
   const centerX = width / 2;
   const centerY = height / 2;
 
   const svg = container.append("svg")
     .attr("viewBox", `0 0 ${width} ${height}`)
     .style("width", "100%")
-    .style("max-width", "600px")
+    .style("max-width", "800px") // Increased from 600px
     .style("margin", "0 auto");
+
+  // Format display name function
+  const getDisplayName = user => {
+    const name = user.name || user.email;
+    return name.split('@')[0]  // Remove email domain if it's an email
+      .split('.')  // Split on dots
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
+      .join(' ');  // Join with space
+  };
 
   const nodes = users.map(user => ({
     id: user.email.trim(),
-    label: user.email,
+    label: getDisplayName(user),
     name: user.name,
-    x: centerX + (Math.random() - 0.5) * 50,
-    y: centerY + (Math.random() - 0.5) * 50
+    x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
+    y: centerY + (Math.random() - 0.5) * 100
   }));
 
-  console.log("Nodes created:", nodes);
-
   if (enablePhysics) {
-    console.log("Physics enabled, creating force simulation...");
-
     const links = connections.map(connection => {
       const [rawSource, rawTarget] = connection.split('-');
       const sourceId = rawSource.trim();
       const targetId = rawTarget.trim();
       const source = nodes.find(n => n.id === sourceId);
       const target = nodes.find(n => n.id === targetId);
-      console.log(`Creating link: ${sourceId} -> ${targetId}`, { source, target });
       return { source, target };
     }).filter(l => l.source && l.target);
 
-    console.log("Links created:", links);
-
     simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id(d => d.id).distance(100).strength(0.2))
-      .force("charge", d3.forceManyBody().strength(-80))
-      .force("collide", d3.forceCollide(20))
+      .force("link", d3.forceLink(links)
+        .id(d => d.id)
+        .distance(200)  // Increased from 100
+        .strength(0.1)) // Decreased from 0.2
+      .force("charge", d3.forceManyBody()
+        .strength(-300)) // Increased repulsion from -80
+      .force("collide", d3.forceCollide(40)) // Increased from 20
       .force("center", d3.forceCenter(centerX, centerY))
       .alpha(1)
       .restart();
@@ -480,6 +492,16 @@ function createVisualization(users = [], connections = [], enablePhysics = false
     const linksGroup = svg.append("g").attr("class", "links");
     const nodesGroup = svg.append("g").attr("class", "nodes");
     const labelsGroup = svg.append("g").attr("class", "labels");
+
+    // Add label backgrounds for better readability
+    const labelBackground = labelsGroup.selectAll(".label-background")
+      .data(nodes)
+      .enter().append("rect")
+      .attr("class", "label-background")
+      .attr("fill", "white")
+      .attr("opacity", 0.8)
+      .attr("rx", 4)  // Rounded corners
+      .attr("ry", 4);
 
     const link = linksGroup.selectAll(".link")
       .data(links)
@@ -502,8 +524,21 @@ function createVisualization(users = [], connections = [], enablePhysics = false
       .attr("class", "label")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .attr("font-size", "12")
+      .attr("font-size", "14")  // Increased from 12
+      .attr("font-weight", "500")  // Made text slightly bolder
       .text(d => d.label);
+
+    // Update label backgrounds based on text size
+    label.each(function(d) {
+      const bbox = this.getBBox();
+      d.bbox = bbox;
+    });
+
+    labelBackground
+      .attr("width", d => d.bbox.width + 10)
+      .attr("height", d => d.bbox.height + 6)
+      .attr("x", d => d.bbox.x - 5)
+      .attr("y", d => d.bbox.y - 3);
 
     simulation.on("tick", () => {
       link.attr("x1", d => d.source.x)
@@ -516,12 +551,15 @@ function createVisualization(users = [], connections = [], enablePhysics = false
 
       label.attr("x", d => d.x)
            .attr("y", d => d.y + 20);
+
+      labelBackground
+        .attr("x", d => d.x - (d.bbox.width / 2) - 5)
+        .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
     });
 
   } else {
-    console.log("Physics disabled, using circle layout...");
-
-    const radius = 200;
+    // Static circle layout code remains the same but with updated display names
+    const radius = 300;  // Increased from 200
     const nodePositions = new Map();
 
     nodes.forEach((node, i) => {
@@ -549,6 +587,30 @@ function createVisualization(users = [], connections = [], enablePhysics = false
       }
     });
 
+    // Add white background rectangles for labels
+    nodes.forEach(node => {
+      const pos = nodePositions.get(node.id);
+      const tempText = svg.append("text")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("font-size", "14")
+        .text(node.label);
+      
+      const bbox = tempText.node().getBBox();
+      tempText.remove();
+
+      svg.append("rect")
+        .attr("x", pos.x - (bbox.width / 2) - 5)
+        .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
+        .attr("width", bbox.width + 10)
+        .attr("height", bbox.height + 6)
+        .attr("fill", "white")
+        .attr("opacity", 0.8)
+        .attr("rx", 4)
+        .attr("ry", 4);
+    });
+
+    // Rest of static layout rendering
     svg.append("circle")
       .attr("cx", centerX)
       .attr("cy", centerY)
@@ -576,7 +638,8 @@ function createVisualization(users = [], connections = [], enablePhysics = false
         .attr("x", pos.x)
         .attr("y", pos.y + 20)
         .attr("text-anchor", "middle")
-        .attr("font-size", "12")
+        .attr("font-size", "14")
+        .attr("font-weight", "500")
         .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
         .text(node.label);
     });
@@ -597,7 +660,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   toggleButton.addEventListener('click', () => {
     currentPhysics = !currentPhysics;
-    console.log("Physics toggled:", currentPhysics);
     createVisualization(currentUsers, currentConnections, currentPhysics);
   });
 });
