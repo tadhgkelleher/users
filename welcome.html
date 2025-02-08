@@ -301,10 +301,10 @@ function fetchAcceptedInvitations(currentUser) {
 }
 
 async function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations) {
-    const userInvitations = allInvitations.filter(invite =>
-        invite.fromUserEmail === acceptedUser.email ||
-        (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email))
-    );
+    const userInvitations = allInvitations.filter(invite => {
+        return (invite.fromUserEmail === acceptedUser.email) ||
+            (invite.acceptedByUser && invite.acceptedByUser.some(u => u.email === acceptedUser.email));
+    });
 
     const sectionId = `userSection-${acceptedUser.email.replace(/[@.]/g, '_')}`;
     let section = document.getElementById(sectionId);
@@ -338,11 +338,13 @@ async function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvita
         return;
     }
 
-    const displayedConnections = new Set(); // Track connections to avoid duplicates
+    const displayedConnections = new Set(); // Track connections to avoid duplicates (within ALL users now!)
     const existingConnections = await fetchExistingConnections(currentUser); // Get existing connections
 
-    userInvitations.forEach(invite => {
+    for (const invite of userInvitations) { // Use a for...of loop
+
         let role, otherParties;
+
         if (invite.fromUserEmail === acceptedUser.email) {
             role = "Sent";
             otherParties = invite.acceptedByUser ?
@@ -365,16 +367,20 @@ async function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvita
                 <td style="padding: 12px; border-bottom: 1px solid #333;"></td>
             `;
             tbody.appendChild(row);
-        } else {
-            otherParties.forEach(user => {
-                const connectionKey = [acceptedUser.email, user.email].sort().join('-'); // Unique key
-                const alreadyConnected = existingConnections.has(connectionKey); // Check if already connected
+            continue; // Skip to the next iteration
+        }
 
-                if (!displayedConnections.has(connectionKey) && !alreadyConnected) {
-                    displayedConnections.add(connectionKey);
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
+        for (const user of otherParties) { // Use a for...of loop
+
+            const connectionKey = [acceptedUser.email, user.email].sort().join('-'); // Unique key
+            const alreadyConnected = existingConnections.has(connectionKey); // Check if already connected
+
+            if (!displayedConnections.has(connectionKey) && !alreadyConnected) {
+                displayedConnections.add(connectionKey);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
                         <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                         <td style="padding: 12px; border-bottom: 1px solid #333;">
                             ${user.name}
@@ -386,14 +392,13 @@ async function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvita
                         </td>
                     `;
 
-                    const button = row.querySelector('.add-connection-btn');
-                    button.addEventListener('click', () => handleAddConnection(currentUser, user));
+                const button = row.querySelector('.add-connection-btn');
+                button.addEventListener('click', () => handleAddConnection(currentUser, user));
 
-                    tbody.appendChild(row);
-                }
-            });
+                tbody.appendChild(row);
+            }
         }
-    });
+    }
 }
 
 async function fetchExistingConnections(currentUser) {
@@ -484,7 +489,6 @@ function handleAddConnection(currentUser, targetUser) {
         alert('Failed to add connection.');
     });
 }
-
 let simulation = null;
 let currentPhysics = false;
 
