@@ -453,10 +453,7 @@ let currentUsers = [];
 let currentConnections = [];
 
 function createVisualization(users = [], connections = [], enablePhysics = false) {
-  if (!Array.isArray(users) || !Array.isArray(connections)) {
-    console.error("Invalid data received:", { users, connections });
-    return;
-  }
+
 
  
   // Clear previous visualization
