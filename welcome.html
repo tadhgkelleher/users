@@ -279,7 +279,7 @@ function fetchAcceptedInvitations(currentUser) {
             // Display users and their invitations
             acceptedUsersMap.forEach(user => {
                 const tr = document.createElement("tr");
-                tr.innerHTML = `<td>${user.email}<br>${user.name}</td>`;
+                tr.innerHTML = `<td>${user.name}</td>`;
                 invitationsTable.appendChild(tr);
                 displayAcceptedInvitesByUser(currentUser, user, allAcceptedInvitations); // Pass all accepted
             });
@@ -317,7 +317,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
     section.style.marginTop = "2rem";
     section.innerHTML = `
         <h3 style="color: #4db6ac; text-transform: uppercase;">
-            Invitations for ${acceptedUser.name} (${acceptedUser.email})
+            Invitations for ${acceptedUser.name}
         </h3>
         <table style="width: 100%; border-collapse: collapse; background-color: #242424; border-radius: 8px; overflow: hidden;">
             <thead>
@@ -349,7 +349,9 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
             role = "Received";
             otherParties = [{ 
                 email: invite.fromUserEmail, 
-                name: invite.fromUserName || invite.fromUserEmail 
+                name: invite.fromUserName || invite.fromUserEmail,
+                firstName: invite.fromUserFirstName || invite.fromUserName,
+                lastName: invite.fromUserLastName || invite.fromUserLastName
             }];
         }
 
@@ -367,7 +369,7 @@ function displayAcceptedInvitesByUser(currentUser, acceptedUser, allInvitations)
                 row.innerHTML = `
                     <td style="padding: 12px; border-bottom: 1px solid #333;">${role}</td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
-                        ${user.name} (${user.email})
+                        ${user.name}
                     </td>
                     <td style="padding: 12px; border-bottom: 1px solid #333;">
                         <button class="add-connection-btn">
