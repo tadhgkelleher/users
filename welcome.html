@@ -1,380 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #121212;
-        color: #e0e0e0;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        padding-top: 20px;
-      }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome</title>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding-top: 20px;
+    }
 
-      .container {
-        background-color: #1e1e1e;
-        padding: 30px;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        max-width: 1000px;
-        width: 90%;
-      }
+    .container {
+      background-color: #1e1e1e;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      max-width: 1000px;
+      width: 90%;
+    }
 
-      h1 {
-        text-align: center;
-        margin-bottom: 20px;
-        color: #4db6ac;
-        font-weight: bold;
-      }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #4db6ac;
+      font-weight: bold;
+    }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 30px;
-        background-color: #242424;
-        border-radius: 8px;
-        overflow: hidden;
-      }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+      background-color: #242424;
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-      th, td {
-        padding: 12px;
-        text-align: left;
-        border-bottom: 1px solid #333;
-      }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
 
-      th {
-        background-color: #4db6ac;
-        color: #121212;
-        font-weight: bold;
-      }
+    th {
+      background-color: #4db6ac;
+      color: #121212;
+      font-weight: bold;
+    }
 
-      tr:nth-child(even) {
-        background-color: #2a2a2a;
-      }
+    tr:nth-child(even) {
+      background-color: #2a2a2a;
+    }
 
-      tr:hover {
-        background-color: #333;
-      }
+    tr:hover {
+      background-color: #333;
+    }
 
-      .error-message {
-        color: #e57373;
-        text-align: center;
-        margin-bottom: 20px;
-        font-weight: bold;
-      }
+    .error-message {
+      color: #e57373;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
 
-      .nav-links {
-        width: 100%;
-        padding: 15px;
-        background-color: #263238;
-        color: white;
-        text-align: center;
-        margin-bottom: 20px;
-        border-radius: 6px;
-      }
+    .nav-links {
+      width: 100%;
+      padding: 15px;
+      background-color: #263238;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 6px;
+    }
 
-      .nav-links a, .nav-links button {
-        color: #80cbc4;
-        margin: 0 15px;
-        text-decoration: none;
-        font-weight: bold;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 16px;
-        transition: color 0.3s ease;
-      }
+    .nav-links a, .nav-links button {
+      color: #80cbc4;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      transition: color 0.3s ease;
+    }
 
-      .node {
-        stroke: #fff;
-        stroke-width: 1.5px;
-      }
+    .node {
+      stroke: #fff;
+      stroke-width: 1.5px;
+    }
 
-      .link {
-        stroke: #999;
-        stroke-opacity: 0.6;
-      }
+    .link {
+      stroke: #999;
+      stroke-opacity: 0.6;
+    }
 
-      .label-background {
-        fill: white; /* or any color you prefer */
-        opacity: 0.7; /* adjust as needed */
-      }
+    .label-background {
+      fill: white; /* or any color you prefer */
+      opacity: 0.7; /* adjust as needed */
+    }
 
-      .label {
-        font-size: 12px;
-        font-family: sans-serif;
-        fill: #333;
-        pointer-events
-      }
+    .label {
+      font-size: 12px;
+      font-family: sans-serif;
+      fill: #333;
+      pointer-events
+    }
 
-      .nav-links a:hover, .nav-links button:hover {
-        color: #4db6ac;
-      }
+    .nav-links a:hover, .nav-links button:hover {
+      color: #4db6ac;
+    }
 
-      #inviteLink {
-        display: none;
-        margin-top: 10px;
-        padding: 12px;
-        width: 100%;
-        box-sizing: border-box;
-        border: 1px solid #555;
-        border-radius: 6px;
-        background-color: #1e1e1e;
-        color: #e0e0e0;
-      }
+    #inviteLink {
+      display: none;
+      margin-top: 10px;
+      padding: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #555;
+      border-radius: 6px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+    }
 
-      .share-buttons {
-        margin-top: 20px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
+    .share-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-      .share-buttons button, #generateLinkBtn, #copyLinkBtn {
-        padding: 10px 18px;
-        background-color: #4db6ac;
-        color: #121212;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background 0.3s ease;
-      }
+    .share-buttons button, #generateLinkBtn, #copyLinkBtn {
+      padding: 10px 18px;
+      background-color: #4db6ac;
+      color: #121212;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
 
-      .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-        background-color: #388e8e;
-      }
+    .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+      background-color: #388e8e;
+    }
 
-      .add-connection-btn {
-        background-color: #4db6ac;
-        color: #121212;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
+    .add-connection-btn {
+      background-color: #4db6ac;
+      color: #121212;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
 
-      .add-connection-btn:hover {
-        background-color: #26a69a;
-      }
+    .add-connection-btn:hover {
+      background-color: #26a69a;
+    }
 
-      .add-connection-btn:active {
-        transform: scale(0.98);
-      }
-    </style>
+    .add-connection-btn:active {
+      transform: scale(0.98);
+    }
+  </style>
 </head>
 <body>
 <div class="nav-links">
 
 </div>
 <div class="container">
-    <h1>The Mandala</h1>
-    <p id="welcomeMessage"></p>
+  <h1>The Mandala</h1>
+  <p id="welcomeMessage"></p>
 
-    <!-- Visualization Container -->
-    <div id="visualization-container"
-         style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease; margin: 2rem auto;">
-        <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;"></h2>
-        <div id="visualization"
-             style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
+  <!-- Visualization Container -->
+  <div id="visualization-container"
+       style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease; margin: 2rem auto;">
+    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;"></h2>
+    <div id="visualization"
+         style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 300px; width: 100%; padding: 20px; box-sizing: border-box;">
+
+    <button id="togglePhysics"
+            style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
+      Push Button
+    </button>
+
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
+      <h2 style="text-align: center;">Generate Invitation Link</h2>
+      <button id="generateLinkBtn"
+              style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
+        Generate Link
+      </button>
+      <input type="text" id="inviteLink" readonly
+             style="margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; text-align: center;">
+      <button id="copyLinkBtn" style="display: none; background-color: #008CBA; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
+        Copy Link
+      </button>
     </div>
 
-    <div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 300px; width: 100%; padding: 20px; box-sizing: border-box;">
+    <button id="signOutBtn"
+            style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
+      Sign Out
+    </button>
 
-        <button id="togglePhysics"
-                style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
-            Push Button
-        </button>
+  </div>
 
-        <div style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
-            <h2 style="text-align: center;">Generate Invitation Link</h2>
-            <button id="generateLinkBtn"
-                    style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
-                Generate Link
-            </button>
-            <input type="text" id="inviteLink" readonly
-                   style="margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; text-align: center;">
-            <button id="copyLinkBtn" style="display: none; background-color: #008CBA; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
-                Copy Link
-            </button>
-        </div>
+  <style>
+    /* hover effects here because it can't be placed inline*/
+    button:hover {
+      background-color: #3e8e41;
+      box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.24);
+      transform: translateY(-2px);
+    }
 
-        <button id="signOutBtn"
-                style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">
-            Sign Out
-        </button>
+    #copyLinkBtn:hover {
+      background-color: #005f73;
+    }
+  </style>
 
-    </div>
+  <h2>Connect</h2>
+  <table id="invitationsTable">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Action</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    <style>
-      /* hover effects here because it can't be placed inline*/
-      button:hover {
-        background-color: #3e8e41;
-        box-shadow: 0 6px 10px 0 rgba(0, 0, 0, 0.24);
-        transform: translateY(-2px);
+
+  <script>
+    // REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "mandala-5165e.firebaseapp.com",
+      projectId: "mandala-5165e",
+      storageBucket: "mandala-5165e.appspot.com",
+      messagingSenderId: "569537405023",
+      appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+      measurementId: "G-TER99X7NBT"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let simulation = null;
+    let currentPhysics = false;
+    let currentUsers = [];
+    let currentConnections = [];
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
+        fetchAcceptedInvitations(user);
+
+      } else {
+        window.location.href = '/index.html';
       }
+    });
 
-      #copyLinkBtn:hover {
-        background-color: #005f73;
+
+    async function fetchAcceptedInvitations(currentUser) {
+      try {
+        const directConnections = await fetchDirectConnections(currentUser.email);
+        const potentialConnections = await findPotentialConnections(currentUser.email, directConnections);
+        displayPotentialConnections(currentUser, potentialConnections);
+        updateVisualization(currentUser.email); // Update after data is ready
+      } catch (error) {
+        console.error("Error fetching and processing invitations:", error);
+        document.getElementById("errorMessage").textContent = "Error loading invitations.";
       }
-    </style>
-
-    <h2>Connect</h2>
-    <table id="invitationsTable">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Action</th>
-        </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+    }
 
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "mandala-5165e.firebaseapp.com",
-            projectId: "mandala-5165e",
-            storageBucket: "mandala-5165e.appspot.com",
-            messagingSenderId: "569537405023",
-            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-            measurementId: "G-TER99X7NBT"
-        };
+    async function fetchDirectConnections(currentUserEmail) {
+      const directConnections = new Set();
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+      const snapshot = await db.collection('connections')
+        .where('users', 'array-contains', currentUserEmail)
+        .get();
 
-        let simulation = null;
-        let currentPhysics = false;
-        let currentUsers = [];
-        let currentConnections = [];
-        let unsubscribeInvitationsListener; // To store the listener
-
-
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchAcceptedInvitations(user); // Initial fetch
-
-                // Set up real-time listener
-                if (unsubscribeInvitationsListener) {
-                    unsubscribeInvitationsListener(); // Unsubscribe existing listener
-                }
-                unsubscribeInvitationsListener = setupInvitationsListener(user);
-
-            } else {
-                window.location.href = '/index.html';
-            }
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const users = data.users;
+        users.forEach(user => {
+          if (user !== currentUserEmail) {
+            directConnections.add(user);
+          }
         });
+      });
 
-// Real-time listener for invitations
-        function setupInvitationsListener(currentUser) {
-            return db.collection("connections")
-                .where('users', 'array-contains', currentUser.email)
-                .onSnapshot(snapshot => {
-                    console.log("Invitations updated (realtime)");
-                    fetchAcceptedInvitations(currentUser); // Re-fetch and re-render on changes
-                }, error => {
-                    console.error("Error listening to connections:", error);
-                });
-        }
+      return directConnections;
+    }
 
-        async function fetchAcceptedInvitations(currentUser) {
-            try {
-                const directConnections = await fetchDirectConnections(currentUser.email);
-                const potentialConnections = await findPotentialConnections(currentUser.email, directConnections);
-                displayPotentialConnections(currentUser, potentialConnections);
-                updateVisualization(currentUser.email); // Update after data is ready
-            } catch (error) {
-                console.error("Error fetching and processing invitations:", error);
-                document.getElementById("errorMessage").textContent = "Error loading invitations.";
+    async function findPotentialConnections(currentUserEmail, directConnections) {
+      const potentialConnections = [];
+      const processedEmails = new Set([currentUserEmail, ...directConnections]); // Track already processed emails
+
+
+      for (const connectedEmail of directConnections) {
+        const secondaryConnections = await fetchDirectConnections(connectedEmail);
+
+        for (const potentialEmail of secondaryConnections) {
+          if (!processedEmails.has(potentialEmail)) {
+            processedEmails.add(potentialEmail); // Mark email as processed
+
+            // Fetch user information (name)
+            //CHANGED THIS TO GET DATA FROM THE USERS COLLECTION!
+            const userSnapshot = await db.collection('users').doc(potentialEmail).get();
+
+            if (userSnapshot.exists) {
+              const userData = userSnapshot.data();
+              potentialConnections.push({
+                email: potentialEmail,
+                name: userData.displayName // Or whatever field holds the name
+              });
+            } else {
+              // Handle the case where user info isn't available
+              potentialConnections.push({
+                email: potentialEmail,
+                name: potentialEmail // Use email as name for now
+              });
             }
+          }
         }
+      }
+      return potentialConnections;
+    }
 
+    async function displayPotentialConnections(currentUser, users) {
+      const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+      invitationsTable.innerHTML = ""; // Clear the table
 
-        async function fetchDirectConnections(currentUserEmail) {
-            const directConnections = new Set();
+      const existingConnections = await fetchExistingConnections(currentUser.email); // Pass only the email
 
-            const snapshot = await db.collection('connections')
-                .where('users', 'array-contains', currentUserEmail)
-                .get();
+      users.forEach(user => {
+        const connectionKey = [currentUser.email, user.email].sort().join('-');
+        const alreadyConnected = existingConnections.has(connectionKey);
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const users = data.users;
-                users.forEach(user => {
-                    if (user !== currentUserEmail) {
-                        directConnections.add(user);
-                    }
-                });
-            });
-
-            return directConnections;
-        }
-
-        async function findPotentialConnections(currentUserEmail, directConnections) {
-            const potentialConnections = [];
-            const processedEmails = new Set([currentUserEmail, ...directConnections]); // Track already processed emails
-
-
-            for (const connectedEmail of directConnections) {
-                const secondaryConnections = await fetchDirectConnections(connectedEmail);
-
-                for (const potentialEmail of secondaryConnections) {
-                    if (!processedEmails.has(potentialEmail)) {
-                        processedEmails.add(potentialEmail); // Mark email as processed
-
-                        // Fetch user information (name)
-                        const userSnapshot = await db.collection('users').doc(potentialEmail).get();
-
-                        if (userSnapshot.exists) {
-                            const userData = userSnapshot.data();
-                            potentialConnections.push({
-                                email: potentialEmail,
-                                name: userData.displayName // Or whatever field holds the name
-                            });
-                        } else {
-                            // Handle the case where user info isn't available
-                            potentialConnections.push({
-                                email: potentialEmail,
-                                name: potentialEmail // Use email as name for now
-                            });
-                        }
-                    }
-                }
-            }
-            return potentialConnections;
-        }
-
-        async function displayPotentialConnections(currentUser, users) {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            invitationsTable.innerHTML = ""; // Clear the table
-
-            const existingConnections = await fetchExistingConnections(currentUser.email); // Pass only the email
-
-            users.forEach(user => {
-                const connectionKey = [currentUser.email, user.email].sort().join('-');
-                const alreadyConnected = existingConnections.has(connectionKey);
-
-                if (!alreadyConnected) {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
+        if (!alreadyConnected) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
                 <td>${user.name}</td>
                 <td>${user.email}</td>
                 <td>
@@ -383,404 +366,403 @@
                     </button>
                 </td>
             `;
-                    invitationsTable.appendChild(tr);
+          invitationsTable.appendChild(tr);
 
-                    const button = tr.querySelector('.add-connection-btn');
-                    button.addEventListener('click', () => handleAddConnection(currentUser, user));
-                }
-            });
+          const button = tr.querySelector('.add-connection-btn');
+          button.addEventListener('click', () => handleAddConnection(currentUser, user));
+        }
+      });
+    }
+
+
+    async function fetchExistingConnections(currentUserEmail) {
+      const connections = new Set();
+
+      try {
+        const snapshot = await db.collection('connections')
+          .where('users', 'array-contains', currentUserEmail)
+          .get();
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const users = data.users;
+          const connectionKey = users.sort().join('-');
+          connections.add(connectionKey);
+        });
+      } catch (error) {
+        console.error("Error fetching existing connections:", error);
+      }
+
+      return connections;
+    }
+
+    function handleAddConnection(currentUser, targetUser) {
+      if (currentUser.email === targetUser.email) {
+        alert('Cannot add yourself as a connection.');
+        return;
+      }
+
+      const sortedEmails = [currentUser.email, targetUser.email].sort();
+      const connectionId = sortedEmails.join('-');
+
+      const connectionRef = db.collection('connections').doc(connectionId);
+
+      connectionRef.get().then(doc => {
+        if (doc.exists) {
+          alert('Connection already exists!');
+          return;
         }
 
+        return connectionRef.set({
+          users: sortedEmails,
+          usersInfo: [
+            {email: currentUser.email, name: currentUser.displayName},
+            {email: targetUser.email, name: targetUser.name}
+          ],
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).then(() => {
+        alert('Connection added successfully!');
+        fetchAcceptedInvitations(currentUser);
+      }).catch(error => {
+        console.error('Error adding connection:', error);
+        alert('Failed to add connection.');
+      });
+    }
 
-        async function fetchExistingConnections(currentUserEmail) {
-            const connections = new Set();
+    async function updateVisualization(currentUserEmail) {
+      const connections = await fetchExistingConnections(currentUserEmail);
+      const allUsers = new Set();
 
-            try {
-                const snapshot = await db.collection('connections')
-                    .where('users', 'array-contains', currentUserEmail)
-                    .get();
+      connections.forEach(connectionKey => {
+        const [email1, email2] = connectionKey.split('-');
+        allUsers.add(email1);
+        allUsers.add(email2);
+      });
 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const users = data.users;
-                    const connectionKey = users.sort().join('-');
-                    connections.add(connectionKey);
-                });
-            } catch (error) {
-                console.error("Error fetching existing connections:", error);
-            }
-
-            return connections;
+      // Fetch user information (name) for all involved users
+      const usersInfo = [];
+      for (const email of allUsers) {
+        const userSnapshot = await db.collection('users').doc(email).get();
+        if (userSnapshot.exists) {
+          const userData = userSnapshot.data();
+          usersInfo.push({
+            email: email,
+            name: userData.displayName
+          });
+        } else {
+          usersInfo.push({
+            email: email,
+            name: email // Default to using email if name is not available
+          });
         }
+      }
 
-        function handleAddConnection(currentUser, targetUser) {
-            if (currentUser.email === targetUser.email) {
-                alert('Cannot add yourself as a connection.');
-                return;
-            }
+      const connectionsArray = Array.from(connections);
+      createVisualization(usersInfo, connectionsArray, currentPhysics); // Re-render with current physics state
 
-            const sortedEmails = [currentUser.email, targetUser.email].sort();
-            const connectionId = sortedEmails.join('-');
-
-            const connectionRef = db.collection('connections').doc(connectionId);
-
-            connectionRef.get().then(doc => {
-                if (doc.exists) {
-                    alert('Connection already exists!');
-                    return;
-                }
-
-                return connectionRef.set({
-                    users: sortedEmails,
-                    usersInfo: [
-                        {email: currentUser.email, name: currentUser.displayName},
-                        {email: targetUser.email, name: targetUser.name}
-                    ],
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }).then(() => {
-                alert('Connection added successfully!');
-                fetchAcceptedInvitations(currentUser);
-            }).catch(error => {
-                console.error('Error adding connection:', error);
-                alert('Failed to add connection.');
-            });
-        }
-
-        async function updateVisualization(currentUserEmail) {
-            const connections = await fetchExistingConnections(currentUserEmail);
-            const allUsers = new Set();
-
-            connections.forEach(connectionKey => {
-                const [email1, email2] = connectionKey.split('-');
-                allUsers.add(email1);
-                allUsers.add(email2);
-            });
-
-            // Fetch user information (name) for all involved users
-            const usersInfo = [];
-            for (const email of allUsers) {
-                const userSnapshot = await db.collection('users').doc(email).get();
-                if (userSnapshot.exists) {
-                    const userData = userSnapshot.data();
-                    usersInfo.push({
-                        email: email,
-                        name: userData.displayName
-                    });
-                } else {
-                    usersInfo.push({
-                        email: email,
-                        name: email // Default to using email if name is not available
-                    });
-                }
-            }
-
-            const connectionsArray = Array.from(connections);
-            createVisualization(usersInfo, connectionsArray, currentPhysics); // Re-render with current physics state
-
-        }
+    }
 
 
-        function createVisualization(users = [], connections = [], enablePhysics = false) {
-            if (!Array.isArray(users) || !Array.isArray(connections)) {
-                console.error("Invalid data received:", {users, connections});
-                return;
-            }
+    function createVisualization(users = [], connections = [], enablePhysics = false) {
+      if (!Array.isArray(users) || !Array.isArray(connections)) {
+        console.error("Invalid data received:", {users, connections});
+        return;
+      }
 
-            // Clear previous visualization
-            const container = d3.select("#visualization");
-            container.html("");
-            if (simulation) simulation.stop();
+      // Clear previous visualization
+      const container = d3.select("#visualization");
+      container.html("");
+      if (simulation) simulation.stop();
 
-            const width = 600;  // Increased from 600
-            const height = 500; // Increased from 500
-            const centerX = width / 2;
-            const centerY = height / 2;
+      const width = 600;  // Increased from 600
+      const height = 500; // Increased from 500
+      const centerX = width / 2;
+      const centerY = height / 2;
 
-            const svg = container.append("svg")
-                .attr("viewBox", `0 0 ${width} ${height}`)
-                .style("width", "100%")
-                .style("max-width", "600px") // Increased from 600px
-                .style("margin", "0 auto");
-
-
-            // Format display name function
-            const getDisplayName = user => {
-                const name = user.name || user.email;
-                return name.split('@')[0]  // Remove email domain if it's an email
-                    .split('.')  // Split on dots
-                    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
-                    .join(' ');  // Join with space
-            };
-
-            const nodes = users.map(user => ({
-                id: user.email.trim(),
-                label: getDisplayName(user),
-                name: user.name,
-                x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
-                y: centerY + (Math.random() - 0.5) * 100
-            }));
-
-            if (enablePhysics) {
-                const links = connections.map(connection => {
-                    const [rawSource, rawTarget] = connection.split('-');
-                    const sourceId = rawSource.trim();
-                    const targetId = rawTarget.trim();
-                    const source = nodes.find(n => n.id === sourceId);
-                    const target = nodes.find(n => n.id === targetId);
-                    return {source, target};
-                }).filter(l => l.source && l.target);
-
-                simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink(links)
-                        .id(d => d.id)
-                        .distance(200)  // Increased from 100
-                        .strength(0.1)) // Decreased from 0.2
-                    .force("charge", d3.forceManyBody()
-                        .strength(-500)) // Increased repulsion from -80
-                    .force("collide", d3.forceCollide(40)) // Increased from 20
-                    .force("center", d3.forceCenter(centerX, centerY))
-                    .alpha(1)
-                    .restart();
-
-                const linksGroup = svg.append("g").attr("class", "links");
-                const nodesGroup = svg.append("g").attr("class", "nodes");
-                const labelsGroup = svg.append("g").attr("class", "labels");
-
-                // Add label backgrounds for better readability
-                const labelBackground = labelsGroup.selectAll(".label-background")
-                    .data(nodes)
-                    .enter().append("rect")
-                    .attr("class", "label-background")
-                    .attr("fill", "white")
-                    .attr("opacity", 0.8)
-                    .attr("rx", 4)  // Rounded corners
-                    .attr("ry", 4);
-
-                const link = linksGroup.selectAll(".link")
-                    .data(links)
-                    .enter().append("line")
-                    .attr("class", "link")
-                    .attr("stroke", "#4CAF50")
-                    .attr("stroke-width", 2)
-                    .attr("opacity", 0.5);
-
-                const node = nodesGroup.selectAll(".node")
-                    .data(nodes)
-                    .enter().append("circle")
-                    .attr("class", "node")
-                    .attr("r", 8)
-                    .attr("fill", "#4CAF50")
-                    .call(drag(simulation));  // Add drag behavior
+      const svg = container.append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .style("width", "100%")
+        .style("max-width", "600px") // Increased from 600px
+        .style("margin", "0 auto");
 
 
-                const label = labelsGroup.selectAll(".label")
-                    .data(nodes)
-                    .enter().append("text")
-                    .attr("class", "label")
-                    .attr("text-anchor", "middle")
-                    .attr("dy", "0.35em")
-                    .attr("font-size", "14")  // Increased from 12
-                    .attr("font-weight", "500")  // Made text slightly bolder
-                    .text(d => d.label);
+      // Format display name function
+      const getDisplayName = user => {
+        const name = user.name || user.email;
+        return name.split('@')[0]  // Remove email domain if it's an email
+          .split('.')  // Split on dots
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
+          .join(' ');  // Join with space
+      };
 
-                // Update label backgrounds based on text size
-                label.each(function (d) {
-                    const bbox = this.getBBox();
-                    d.bbox = bbox;
-                });
+      const nodes = users.map(user => ({
+        id: user.email.trim(),
+        label: getDisplayName(user),
+        name: user.name,
+        x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
+        y: centerY + (Math.random() - 0.5) * 100
+      }));
 
-                labelBackground
-                    .attr("width", d => d.bbox.width + 10)
-                    .attr("height", d => d.bbox.height + 6)
-                    .attr("x", d => d.bbox.x - 5)
-                    .attr("y", d => d.bbox.y - 3);
+      if (enablePhysics) {
+        const links = connections.map(connection => {
+          const [rawSource, rawTarget] = connection.split('-');
+          const sourceId = rawSource.trim();
+          const targetId = rawTarget.trim();
+          const source = nodes.find(n => n.id === sourceId);
+          const target = nodes.find(n => n.id === targetId);
+          return {source, target};
+        }).filter(l => l.source && l.target);
 
-                simulation.on("tick", () => {
-                    link.attr("x1", d => d.source.x)
-                        .attr("y1", d => d.source.y)
-                        .attr("x2", d => d.target.x)
-                        .attr("y2", d => d.target.y);
+        simulation = d3.forceSimulation(nodes)
+          .force("link", d3.forceLink(links)
+            .id(d => d.id)
+            .distance(200)  // Increased from 100
+            .strength(0.1)) // Decreased from 0.2
+          .force("charge", d3.forceManyBody()
+            .strength(-500)) // Increased repulsion from -80
+          .force("collide", d3.forceCollide(40)) // Increased from 20
+          .force("center", d3.forceCenter(centerX, centerY))
+          .alpha(1)
+          .restart();
 
-                    node.attr("cx", d => d.x)
-                        .attr("cy", d => d.y);
+        const linksGroup = svg.append("g").attr("class", "links");
+        const nodesGroup = svg.append("g").attr("class", "nodes");
+        const labelsGroup = svg.append("g").attr("class", "labels");
 
-                    label.attr("x", d => d.x)
-                        .attr("y", d => d.y + 20)
-                        .attr("transform", ""); // remove any transformations to stop labels from being upside down
+        // Add label backgrounds for better readability
+        const labelBackground = labelsGroup.selectAll(".label-background")
+          .data(nodes)
+          .enter().append("rect")
+          .attr("class", "label-background")
+          .attr("fill", "white")
+          .attr("opacity", 0.8)
+          .attr("rx", 4)  // Rounded corners
+          .attr("ry", 4);
 
-                    labelBackground
-                        .attr("x", d => d.x - (d.bbox.width / 2) - 5)
-                        .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
-                });
+        const link = linksGroup.selectAll(".link")
+          .data(links)
+          .enter().append("line")
+          .attr("class", "link")
+          .attr("stroke", "#4CAF50")
+          .attr("stroke-width", 2)
+          .attr("opacity", 0.5);
 
-            } else {
-                // Static circle layout code remains the same but with updated display names
-                const radius = 200;  // Increased from 200
-                const nodePositions = new Map();
+        const node = nodesGroup.selectAll(".node")
+          .data(nodes)
+          .enter().append("circle")
+          .attr("class", "node")
+          .attr("r", 8)
+          .attr("fill", "#4CAF50")
+          .call(drag(simulation));  // Add drag behavior
 
-                nodes.forEach((node, i) => {
-                    const angle = (i * 2 * Math.PI) / nodes.length;
-                    nodePositions.set(node.id, {
-                        x: centerX + radius * Math.cos(angle),
-                        y: centerY + radius * Math.sin(angle),
-                        angle: angle
-                    });
-                });
 
-                connections.forEach(connection => {
-                    const [email1, email2] = connection.split('-');
-                    const pos1 = nodePositions.get(email1.trim());
-                    const pos2 = nodePositions.get(email2.trim());
-                    if (pos1 && pos2) {
-                        svg.append("line")
-                            .attr("x1", pos1.x)
-                            .attr("y1", pos1.y)
-                            .attr("x2", pos2.x)
-                            .attr("y2", pos2.y)
-                            .attr("stroke", "#4CAF50")
-                            .attr("stroke-width", 2)
-                            .attr("opacity", 0.5);
-                    }
-                });
+        const label = labelsGroup.selectAll(".label")
+          .data(nodes)
+          .enter().append("text")
+          .attr("class", "label")
+          .attr("text-anchor", "middle")
+          .attr("dy", "0.35em")
+          .attr("font-size", "14")  // Increased from 12
+          .attr("font-weight", "500")  // Made text slightly bolder
+          .text(d => d.label);
 
-                // Add white background rectangles for labels
-                nodes.forEach(node => {
-                    const pos = nodePositions.get(node.id);
-                    const tempText = svg.append("text")
-                        .attr("x", 0)
-                        .attr("y", 0)
-                        .attr("font-size", "14")
-                        .text(node.label);
+        // Update label backgrounds based on text size
+        label.each(function (d) {
+          const bbox = this.getBBox();
+          d.bbox = bbox;
+        });
 
-                    const bbox = tempText.node().getBBox();
-                    tempText.remove();
+        labelBackground
+          .attr("width", d => d.bbox.width + 10)
+          .attr("height", d => d.bbox.height + 6)
+          .attr("x", d => d.bbox.x - 5)
+          .attr("y", d => d.bbox.y - 3);
 
-                    svg.append("rect")
-                        .attr("x", pos.x - (bbox.width / 2) - 5)
-                        .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
-                        .attr("width", bbox.width + 10)
-                        .attr("height", bbox.height + 6)
-                        .attr("fill", "white")
-                        .attr("opacity", 0.8)
-                        .attr("rx", 4)
-                        .attr("ry", 4);
-                });
+        simulation.on("tick", () => {
+          link.attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
 
-                // Rest of static layout rendering
-                svg.append("circle")
-                    .attr("cx", centerX)
-                    .attr("cy", centerY)
-                    .attr("r", 8)
-                    .attr("fill", "#4CAF50");
+          node.attr("cx", d => d.x)
+            .attr("cy", d => d.y);
 
-                nodes.forEach(node => {
-                    const pos = nodePositions.get(node.id);
-                    svg.append("line")
-                        .attr("x1", centerX)
-                        .attr("y1", centerY)
-                        .attr("x2", pos.x)
-                        .attr("y2", pos.y)
-                        .attr("stroke", "#4CAF50")
-                        .attr("stroke-width", 1)
-                        .attr("opacity", 0.2);
+          label.attr("x", d => d.x)
+            .attr("y", d => d.y + 20)
+            .attr("transform", ""); // remove any transformations to stop labels from being upside down
 
-                    svg.append("circle")
-                        .attr("cx", pos.x)
-                        .attr("cy", pos.y)
-                        .attr("r", 6)
-                        .attr("fill", "#4CAF50");
+          labelBackground
+            .attr("x", d => d.x - (d.bbox.width / 2) - 5)
+            .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
+        });
 
-                    svg.append("text")
-                        .attr("x", pos.x)
-                        .attr("y", pos.y + 20)
-                        .attr("text-anchor", "middle")
-                        .attr("font-size", "14")
-                        .attr("font-weight", "500")
-                        .text(node.label);
-                });
-            }
-        }
+      } else {
+        // Static circle layout code remains the same but with updated display names
+        const radius = 200;  // Increased from 200
+        const nodePositions = new Map();
+
+        nodes.forEach((node, i) => {
+          const angle = (i * 2 * Math.PI) / nodes.length;
+          nodePositions.set(node.id, {
+            x: centerX + radius * Math.cos(angle),
+            y: centerY + radius * Math.sin(angle),
+            angle: angle
+          });
+        });
+
+        connections.forEach(connection => {
+          const [email1, email2] = connection.split('-');
+          const pos1 = nodePositions.get(email1.trim());
+          const pos2 = nodePositions.get(email2.trim());
+          if (pos1 && pos2) {
+            svg.append("line")
+              .attr("x1", pos1.x)
+              .attr("y1", pos1.y)
+              .attr("x2", pos2.x)
+              .attr("y2", pos2.y)
+              .attr("stroke", "#4CAF50")
+              .attr("stroke-width", 2)
+              .attr("opacity", 0.5);
+          }
+        });
+
+        // Add white background rectangles for labels
+        nodes.forEach(node => {
+          const pos = nodePositions.get(node.id);
+          const tempText = svg.append("text")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("font-size", "14")
+            .text(node.label);
+
+          const bbox = tempText.node().getBBox();
+          tempText.remove();
+
+          svg.append("rect")
+            .attr("x", pos.x - (bbox.width / 2) - 5)
+            .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
+            .attr("width", bbox.width + 10)
+            .attr("height", bbox.height + 6)
+            .attr("fill", "white")
+            .attr("opacity", 0.8)
+            .attr("rx", 4)
+            .attr("ry", 4);
+        });
+
+        // Rest of static layout rendering
+        svg.append("circle")
+          .attr("cx", centerX)
+          .attr("cy", centerY)
+          .attr("r", 8)
+          .attr("fill", "#4CAF50");
+
+        nodes.forEach(node => {
+          const pos = nodePositions.get(node.id);
+          svg.append("line")
+            .attr("x1", centerX)
+            .attr("y1", centerY)
+            .attr("x2", pos.x)
+            .attr("y2", pos.y)
+            .attr("stroke", "#4CAF50")
+            .attr("stroke-width", 1)
+            .attr("opacity", 0.2);
+
+          svg.append("circle")
+            .attr("cx", pos.x)
+            .attr("cy", pos.y)
+            .attr("r", 6)
+            .attr("fill", "#4CAF50");
+
+          svg.append("text")
+            .attr("x", pos.x)
+            .attr("y", pos.y + 20)
+            .attr("text-anchor", "middle")
+            .attr("font-size", "14")
+            .attr("font-weight", "500")
+            .text(node.label);
+        });
+      }
+    }
 
 // Dragging functionality
-        function drag(simulation) {
-            function dragstarted(event, d) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
+    function drag(simulation) {
+      function dragstarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
 
-            function dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = d.y;
+      }
 
-            function dragended(event, d) {
-                if (!event.active) simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
+      function dragended(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
 
-            return d3.drag()
-                .on("start", dragstarted)
-                .on("drag", dragged)
-                .on("end", dragended);
-        }
-
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const toggleButton = document.getElementById('togglePhysics');
-            const visualizationDiv = document.getElementById('visualization');
-
-            if (!toggleButton || !visualizationDiv) {
-                console.error('Required elements not found!');
-                return;
-            }
-
-            // Initial visualization with physics disabled
-            fetchAcceptedInvitations(auth.currentUser);
-
-            toggleButton.addEventListener('click', () => {
-                currentPhysics = !currentPhysics;
-                createVisualization(currentUsers, currentConnections, currentPhysics);
-            });
-        });
+      return d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended);
+    }
 
 
-        document.getElementById("generateLinkBtn").addEventListener("click", () => {
-            const user = auth.currentUser;
-            if (!user) return;
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleButton = document.getElementById('togglePhysics');
+      const visualizationDiv = document.getElementById('visualization');
 
-            const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+      if (!toggleButton || !visualizationDiv) {
+        console.error('Required elements not found!');
+        return;
+      }
 
-            //THIS SHOULD LINK DIRECTLY TO THE CONNECTIONS TABLE...
-            db.collection("invitations").doc(uniqueId).set({
-                fromUserId: user.uid,
-                fromUserEmail: user.email,
-                status: "open",
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            }).then(() => {
-                const inviteLinkInput = document.getElementById("inviteLink");
-                inviteLinkInput.value = inviteLink;
-                inviteLinkInput.style.display = "block";
-                document.getElementById("copyLinkBtn").style.display = "inline-block";
-            });
-        });
+      // Initial visualization with physics disabled
+      //fetchAcceptedInvitations(auth.currentUser); This gets called after sign in anyway
 
-        document.getElementById("copyLinkBtn").addEventListener("click", () => {
-            const inviteLinkInput = document.getElementById("inviteLink");
-            inviteLinkInput.select();
-            document.execCommand("copy");
-            alert("Link copied to clipboard!");
-        });
+      toggleButton.addEventListener('click', () => {
+        currentPhysics = !currentPhysics;
+        createVisualization(currentUsers, currentConnections, currentPhysics);
+      });
+    });
 
-        document.getElementById("signOutBtn").addEventListener("click", () => {
-            auth.signOut().then(() => {
-                window.location.href = '/index.html';
-            });
-        });
 
-    </script>
+    document.getElementById("generateLinkBtn").addEventListener("click", () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const uniqueId = Math.random().toString(36).substr(2, 9);
+      const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
+
+      db.collection("invitations").doc(uniqueId).set({
+        fromUserId: user.uid,
+        fromUserEmail: user.email,
+        status: "open",
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      }).then(() => {
+        const inviteLinkInput = document.getElementById("inviteLink");
+        inviteLinkInput.value = inviteLink;
+        inviteLinkInput.style.display = "block";
+        document.getElementById("copyLinkBtn").style.display = "inline-block";
+      });
+    });
+
+    document.getElementById("copyLinkBtn").addEventListener("click", () => {
+      const inviteLinkInput = document.getElementById("inviteLink");
+      inviteLinkInput.select();
+      document.execCommand("copy");
+      alert("Link copied to clipboard!");
+    });
+
+    document.getElementById("signOutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => {
+        window.location.href = '/index.html';
+      });
+    });
+
+  </script>
 </body>
 </html>
