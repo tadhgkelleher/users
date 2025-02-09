@@ -254,97 +254,95 @@ tr:hover {
             }
         });
 
-async function fetchAcceptedInvitations(currentUser) {
+function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
-    try {
-        const snapshot = await db.collection("invitations").get();
-        const allAcceptedInvitations = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.acceptedByUser?.length > 0) {
-                allAcceptedInvitations.push(data);
-            }
-        });
-
-        // Identify direct connections (current user's invitations)
-        const directConnectionsEmails = new Set();
-        const directInvitations = allAcceptedInvitations.filter(data => {
-            const isSender = data.fromUserId === currentUser.uid;
-            const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
-            return isSender || isAcceptor;
-        });
-
-        directInvitations.forEach(data => {
-            data.acceptedByUser.forEach(user => {
-                if (user.email !== currentUser.email) {
-                    directConnectionsEmails.add(user.email);
+    db.collection("invitations").get()
+        .then(snapshot => {
+            const allAcceptedInvitations = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.acceptedByUser?.length > 0) {
+                    allAcceptedInvitations.push(data);
                 }
             });
-            if (data.fromUserEmail !== currentUser.email) {
-                directConnectionsEmails.add(data.fromUserEmail);
-            }
-        });
-        console.log("Direct Connections Emails:", Array.from(directConnectionsEmails)); // Debug
 
-        // Identify potential second-degree connections (users connected to direct connections)
-        const potentialSecondDegreeConnections = new Set();
-        allAcceptedInvitations.forEach(invitation => {
-            // Check if the sender is a direct connection
-            if (directConnectionsEmails.has(invitation.fromUserEmail)) {
-                invitation.acceptedByUser.forEach(user => {
-                    if (user.email !== currentUser.email && !directConnectionsEmails.has(user.email)) {
-                        potentialSecondDegreeConnections.add(user); // Store the *user object*
+            // Identify direct connections (current user's invitations)
+            const directConnectionsEmails = new Set();
+            const directInvitations = allAcceptedInvitations.filter(data => {
+                const isSender = data.fromUserId === currentUser.uid;
+                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
+                return isSender || isAcceptor;
+            });
+
+            directInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    if (user.email !== currentUser.email) {
+                        directConnectionsEmails.add(user.email);
                     }
                 });
-            }
-            // Check if any acceptor is a direct connection
-            invitation.acceptedByUser.forEach(user => {
-                if (directConnectionsEmails.has(user.email)) {
-                    if (invitation.fromUserEmail !== currentUser.email && !directConnectionsEmails.has(invitation.fromUserEmail)){
-                        potentialSecondDegreeConnections.add({ email: invitation.fromUserEmail, name: invitation.fromUserName });
-                    }
-                }
             });
+
+            // Identify second-degree invitations (involving direct connections)
+            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
+                const senderEmail = data.fromUserEmail;
+                const acceptorEmails = data.acceptedByUser.map(u => u.email);
+                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
+            });
+
+            // Combine and deduplicate invitations
+            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
+
+            // Process combined invitations to build maps
+            const acceptedUsersMap = new Map();
+            const connections = new Set();
+
+            combinedInvitations.forEach(data => {
+                data.acceptedByUser.forEach(user => {
+                    const key = user.email;
+                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
+                        acceptedUsersMap.set(key, user);
+                    }
+                });
+
+                data.acceptedByUser.forEach(user => {
+                    const connection = [data.fromUserEmail, user.email].sort().join('-');
+                    connections.add(connection);
+                });
+            });
+
+            // Convert maps to arrays before passing to createVisualization
+            const usersArray = Array.from(acceptedUsersMap.values());
+            const connectionsArray = Array.from(connections);
+
+            // Update currentUsers and currentConnections
+            currentUsers = usersArray;
+            currentConnections = connectionsArray;
+
+            createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
+
+            // Display potential connections in the table
+            displayPotentialConnections(currentUser, usersArray, connections);
+
+        })
+        .catch(error => {
+            console.error("Error fetching invitations:", error);
+            document.getElementById("errorMessage").textContent = "Error loading invitations.";
         });
-
-        // Convert the Set to an array
-        const potentialSecondDegreeConnectionsArray = Array.from(potentialSecondDegreeConnections);
-        console.log("Potential Second Degree Connections:", potentialSecondDegreeConnectionsArray); // Debug
-
-        // Fetch existing connections
-        const existingConnections = await fetchExistingConnections(currentUser);
-
-        // Filter out existing connections and the current user
-        const filteredSecondDegreeConnections = potentialSecondDegreeConnectionsArray.filter(user => {
-            if (!user || !user.email) {
-                console.warn("Invalid user object:", user);
-                return false;
-            }
-
-            const connectionKey = [currentUser.email, user.email].sort().join('-');
-            return user.email !== currentUser.email && !existingConnections.has(connectionKey);
-        });
-
-        console.log("Filtered Second Degree Connections:", filteredSecondDegreeConnections); // Debug
-
-        displayPotentialConnections(currentUser, filteredSecondDegreeConnections);
-
-        //The visualization code does not need to be re-done here.
-
-    } catch (error) {
-        console.error("Error fetching invitations:", error);
-        document.getElementById("errorMessage").textContent = "Error loading invitations.";
-    }
 }
 
-async function displayPotentialConnections(currentUser, users) {
+async function displayPotentialConnections(currentUser, users, connections) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = ""; // Clear the table
 
-    for (const user of users) {
-        if (user.email !== currentUser.email) {
+    const existingConnections = await fetchExistingConnections(currentUser);
+
+    users.forEach(user => {
+        const connectionKey = [currentUser.email, user.email].sort().join('-');
+        const alreadyConnected = existingConnections.has(connectionKey);
+
+        if (user.email !== currentUser.email && !alreadyConnected) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${user.name}</td>
@@ -359,10 +357,31 @@ async function displayPotentialConnections(currentUser, users) {
             const button = tr.querySelector('.add-connection-btn');
             button.addEventListener('click', () => handleAddConnection(currentUser, user));
         }
-    }
+    });
 }
 
-async function handleAddConnection(currentUser, targetUser) {
+async function fetchExistingConnections(currentUser) {
+    const connections = new Set();
+
+    try {
+        const snapshot = await db.collection('connections')
+            .where('users', 'array-contains', currentUser.email)
+            .get();
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const users = data.users;
+            const connectionKey = users.sort().join('-');
+            connections.add(connectionKey);
+        });
+    } catch (error) {
+        console.error("Error fetching existing connections:", error);
+    }
+
+    return connections;
+}
+
+function handleAddConnection(currentUser, targetUser) {
     if (currentUser.email === targetUser.email) {
         alert('Cannot add yourself as a connection.');
         return;
@@ -371,90 +390,66 @@ async function handleAddConnection(currentUser, targetUser) {
     const sortedEmails = [currentUser.email, targetUser.email].sort();
     const connectionId = sortedEmails.join('-');
 
-    try {
-        // Use a transaction for atomic updates
-        await db.runTransaction(async (transaction) => {
-            const connectionRef = db.collection('connections').doc(connectionId);
-            const connectionDoc = await transaction.get(connectionRef);
+    const connectionRef = db.collection('connections').doc(connectionId);
 
-            if (connectionDoc.exists) {
-                throw new Error('Connection already exists!'); // Abort transaction
-            }
+    connectionRef.get().then(doc => {
+        if (doc.exists) {
+            alert('Connection already exists!');
+            return;
+        }
 
-            // Check for existing accepted invitations (either direction)
-            const existingInviteQuery1 = db.collection("invitations")
-                .where("fromUserEmail", "==", currentUser.email)
-                .where("toUserEmail", "==", targetUser.email)
-                .limit(1);
-
-            const existingInviteQuery2 = db.collection("invitations")
-                .where("fromUserEmail", "==", targetUser.email)
-                .where("toUserEmail", "==", currentUser.email)
-                .limit(1);
-
-            const [snapshot1, snapshot2] = await Promise.all([
-                transaction.get(existingInviteQuery1),
-                transaction.get(existingInviteQuery2)
-            ]);
-
-            let inviteRef;
-            let inviteData;
-
-            if (!snapshot1.empty) {
-                const inviteDoc = snapshot1.docs[0];
-                inviteRef = db.collection("invitations").doc(inviteDoc.id);
-                inviteData = inviteDoc.data();
-            } else if (!snapshot2.empty) {
-                const inviteDoc = snapshot2.docs[0];
-                inviteRef = db.collection("invitations").doc(inviteDoc.id);
-                inviteData = inviteDoc.data();
-            }
-
-            const connectionData = {
-                users: sortedEmails,
-                usersInfo: [
-                    { email: currentUser.email, name: currentUser.displayName },
-                    { email: targetUser.email, name: targetUser.name }
-                ],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Update or Create connection doc
-            transaction.set(connectionRef, connectionData);
-
-            if (inviteRef) {
-                // Update existing invitation
-                const updatedAcceptedBy = inviteData.acceptedByUser || [];
-                if (!updatedAcceptedBy.some(user => user.email === targetUser.email)) {
-                    updatedAcceptedBy.push({ email: targetUser.email, name: targetUser.name });
-                }
-
-                transaction.update(inviteRef, { acceptedByUser: updatedAcceptedBy, status: "accepted" });
-            } else {
-                // Create a new invitation if none exists
-                const newInviteData = {
-                    fromUserId: currentUser.uid,
-                    fromUserEmail: currentUser.email,
-                    fromUserName: currentUser.displayName,
-                    toUserId: targetUser.uid || null, // if available
-                    toUserEmail: targetUser.email,
-                    toUserName: targetUser.name,
-                    status: "accepted",
-                    acceptedByUser: [{ email: targetUser.email, name: targetUser.name }],
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                };
-
-                transaction.set(db.collection("invitations").doc(), newInviteData); //let firestore generate the id
-            }
+        return connectionRef.set({
+            users: sortedEmails,
+            usersInfo: [
+                { email: currentUser.email, name: currentUser.displayName },
+                { email: targetUser.email, name: targetUser.name }
+            ],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+    }).then(() => {
+        // Check if an invite already exists from the current user to the target user
+        return db.collection("invitations")
+            .where("fromUserEmail", "==", currentUser.email)
+            .where("toUserEmail", "==", targetUser.email)
+            .limit(1)
+            .get();
+    }).then(snapshot => {
+        if (!snapshot.empty) {
+            // Update existing invitation
+            const inviteDoc = snapshot.docs[0];
+            const inviteRef = db.collection("invitations").doc(inviteDoc.id);
+            const inviteData = inviteDoc.data();
 
+            const updatedAcceptedBy = inviteData.acceptedByUser || [];
+            if (!updatedAcceptedBy.some(user => user.email === targetUser.email)) {
+                updatedAcceptedBy.push({ email: targetUser.email, name: targetUser.name });
+            }
+
+            return inviteRef.update({ acceptedByUser: updatedAcceptedBy, status: "accepted" });
+        } else {
+            // Create a new invitation if none exists
+            return db.collection("invitations").add({
+                fromUserId: currentUser.uid,
+                fromUserEmail: currentUser.email,
+                fromUserName: currentUser.displayName,
+                toUserId: targetUser.uid || null, // if available
+                toUserEmail: targetUser.email,
+                toUserName: targetUser.name,
+                status: "accepted",
+                acceptedByUser: [{ email: targetUser.email, name: targetUser.name }],
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }).then(() => {
         alert('Connection added successfully!');
-        fetchAcceptedInvitations(currentUser); // Refresh
-    } catch (error) {
+        fetchAcceptedInvitations(currentUser);
+    }).catch(error => {
         console.error('Error adding connection:', error);
-        alert(`Failed to add connection: ${error.message}`); //More specific error
-    }
+        alert('Failed to add connection.');
+    });
 }
+
+
         
 
 
