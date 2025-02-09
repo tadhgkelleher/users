@@ -258,96 +258,93 @@ async function fetchAcceptedInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
-    db.collection("invitations").get()
-        .then(snapshot => {
-            const allAcceptedInvitations = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.acceptedByUser?.length > 0) {
-                    allAcceptedInvitations.push(data);
+    try {
+        const snapshot = await db.collection("invitations").get();
+        const allAcceptedInvitations = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.acceptedByUser?.length > 0) {
+                allAcceptedInvitations.push(data);
+            }
+        });
+
+        // Identify direct connections (current user's invitations)
+        const directConnectionsEmails = new Set();
+        const directInvitations = allAcceptedInvitations.filter(data => {
+            const isSender = data.fromUserId === currentUser.uid;
+            const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
+            return isSender || isAcceptor;
+        });
+
+        directInvitations.forEach(data => {
+            data.acceptedByUser.forEach(user => {
+                if (user.email !== currentUser.email) {
+                    directConnectionsEmails.add(user.email);
                 }
             });
-
-            // Identify direct connections (current user's invitations)
-            const directConnectionsEmails = new Set();
-            const directInvitations = allAcceptedInvitations.filter(data => {
-                const isSender = data.fromUserId === currentUser.uid;
-                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
-                return isSender || isAcceptor;
-            });
-
-            directInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    if (user.email !== currentUser.email) {
-                        directConnectionsEmails.add(user.email);
-                    }
-                });
-            });
-
-            // Identify second-degree invitations (involving direct connections)
-            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
-                const senderEmail = data.fromUserEmail;
-                const acceptorEmails = data.acceptedByUser.map(u => u.email);
-                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
-            });
-
-            // Combine and deduplicate invitations
-            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
-
-            // Process combined invitations to build maps
-            const acceptedUsersMap = new Map();
-            const connections = new Set();
-
-            combinedInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    const key = user.email;
-                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
-                        acceptedUsersMap.set(key, user);
-                    }
-                });
-
-                data.acceptedByUser.forEach(user => {
-                    const connection = [data.fromUserEmail, user.email].sort().join('-');
-                    connections.add(connection);
-                });
-            });
-
-            // Convert maps to arrays before passing to createVisualization
-            const usersArray = Array.from(acceptedUsersMap.values());
-            const connectionsArray = Array.from(connections);
-
-            // Update currentUsers and currentConnections
-            currentUsers = usersArray;
-            currentConnections = connectionsArray;
-
-            createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
-
-            // Display potential connections in the table
-            displayPotentialConnections(currentUser, usersArray);
-
-        })
-        .catch(error => {
-            console.error("Error fetching invitations:", error);
-            document.getElementById("errorMessage").textContent = "Error loading invitations.";
+            if (data.fromUserEmail !== currentUser.email) {
+                directConnectionsEmails.add(data.fromUserEmail);
+            }
         });
-}
+        console.log("Direct Connections Emails:", Array.from(directConnectionsEmails)); // Debug
 
+        // Identify potential second-degree connections (users connected to direct connections)
+        const potentialSecondDegreeConnections = new Set();
+        allAcceptedInvitations.forEach(invitation => {
+            // Check if the sender is a direct connection
+            if (directConnectionsEmails.has(invitation.fromUserEmail)) {
+                invitation.acceptedByUser.forEach(user => {
+                    if (user.email !== currentUser.email && !directConnectionsEmails.has(user.email)) {
+                        potentialSecondDegreeConnections.add(user); // Store the *user object*
+                    }
+                });
+            }
+            // Check if any acceptor is a direct connection
+            invitation.acceptedByUser.forEach(user => {
+                if (directConnectionsEmails.has(user.email)) {
+                    if (invitation.fromUserEmail !== currentUser.email && !directConnectionsEmails.has(invitation.fromUserEmail)){
+                        potentialSecondDegreeConnections.add({ email: invitation.fromUserEmail, name: invitation.fromUserName });
+                    }
+                }
+            });
+        });
+
+        // Convert the Set to an array
+        const potentialSecondDegreeConnectionsArray = Array.from(potentialSecondDegreeConnections);
+        console.log("Potential Second Degree Connections:", potentialSecondDegreeConnectionsArray); // Debug
+
+        // Fetch existing connections
+        const existingConnections = await fetchExistingConnections(currentUser);
+
+        // Filter out existing connections and the current user
+        const filteredSecondDegreeConnections = potentialSecondDegreeConnectionsArray.filter(user => {
+            if (!user || !user.email) {
+                console.warn("Invalid user object:", user);
+                return false;
+            }
+
+            const connectionKey = [currentUser.email, user.email].sort().join('-');
+            return user.email !== currentUser.email && !existingConnections.has(connectionKey);
+        });
+
+        console.log("Filtered Second Degree Connections:", filteredSecondDegreeConnections); // Debug
+
+        displayPotentialConnections(currentUser, filteredSecondDegreeConnections);
+
+        //The visualization code does not need to be re-done here.
+
+    } catch (error) {
+        console.error("Error fetching invitations:", error);
+        document.getElementById("errorMessage").textContent = "Error loading invitations.";
+    }
+}
 
 async function displayPotentialConnections(currentUser, users) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = ""; // Clear the table
 
-    const existingConnections = await fetchExistingConnections(currentUser);
-    const existingInvitations = await fetchExistingInvitations(currentUser); // Fetch existing invitations
-
-    users.forEach(user => {
-        const connectionKey = [currentUser.email, user.email].sort().join('-');
-        const alreadyConnected = existingConnections.has(connectionKey);
-
-        // Check if an invitation already exists between the users (either direction)
-        const alreadyInvited = existingInvitations.has(connectionKey);
-
-        if (user.email !== currentUser.email && !alreadyConnected && !alreadyInvited) {
+    for (const user of users) {
+        if (user.email !== currentUser.email) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${user.name}</td>
@@ -362,63 +359,7 @@ async function displayPotentialConnections(currentUser, users) {
             const button = tr.querySelector('.add-connection-btn');
             button.addEventListener('click', () => handleAddConnection(currentUser, user));
         }
-    });
-}
-
-async function fetchExistingConnections(currentUser) {
-    const connections = new Set();
-
-    try {
-        const snapshot = await db.collection('connections')
-            .where('users', 'array-contains', currentUser.email)
-            .get();
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const users = data.users;
-            const connectionKey = users.sort().join('-');
-            connections.add(connectionKey);
-        });
-    } catch (error) {
-        console.error("Error fetching existing connections:", error);
     }
-
-    return connections;
-}
-
-async function fetchExistingInvitations(currentUser) {
-    const invitations = new Set();
-
-    try {
-        const snapshot = await db.collection('invitations')
-            .where('acceptedByUser', 'array-contains', { email: currentUser.email }) // Changed to acceptedByUser array
-            .get();
-
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const users = [data.fromUserEmail, ...data.acceptedByUser.map(u => u.email)].sort();  // Include all users involved
-            const connectionKey = users.join('-');
-            invitations.add(connectionKey);
-        });
-
-        //Also add invites where you're the initiator
-        const sentInvites = await db.collection('invitations')
-            .where("fromUserEmail", "==", currentUser.email)
-            .get();
-
-        sentInvites.forEach(doc => {
-            const data = doc.data();
-            const users = [data.fromUserEmail, data.toUserEmail].sort()
-            const connectionKey = users.join('-');
-            invitations.add(connectionKey)
-        })
-
-
-    } catch (error) {
-        console.error("Error fetching existing invitations:", error);
-    }
-
-    return invitations;
 }
 
 async function handleAddConnection(currentUser, targetUser) {
