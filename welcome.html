@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,151 +12,160 @@
     <!-- D3.js script for visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding-top: 20px;
-}
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding-top: 20px;
+        }
 
-.container {
-    background-color: #1e1e1e;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    max-width: 1000px;
-    width: 90%;
-}
+        .container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 90%;
+        }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #90a4ae;
-    font-weight: bold;
-}
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #90a4ae;
+            font-weight: bold;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    background-color: #242424;
-    border-radius: 8px;
-    overflow: hidden;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: #242424;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #333;
-    color:#e0e0e0;
-}
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+            color: #e0e0e0;
+        }
 
-th {
-    background-color: #424242;
-    color: #e0e0e0;
-    font-weight: bold;
-}
+        th {
+            background-color: #424242;
+            color: #e0e0e0;
+            font-weight: bold;
+        }
 
-tr:nth-child(even) {
-    background-color: #2a2a2a;
-}
+        tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
 
-tr:hover {
-    background-color: #333;
-}
+        tr:hover {
+            background-color: #333;
+        }
 
-.error-message {
-    color: #e57373;
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
+        .error-message {
+            color: #e57373;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
 
-.nav-links {
-    width: 100%;
-    padding: 15px;
-    background-color: #263238;
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-    border-radius: 6px;
-}
+        .nav-links {
+            width: 100%;
+            padding: 15px;
+            background-color: #263238;
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
 
-.nav-links a, .nav-links button {
-    color: #80cbc4;
-    margin: 0 15px;
-    text-decoration: none;
-    font-weight: bold;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    transition: color 0.3s ease;
-}
+        .nav-links a,
+        .nav-links button {
+            color: #80cbc4;
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
 
-.nav-links a:hover, .nav-links button:hover {
-    color: #4db6ac;
-}
+        .nav-links a:hover,
+        .nav-links button:hover {
+            color: #4db6ac;
+        }
 
-#inviteLink {
-    display: none;
-    margin-top: 10px;
-    padding: 12px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 6px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-}
+        #inviteLink {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
 
-.share-buttons {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
+        .share-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-.share-buttons button, #generateLinkBtn, #copyLinkBtn {
-    padding: 10px 18px;
-    background-color: #424242;
-    color: #e0e0e0;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
+        .share-buttons button,
+        #generateLinkBtn,
+        #copyLinkBtn {
+            padding: 10px 18px;
+            background-color: #424242;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
 
-.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-    background-color: #388e8e;
-}
- .add-connection-btn {
-        background-color: #424242;
-        color: #e0e0e0;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
+        .share-buttons button:hover,
+        #generateLinkBtn:hover,
+        #copyLinkBtn:hover {
+            background-color: #388e8e;
+        }
 
-    .add-connection-btn:hover {
-        background-color: #263238;
-    }
+        .add-connection-btn {
+            background-color: #424242;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
 
-    .add-connection-btn:active {
-        transform: scale(0.98);
-    }
+        .add-connection-btn:hover {
+            background-color: #263238;
+        }
+
+        .add-connection-btn:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
+
 <body>
     <!-- Navigation links -->
     <div class="nav-links">
@@ -213,13 +223,13 @@ tr:hover {
     <script>
         // Firebase configuration - Replace with your actual Firebase credentials
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID",
-            measurementId: "YOUR_MEASUREMENT_ID"
+            apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
+            authDomain: "mandala-5165e.firebaseapp.com",
+            projectId: "mandala-5165e",
+            storageBucket: "mandala-5165e.appspot.com",
+            messagingSenderId: "569537405023",
+            appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
+            measurementId: "G-TER99X7NBT"
         };
 
         // Initialize Firebase
@@ -275,24 +285,30 @@ tr:hover {
             const connections = new Set();
 
             allInvitations.forEach(data => {
-              //ADD VALIDATION HERE.
-               if (data && data.fromUserEmail && data.toUserEmail) {
-                   const fromUserKey = data.fromUserEmail;
-                   if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                       acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
-                   }
+                // Validate that the required data is present.  Skip and log otherwise.
+                if (isValidData(data)) {
+                    const fromUserKey = data.fromUserEmail;
+                    if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                        acceptedUsersMap.set(fromUserKey, {
+                            email: data.fromUserEmail,
+                            name: data.fromUserName
+                        });
+                    }
 
-                   const toUserKey = data.toUserEmail;
+                    const toUserKey = data.toUserEmail;
                     if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                          acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
+                        acceptedUsersMap.set(toUserKey, {
+                            email: data.toUserEmail,
+                            name: data.toUserName
+                        });
                     }
 
                     // Create a connection string based on from and to
                     const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
                     connections.add(connection);
-               } else {
-                   console.warn("Skipping invitation data:", data);  // Clear warning in log
-               }
+                } else {
+                    console.warn("Skipping invitation data:", data); // Clear warning in log
+                }
             });
 
             // Convert maps to arrays before passing to createVisualization
@@ -326,14 +342,14 @@ tr:hover {
 
                     if (!displayedConnections.has(invitationKey)) {
                         displayedConnections.add(invitationKey);
-                         let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
-                          const tr = document.createElement("tr");
-                          tr.innerHTML = `
-                              <td>${otherUserEmail}</td>
-                              <td>${invite.status}</td>
-                          `;
-                          invitationsTable.appendChild(tr); // Append the row to the table
-                     }
+                        let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${otherUserEmail}</td>
+                            <td>${invite.status}</td>
+                        `;
+                        invitationsTable.appendChild(tr); // Append the row to the table
+                    }
                 }
                  else{
                       console.warn("Skipping invitation data:", invite);
@@ -401,16 +417,16 @@ tr:hover {
                          .get();
 
                          connectedUserInvitations_Me.forEach(doc => {
-                             const inviteData = doc.data();
-                              if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                      const potentialEmail = inviteData.fromUserEmail;
-                                       // Exclude current user, existing connections, and already invited people
-                                        if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                            potentialConnections.add(potentialEmail);
-                                        }
-                                }else{
-                                   console.warn("Skipping invitation data:", inviteData);
-                                }
+                            const inviteData = doc.data();
+                             if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                  const potentialEmail = inviteData.fromUserEmail;
+                                   // Exclude current user, existing connections, and already invited people
+                                    if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                        potentialConnections.add(potentialEmail);
+                                    }
+                            }else{
+                               console.warn("Skipping invitation data:", inviteData);
+                            }
 
                          });
                }
@@ -436,7 +452,7 @@ tr:hover {
                 handleAddConnection(currentUser, { email: email, name: email });  // Use email for name temporarily
 
             });
-        }
+        });
 
         /**
          * Checks if a potential email is already in an existing invitation list.
@@ -446,20 +462,19 @@ tr:hover {
          * @returns {boolean} - True if the potential user is already connected, false otherwise.
          */
         function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
-          for (const invite of existingInvitations) {
-               if (invite && invite.toUserEmail && invite.fromUserEmail){
-                    if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
-                        return true; // This potential connection is in existing connections (existingInvite)
-                    }
-               }else{
-                    console.warn("Skipping invitation data:", invite);
-              }
+            for (const invite of existingInvitations) {
+                 if (invite && invite.toUserEmail && invite.fromUserEmail){
+                      if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+                          return true; // This potential connection is in existing connections (existingInvite)
+                      }
+                }else{
+                     console.warn("Skipping invitation data:", invite);
+                }
 
-          }
+            }
             return false; // This potential connection is NOT in existing connections
 
         }
-
 
         /**
          * Adds a new connection by creating an invitation in Firestore.
@@ -587,133 +602,141 @@ tr:hover {
                     .enter().append("line")
                     .attr("class", "link")
                     .attr("stroke", "#4CAF50")
-                    .attr="data", links)
-                .enter().append("line")
-                .attr("class", "link")
-                .attr("stroke", "#4CAF50")
-                .attr("stroke-width", 2)
-                .attr("opacity", 0.5);
-
-            const node = nodesGroup.selectAll(".node")
-                .data(nodes)
-                .enter().append("circle")
-                .attr("class", "node")
-                .attr("r", 8)
-                .attr("fill", "#4CAF50");
-
-            const label = labelsGroup.selectAll(".label")
-                .data(nodes)
-                .enter().append("text")
-                .attr("class", "label")
-                .attr("text-anchor", "middle")
-                .attr("dy", "0.35em")
-                .attr("font-size", "14")
-                .attr("font-weight", "500")
-                .text(d => d.label);
-
-            simulation.on("tick", () => {
-                link
-                    .attr("x1", d => d.source.x)
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y);
-
-                node
-                    .attr("cx", d => d.x)
-                    .attr("cy", d => d.y);
-
-                label
-                    .attr("x", d => d.x)
-                    .attr("y", d => d.y + 20);
-            });
-
-        } else {
-            // Static circle layout (without physics)
-
-             const radius = 300;  // Increased from 200
-              const nodePositions = new Map();
-
-              nodes.forEach((node, index) => {
-                const angle = (index * 2 * Math.PI) / nodes.length;
-                nodePositions.set(node.id, {
-                  x: centerX + radius * Math.cos(angle),
-                  y: centerY + radius * Math.sin(angle),
-                  angle: angle
-                });
-              });
-
-              connections.forEach(connection => {
-                const [email1, email2] = connection.split('-');
-                const pos1 = nodePositions.get(email1.trim());
-                const pos2 = nodePositions.get(email2.trim());
-                if (pos1 && pos2) {
-                  svg.append("line")
-                    .attr("x1", pos1.x)
-                    .attr("y1", pos1.y)
-                    .attr("x2", pos2.x)
-                    .attr("y2", pos2.y)
-                    .attr("stroke", "#4CAF50")
                     .attr("stroke-width", 2)
                     .attr("opacity", 0.5);
-                }
-              });
 
-              // Add white background rectangles for labels
-              nodes.forEach(node => {
-                const pos = nodePositions.get(node.id);
-                const tempText = svg.append("text")
-                  .attr("x", 0)
-                  .attr("y", 0)
-                  .attr("font-size", "14")
-                  .text(node.label);
+                const node = nodesGroup.selectAll(".node")
+                    .data(nodes)
+                    .enter().append("circle")
+                    .attr("class", "node")
+                    .attr("r", 8)
+                    .attr("fill", "#4CAF50");
 
-                const bbox = tempText.node().getBBox();
-                tempText.remove();
+                const label = labelsGroup.selectAll(".label")
+                    .data(nodes)
+                    .enter().append("text")
+                    .attr("class", "label")
+                    .attr("text-anchor", "middle")
+                    .attr("dy", "0.35em")
+                    .attr("font-size", "14")
+                    .attr("font-weight", "500")
+                    .text(d => d.label);
 
-                svg.append("rect")
-                  .attr("x", pos.x - (bbox.width / 2) - 5)
-                  .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
-                  .attr("width", bbox.width + 10)
-                  .attr("height", bbox.height + 6)
-                  .attr("fill", "white")
-                  .attr("opacity", 0.8)
-                  .attr("rx", 4)
-                  .attr("ry", 4);
-              });
+                // Update label backgrounds based on text size
+                label.each(function(d) {
+                    const bbox = this.getBBox();
+                    d.bbox = bbox;
+                });
 
-              // Rest of static layout rendering
-              svg.append("circle")
-                .attr("cx", centerX)
-                .attr("cy", centerY)
-                .attr("r", 8)
-                .attr("fill", "#4CAF50");
+                labelBackground
+                  .attr("width", d => d.bbox.width + 10)
+                  .attr("height", d => d.bbox.height + 6)
+                  .attr("x", d => d.bbox.x - 5)
+                  .attr("y", d => d.bbox.y + 20 - (d.bbox.height / 2) - 3);
 
-              nodes.forEach(node => {
-                const pos = nodePositions.get(node.id);
-                svg.append("line")
-                  .attr("x1", centerX)
-                  .attr("y1", centerY)
-                  .attr("x2", pos.x)
-                  .attr("y2", pos.y)
-                  .attr("stroke", "#4CAF50")
-                  .attr("stroke-width", 1)
-                  .attr("opacity", 0.2);
+                simulation.on("tick", () => {
+                    link.attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => d.target.x)
+                        .attr("y2", d => d.target.y);
 
+                    node.attr("cx", d => d.x)
+                        .attr("cy", d => d.y);
+
+                    label.attr("x", d => d.x)
+                         .attr("y", d => d.y + 20);
+
+                    labelBackground
+                      .attr("x", d => d.x - (d.bbox.width / 2) - 5)
+                      .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
+                });
+
+            } else {
+                // Static circle layout code remains the same but with updated display names
+                const radius = 300;  // Increased from 200
+                const nodePositions = new Map();
+
+                nodes.forEach((node, index) => {
+                  const angle = (index * 2 * Math.PI) / nodes.length;
+                  nodePositions.set(node.id, {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle),
+                    angle: angle
+                  });
+                });
+
+                connections.forEach(connection => {
+                  const [email1, email2] = connection.split('-');
+                  const pos1 = nodePositions.get(email1.trim());
+                  const pos2 = nodePositions.get(email2.trim());
+                  if (pos1 && pos2) {
+                    svg.append("line")
+                      .attr("x1", pos1.x)
+                      .attr("y1", pos1.y)
+                      .attr("x2", pos2.x)
+                      .attr("y2", pos2.y)
+                      .attr("stroke", "#4CAF50")
+                      .attr("stroke-width", 2)
+                      .attr("opacity", 0.5);
+                  }
+                });
+
+                // Add white background rectangles for labels
+                nodes.forEach(node => {
+                  const pos = nodePositions.get(node.id);
+                  const tempText = svg.append("text")
+                    .attr("x", 0)
+                    .attr("y", 0)
+                    .attr("font-size", "14")
+                    .text(node.label);
+
+                  const bbox = tempText.node().getBBox();
+                  tempText.remove();
+
+                  svg.append("rect")
+                    .attr("x", pos.x - (bbox.width / 2) - 5)
+                    .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
+                    .attr("width", bbox.width + 10)
+                    .attr("height", bbox.height + 6)
+                    .attr("fill", "white")
+                    .attr("opacity", 0.8)
+                    .attr("rx", 4)
+                    .attr("ry", 4);
+                });
+
+                // Rest of static layout rendering
                 svg.append("circle")
-                  .attr("cx", pos.x)
-                  .attr("cy", pos.y)
-                  .attr("r", 6)
+                  .attr("cx", centerX)
+                  .attr("cy", centerY)
+                  .attr("r", 8)
                   .attr("fill", "#4CAF50");
 
-                svg.append("text")
-                  .attr("x", pos.x)
-                  .attr("y", pos.y + 20)
-                  .attr("text-anchor", "middle")
-                  .attr("font-size", "14")
-                  .attr("font-weight", "500")
-                  .text(node.label);
-              });
-            }
+                nodes.forEach(node => {
+                  const pos = nodePositions.get(node.id);
+                  svg.append("line")
+                    .attr("x1", centerX)
+                    .attr("y1", centerY)
+                    .attr("x2", pos.x)
+                    .attr("y2", pos.y)
+                    .attr("stroke", "#4CAF50")
+                    .attr("stroke-width", 1)
+                    .attr("opacity", 0.2);
+
+                  svg.append("circle")
+                    .attr("cx", pos.x)
+                    .attr("cy", pos.y)
+                    .attr("r", 6)
+                    .attr("fill", "#4CAF50");
+
+                  svg.append("text")
+                    .attr("x", pos.x)
+                    .attr("y", pos.y + 20)
+                    .attr("text-anchor", "middle")
+                    .attr("font-size", "14")
+                    .attr("font-weight", "500")
+                    .text(node.label);
+                });
+              }
         }
 
         /**
