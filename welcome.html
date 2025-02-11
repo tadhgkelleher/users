@@ -253,24 +253,29 @@ tr:hover {
                     });
 
                     // Process invitations to build maps
-                    const acceptedUsersMap = new Map();
+                     const acceptedUsersMap = new Map();
                     const connections = new Set();
 
                     allInvitations.forEach(data => {
                       //ADD VALIDATION HERE.
-                      if (data && data.fromUserEmail && data.toUserEmail) {
-                        const fromUserKey = data.fromUserEmail;
-                        if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                          acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
-                        }
+                       if (data && data.fromUserEmail && data.toUserEmail) {
+                          const fromUserKey = data.fromUserEmail;
+                          if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                            acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
+                          }
 
-                        // Create a connection string based on from and to
-                        const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                        connections.add(connection);
-                      } else {
-                          console.warn("Skipping invalid invitation data:", data);
-                      }
-                    });
+                          const toUserKey = data.toUserEmail;
+                           if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                              acceptedUsersMap.set(toUserKey, {email: data.toUserEmail, name: data.toUserName});
+                           }
+
+                           // Create a connection string based on from and to
+                           const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                           connections.add(connection);
+                       } else {
+                           console.warn("Skipping invalid invitation data:", data);
+                       }
+                   });
 
                     // Convert maps to arrays before passing to createVisualization
                     const usersArray = Array.from(acceptedUsersMap.values());
@@ -333,17 +338,16 @@ tr:hover {
 
             // Get emails of my direct connections (both outgoing and incoming)
             const myConnectionsEmails = new Set();
-            existingInvitations.forEach(inviteData => {
-
-                if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
-                    if (inviteData.fromUserEmail === myEmail) {
-                        myConnectionsEmails.add(inviteData.toUserEmail);
-                    } else if (inviteData.toUserEmail === myEmail) {
-                        myConnectionsEmails.add(inviteData.fromUserEmail);
+            existingInvitations.forEach(invite => {
+                if (invite && invite.fromUserEmail && invite.toUserEmail){
+                    if (invite.fromUserEmail === myEmail) {
+                        myConnectionsEmails.add(invite.toUserEmail);
+                    } else if (invite.toUserEmail === myEmail) {
+                        myConnectionsEmails.add(invite.fromUserEmail);
                     }
                 }
                 else{
-                      console.warn("Skipping invalid invitation data:", inviteData);
+                      console.warn("Skipping invalid invitation data:", invite);
                 }
 
             });
@@ -379,9 +383,8 @@ tr:hover {
                                 .get();
 
                             connectedUserInvitations_Me.forEach(doc => {
-                                 if (doc.data()){
-                                    const inviteData = doc.data()
-                                    if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                const inviteData = doc.data();
+                                if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
                                       const potentialEmail = inviteData.fromUserEmail;
 
                                         // Exclude current user, existing connections, and already invited people
@@ -389,29 +392,24 @@ tr:hover {
                                             potentialConnections.add(potentialEmail);
                                         }
                                     }
-                                    else{
-                                      console.warn("Skipping invalid invitation data:", inviteData);
-                                    }
-                                 }
-
-                                   else{
-                                      console.warn("Skipping invalid invitation data:", inviteData);
-                                   }
+                                  else{
+                                    console.warn("Skipping invalid invitation data:", inviteData);
+                                  }
                             });
-                }
-           }
+                    }
+               }
 
-        }
+            }
 
-        // Display the potential connections in the table
-        potentialConnections.forEach(potentialEmail => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${potentialEmail}</td>
-                <td>
-                    <button class="add-connection-btn" data-email="${potentialEmail}">
-                        Invite
-                    </button>
+            // Display the potential connections in the table
+            potentialConnections.forEach(potentialEmail => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${potentialEmail}</td>
+                    <td>
+                        <button class="add-connection-btn" data-email="${potentialEmail}">
+                            Invite
+                        </button>
                 </td>
             `;
             suggestedConnectionsTable.appendChild(tr);
@@ -438,10 +436,10 @@ tr:hover {
                 if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
                     return true; // This potential connection is in existing connections (existingInvite)
                 }
-            }
-            else{
-                 console.warn("Skipping invalid invitation data:", invite);
-           }
+          }
+          else{
+               console.warn("Skipping invalid invitation data:", invite);
+         }
 
         }
         return false; // This potential connection is NOT in existing connections
@@ -746,7 +744,8 @@ tr:hover {
             fromUserId: user.uid,
             fromUserEmail: user.email,
             status: "open",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          //toUserEmail:
         }).then(() => {
             const inviteLinkInput = document.getElementById("inviteLink");
             inviteLinkInput.value = inviteLink;
