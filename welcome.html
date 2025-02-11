@@ -141,7 +141,7 @@ tr:hover {
         border: none;
         border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background-color 0.3s ease;
     }
 
     .add-connection-btn:hover {
@@ -333,16 +333,17 @@ tr:hover {
 
             // Get emails of my direct connections (both outgoing and incoming)
             const myConnectionsEmails = new Set();
-            existingInvitations.forEach(invite => {
-                if (invite && invite.fromUserEmail && invite.toUserEmail){
-                    if (invite.fromUserEmail === myEmail) {
-                        myConnectionsEmails.add(invite.toUserEmail);
-                    } else if (invite.toUserEmail === myEmail) {
-                        myConnectionsEmails.add(invite.fromUserEmail);
+            existingInvitations.forEach(inviteData => {
+
+                if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
+                    if (inviteData.fromUserEmail === myEmail) {
+                        myConnectionsEmails.add(inviteData.toUserEmail);
+                    } else if (inviteData.toUserEmail === myEmail) {
+                        myConnectionsEmails.add(inviteData.fromUserEmail);
                     }
                 }
                 else{
-                      console.warn("Skipping invalid invitation data:", invite);
+                      console.warn("Skipping invalid invitation data:", inviteData);
                 }
 
             });
@@ -357,18 +358,19 @@ tr:hover {
                         .get();
 
                         connectedUserInvitations.forEach(doc => {
-                          const inviteData = doc.data();
-                          if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                    const potentialEmail = inviteData.toUserEmail;
+                            const inviteData = doc.data();
+                            if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                const potentialEmail = inviteData.toUserEmail;
 
-                                    // Exclude current user, existing connections, and already invited people
-                                    if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                        potentialConnections.add(potentialEmail);
-                                    }
-                             }
+                                // Exclude current user, existing connections, and already invited people
+                                if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                    potentialConnections.add(potentialEmail);
+                                }
+                            }
                               else{
-                                   console.warn("Skipping invalid invitation data:", invite);
+                                   console.warn("Skipping invalid invitation data:", inviteData);
                               }
+
                         });
 
                     if(connectedEmail){
@@ -377,19 +379,24 @@ tr:hover {
                                 .get();
 
                             connectedUserInvitations_Me.forEach(doc => {
-                                if (doc.data()){
-                                     if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                        const potentialEmail = inviteData.fromUserEmail;
+                                 if (doc.data()){
+                                    const inviteData = doc.data()
+                                    if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                      const potentialEmail = inviteData.fromUserEmail;
 
                                         // Exclude current user, existing connections, and already invited people
                                         if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
                                             potentialConnections.add(potentialEmail);
                                         }
-                                  }
-                                   else{
-                                      console.warn("Skipping invalid invitation data:", invite);
                                     }
-                              }
+                                    else{
+                                      console.warn("Skipping invalid invitation data:", inviteData);
+                                    }
+                                 }
+
+                                   else{
+                                      console.warn("Skipping invalid invitation data:", inviteData);
+                                   }
                             });
                 }
            }
@@ -739,8 +746,7 @@ tr:hover {
             fromUserId: user.uid,
             fromUserEmail: user.email,
             status: "open",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          //toUserEmail:
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             const inviteLinkInput = document.getElementById("inviteLink");
             inviteLinkInput.value = inviteLink;
