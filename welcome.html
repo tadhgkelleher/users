@@ -4,176 +4,213 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome</title>
+    <!-- Firebase scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- D3.js script for visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Styles for the page - Corporate aesthetic -->
     <style>
-    body {
-    font-family: Arial, sans-serif;
-    background-color: #121212;
-    color: #e0e0e0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding-top: 20px;
-}
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light gray text */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding-top: 20px;
+        }
 
-.container {
-    background-color: #1e1e1e;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    max-width: 1000px;
-    width: 90%;
-}
+        .container {
+            background-color: #1e1e1e; /* Slightly lighter dark background */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 1000px;
+            width: 90%;
+        }
 
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #4db6ac;
-    font-weight: bold;
-}
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #90a4ae; /* Muted blue-gray header */
+            font-weight: bold;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-    background-color: #242424;
-    border-radius: 8px;
-    overflow: hidden;
-}
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: #242424; /* Dark table background */
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #333;
-}
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #424242; /* Light gray border */
+            color: #e0e0e0;
+        }
 
-th {
-    background-color: #4db6ac;
-    color: #121212;
-    font-weight: bold;
-}
+        th {
+            background-color: #424242; /* Light gray header background */
+            color: #f5f5f5; /* Off-white header text */
+            font-weight: bold;
+        }
 
-tr:nth-child(even) {
-    background-color: #2a2a2a;
-}
+        tr:nth-child(even) {
+            background-color: #212121; /* Slightly darker row */
+        }
 
-tr:hover {
-    background-color: #333;
-}
+        tr:hover {
+            background-color: #333; /* Hover effect */
+        }
 
-.error-message {
-    color: #e57373;
-    text-align: center;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
+        .error-message {
+            color: #e57373;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
 
-.nav-links {
-    width: 100%;
-    padding: 15px;
-    background-color: #263238;
-    color: white;
-    text-align: center;
-    margin-bottom: 20px;
-    border-radius: 6px;
-}
+        .nav-links {
+            width: 100%;
+            padding: 15px;
+            background-color: #263238; /* Darker nav background */
+            color: white;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
 
-.nav-links a, .nav-links button {
-    color: #80cbc4;
-    margin: 0 15px;
-    text-decoration: none;
-    font-weight: bold;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-    transition: color 0.3s ease;
-}
+        .nav-links a, .nav-links button {
+            color: #bdbdbd; /* Silver nav links */
+            margin: 0 15px;
+            text-decoration: none;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
 
-.nav-links a:hover, .nav-links button:hover {
-    color: #4db6ac;
-}
+        .nav-links a:hover, .nav-links button:hover {
+            color: #90a4ae; /* Hover color */
+        }
 
-#inviteLink {
-    display: none;
-    margin-top: 10px;
-    padding: 12px;
-    width: 100%;
-    box-sizing: border-box;
-    border: 1px solid #555;
-    border-radius: 6px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-}
+        #inviteLink {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #555;
+            border-radius: 6px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
 
-.share-buttons {
-    margin-top: 20px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
+        .share-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-.share-buttons button, #generateLinkBtn, #copyLinkBtn {
-    padding: 10px 18px;
-    background-color: #4db6ac;
-    color: #121212;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
+        .share-buttons button, #generateLinkBtn, #copyLinkBtn {
+            padding: 10px 18px;
+            background-color: #424242; /* Light gray button */
+            color: #e0e0e0; /*Dark button Text */
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
 
-.share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
-    background-color: #388e8e;
-}
- .add-connection-btn {
-        background-color: #4db6ac;
-        color: #121212;
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
+        .share-buttons button:hover, #generateLinkBtn:hover, #copyLinkBtn:hover {
+            background-color: #388e8e;
+        }
 
-    .add-connection-btn:hover {
-        background-color: #26a69a;
-    }
+        .add-connection-btn {
+            background-color: #424242; /* Light gray button */
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
 
-    .add-connection-btn:active {
-        transform: scale(0.98);
-    }
+        .add-connection-btn:hover {
+            background-color: #263238;
+        }
+
+        .add-connection-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Styles for the visualization container */
+        #visualization-container {
+            background-color: #1e1e1e; /* Matching background */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            margin-top: 2rem;
+            max-width: 1000px;
+            width: 90%;
+            border: 1px solid #333;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Styles for the visualization heading */
+        #visualization-container h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: #bdbdbd; /* Silver heading */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Styles for the Mandala visualization */
+        #visualization {
+            width: 100%;
+            height: 500px;
+            background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%);
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
     </style>
 </head>
 <body>
+    <!-- Navigation links -->
     <div class="nav-links">
         <a href="invite.html">Invite</a>
         <a href="profile.html">Profile</a>
         <button id="signOutBtn">Sign Out</button>
     </div>
-<div class="container">
-    <h1>Welcome</h1>
-    <p id="welcomeMessage"></p>
-       <p id="errorMessage" class="error-message"></p>
+    <!-- Main container -->
+    <div class="container">
+        <h1>Welcome</h1>
+        <p id="welcomeMessage"></p>
+           <p id="errorMessage" class="error-message"></p>
 
+        <button id="togglePhysics">Toggle Physics</button>
 
-    <button id="togglePhysics">Toggle Physics</button>
-
-    <!-- Visualization Container -->
-    <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
-        <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
-        <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
-    </div>
-</div>
-
+        <!-- Visualization Container -->
+        <div id="visualization-container">
+            <h2 >The Mandala</h2>
+            <div id="visualization"></div>
+        </div>
 
          <h2>Invitations</h2>
         <table id="invitationsTable">
@@ -203,10 +240,7 @@ tr:hover {
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
     </div>
 
-
-
-
-
+    <!-- Main JavaScript -->
     <script>
         // Firebase configuration - Replace with your actual Firebase credentials
         const firebaseConfig = {
@@ -224,7 +258,7 @@ tr:hover {
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Authentication state listener
+        // Authentication state listener - Listens for changes in the user's authentication state
         auth.onAuthStateChanged(user => {
             if (user) {
                 // User is signed in
@@ -257,15 +291,15 @@ tr:hover {
                     const connections = new Set();
 
                     allInvitations.forEach(data => {
-                         // Validate that the required data is present.  Skip and log otherwise.
-                          if (data && data.fromUserEmail && data.toUserEmail) {
+                        // Validate that the required data is present.  Skip and log otherwise.
+                         if (isValidData(data)) {
                             const fromUserKey = data.fromUserEmail;
                             if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
                                 acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
                             }
-                             const toUserKey = data.toUserEmail;
+                            const toUserKey = data.toUserEmail;
                              if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                                    acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
+                                   acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
                              }
 
                              // Create a connection string based on from and to
@@ -288,7 +322,7 @@ tr:hover {
                     createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
 
                       displayInvitations(currentUser, allInvitations);  // Display current invites in a table
-                      suggestConnections(currentUser,  allInvitations); // Suggest Connections!
+                      suggestConnections(allInvitations, currentUser); // Suggest Connections!
 
                 })
                 .catch(error => {
@@ -307,29 +341,29 @@ tr:hover {
             invitationsTable.innerHTML = ""; // Clear the invitation table
 
             invitations.forEach(invite => {
-                if (invite && invite.fromUserEmail && invite.toUserEmail){
+                // Ensure that it has the neccessary features and is not null/undefined.
+                 if (invite && invite.fromUserEmail && invite.toUserEmail){
                     let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td>${otherUserEmail}</td>
-                        <td>${invite.status}</td>
-                    `;
-                    invitationsTable.appendChild(tr); // Append the row to the table
-                }
-                 else{
-                      console.warn("Skipping invitation data:", invite);
-                }
 
+                   const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                       <td>${otherUserEmail}</td>
+                         <td>${invite.status}</td>
+                         `;
+                         invitationsTable.appendChild(tr); // Append the row to the table
+                  }else{
+                        console.warn("Skipping invitation data:", invite);
+                  }
             });
         }
 
         /**
          * **ADD FRIEND SECTION**
          * Suggests new connections to the user based on their existing connections.
-         * @param {firebase.User} currentUser - The currently logged-in user.
          * @param {Array<Object>} existingInvitations - An array of existing invitation objects.
+         * @param {firebase.User} currentUser - The currently logged-in user.
          */
-        async function suggestConnections(currentUser, existingInvitations) {
+        async function suggestConnections(existingInvitations, currentUser) {
             const suggestedConnectionsTable = document.getElementById("suggestedConnectionsTable").getElementsByTagName('tbody')[0];
             suggestedConnectionsTable.innerHTML = "";  // Clear existing suggestions
 
@@ -337,17 +371,16 @@ tr:hover {
 
             // Get emails of my direct connections (both outgoing and incoming)
             const myConnectionsEmails = new Set();
-            existingInvitations.forEach(invite => {
-                 if (invite && invite.fromUserEmail && invite.toUserEmail){
-                        if (invite.fromUserEmail === myEmail) {
-                            myConnectionsEmails.add(invite.toUserEmail);
-                        } else if (invite.toUserEmail === myEmail) {
-                            myConnectionsEmails.add(invite.fromUserEmail);
-                        }
-                 }else{
-                      console.warn("Skipping invitation data:", invite);
-                 }
-
+             existingInvitations.forEach(inviteData => {
+                   if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
+                            if (inviteData.fromUserEmail === myEmail) {
+                                myConnectionsEmails.add(inviteData.toUserEmail);
+                            } else if (inviteData.toUserEmail === myEmail) {
+                                myConnectionsEmails.add(inviteData.fromUserEmail);
+                            }
+                      }else{
+                           console.warn("Skipping invalid invitation data:", inviteData);
+                      }
             });
 
             const potentialConnections = new Set();
@@ -361,39 +394,36 @@ tr:hover {
 
                         connectedUserInvitations.forEach(doc => {
                             const inviteData = doc.data();
-                             if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                            if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                    const potentialEmail = inviteData.toUserEmail;
 
-                                  const potentialEmail = inviteData.toUserEmail;
-
-                                  // Exclude current user, existing connections, and already invited people
-                                  if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                      potentialConnections.add(potentialEmail);
-                                  }
+                                    // Exclude current user, existing connections, and already invited people
+                                    if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                        potentialConnections.add(potentialEmail);
+                                    }
+                            }
+                             else{
+                                    console.warn("Skipping invitation data:", inviteData);
                              }
-                                else{
-                                       console.warn("Skipping invitation data:", inviteData);
-                                  }
+                         });
 
-                        });
-
-                    if(connectedEmail){
+                      if(connectedEmail){
                             const connectedUserInvitations_Me = await db.collection("invitations")
                                 .where("toUserEmail", "==", connectedEmail)
                                 .get();
 
                             connectedUserInvitations_Me.forEach(doc => {
                                 const inviteData = doc.data();
+                                        if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
 
-                                      if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                               const potentialEmail = inviteData.fromUserEmail;
-                                                // Exclude current user, existing connections, and already invited people
-                                                if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                                    potentialConnections.add(potentialEmail);
-                                                }
-                                           }
-                                            else{
-                                               console.warn("Skipping invitation data:", inviteData);
-                                            }
+                                             const potentialEmail = inviteData.fromUserEmail;
+                                              // Exclude current user, existing connections, and already invited people
+                                              if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                                  potentialConnections.add(potentialEmail);
+                                              }
+                                       }else{
+                                          console.warn("Skipping invitation data:", inviteData);
+                                       }
 
                             });
                     }
@@ -432,13 +462,13 @@ tr:hover {
      */
     function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
       for (const invite of existingInvitations) {
-            if (invite && invite.toUserEmail && invite.fromUserEmail){
-                    if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
-                        return true; // This potential connection is in existing connections (existingInvite)
-                    }
-              }else{
-                 console.warn("Skipping invitation data:", invite);
-              }
+               if (invite && invite.toUserEmail && invite.fromUserEmail){
+                   if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+                       return true; // This potential connection is in existing connections (existingInvite)
+                   }
+               }else{
+                    console.warn("Skipping invitation data:", invite);
+               }
 
         }
         return false; // This potential connection is NOT in existing connections
@@ -521,13 +551,15 @@ tr:hover {
           .join(' ');  // Join with space
       };
 
-      const nodes = users.map(user => ({
-        id: user.email ? user.email.trim() : "",
-        label: getDisplayName(user),
-        name: user.name,
-        x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
-        y: centerY + (Math.random() - 0.5) * 100
-      }));
+      const nodes = users.map(user => {
+         return {
+            id: user.email ? user.email.trim() : "",
+            label: getDisplayName(user),
+            name: user.name,
+            x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
+            y: centerY + (Math.random() - 0.5) * 100
+         };
+      });
 
       if (enablePhysics) {
         const links = connections.map(connection => {
@@ -624,8 +656,8 @@ tr:hover {
         const radius = 300;  // Increased from 200
         const nodePositions = new Map();
 
-        nodes.forEach((node, i) => {
-          const angle = (i * 2 * Math.PI) / nodes.length;
+        nodes.forEach((node, index) => {
+          const angle = (index * 2 * Math.PI) / nodes.length;
           nodePositions.set(node.id, {
             x: centerX + radius * Math.cos(angle),
             y: centerY + radius * Math.sin(angle),
@@ -781,9 +813,9 @@ tr:hover {
       alert("Link copied to clipboard!");
   });
 
-    //Utility function
+    //Utility function for checking a data
     function isValidData(data) {
-       return (
+        return (
             data &&
             typeof data === 'object' &&
             data.hasOwnProperty('fromUserEmail') &&
