@@ -253,29 +253,30 @@ tr:hover {
                     });
 
                     // Process invitations to build maps
-                     const acceptedUsersMap = new Map();
+                      const acceptedUsersMap = new Map();
                     const connections = new Set();
 
                     allInvitations.forEach(data => {
-                      //ADD VALIDATION HERE.
-                       if (data && data.fromUserEmail && data.toUserEmail) {
-                          const fromUserKey = data.fromUserEmail;
-                          if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                            acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
-                          }
+                        // Validate that the required data is present.  Skip and log otherwise.
+                        if (data && data.fromUserEmail && data.toUserEmail) {
+                            const fromUserKey = data.fromUserEmail;
+                            if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                                acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
+                            }
 
-                          const toUserKey = data.toUserEmail;
-                           if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                              acceptedUsersMap.set(toUserKey, {email: data.toUserEmail, name: data.toUserName});
-                           }
+                            const toUserKey = data.toUserEmail;
+                            if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                                acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
+                            }
 
-                           // Create a connection string based on from and to
-                           const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                           connections.add(connection);
-                       } else {
-                           console.warn("Skipping invalid invitation data:", data);
-                       }
-                   });
+                            // Create a connection string based on from and to
+                            const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                            connections.add(connection);
+                        }
+                         else {
+                            console.warn("Skipping invitation data:", data);  // Clear warning in log
+                        }
+                    });
 
                     // Convert maps to arrays before passing to createVisualization
                     const usersArray = Array.from(acceptedUsersMap.values());
@@ -307,20 +308,17 @@ tr:hover {
             invitationsTable.innerHTML = ""; // Clear the invitation table
 
             invitations.forEach(invite => {
-                // Ensure there are no null fields
-                if (invite && invite.fromUserEmail && invite.toUserEmail){
-                      let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
-                      const tr = document.createElement("tr");
-                      tr.innerHTML = `
-                          <td>${otherUserEmail}</td>
-                          <td>${invite.status}</td>
-                      `;
-                      invitationsTable.appendChild(tr); // Append the row to the table
-                }
-                 else{
-                      console.warn("Skipping invalid invitation data:", invite);
-                }
-
+              if (invite && invite.fromUserEmail && invite.toUserEmail){
+                    let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${otherUserEmail}</td>
+                        <td>${invite.status}</td>
+                    `;
+                    invitationsTable.appendChild(tr); // Append the row to the table
+              }else{
+                    console.warn("Skipping invitation data:", invite);
+              }
             });
         }
 
@@ -338,17 +336,16 @@ tr:hover {
 
             // Get emails of my direct connections (both outgoing and incoming)
             const myConnectionsEmails = new Set();
-            existingInvitations.forEach(invite => {
-                if (invite && invite.fromUserEmail && invite.toUserEmail){
-                    if (invite.fromUserEmail === myEmail) {
-                        myConnectionsEmails.add(invite.toUserEmail);
-                    } else if (invite.toUserEmail === myEmail) {
-                        myConnectionsEmails.add(invite.fromUserEmail);
-                    }
-                }
-                else{
-                      console.warn("Skipping invalid invitation data:", invite);
-                }
+            existingInvitations.forEach(inviteData => {
+                 if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
+                        if (inviteData.fromUserEmail === myEmail) {
+                            myConnectionsEmails.add(inviteData.toUserEmail);
+                        } else if (inviteData.toUserEmail === myEmail) {
+                            myConnectionsEmails.add(inviteData.fromUserEmail);
+                        }
+                 }else{
+                      console.warn("Skipping invitation data:", inviteData);
+                 }
 
             });
 
@@ -363,18 +360,16 @@ tr:hover {
 
                         connectedUserInvitations.forEach(doc => {
                             const inviteData = doc.data();
-                            if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
                                 const potentialEmail = inviteData.toUserEmail;
 
                                 // Exclude current user, existing connections, and already invited people
                                 if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
                                     potentialConnections.add(potentialEmail);
                                 }
+                            }else{
+                                 console.warn("Skipping invitation data:", inviteData);
                             }
-                              else{
-                                   console.warn("Skipping invalid invitation data:", inviteData);
-                              }
-
                         });
 
                     if(connectedEmail){
@@ -384,17 +379,17 @@ tr:hover {
 
                             connectedUserInvitations_Me.forEach(doc => {
                                 const inviteData = doc.data();
-                                if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                      const potentialEmail = inviteData.fromUserEmail;
 
-                                        // Exclude current user, existing connections, and already invited people
-                                        if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                            potentialConnections.add(potentialEmail);
-                                        }
+                                 if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                    const potentialEmail = inviteData.fromUserEmail;
+
+                                    // Exclude current user, existing connections, and already invited people
+                                    if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                        potentialConnections.add(potentialEmail);
                                     }
-                                  else{
-                                    console.warn("Skipping invalid invitation data:", inviteData);
-                                  }
+                                }else{
+                                     console.warn("Skipping invitation data:", inviteData);
+                                }
                             });
                     }
                }
@@ -432,14 +427,13 @@ tr:hover {
      */
     function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
       for (const invite of existingInvitations) {
-           if (invite && invite.toUserEmail && invite.fromUserEmail){
-                if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
-                    return true; // This potential connection is in existing connections (existingInvite)
-                }
-          }
-          else{
-               console.warn("Skipping invalid invitation data:", invite);
-         }
+        if (invite && invite.fromUserEmail && invite.toUserEmail){
+           if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+               return true; // This potential connection is in existing connections (existingInvite)
+           }
+        }else{
+            console.warn("Skipping invitation data:", invite);
+        }
 
         }
         return false; // This potential connection is NOT in existing connections
