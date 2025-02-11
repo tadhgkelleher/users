@@ -96,26 +96,6 @@ tr:hover {
     transition: color 0.3s ease;
 }
 
-        .node {
-  stroke: #fff;
-  stroke-width: 1.5px;
-}
-
-.link {
-  stroke: #999;
-  stroke-opacity: 0.6;
-}
-
-.label-background {
-  fill: white; /* or any color you prefer */
-  opacity: 0.7; /* adjust as needed */
-}
-
-.label {
-  font-size: 12px;
-  font-family: sans-serif;
-  fill: #333;
-  pointer-events
 .nav-links a:hover, .nav-links button:hover {
     color: #4db6ac;
 }
@@ -175,59 +155,55 @@ tr:hover {
 </head>
 <body>
     <div class="nav-links">
-    
-      
+        <a href="invite.html">Invite</a>
+        <a href="profile.html">Profile</a>
+        <button id="signOutBtn">Sign Out</button>
     </div>
 <div class="container">
-    <h1>The Mandala</h1>
+    <h1>Welcome</h1>
     <p id="welcomeMessage"></p>
 
 
+    <button id="togglePhysics">Toggle Physics</button>
 
-<!-- Visualization Container -->
-<div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease; margin: 2rem auto;">
-    <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;"></h2>
-    <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
-</div>
-
-<div style="display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 300px; width: 100%; padding: 20px; box-sizing: border-box;">
-
-    <button id="togglePhysics" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Push Button</button>
-
-    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
-        <h2 style="text-align: center;">Generate Invitation Link</h2>
-        <button id="generateLinkBtn" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Generate Link</button>
-        <input type="text" id="inviteLink" readonly style="margin: 10px 0; padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 250px; text-align: center;">
-        <button id="copyLinkBtn" style="display: none; background-color: #008CBA; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Copy Link</button>
+    <!-- Visualization Container -->
+    <div id="visualization-container" style="background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); margin-top: 2rem; max-width: 1000px; width: 90%; border: 1px solid #333; transition: transform 0.3s ease, box-shadow 0.3s ease;">
+        <h2 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 1rem; text-align: center; color: #4db6ac; text-transform: uppercase; letter-spacing: 1px;">The Mandala</h2>
+        <div id="visualization" style="width: 100%; height: 500px; background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%); border-radius: 8px; border: 1px solid #333;"></div>
     </div>
-
-    <button id="signOutBtn" style="background-color: #4CAF50; border: none; color: white; padding: 15px 32px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 10px 0; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); transition: all 0.3s ease 0s;">Sign Out</button>
-
 </div>
 
-<style>
-    /* hover effects here because it can't be placed inline*/
-    button:hover {
-      background-color: #3e8e41;
-      box-shadow: 0 6px 10px 0 rgba(0,0,0,0.24);
-      transform: translateY(-2px);
-    }
-     #copyLinkBtn:hover {
-      background-color: #005f73;
-    }
-</style>
 
-         <h2>Connect</h2>
+         <h2>Invitations</h2>
         <table id="invitationsTable">
             <thead>
                 <tr>
-                    <th>Accepted By</th>
+                    <th>User</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody></tbody>
         </table>
 
- 
+        <h2>Suggested Connections</h2>
+        <table id="suggestedConnectionsTable">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <h2>Generate Invitation Link</h2>
+        <button id="generateLinkBtn">Generate Link</button>
+        <input type="text" id="inviteLink" readonly>
+        <button id="copyLinkBtn" style="display: none;">Copy Link</button>
+    </div>
+
+
+
 
 
     <script>
@@ -248,68 +224,43 @@ tr:hover {
         auth.onAuthStateChanged(user => {
             if (user) {
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchAcceptedInvitations(user);
+                fetchInvitations(user);
             } else {
                 window.location.href = '/index.html';
             }
         });
 
-function fetchAcceptedInvitations(currentUser) {
+function fetchInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
     db.collection("invitations").get()
         .then(snapshot => {
-            const allAcceptedInvitations = [];
+            const allInvitations = [];
             snapshot.forEach(doc => {
                 const data = doc.data();
-                if (data.acceptedByUser?.length > 0) {
-                    allAcceptedInvitations.push(data);
-                }
+                allInvitations.push(data);
             });
 
-            // Identify direct connections (current user's invitations)
-            const directConnectionsEmails = new Set();
-            const directInvitations = allAcceptedInvitations.filter(data => {
-                const isSender = data.fromUserId === currentUser.uid;
-                const isAcceptor = data.acceptedByUser.some(u => u.email === currentUser.email);
-                return isSender || isAcceptor;
-            });
-
-            directInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    if (user.email !== currentUser.email) {
-                        directConnectionsEmails.add(user.email);
-                    }
-                });
-            });
-
-            // Identify second-degree invitations (involving direct connections)
-            const secondDegreeInvitations = allAcceptedInvitations.filter(data => {
-                const senderEmail = data.fromUserEmail;
-                const acceptorEmails = data.acceptedByUser.map(u => u.email);
-                return directConnectionsEmails.has(senderEmail) || acceptorEmails.some(email => directConnectionsEmails.has(email));
-            });
-
-            // Combine and deduplicate invitations
-            const combinedInvitations = [...new Set([...directInvitations, ...secondDegreeInvitations])];
-
-            // Process combined invitations to build maps
+            // Process invitations to build maps
             const acceptedUsersMap = new Map();
             const connections = new Set();
 
-            combinedInvitations.forEach(data => {
-                data.acceptedByUser.forEach(user => {
-                    const key = user.email;
-                    if (!acceptedUsersMap.has(key) && key !== currentUser.email) {
-                        acceptedUsersMap.set(key, user);
-                    }
-                });
+            allInvitations.forEach(data => {
+                // Add both sender and receiver as users
+                const fromUserKey = data.fromUserEmail;
+                if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                  acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
+                }
 
-                data.acceptedByUser.forEach(user => {
-                    const connection = [data.fromUserEmail, user.email].sort().join('-');
-                    connections.add(connection);
-                });
+                const toUserKey = data.toUserEmail;
+                if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                  acceptedUsersMap.set(toUserKey, {email: data.toUserEmail, name: data.toUserName});
+                }
+
+                // Create a connection string based on from and to
+                const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                connections.add(connection);
             });
 
             // Convert maps to arrays before passing to createVisualization
@@ -322,8 +273,8 @@ function fetchAcceptedInvitations(currentUser) {
 
             createVisualization(currentUsers, currentConnections, currentPhysics); // Re-render with current physics state
 
-            // Display potential connections in the table
-            displayPotentialConnections(currentUser, usersArray, connections);
+              displayInvitations(currentUser, allInvitations);  // Display current invites in a table
+              suggestConnections(currentUser, usersArray, allInvitations); // Suggest Connections!
 
         })
         .catch(error => {
@@ -332,403 +283,396 @@ function fetchAcceptedInvitations(currentUser) {
         });
 }
 
-async function displayPotentialConnections(currentUser, users, connections) {
+function displayInvitations(currentUser, invitations) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-    invitationsTable.innerHTML = ""; // Clear the table
+    invitationsTable.innerHTML = "";
 
-    const existingConnections = await fetchExistingConnections(currentUser);
-
-    users.forEach(user => {
-        const connectionKey = [currentUser.email, user.email].sort().join('-');
-        const alreadyConnected = existingConnections.has(connectionKey);
-
-        if (user.email !== currentUser.email && !alreadyConnected) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${user.name}</td>
-                <td>
-                    <button class="add-connection-btn">
-                        Add Connection
-                    </button>
-                </td>
-            `;
-            invitationsTable.appendChild(tr);
-
-            const button = tr.querySelector('.add-connection-btn');
-            button.addEventListener('click', () => handleAddConnection(currentUser, user));
-        }
+    invitations.forEach(invite => {
+        let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${otherUserEmail}</td>
+            <td>${invite.status}</td>
+        `;
+        invitationsTable.appendChild(tr);
     });
 }
 
-async function fetchExistingConnections(currentUser) {
-    const connections = new Set();
+async function suggestConnections(currentUser, existingUsers, existingInvitations) {
+    const suggestedConnectionsTable = document.getElementById("suggestedConnectionsTable").getElementsByTagName('tbody')[0];
+    suggestedConnectionsTable.innerHTML = "";  // Clear existing suggestions
 
-    try {
-        const snapshot = await db.collection('connections')
-            .where('users', 'array-contains', currentUser.email)
-            .get();
+    const myEmail = currentUser.email;
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const users = data.users;
-            const connectionKey = users.sort().join('-');
-            connections.add(connectionKey);
-        });
-    } catch (error) {
-        console.error("Error fetching existing connections:", error);
-    }
-
-    return connections;
-}
-
-function handleAddConnection(currentUser, targetUser) {
-    if (currentUser.email === targetUser.email) {
-        alert('Cannot add yourself as a connection.');
-        return;
-    }
-
-    const sortedEmails = [currentUser.email, targetUser.email].sort();
-    const connectionId = sortedEmails.join('-');
-
-    const connectionRef = db.collection('connections').doc(connectionId);
-
-    connectionRef.get().then(doc => {
-        if (doc.exists) {
-            alert('Connection already exists!');
-            return;
+    // Get emails of my direct connections
+    const myConnectionsEmails = new Set();
+    existingInvitations.forEach(invite => {
+        if (invite.fromUserEmail === myEmail) {
+            myConnectionsEmails.add(invite.toUserEmail);
+        } else if (invite.toUserEmail === myEmail) {
+            myConnectionsEmails.add(invite.fromUserEmail);
         }
+    });
 
-        return connectionRef.set({
-            users: sortedEmails,
-            usersInfo: [
-                { email: currentUser.email, name: currentUser.displayName },
-                { email: targetUser.email, name: targetUser.name }
-            ],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }).then(() => {
-        // Check if an invite already exists from the current user to the target user
-        return db.collection("invitations")
-            .where("fromUserEmail", "==", currentUser.email)
-            .where("toUserEmail", "==", targetUser.email)
-            .limit(1)
+    // Now, find people connected to my connections (2nd-degree connections)
+    const potentialConnections = new Set();
+    for (const connectedEmail of myConnectionsEmails) {
+        const connectedUserInvitations = await db.collection("invitations")
+            .where("fromUserEmail", "==", connectedEmail)
             .get();
-    }).then(snapshot => {
-        if (!snapshot.empty) {
-            // Update existing invitation
-            const inviteDoc = snapshot.docs[0];
-            const inviteRef = db.collection("invitations").doc(inviteDoc.id);
-            const inviteData = inviteDoc.data();
 
-            const updatedAcceptedBy = inviteData.acceptedByUser || [];
-            if (!updatedAcceptedBy.some(user => user.email === targetUser.email)) {
-                updatedAcceptedBy.push({ email: targetUser.email, name: targetUser.name });
+        connectedUserInvitations.forEach(doc => {
+            const invite = doc.data();
+            // Get the email of the person connected to the connectedUser
+            const potentialEmail = invite.toUserEmail;
+
+            // Exclude me, my existing connections, and people I've already invited or have invited me
+            if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers)) {
+                potentialConnections.add(potentialEmail);
+
             }
 
-            return inviteRef.update({ acceptedByUser: updatedAcceptedBy, status: "accepted" });
-        } else {
-            // Create a new invitation if none exists
-            return db.collection("invitations").add({
-                fromUserId: currentUser.uid,
-                fromUserEmail: currentUser.email,
-                fromUserName: currentUser.displayName,
-                toUserId: targetUser.uid || null, // if available
-                toUserEmail: targetUser.email,
-                toUserName: targetUser.name,
-                status: "accepted",
-                acceptedByUser: [{ email: targetUser.email, name: targetUser.name }],
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    }).then(() => {
-        alert('Connection added successfully!');
-        fetchAcceptedInvitations(currentUser);
-    }).catch(error => {
-        console.error('Error adding connection:', error);
-        alert('Failed to add connection.');
-    });
-}
+        });
+    }
 
+  //  Convert the set to an array for processing
+  const potentialConnectionsArray = Array.from(potentialConnections);
 
-        
+  // Filter for people connected To the connected users
+  for (const connectedEmail of myConnectionsEmails) {
+    const connectedUserInvitations = await db.collection("invitations")
+      .where("toUserEmail", "==", connectedEmail)
+      .get();
 
+    connectedUserInvitations.forEach(doc => {
+      const invite = doc.data();
+      // Get the email of the person connected to the connectedUser
+      const potentialEmail = invite.fromUserEmail;
 
-let simulation = null;
-let currentPhysics = false;
-
-let currentUsers = [];
-let currentConnections = [];
-
-function createVisualization(users = [], connections = [], enablePhysics = false) {
-  if (!Array.isArray(users) || !Array.isArray(connections)) {
-    console.error("Invalid data received:", { users, connections });
-    return;
-  }
-
- // Clear previous visualization
-  const container = d3.select("#visualization");
-  container.html("");
-  if (simulation) simulation.stop();
-
-  const width = 600;  // Increased from 600
-  const height = 500; // Increased from 500
-  const centerX = width / 2;
-  const centerY = height / 2;
-
-  const svg = container.append("svg")
-    .attr("viewBox", `0 0 ${width} ${height}`)
-    .style("width", "100%")
-    .style("max-width", "600px") // Increased from 600px
-    .style("margin", "0 auto");
-
-    
-  // Format display name function
-  const getDisplayName = user => {
-    const name = user.name || user.email;
-    return name.split('@')[0]  // Remove email domain if it's an email
-      .split('.')  // Split on dots
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
-      .join(' ');  // Join with space
-  };
-
-  const nodes = users.map(user => ({
-    id: user.email.trim(),
-    label: getDisplayName(user),
-    name: user.name,
-    x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
-    y: centerY + (Math.random() - 0.5) * 100
-  }));
-
-  if (enablePhysics) {
-    const links = connections.map(connection => {
-      const [rawSource, rawTarget] = connection.split('-');
-      const sourceId = rawSource.trim();
-      const targetId = rawTarget.trim();
-      const source = nodes.find(n => n.id === sourceId);
-      const target = nodes.find(n => n.id === targetId);
-      return { source, target };
-    }).filter(l => l.source && l.target);
-
-    simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links)
-        .id(d => d.id)
-        .distance(200)  // Increased from 100
-        .strength(0.1)) // Decreased from 0.2
-      .force("charge", d3.forceManyBody()
-        .strength(-500)) // Increased repulsion from -80
-      .force("collide", d3.forceCollide(40)) // Increased from 20
-      .force("center", d3.forceCenter(centerX, centerY))
-      .alpha(1)
-      .restart();
-
-    const linksGroup = svg.append("g").attr("class", "links");
-    const nodesGroup = svg.append("g").attr("class", "nodes");
-    const labelsGroup = svg.append("g").attr("class", "labels");
-
-    // Add label backgrounds for better readability
-    const labelBackground = labelsGroup.selectAll(".label-background")
-      .data(nodes)
-      .enter().append("rect")
-      .attr("class", "label-background")
-      .attr("fill", "white")
-      .attr("opacity", 0.8)
-      .attr("rx", 4)  // Rounded corners
-      .attr("ry", 4);
-
-    const link = linksGroup.selectAll(".link")
-      .data(links)
-      .enter().append("line")
-      .attr("class", "link")
-      .attr("stroke", "#4CAF50")
-      .attr("stroke-width", 2)
-      .attr("opacity", 0.5);
-
-    const node = nodesGroup.selectAll(".node")
-      .data(nodes)
-      .enter().append("circle")
-      .attr("class", "node")
-      .attr("r", 8)
-      .attr("fill", "#4CAF50")
-    .call(drag(simulation));  // Add drag behavior
-
-
-    const label = labelsGroup.selectAll(".label")
-      .data(nodes)
-      .enter().append("text")
-      .attr("class", "label")
-      .attr("text-anchor", "middle")
-      .attr("dy", "0.35em")
-      .attr("font-size", "14")  // Increased from 12
-      .attr("font-weight", "500")  // Made text slightly bolder
-      .text(d => d.label);
-
-    // Update label backgrounds based on text size
-    label.each(function(d) {
-      const bbox = this.getBBox();
-      d.bbox = bbox;
-    });
-
-    labelBackground
-      .attr("width", d => d.bbox.width + 10)
-      .attr("height", d => d.bbox.height + 6)
-      .attr("x", d => d.bbox.x - 5)
-      .attr("y", d => d.bbox.y - 3);
-
-    simulation.on("tick", () => {
-      link.attr("x1", d => d.source.x)
-          .attr("y1", d => d.source.y)
-          .attr("x2", d => d.target.x)
-          .attr("y2", d => d.target.y);
-
-      node.attr("cx", d => d.x)
-          .attr("cy", d => d.y);
-
-      label.attr("x", d => d.x)
-           .attr("y", d => d.y + 20)
-           .attr("transform", ""); // remove any transformations to stop labels from being upside down
-
-      labelBackground
-        .attr("x", d => d.x - (d.bbox.width / 2) - 5)
-        .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
-    });
-
-  } else {
-    // Static circle layout code remains the same but with updated display names
-    const radius = 200;  // Increased from 200
-    const nodePositions = new Map();
-
-    nodes.forEach((node, i) => {
-      const angle = (i * 2 * Math.PI) / nodes.length;
-      nodePositions.set(node.id, {
-        x: centerX + radius * Math.cos(angle),
-        y: centerY + radius * Math.sin(angle),
-        angle: angle
-      });
-    });
-
-    connections.forEach(connection => {
-      const [email1, email2] = connection.split('-');
-      const pos1 = nodePositions.get(email1.trim());
-      const pos2 = nodePositions.get(email2.trim());
-      if (pos1 && pos2) {
-        svg.append("line")
-          .attr("x1", pos1.x)
-          .attr("y1", pos1.y)
-          .attr("x2", pos2.x)
-          .attr("y2", pos2.y)
-          .attr("stroke", "#4CAF50")
-          .attr("stroke-width", 2)
-          .attr("opacity", 0.5);
+      // Exclude me, my existing connections, and people I've already invited or have invited me
+      if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers) && !potentialConnections.has(potentialEmail)) {
+          potentialConnections.add(potentialEmail);
       }
-    });
 
-    // Add white background rectangles for labels
-    nodes.forEach(node => {
-      const pos = nodePositions.get(node.id);
-      const tempText = svg.append("text")
-        .attr("x", 0)
-        .attr("y", 0)
-        .attr("font-size", "14")
-        .text(node.label);
-      
-      const bbox = tempText.node().getBBox();
-      tempText.remove();
-
-      svg.append("rect")
-        .attr("x", pos.x - (bbox.width / 2) - 5)
-        .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
-        .attr("width", bbox.width + 10)
-        .attr("height", bbox.height + 6)
-        .attr("fill", "white")
-        .attr("opacity", 0.8)
-        .attr("rx", 4)
-        .attr("ry", 4);
-    });
-
-    // Rest of static layout rendering
-    svg.append("circle")
-      .attr("cx", centerX)
-      .attr("cy", centerY)
-      .attr("r", 8)
-      .attr("fill", "#4CAF50");
-
-    nodes.forEach(node => {
-      const pos = nodePositions.get(node.id);
-      svg.append("line")
-        .attr("x1", centerX)
-        .attr("y1", centerY)
-        .attr("x2", pos.x)
-        .attr("y2", pos.y)
-        .attr("stroke", "#4CAF50")
-        .attr("stroke-width", 1)
-        .attr("opacity", 0.2);
-
-      svg.append("circle")
-        .attr("cx", pos.x)
-        .attr("cy", pos.y)
-        .attr("r", 6)
-        .attr("fill", "#4CAF50");
-
-      svg.append("text")
-        .attr("x", pos.x)
-        .attr("y", pos.y + 20)
-        .attr("text-anchor", "middle")
-        .attr("font-size", "14")
-        .attr("font-weight", "500")
-        .text(node.label);
     });
   }
+
+    // Display the potential connections in the table
+    potentialConnections.forEach(potentialEmail => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${potentialEmail}</td>
+            <td>
+                <button class="add-connection-btn" data-email="${potentialEmail}">
+                    Invite
+                </button>
+            </td>
+        `;
+        suggestedConnectionsTable.appendChild(tr);
+
+        const button = tr.querySelector('.add-connection-btn');
+        button.addEventListener('click', (event) => {
+            const email = event.target.dataset.email; // get the email here
+            handleAddConnection(currentUser, { email: email, name: email });  // Use email for name temporarily
+
+        });
+    });
 }
 
-// Dragging functionality
-function drag(simulation) {
-  function dragstarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-  }
+// Helper function to check if the potential user is not present in the other connection users
+function isAmongExisting(potentialEmail, existingUsers){
 
-  function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-  }
+    const emailList = [];
+    existingUsers.forEach(user => {
+        emailList.push(user.email);
+    });
 
-  function dragended(event, d) {
-    if (!event.active) simulation.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
-  }
+    return emailList.includes(potentialEmail);
+}
 
-  return d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended);
+function isAlreadyInvited(currentUserEmail, potentialEmail, existingInvitations) {
+    for (const invite of existingInvitations) {
+        if ((invite.fromUserEmail === currentUserEmail && invite.toUserEmail === potentialEmail) ||
+            (invite.fromUserEmail === potentialEmail && invite.toUserEmail === currentUserEmail)) {
+            return true; // Already invited or have been invited by this potential user
+        }
+    }
+    return false;
 }
 
 
-document.addEventListener('DOMContentLoaded', () => {
-  const toggleButton = document.getElementById('togglePhysics');
-  const visualizationDiv = document.getElementById('visualization');
-
-  if (!toggleButton || !visualizationDiv) {
-    console.error('Required elements not found!');
+function handleAddConnection(currentUser, targetUser) {
+  if (currentUser.email === targetUser.email) {
+    alert('Cannot add yourself as a connection.');
     return;
   }
 
-  // Initial visualization with physics disabled
-  fetchAcceptedInvitations(auth.currentUser);
+  db.collection("invitations").add({  // Create an invite
+      fromUserId: currentUser.uid,
+      fromUserEmail: currentUser.email,
+      fromUserName: currentUser.displayName,
+      toUserId: targetUser.uid || null, // if available
+      toUserEmail: targetUser.email,
+      toUserName: targetUser.name,
+      status: "pending",  // Initial status
+      acceptedByUser: [], // No one has accepted yet
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      alert('Invitation sent!');
+      fetchInvitations(currentUser);
+    }).catch(error => {
+      console.error('Error sending invitation:', error);
+      alert('Failed to send invitation.');
+    });
+}
 
-  toggleButton.addEventListener('click', () => {
-    currentPhysics = !currentPhysics;
-    createVisualization(currentUsers, currentConnections, currentPhysics);
-  });
-});
+        let simulation = null;
+        let currentPhysics = false;
 
-        
+        let currentUsers = [];
+        let currentConnections = [];
+
+        function createVisualization(users = [], connections = [], enablePhysics = false) {
+          if (!Array.isArray(users) || !Array.isArray(connections)) {
+            console.error("Invalid data received:", { users, connections });
+            return;
+          }
+
+          // Clear previous visualization
+          const container = d3.select("#visualization");
+          container.html("");
+          if (simulation) simulation.stop();
+
+          const width = 800;  // Increased from 600
+          const height = 700; // Increased from 500
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          const svg = container.append("svg")
+            .attr("viewBox", `0 0 ${width} ${height}`)
+            .style("width", "100%")
+            .style("max-width", "800px") // Increased from 600px
+            .style("margin", "0 auto");
+
+          // Format display name function
+          const getDisplayName = user => {
+            const name = user.name || user.email;
+            return name.split('@')[0]  // Remove email domain if it's an email
+              .split('.')  // Split on dots
+              .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
+              .join(' ');  // Join with space
+          };
+
+          const nodes = users.map(user => ({
+            id: user.email.trim(),
+            label: getDisplayName(user),
+            name: user.name,
+            x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
+            y: centerY + (Math.random() - 0.5) * 100
+          }));
+
+          if (enablePhysics) {
+            const links = connections.map(connection => {
+              const [rawSource, rawTarget] = connection.split('-');
+              const sourceId = rawSource.trim();
+              const targetId = rawTarget.trim();
+              const source = nodes.find(n => n.id === sourceId);
+              const target = nodes.find(n => n.id === targetId);
+              return { source, target };
+            }).filter(l => l.source && l.target);
+
+            simulation = d3.forceSimulation(nodes)
+              .force("link", d3.forceLink(links)
+                .id(d => d.id)
+                .distance(200)  // Increased from 100
+                .strength(0.1)) // Decreased from 0.2
+              .force("charge", d3.forceManyBody()
+                .strength(-300)) // Increased repulsion from -80
+              .force("collide", d3.forceCollide(40)) // Increased from 20
+              .force("center", d3.forceCenter(centerX, centerY))
+              .alpha(1)
+              .restart();
+
+            const linksGroup = svg.append("g").attr("class", "links");
+            const nodesGroup = svg.append("g").attr("class", "nodes");
+            const labelsGroup = svg.append("g").attr("class", "labels");
+
+            // Add label backgrounds for better readability
+            const labelBackground = labelsGroup.selectAll(".label-background")
+              .data(nodes)
+              .enter().append("rect")
+              .attr("class", "label-background")
+              .attr("fill", "white")
+              .attr("opacity", 0.8)
+              .attr("rx", 4)  // Rounded corners
+              .attr("ry", 4);
+
+            const link = linksGroup.selectAll(".link")
+              .data(links)
+              .enter().append("line")
+              .attr("class", "link")
+              .attr("stroke", "#4CAF50")
+              .attr("stroke-width", 2)
+              .attr("opacity", 0.5);
+
+            const node = nodesGroup.selectAll(".node")
+              .data(nodes)
+              .enter().append("circle")
+              .attr("class", "node")
+              .attr("r", 8)
+              .attr("fill", "#4CAF50");
+
+            const label = labelsGroup.selectAll(".label")
+              .data(nodes)
+              .enter().append("text")
+              .attr("class", "label")
+              .attr("text-anchor", "middle")
+              .attr("dy", "0.35em")
+              .attr("font-size", "14")  // Increased from 12
+              .attr("font-weight", "500")  // Made text slightly bolder
+              .text(d => d.label);
+
+            // Update label backgrounds based on text size
+            label.each(function(d) {
+              const bbox = this.getBBox();
+              d.bbox = bbox;
+            });
+
+            labelBackground
+              .attr("width", d => d.bbox.width + 10)
+              .attr("height", d => d.bbox.height + 6)
+              .attr("x", d => d.bbox.x - 5)
+              .attr("y", d => d.bbox.y - 3);
+
+            simulation.on("tick", () => {
+              link.attr("x1", d => d.source.x)
+                  .attr("y1", d => d.source.y)
+                  .attr("x2", d => d.target.x)
+                  .attr("y2", d => d.target.y);
+
+              node.attr("cx", d => d.x)
+                  .attr("cy", d => d.y);
+
+              label.attr("x", d => d.x)
+                   .attr("y", d => d.y + 20);
+
+              labelBackground
+                .attr("x", d => d.x - (d.bbox.width / 2) - 5)
+                .attr("y", d => d.y + 20 - (d.bbox.height / 2) - 3);
+            });
+
+          } else {
+            // Static circle layout code remains the same but with updated display names
+            const radius = 300;  // Increased from 200
+            const nodePositions = new Map();
+
+            nodes.forEach((node, i) => {
+              const angle = (i * 2 * Math.PI) / nodes.length;
+              nodePositions.set(node.id, {
+                x: centerX + radius * Math.cos(angle),
+                y: centerY + radius * Math.sin(angle),
+                angle: angle
+              });
+            });
+
+            connections.forEach(connection => {
+              const [email1, email2] = connection.split('-');
+              const pos1 = nodePositions.get(email1.trim());
+              const pos2 = nodePositions.get(email2.trim());
+              if (pos1 && pos2) {
+                svg.append("line")
+                  .attr("x1", pos1.x)
+                  .attr("y1", pos1.y)
+                  .attr("x2", pos2.x)
+                  .attr("y2", pos2.y)
+                  .attr("stroke", "#4CAF50")
+                  .attr("stroke-width", 2)
+                  .attr("opacity", 0.5);
+              }
+            });
+
+            // Add white background rectangles for labels
+            nodes.forEach(node => {
+              const pos = nodePositions.get(node.id);
+              const tempText = svg.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("font-size", "14")
+                .text(node.label);
+
+              const bbox = tempText.node().getBBox();
+              tempText.remove();
+
+              svg.append("rect")
+                .attr("x", pos.x - (bbox.width / 2) - 5)
+                .attr("y", pos.y + 20 - (bbox.height / 2) - 3)
+                .attr("width", bbox.width + 10)
+                .attr("height", bbox.height + 6)
+                .attr("fill", "white")
+                .attr("opacity", 0.8)
+                .attr("rx", 4)
+                .attr("ry", 4);
+            });
+
+            // Rest of static layout rendering
+            svg.append("circle")
+              .attr("cx", centerX)
+              .attr("cy", centerY)
+              .attr("r", 8)
+              .attr("fill", "#4CAF50");
+
+            nodes.forEach(node => {
+              const pos = nodePositions.get(node.id);
+              svg.append("line")
+                .attr("x1", centerX)
+                .attr("y1", centerY)
+                .attr("x2", pos.x)
+                .attr("y2", pos.y)
+                .attr("stroke", "#4CAF50")
+                .attr("stroke-width", 1)
+                .attr("opacity", 0.2);
+
+              svg.append("circle")
+                .attr("cx", pos.x)
+                .attr("cy", pos.y)
+                .attr("r", 6)
+                .attr("fill", "#4CAF50");
+
+              svg.append("text")
+                .attr("x", pos.x)
+                .attr("y", pos.y + 20)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "14")
+                .attr("font-weight", "500")
+                .attr("transform", `rotate(${pos.angle * 180 / Math.PI + (pos.angle > Math.PI ? 180 : 0)}, ${pos.x}, ${pos.y})`)
+                .text(node.label);
+            });
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const toggleButton = document.getElementById('togglePhysics');
+          const visualizationDiv = document.getElementById('visualization');
+
+          if (!toggleButton || !visualizationDiv) {
+            console.error('Required elements not found!');
+            return;
+          }
+
+          // Initial visualization with physics disabled
+          fetchInvitations(auth.currentUser);
+
+          toggleButton.addEventListener('click', () => {
+            currentPhysics = !currentPhysics;
+            createVisualization(currentUsers, currentConnections, currentPhysics);
+          });
+        });
+
+
     document.getElementById("generateLinkBtn").addEventListener("click", () => {
         const user = auth.currentUser;
         if (!user) return;
-        
+
         const uniqueId = Math.random().toString(36).substr(2, 9);
         const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
@@ -761,4 +705,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
