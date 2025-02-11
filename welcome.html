@@ -162,6 +162,7 @@ tr:hover {
 <div class="container">
     <h1>Welcome</h1>
     <p id="welcomeMessage"></p>
+       <p id="errorMessage" class="error-message"></p>
 
 
     <button id="togglePhysics">Toggle Physics</button>
@@ -248,15 +249,15 @@ function fetchInvitations(currentUser) {
 
             allInvitations.forEach(data => {
                 // Add both sender and receiver as users
-                const fromUserKey = data.fromUserEmail;
-                if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                  acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
-                }
+              const fromUserKey = data.fromUserEmail;
+              if (data && data.fromUserEmail && !acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                acceptedUsersMap.set(fromUserKey, {email: data.fromUserEmail, name: data.fromUserName});
+              }
 
-                const toUserKey = data.toUserEmail;
-                if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                  acceptedUsersMap.set(toUserKey, {email: data.toUserEmail, name: data.toUserName});
-                }
+              const toUserKey = data.toUserEmail;
+              if (data && data.toUserEmail && !acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                acceptedUsersMap.set(toUserKey, {email: data.toUserEmail, name: data.toUserName});
+              }
 
                 // Create a connection string based on from and to
                 const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
@@ -464,7 +465,7 @@ function handleAddConnection(currentUser, targetUser) {
           };
 
           const nodes = users.map(user => ({
-            id: user.email.trim(),
+            id: user.email ? user.email.trim() : "",
             label: getDisplayName(user),
             name: user.name,
             x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
