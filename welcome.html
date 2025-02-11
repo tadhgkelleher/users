@@ -253,25 +253,24 @@ tr:hover {
                     });
 
                     // Process invitations to build maps
-                      const acceptedUsersMap = new Map();
+                     const acceptedUsersMap = new Map();
                     const connections = new Set();
 
                     allInvitations.forEach(data => {
-                        // Validate that the required data is present.  Skip and log otherwise.
-                         if (data && data.fromUserEmail && data.toUserEmail) {
-
-                           const fromUserKey = data.fromUserEmail;
+                         // Validate that the required data is present.  Skip and log otherwise.
+                          if (data && data.fromUserEmail && data.toUserEmail) {
+                            const fromUserKey = data.fromUserEmail;
                             if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
                                 acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
                             }
-                            const toUserKey = data.toUserEmail;
+                             const toUserKey = data.toUserEmail;
                              if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                                   acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
-                            }
+                                    acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
+                             }
 
-                            // Create a connection string based on from and to
-                            const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                            connections.add(connection);
+                             // Create a connection string based on from and to
+                             const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                             connections.add(connection);
                          }
                          else {
                             console.warn("Skipping invitation data:", data);  // Clear warning in log
@@ -338,16 +337,15 @@ tr:hover {
 
             // Get emails of my direct connections (both outgoing and incoming)
             const myConnectionsEmails = new Set();
-            existingInvitations.forEach(inviteData => {
-
-                 if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
-                        if (inviteData.fromUserEmail === myEmail) {
-                            myConnectionsEmails.add(inviteData.toUserEmail);
-                        } else if (inviteData.toUserEmail === myEmail) {
-                            myConnectionsEmails.add(inviteData.fromUserEmail);
+            existingInvitations.forEach(invite => {
+                 if (invite && invite.fromUserEmail && invite.toUserEmail){
+                        if (invite.fromUserEmail === myEmail) {
+                            myConnectionsEmails.add(invite.toUserEmail);
+                        } else if (invite.toUserEmail === myEmail) {
+                            myConnectionsEmails.add(invite.fromUserEmail);
                         }
                  }else{
-                      console.warn("Skipping invitation data:", inviteData);
+                      console.warn("Skipping invitation data:", invite);
                  }
 
             });
@@ -363,17 +361,18 @@ tr:hover {
 
                         connectedUserInvitations.forEach(doc => {
                             const inviteData = doc.data();
-                                 if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                             if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
 
-                                     const potentialEmail = inviteData.toUserEmail;
+                                  const potentialEmail = inviteData.toUserEmail;
 
-                                      if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                            potentialConnections.add(potentialEmail);
-                                      }
-
-                                 }else{
-                                        console.warn("Skipping invitation data:", inviteData);
-                                 }
+                                  // Exclude current user, existing connections, and already invited people
+                                  if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                      potentialConnections.add(potentialEmail);
+                                  }
+                             }
+                                else{
+                                       console.warn("Skipping invitation data:", inviteData);
+                                  }
 
                         });
 
@@ -384,15 +383,18 @@ tr:hover {
 
                             connectedUserInvitations_Me.forEach(doc => {
                                 const inviteData = doc.data();
-                                     if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
-                                          const potentialEmail = inviteData.fromUserEmail;
-                                          if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                                              potentialConnections.add(potentialEmail);
-                                          }
 
-                                     }else{
-                                        console.warn("Skipping invitation data:", inviteData);
-                                     }
+                                      if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                                               const potentialEmail = inviteData.fromUserEmail;
+                                                // Exclude current user, existing connections, and already invited people
+                                                if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                                    potentialConnections.add(potentialEmail);
+                                                }
+                                           }
+                                            else{
+                                               console.warn("Skipping invitation data:", inviteData);
+                                            }
+
                             });
                     }
                }
@@ -430,13 +432,13 @@ tr:hover {
      */
     function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
       for (const invite of existingInvitations) {
-           if (invite && invite.toUserEmail && invite.fromUserEmail){
-                if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
-                    return true; // This potential connection is in existing connections (existingInvite)
-                }
-         }else{
-            console.warn("Skipping invitation data:", invite);
-         }
+            if (invite && invite.toUserEmail && invite.fromUserEmail){
+                    if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+                        return true; // This potential connection is in existing connections (existingInvite)
+                    }
+              }else{
+                 console.warn("Skipping invitation data:", invite);
+              }
 
         }
         return false; // This potential connection is NOT in existing connections
@@ -622,7 +624,7 @@ tr:hover {
         const radius = 300;  // Increased from 200
         const nodePositions = new Map();
 
-        nodes.forEach(node => {
+        nodes.forEach((node, i) => {
           const angle = (i * 2 * Math.PI) / nodes.length;
           nodePositions.set(node.id, {
             x: centerX + radius * Math.cos(angle),
@@ -741,8 +743,7 @@ tr:hover {
             fromUserId: user.uid,
             fromUserEmail: user.email,
             status: "open",
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          //toUserEmail:
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => {
             const inviteLinkInput = document.getElementById("inviteLink");
             inviteLinkInput.value = inviteLink;
@@ -780,7 +781,7 @@ tr:hover {
       alert("Link copied to clipboard!");
   });
 
-  //Utility function
+    //Utility function
     function isValidData(data) {
        return (
             data &&
