@@ -305,65 +305,56 @@ async function suggestConnections(currentUser, existingUsers, existingInvitation
 
     const myEmail = currentUser.email;
 
-    // Get emails of my direct connections
+    // Get emails of my direct connections (both outgoing and incoming)
     const myConnectionsEmails = new Set();
     existingInvitations.forEach(invite => {
-        if (invite.fromUserEmail === myEmail) {
-            myConnectionsEmails.add(invite.toUserEmail);
-        } else if (invite.toUserEmail === myEmail) {
-            myConnectionsEmails.add(invite.fromUserEmail);
-        }
+      if (invite.fromUserEmail === myEmail) {
+        myConnectionsEmails.add(invite.toUserEmail); // I invited them
+      } else if (invite.toUserEmail === myEmail) {
+        myConnectionsEmails.add(invite.fromUserEmail); // They invited me
+      }
     });
 
-    // Now, find people connected to my connections (2nd-degree connections)
     const potentialConnections = new Set();
+
+    // Iterate through connections of my connections
     for (const connectedEmail of myConnectionsEmails) {
-        if(connectedEmail){
+      if(connectedEmail){
+
               const connectedUserInvitations = await db.collection("invitations")
                 .where("fromUserEmail", "==", connectedEmail)
                 .get();
 
                 connectedUserInvitations.forEach(doc => {
                     const invite = doc.data();
-                    // Get the email of the person connected to the connectedUser
                     const potentialEmail = invite.toUserEmail;
 
-                    // Exclude me, my existing connections, and people I've already invited or have invited me
-                    if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers)) {
+                    // Exclude current user, existing connections, and already invited people
+                  if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail) ) {
                         potentialConnections.add(potentialEmail);
 
                     }
 
                 });
-            }
+
+                 const connectedUserInvitations_Me = await db.collection("invitations")
+                    .where("toUserEmail", "==", connectedEmail)
+                    .get();
+
+                connectedUserInvitations_Me.forEach(doc => {
+                    const invite = doc.data();
+                    const potentialEmail = invite.fromUserEmail;
+
+                    // Exclude current user, existing connections, and already invited people
+                  if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail) ) {
+                        potentialConnections.add(potentialEmail);
+
+                    }
+
+                });
+         }
 
     }
-
-  //  Convert the set to an array for processing
-  const potentialConnectionsArray = Array.from(potentialConnections);
-
-  // Filter for people connected To the connected users
-  for (const connectedEmail of myConnectionsEmails) {
-    if (connectedEmail){
-        const connectedUserInvitations = await db.collection("invitations")
-            .where("toUserEmail", "==", connectedEmail)
-            .get();
-
-            connectedUserInvitations.forEach(doc => {
-              const invite = doc.data();
-              // Get the email of the person connected to the connectedUser
-              const potentialEmail = invite.fromUserEmail;
-
-              // Exclude me, my existing connections, and people I've already invited or have invited me
-              if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers) && !potentialConnections.has(potentialEmail)) {
-                  potentialConnections.add(potentialEmail);
-              }
-
-            });
-        }
-
-
-  }
 
     // Display the potential connections in the table
     potentialConnections.forEach(potentialEmail => {
@@ -387,25 +378,14 @@ async function suggestConnections(currentUser, existingUsers, existingInvitation
     });
 }
 
-// Helper function to check if the potential user is not present in the existing users
-function isAmongExisting(potentialEmail, existingUsers) {
-    for (const user of existingUsers) {
-        if (user.email === potentialEmail) {
-            return true; // The potentialEmail is in existingUsers
+function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
+  for (const invite of existingInvitations) {
+        if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+            return true; // This potential connection is in existing connections (existingInvite)
         }
     }
-    return false; // The potentialEmail is NOT in existingUsers
-}
+    return false; // This potential connection is NOT in existing connections
 
-
-function isAlreadyInvited(currentUserEmail, potentialEmail, existingInvitations) {
-    for (const invite of existingInvitations) {
-        if ((invite.fromUserEmail === currentUserEmail && invite.toUserEmail === potentialEmail) ||
-            (invite.fromUserEmail === potentialEmail && invite.toUserEmail === currentUserEmail)) {
-            return true; // Already invited or have been invited by this potential user
-        }
-    }
-    return false;
 }
 
 
