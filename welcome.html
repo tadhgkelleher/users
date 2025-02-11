@@ -380,16 +380,16 @@ async function suggestConnections(currentUser, existingUsers, existingInvitation
     });
 }
 
-// Helper function to check if the potential user is not present in the other connection users
-function isAmongExisting(potentialEmail, existingUsers){
-
-    const emailList = [];
-    existingUsers.forEach(user => {
-        emailList.push(user.email);
-    });
-
-    return emailList.includes(potentialEmail);
+// Helper function to check if the potential user is not present in the existing users
+function isAmongExisting(potentialEmail, existingUsers) {
+    for (const user of existingUsers) {
+        if (user.email === potentialEmail) {
+            return true; // The potentialEmail is in existingUsers
+        }
+    }
+    return false; // The potentialEmail is NOT in existingUsers
 }
+
 
 function isAlreadyInvited(currentUserEmail, potentialEmail, existingInvitations) {
     for (const invite of existingInvitations) {
