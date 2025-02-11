@@ -318,22 +318,25 @@ async function suggestConnections(currentUser, existingUsers, existingInvitation
     // Now, find people connected to my connections (2nd-degree connections)
     const potentialConnections = new Set();
     for (const connectedEmail of myConnectionsEmails) {
-        const connectedUserInvitations = await db.collection("invitations")
-            .where("fromUserEmail", "==", connectedEmail)
-            .get();
+        if(connectedEmail){
+              const connectedUserInvitations = await db.collection("invitations")
+                .where("fromUserEmail", "==", connectedEmail)
+                .get();
 
-        connectedUserInvitations.forEach(doc => {
-            const invite = doc.data();
-            // Get the email of the person connected to the connectedUser
-            const potentialEmail = invite.toUserEmail;
+                connectedUserInvitations.forEach(doc => {
+                    const invite = doc.data();
+                    // Get the email of the person connected to the connectedUser
+                    const potentialEmail = invite.toUserEmail;
 
-            // Exclude me, my existing connections, and people I've already invited or have invited me
-            if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers)) {
-                potentialConnections.add(potentialEmail);
+                    // Exclude me, my existing connections, and people I've already invited or have invited me
+                    if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers)) {
+                        potentialConnections.add(potentialEmail);
 
+                    }
+
+                });
             }
 
-        });
     }
 
   //  Convert the set to an array for processing
@@ -341,21 +344,25 @@ async function suggestConnections(currentUser, existingUsers, existingInvitation
 
   // Filter for people connected To the connected users
   for (const connectedEmail of myConnectionsEmails) {
-    const connectedUserInvitations = await db.collection("invitations")
-      .where("toUserEmail", "==", connectedEmail)
-      .get();
+    if (connectedEmail){
+        const connectedUserInvitations = await db.collection("invitations")
+            .where("toUserEmail", "==", connectedEmail)
+            .get();
 
-    connectedUserInvitations.forEach(doc => {
-      const invite = doc.data();
-      // Get the email of the person connected to the connectedUser
-      const potentialEmail = invite.fromUserEmail;
+            connectedUserInvitations.forEach(doc => {
+              const invite = doc.data();
+              // Get the email of the person connected to the connectedUser
+              const potentialEmail = invite.fromUserEmail;
 
-      // Exclude me, my existing connections, and people I've already invited or have invited me
-      if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers) && !potentialConnections.has(potentialEmail)) {
-          potentialConnections.add(potentialEmail);
-      }
+              // Exclude me, my existing connections, and people I've already invited or have invited me
+              if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAlreadyInvited(myEmail, potentialEmail, existingInvitations) && !isAmongExisting(potentialEmail, existingUsers) && !potentialConnections.has(potentialEmail)) {
+                  potentialConnections.add(potentialEmail);
+              }
 
-    });
+            });
+        }
+
+
   }
 
     // Display the potential connections in the table
