@@ -331,32 +331,47 @@
                 });
         }
 
-        /**
-         * Displays the existing invitations in a table.
-         * @param {firebase.User} currentUser - The currently logged-in user.
-         * @param {Array<Object>} invitations - An array of invitation objects.
-         */
-        function displayInvitations(currentUser, invitations) {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            invitationsTable.innerHTML = ""; // Clear the invitation table
+       /**
+ * Displays the existing invitations in a table, preventing duplicates.
+ * @param {firebase.User} currentUser - The currently logged-in user.
+ * @param {Array<Object>} invitations - An array of invitation objects.
+ */
+function displayInvitations(currentUser, invitations) {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    invitationsTable.innerHTML = ""; // Clear the invitation table
 
-            invitations.forEach(invite => {
-                // Ensure that it has the neccessary features and is not null/undefined.
-                 if (invite && invite.fromUserEmail && invite.toUserEmail){
-                    let otherUserEmail = (invite.fromUserEmail === currentUser.email) ? invite.toUserEmail : invite.fromUserEmail; // Determine the other user
+    const processedConnections = new Set(); // Track processed connections
 
-                   const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                       <td>${otherUserEmail}</td>
-                         <td>${invite.status}</td>
-                         `;
-                         invitationsTable.appendChild(tr); // Append the row to the table
-                  }else{
-                        console.warn("Skipping invitation data:", invite);
-                  }
-            });
+    invitations.forEach(invite => {
+        // Ensure that it has the necessary features and is not null/undefined.
+        if (invite && invite.fromUserEmail && invite.toUserEmail) {
+            const email1 = invite.fromUserEmail;
+            const email2 = invite.toUserEmail;
+
+            // Create a unique connection identifier (e.g., "email1-email2" - always sorted)
+            const connectionId = [email1, email2].sort().join('-');
+
+            // Skip if this connection has already been processed
+            if (processedConnections.has(connectionId)) {
+                return; // Skip to the next iteration of the loop
+            }
+
+            let otherUserEmail = (email1 === currentUser.email) ? email2 : email1; // Determine the other user
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${otherUserEmail}</td>
+                <td>${invite.status}</td>
+            `;
+            invitationsTable.appendChild(tr); // Append the row to the table
+
+            processedConnections.add(connectionId); // Mark this connection as processed
+
+        } else {
+            console.warn("Skipping invitation data:", invite);
         }
-
+    });
+}
         /**
          * **ADD FRIEND SECTION**
          * Suggests new connections to the user based on their existing connections.
