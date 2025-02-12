@@ -10,12 +10,12 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <!-- D3.js script for visualization -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <!-- Styles for the page -->
+    <!-- Styles for the page - Corporate aesthetic -->
     <style>
-      body {
+        body {
             font-family: Arial, sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light gray text */
             margin: 0;
             padding: 0;
             display: flex;
@@ -26,7 +26,7 @@
         }
 
         .container {
-            background-color: #1e1e1e;
+            background-color: #1e1e1e; /* Slightly lighter dark background */
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -37,7 +37,7 @@
         h1 {
             text-align: center;
             margin-bottom: 20px;
-            color: #90a4ae;
+            color: #90a4ae; /* Muted blue-gray header */
             font-weight: bold;
         }
 
@@ -45,7 +45,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
-            background-color: #242424;
+            background-color: #242424; /* Dark table background */
             border-radius: 8px;
             overflow: hidden;
         }
@@ -53,22 +53,22 @@
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #424242;
+            border-bottom: 1px solid #424242; /* Light gray border */
             color: #e0e0e0;
         }
 
         th {
-            background-color: #424242;
-            color: #f5f5f5;
+            background-color: #424242; /* Light gray header background */
+            color: #f5f5f5; /* Off-white header text */
             font-weight: bold;
         }
 
         tr:nth-child(even) {
-            background-color: #212121;
+            background-color: #212121; /* Slightly darker row */
         }
 
         tr:hover {
-            background-color: #333;
+            background-color: #333; /* Hover effect */
         }
 
         .error-message {
@@ -81,7 +81,7 @@
         .nav-links {
             width: 100%;
             padding: 15px;
-            background-color: #263238;
+            background-color: #263238; /* Darker nav background */
             color: white;
             text-align: center;
             margin-bottom: 20px;
@@ -89,7 +89,7 @@
         }
 
         .nav-links a, .nav-links button {
-            color: #bdbdbd;
+            color: #bdbdbd; /* Silver nav links */
             margin: 0 15px;
             text-decoration: none;
             font-weight: bold;
@@ -101,7 +101,7 @@
         }
 
         .nav-links a:hover, .nav-links button:hover {
-            color: #90a4ae;
+            color: #90a4ae; /* Hover color */
         }
 
         #inviteLink {
@@ -126,8 +126,8 @@
 
         .share-buttons button, #generateLinkBtn, #copyLinkBtn {
             padding: 10px 18px;
-            background-color: #424242;
-            color: #e0e0e0;
+            background-color: #424242; /* Light gray button */
+            color: #e0e0e0; /*Dark button Text */
             border: none;
             border-radius: 6px;
             cursor: pointer;
@@ -140,7 +140,7 @@
         }
 
         .add-connection-btn {
-            background-color: #424242;
+            background-color: #424242; /* Light gray button */
             color: #e0e0e0;
             padding: 8px 16px;
             border: none;
@@ -157,8 +157,9 @@
             transform: scale(0.98);
         }
 
+        /* Styles for the visualization container */
         #visualization-container {
-            background-color: #1e1e1e;
+            background-color: #1e1e1e; /* Matching background */
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -169,45 +170,24 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
+        /* Styles for the visualization heading */
         #visualization-container h2 {
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 1rem;
             text-align: center;
-            color: #bdbdbd;
+            color: #bdbdbd; /* Silver heading */
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
+        /* Styles for the Mandala visualization */
         #visualization {
             width: 100%;
             height: 500px;
             background: radial-gradient(circle, rgba(77, 182, 172, 0.2) 0%, rgba(30, 30, 30, 0.9) 100%);
             border-radius: 8px;
             border: 1px solid #333;
-        }
-
-        .accept-btn, .reject-btn {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-            font-weight: bold;
-        }
-
-        .accept-btn {
-            background-color: #4CAF50;
-            color: white;
-        }
-
-        .reject-btn {
-            background-color: #f44336;
-            color: white;
-        }
-
-        #suggestedConnectionsTable {
-            display: table; /* Initially visible */
         }
     </style>
 </head>
@@ -222,22 +202,21 @@
     <div class="container">
         <h1>Welcome</h1>
         <p id="welcomeMessage"></p>
-        <p id="errorMessage" class="error-message"></p>
+           <p id="errorMessage" class="error-message"></p>
 
         <button id="togglePhysics">Toggle Physics</button>
 
         <!-- Visualization Container -->
         <div id="visualization-container">
-            <h2>The Mandala</h2>
+            <h2 >The Mandala</h2>
             <div id="visualization"></div>
         </div>
 
-        <h2>Connected</h2>
+         <h2>Connected</h2>
         <table id="invitationsTable">
             <thead>
                 <tr>
                     <th>User</th>
-                    <th>User ID</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -259,13 +238,11 @@
         <button id="generateLinkBtn">Generate Link</button>
         <input type="text" id="inviteLink" readonly>
         <button id="copyLinkBtn" style="display: none;">Copy Link</button>
-
-        <button id="toggleSuggestions">Hide Suggestions</button>
     </div>
 
     <!-- Main JavaScript -->
     <script>
-// Firebase configuration
+        // Firebase configuration - Replace with your actual Firebase credentials
         const firebaseConfig = {
             apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
             authDomain: "mandala-5165e.firebaseapp.com",
@@ -281,26 +258,22 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Authentication state listener
+        // Authentication state listener - Listens for changes in the user's authentication state
         auth.onAuthStateChanged(user => {
             if (user) {
+                // User is signed in
                 document.getElementById("welcomeMessage").textContent = `Hello, ${user.email}!`;
-                fetchInvitations(user);
+                fetchInvitations(user); // Fetch invitations when user is logged in
             } else {
-                window.location.href = '/index.html';
+                // User is signed out
+                window.location.href = '/index.html'; // Redirect to login page
             }
         });
 
-        // Toggle Suggestions Table
-        let isSuggestionsVisible = true;
-        document.getElementById('toggleSuggestions').addEventListener('click', function() {
-            const table = document.getElementById('suggestedConnectionsTable');
-            isSuggestionsVisible = !isSuggestionsVisible;
-            table.style.display = isSuggestionsVisible ? 'table' : 'none';
-            this.textContent = isSuggestionsVisible ? 'Hide Suggestions' : 'Show Suggestions';
-        });
-
-
+        /**
+         * Fetches invitations from Firestore and updates the UI, considering only mutual invitations as established connections.
+         * @param {firebase.User} currentUser - The currently logged-in user.
+         */
         function fetchInvitations(currentUser) {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
             invitationsTable.innerHTML = "";
@@ -308,43 +281,52 @@
             db.collection("invitations").get()
                 .then(snapshot => {
                     const allInvitations = [];
-                    const invitationsMap = new Map();
-
                     snapshot.forEach(doc => {
                         const data = doc.data();
-                        const docId = doc.id;
-                        if (isValidData(data)) {
-                            allInvitations.push({ ...data, docId: docId });
-                            const connectionId = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                            invitationsMap.set(connectionId, { ...data, docId: docId });
+                        if (isValidData(data)) {  // Validate the structure
+                            allInvitations.push(data);
                         } else {
-                            console.warn("Skipping invalid data:", data);
+                            console.warn("Skipping invalid invitation data:", data);
                         }
                     });
 
+                    // Identify mutual connections
                     const mutualConnections = getMutualConnections(allInvitations);
+
+                    // Process invitations to build maps
                     const acceptedUsersMap = new Map();
                     const connections = new Set();
 
                     allInvitations.forEach(data => {
                         if (isValidData(data)) {
-                            if (!acceptedUsersMap.has(data.fromUserEmail) && data.fromUserEmail !== currentUser.email) {
-                                acceptedUsersMap.set(data.fromUserEmail, { email: data.fromUserEmail, name: data.fromUserName, userId: data.fromUserId });
+                            const fromUserKey = data.fromUserEmail;
+                            if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                                acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
                             }
-                            if (!acceptedUsersMap.has(data.toUserEmail) && data.toUserEmail !== currentUser.email) {
-                                acceptedUsersMap.set(data.toUserEmail, { email: data.toUserEmail, name: data.toUserName, userId: data.toUserId });
+                            const toUserKey = data.toUserEmail;
+                            if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                                acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
                             }
+
+                            // Create a connection string based on from and to, if it's a mutual connection
                             if (mutualConnections.has([data.fromUserEmail, data.toUserEmail].sort().join('-'))) {
-                                connections.add([data.fromUserEmail, data.toUserEmail].sort().join('-'));
+                                const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                                connections.add(connection);
                             }
+                        } else {
+                            console.warn("Skipping invitation data:", data);
                         }
                     });
 
-                    currentUsers = Array.from(acceptedUsersMap.values());
-                    currentConnections = Array.from(connections);
+                    const usersArray = Array.from(acceptedUsersMap.values());
+                    const connectionsArray = Array.from(connections);
+
+                    // Update currentUsers and currentConnections
+                    currentUsers = usersArray;
+                    currentConnections = connectionsArray;
 
                     createVisualization(currentUsers, currentConnections, currentPhysics);
-                    displayInvitations(currentUser, allInvitations, invitationsMap, mutualConnections);
+                    displayInvitations(currentUser, allInvitations, mutualConnections); // Important: Pass mutualConnections to displayInvitations
                     suggestConnections(allInvitations, currentUser);
                 })
                 .catch(error => {
@@ -353,189 +335,216 @@
                 });
         }
 
-
+        /**
+         * Finds all mutual connections from a list of invitations.
+         * @param {Array<Object>} invitations - An array of invitation objects.
+         * @returns {Set<string>} - A set of connection strings representing mutual connections.
+         */
         function getMutualConnections(invitations) {
             const mutualConnections = new Set();
-            const invitationMap = new Map();
+            const invitationMap = new Map();  // Store invitations for easy lookup
 
+            // Index invitations by fromUserEmail-toUserEmail
             invitations.forEach(invite => {
                 const connectionId = [invite.fromUserEmail, invite.toUserEmail].sort().join('-');
                 invitationMap.set(connectionId, invite);
             });
 
+            // Check for mutual invitations
             invitations.forEach(invite => {
                 const connectionId = [invite.fromUserEmail, invite.toUserEmail].sort().join('-');
                 const reciprocalConnectionId = [invite.toUserEmail, invite.fromUserEmail].sort().join('-');
+
                 if (invitationMap.has(reciprocalConnectionId)) {
                     mutualConnections.add(connectionId);
                 }
             });
+
             return mutualConnections;
         }
 
-        function displayInvitations(currentUser, invitations, invitationsMap, mutualConnections) {
+        /**
+         * Displays the existing invitations in a table, preventing duplicates.
+         * @param {firebase.User} currentUser - The currently logged-in user.
+         * @param {Array<Object>} invitations - An array of invitation objects.
+         * @param {Set<string>} mutualConnections - Set of email pairs with accepted connections.
+         */
+        function displayInvitations(currentUser, invitations, mutualConnections) {
             const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            invitationsTable.innerHTML = "";
-            const processedConnections = new Set();
+            invitationsTable.innerHTML = ""; // Clear the invitation table
+
+            const processedConnections = new Set(); // Track processed connections
 
             invitations.forEach(invite => {
-              if (invite && invite.fromUserEmail && invite.toUserEmail && invite.fromUserId && invite.toUserId) {
+                // Ensure that it has the necessary features and is not null/undefined.
+                if (invite && invite.fromUserEmail && invite.toUserEmail) {
                     const email1 = invite.fromUserEmail;
                     const email2 = invite.toUserEmail;
+
+                    // Create a unique connection identifier (e.g., "email1-email2" - always sorted)
                     const connectionId = [email1, email2].sort().join('-');
-                    const otherUserEmail = (email1 === currentUser.email) ? email2 : email1;
-                    const otherUserId = (email1 === currentUser.email) ? invite.toUserId : invite.fromUserId;
-                    const isCurrentUserTheReceiver = invite.toUserEmail === currentUser.email;
-                    const status = invite.status || "pending";
 
-                    if (mutualConnections.has(connectionId) || status === "accepted") {
-                        if (!processedConnections.has(connectionId)) {
-                            const tr = document.createElement("tr");
-                            tr.innerHTML = `
-                                <td>${otherUserEmail}</td>
-                                <td>${otherUserId || 'N/A'}</td>
-                                <td>Connected</td>
-                            `;
-                            invitationsTable.appendChild(tr);
-                            processedConnections.add(connectionId);
+                    // check is current user is a member of a mutual connection
+                    if(mutualConnections.has(connectionId)){
+                        // Skip if this connection has already been processed
+                        if (processedConnections.has(connectionId)) {
+                            return; // Skip to the next iteration of the loop
                         }
-                    } else if (isCurrentUserTheReceiver && status === "pending") {
-                        if (!processedConnections.has(connectionId)) {
-                            const tr = document.createElement("tr");
-                            const acceptButton = document.createElement("button");
-                            acceptButton.textContent = "Accept";
-                            acceptButton.className = "accept-btn";
-                            acceptButton.addEventListener("click", () => handleAcceptInvitation(invite.docId));
 
-                            const rejectButton = document.createElement("button");
-                            rejectButton.textContent = "Reject";
-                            rejectButton.className = "reject-btn";
-                            rejectButton.addEventListener("click", () => handleRejectInvitation(invite.docId));
+                        let otherUserEmail = (email1 === currentUser.email) ? email2 : email1; // Determine the other user
 
-                            tr.innerHTML = `
-                                <td>${invite.fromUserEmail}</td>
-                                 <td>${invite.fromUserId}</td>
-                                <td>Pending<br/>${acceptButton.outerHTML}${rejectButton.outerHTML}</td>
-                            `;
-                            invitationsTable.appendChild(tr);
-                            processedConnections.add(connectionId);
-                        }
-                    } else if (invite.fromUserEmail === currentUser.email && invite.toUserEmail === otherUserEmail && status === "pending") {
-                        if (!processedConnections.has(connectionId)) {
-                            const tr = document.createElement("tr");
-                            tr.innerHTML = `
-                                <td>${otherUserEmail}</td>
-                                 <td>${invite.toUserId}</td>
-                                <td>Pending</td>
-                            `;
-                            invitationsTable.appendChild(tr);
-                            processedConnections.add(connectionId);
-                        }
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `
+                            <td>${otherUserEmail}</td>
+                            <td>Connected</td>
+                        `;
+                        invitationsTable.appendChild(tr); // Append the row to the table
+
+                        processedConnections.add(connectionId); // Mark this connection as processed
                     }
                 } else {
-                    console.warn("Skipping invalid invitation data:", invite);
+                    console.warn("Skipping invitation data:", invite);
                 }
             });
         }
 
-
-
+        /**
+         * **ADD FRIEND SECTION**
+         * Suggests new connections to the user based on their existing connections.
+         * @param {Array<Object>} existingInvitations - An array of existing invitation objects.
+         * @param {firebase.User} currentUser - The currently logged-in user.
+         */
         async function suggestConnections(existingInvitations, currentUser) {
-          const suggestedConnectionsTable = document.getElementById("suggestedConnectionsTable").getElementsByTagName('tbody')[0];
-          suggestedConnectionsTable.innerHTML = "";
+            const suggestedConnectionsTable = document.getElementById("suggestedConnectionsTable").getElementsByTagName('tbody')[0];
+            suggestedConnectionsTable.innerHTML = "";  // Clear existing suggestions
 
-          const myEmail = currentUser.email;
-          const myConnectionsEmails = new Set();
+            const myEmail = currentUser.email;
 
-          existingInvitations.forEach(inviteData => {
-              if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail) {
-                  if (inviteData.fromUserEmail === myEmail) {
-                      myConnectionsEmails.add(inviteData.toUserEmail);
-                  } else if (inviteData.toUserEmail === myEmail) {
-                      myConnectionsEmails.add(inviteData.fromUserEmail);
-                  }
-              }
-          });
+            // Get emails of my direct connections (both outgoing and incoming)
+            const myConnectionsEmails = new Set();
+            existingInvitations.forEach(inviteData => {
+                if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail){
+                    if (inviteData.fromUserEmail === myEmail) {
+                        myConnectionsEmails.add(inviteData.toUserEmail);
+                    } else if (inviteData.toUserEmail === myEmail) {
+                        myConnectionsEmails.add(inviteData.fromUserEmail);
+                    }
+                }else{
+                    console.warn("Skipping invalid invitation data:", inviteData);
+                }
+            });
 
-          const potentialConnections = new Set();
+            const potentialConnections = new Set();
 
-          for (const connectedEmail of myConnectionsEmails) {
-              const connectedUserInvitations = await db.collection("invitations")
-                  .where("fromUserEmail", "==", connectedEmail)
-                  .get();
+            // Iterate through connections of my connections
+            for (const connectedEmail of myConnectionsEmails) {
+                if(connectedEmail){
+                    const connectedUserInvitations = await db.collection("invitations")
+                        .where("fromUserEmail", "==", connectedEmail)
+                        .get();
 
-              connectedUserInvitations.forEach(doc => {
-                  const inviteData = doc.data();
-                  if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail) {
-                      const potentialEmail = inviteData.toUserEmail;
-                      if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                          potentialConnections.add(potentialEmail);
-                      }
-                  }
-              });
+                    connectedUserInvitations.forEach(doc => {
+                        const inviteData = doc.data();
+                        if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
+                            const potentialEmail = inviteData.toUserEmail;
 
-              const connectedUserInvitationsMe = await db.collection("invitations")
-                  .where("toUserEmail", "==", connectedEmail)
-                  .get();
+                            // Exclude current user, existing connections, and already invited people
+                            if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                potentialConnections.add(potentialEmail);
+                            }
+                        }
+                        else{
+                            console.warn("Skipping invitation data:", inviteData);
+                        }
+                    });
 
-              connectedUserInvitationsMe.forEach(doc => {
-                  const inviteData = doc.data();
-                  if (inviteData && inviteData.fromUserEmail && inviteData.toUserEmail) {
-                      const potentialEmail = inviteData.fromUserEmail;
-                      if (potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
-                          potentialConnections.add(potentialEmail);
-                      }
-                  }
-              });
-          }
+                    if(connectedEmail){
+                        const connectedUserInvitations_Me = await db.collection("invitations")
+                            .where("toUserEmail", "==", connectedEmail)
+                            .get();
 
-          potentialConnections.forEach(potentialEmail => {
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                  <td>${potentialEmail}</td>
-                  <td>
-                      <button class="add-connection-btn" data-email="${potentialEmail}">
-                          Invite
-                      </button>
-                  </td>
-              `;
-              suggestedConnectionsTable.appendChild(tr);
+                        connectedUserInvitations_Me.forEach(doc => {
+                            const inviteData = doc.data();
+                            if (inviteData && inviteData.toUserEmail && inviteData.fromUserEmail){
 
-              const button = tr.querySelector('.add-connection-btn');
-              button.addEventListener('click', (event) => {
-                  const email = event.target.dataset.email;
-                  handleAddConnection(currentUser, { email: email, name: email });
-              });
-          });
-      }
+                                const potentialEmail = inviteData.fromUserEmail;
+                                // Exclude current user, existing connections, and already invited people
+                                if (potentialEmail && potentialEmail !== myEmail && !myConnectionsEmails.has(potentialEmail) && !isAmongExisting(potentialEmail, existingInvitations, myEmail)) {
+                                    potentialConnections.add(potentialEmail);
+                                }
+                            }else{
+                                console.warn("Skipping invitation data:", inviteData);
+                            }
 
-      function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
-          for (const invite of existingInvitations) {
-              if (invite && invite.toUserEmail && invite.fromUserEmail) {
-                if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) ||
-                      (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail)) {
-                      return true;
-                  }
-              }
-          }
-          return false;
-      }
+                        });
+                    }
+                }
+
+            }
+
+            // Display the potential connections in the table
+            potentialConnections.forEach(potentialEmail => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${potentialEmail}</td>
+                    <td>
+                        <button class="add-connection-btn" data-email="${potentialEmail}">
+                            Invite
+                        </button>
+                </td>
+            `;
+                suggestedConnectionsTable.appendChild(tr);
+
+                const button = tr.querySelector('.add-connection-btn');
+                button.addEventListener('click', (event) => {
+                    const email = event.target.dataset.email; // get the email here
+                    handleAddConnection(currentUser, { email: email, name: email });  // Use email for name temporarily
+
+                });
+            });
+        }
+
+        /**
+         * Checks if a potential email is already in an existing invitation list.
+         * @param {string} potentialEmail - The potential user's email address.
+         * @param {Array<Object>} existingInvitations - An array of existing invitation objects.
+         * @param {string} myEmail - The current user's email.
+         * @returns {boolean} - True if the potential user is already connected, false otherwise.
+         */
+        function isAmongExisting(potentialEmail, existingInvitations, myEmail) {
+            for (const invite of existingInvitations) {
+                if (invite && invite.toUserEmail && invite.fromUserEmail){
+                    if ((invite.fromUserEmail === myEmail && invite.toUserEmail === potentialEmail) || (invite.toUserEmail === myEmail && invite.fromUserEmail === potentialEmail )) {
+                        return true; // This potential connection is in existing connections (existingInvite)
+                    }
+                }else{
+                    console.warn("Skipping invitation data:", invite);
+                }
+
+            }
+            return false; // This potential connection is NOT in existing connections
+
+        }
 
 
+        /**
+         * Adds a new connection by creating an invitation in Firestore.
+         * @param {firebase.User} currentUser - The currently logged-in user.
+         * @param {Object} targetUser - An object containing information about the user to invite.
+         */
         function handleAddConnection(currentUser, targetUser) {
             if (currentUser.email === targetUser.email) {
-                alert('Cannot add yourself.');
+                alert('Cannot add yourself as a connection.');
                 return;
             }
 
-            db.collection("invitations").add({
+            db.collection("invitations").add({  // Create an invite
                 fromUserId: currentUser.uid,
                 fromUserEmail: currentUser.email,
-                fromUserName: currentUser.displayName || currentUser.email, // Use email if no displayName
-                toUserId: targetUser.uid || null,
+                fromUserName: currentUser.displayName,
+                toUserId: targetUser.uid || null, // if available
                 toUserEmail: targetUser.email,
-                toUserName: targetUser.name || targetUser.email, // Use email if no name
-                status: "pending",
+                toUserName: targetUser.name,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 alert('Invitation sent!');
@@ -546,70 +555,61 @@
             });
         }
 
-      function handleAcceptInvitation(invitationId) {
-          db.collection("invitations").doc(invitationId).update({
-              status: "accepted"
-          }).then(() => {
-              fetchInvitations(auth.currentUser); // Use auth.currentUser
-          }).catch(error => {
-              console.error("Error accepting invitation:", error);
-              alert("Failed to accept invitation.");
-          });
-      }
-
-      function handleRejectInvitation(invitationId) {
-          db.collection("invitations").doc(invitationId).delete()
-              .then(() => {
-                  fetchInvitations(auth.currentUser); // Use auth.currentUser
-              })
-              .catch(error => {
-                  console.error("Error rejecting invitation:", error);
-                  alert("Failed to reject invitation.");
-              });
-      }
-
+        /**
+         * Manages the D3.js-based visualization of the social network.
+         */
         let simulation = null;
         let currentPhysics = false;
 
         let currentUsers = [];
         let currentConnections = [];
 
+        /**
+         * Creates the D3.js visualization of the social network.
+         * @param {Array<Object>} users - An array of user objects.
+         * @param {Array<string>} connections - An array of connection strings (email1-email2).
+         * @param {boolean} enablePhysics - Whether to enable physics-based simulation for the graph.
+         */
         function createVisualization(users = [], connections = [], enablePhysics = false) {
             if (!Array.isArray(users) || !Array.isArray(connections)) {
                 console.error('Invalid data received:', { users, connections });
                 return;
             }
 
+            // Clear previous visualization
             const container = d3.select("#visualization");
             container.html("");
             if (simulation) simulation.stop();
 
-            const width = 800;
-            const height = 700;
+            const width = 800;  // Increased from 600
+            const height = 700; // Increased from 500
             const centerX = width / 2;
             const centerY = height / 2;
 
             const svg = container.append("svg")
                 .attr("viewBox", `0 0 ${width} ${height}`)
                 .style("width", "100%")
-                .style("max-width", "800px")
+                .style("max-width", "800px") // Increased from 600px
                 .style("margin", "0 auto");
 
+            // Format display name function
             const getDisplayName = user => {
                 const name = user.name || user.email;
-                return name.split('@')[0]
-                    .split('.')
-                    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-                    .join(' ');
+                return name.split('@')[0]  // Remove email domain if it's an email
+                    .split('.')  // Split on dots
+                    .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())  // Capitalize each part
+                    .join(' ');  // Join with space
             };
 
-            const nodes = users.map(user => ({
-                id: user.email ? user.email.trim() : "",
-                label: getDisplayName(user),
-                name: user.name,
-                x: centerX + (Math.random() - 0.5) * 100,
-                y: centerY + (Math.random() - 0.5) * 100
-            }));
+            const nodes = users.map(user => {
+                return {
+                    id: user.email ? user.email.trim() : "",
+                    label: getDisplayName(user),
+                    name: user.name,
+                    x: centerX + (Math.random() - 0.5) * 100,  // Increased initial spread
+                    y: centerY + (Math.random() - 0.5) * 100
+                };
+            });
 
             if (enablePhysics) {
                 const links = connections.map(connection => {
@@ -622,9 +622,13 @@
                 }).filter(l => l.source && l.target);
 
                 simulation = d3.forceSimulation(nodes)
-                    .force("link", d3.forceLink(links).id(d => d.id).distance(200).strength(0.1))
-                    .force("charge", d3.forceManyBody().strength(-300))
-                    .force("collide", d3.forceCollide(40))
+                    .force("link", d3.forceLink(links)
+                        .id(d => d.id)
+                        .distance(200)  // Increased from 100
+                        .strength(0.1)) // Decreased from 0.2
+                    .force("charge", d3.forceManyBody()
+                        .strength(-300)) // Increased repulsion from -80
+                    .force("collide", d3.forceCollide(40)) // Increased from 20
                     .force("center", d3.forceCenter(centerX, centerY))
                     .alpha(1)
                     .restart();
@@ -633,13 +637,14 @@
                 const nodesGroup = svg.append("g").attr("class", "nodes");
                 const labelsGroup = svg.append("g").attr("class", "labels");
 
+                // Add label backgrounds for better readability
                 const labelBackground = labelsGroup.selectAll(".label-background")
                     .data(nodes)
                     .enter().append("rect")
                     .attr("class", "label-background")
                     .attr("fill", "white")
                     .attr("opacity", 0.8)
-                    .attr("rx", 4)
+                    .attr("rx", 4)  // Rounded corners
                     .attr("ry", 4);
 
                 const link = linksGroup.selectAll(".link")
@@ -663,10 +668,11 @@
                     .attr("class", "label")
                     .attr("text-anchor", "middle")
                     .attr("dy", "0.35em")
-                    .attr("font-size", "14")
-                    .attr("font-weight", "500")
+                    .attr("font-size", "14")  // Increased from 12
+                    .attr("font-weight", "500")  // Made text slightly bolder
                     .text(d => d.label);
 
+                // Update label backgrounds based on text size
                 label.each(function(d) {
                     const bbox = this.getBBox();
                     d.bbox = bbox;
@@ -696,7 +702,8 @@
                 });
 
             } else {
-                const radius = 300;
+                // Static circle layout code remains the same but with updated display names
+                const radius = 300;  // Increased from 200
                 const nodePositions = new Map();
 
                 nodes.forEach((node, index) => {
@@ -724,6 +731,7 @@
                     }
                 });
 
+                // Add white background rectangles for labels
                 nodes.forEach(node => {
                     const pos = nodePositions.get(node.id);
                     const tempText = svg.append("text")
@@ -744,7 +752,17 @@
                         .attr("opacity", 0.8)
                         .attr("rx", 4)
                         .attr("ry", 4);
+                });
 
+                // Rest of static layout rendering
+                svg.append("circle")
+                    .attr("cx", centerX)
+                    .attr("cy", centerY)
+                    .attr("r", 8)
+                    .attr("fill", "#4CAF50");
+
+                nodes.forEach(node => {
+                    const pos = nodePositions.get(node.id);
                     svg.append("line")
                         .attr("x1", centerX)
                         .attr("y1", centerY)
@@ -771,42 +789,41 @@
                 });
             }
         }
-        // Toggle Physics
-        document.getElementById('togglePhysics').addEventListener('click', () => {
-            currentPhysics = !currentPhysics;
-            createVisualization(currentUsers, currentConnections, currentPhysics);
+
+        /**
+         * Event listener for DOMContentLoaded.
+         */
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleButton = document.getElementById('togglePhysics');
+            const visualizationDiv = document.getElementById('visualization');
+
+            if (!toggleButton || !visualizationDiv) {
+                console.error('Required elements not found!');
+                return;
+            }
+
+            // Initial visualization with physics disabled
+            fetchInvitations(auth.currentUser);
+
+            toggleButton.addEventListener('click', () => {
+                currentPhysics = !currentPhysics;
+                createVisualization(currentUsers, currentConnections, currentPhysics);
+            });
         });
 
-        // Utility function to validate data
-        function isValidData(data) {
-          return (
-              data &&
-              typeof data === 'object' &&
-              data.hasOwnProperty('fromUserEmail') &&
-              typeof data.fromUserEmail === 'string' &&
-              data.hasOwnProperty('toUserEmail') &&
-              typeof data.toUserEmail === 'string' &&
-              data.hasOwnProperty('fromUserId') &&  // Check for fromUserId
-              data.hasOwnProperty('toUserId')     // Check for toUserId
-          );
-        }
-
-        // Generate and Copy Invitation Link
+        /**
+         * Generates a unique invitation link and stores the invitation in Firestore.
+         */
         document.getElementById("generateLinkBtn").addEventListener("click", () => {
             const user = auth.currentUser;
             if (!user) return;
 
             const uniqueId = Math.random().toString(36).substr(2, 9);
-            const inviteLink = `${window.location.origin}/?inviteId=${uniqueId}`;
+            const inviteLink = `https://my-mandala.com/?inviteId=${uniqueId}`;
 
             db.collection("invitations").doc(uniqueId).set({
                 fromUserId: user.uid,
                 fromUserEmail: user.email,
-                fromUserName: user.displayName || user.email, // Fallback to email
-                toUserId: null, // Initially null, as it's a general invite
-                toUserEmail: null, // Initially null
-                toUserName: null,
-                status: "pending",  //Consider adding status for link-based invites
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             }).then(() => {
                 const inviteLinkInput = document.getElementById("inviteLink");
@@ -816,6 +833,9 @@
             });
         });
 
+        /**
+         * Copies the invitation link to the clipboard.
+         */
         document.getElementById("copyLinkBtn").addEventListener("click", () => {
             const inviteLinkInput = document.getElementById("inviteLink");
             inviteLinkInput.select();
@@ -823,19 +843,18 @@
             alert("Link copied to clipboard!");
         });
 
-          // Sign Out Button
-        document.getElementById('signOutBtn').addEventListener('click', () => {
-            auth.signOut().then(() => {
-                // Redirect to login page or perform other actions after successful sign-out
-                window.location.href = "index.html"; // Assuming your login page is named "index.html"
-            }).catch((error) => {
-                // Handle sign-out errors
-                console.error("Sign-out error:", error);
-                alert("An error occurred during sign-out. Please try again.");
-            });
-        });
 
-
-    </script>
+    //Utility function for checking a data
+    function isValidData(data) {
+        return (
+            data &&
+            typeof data === 'object' &&
+            data.hasOwnProperty('fromUserEmail') &&
+            typeof data.fromUserEmail === 'string' &&
+            data.hasOwnProperty('toUserEmail') &&
+            typeof data.toUserEmail === 'string'
+        );
+    }
+</script>
 </body>
 </html>
