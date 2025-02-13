@@ -363,50 +363,49 @@
             return mutualConnections;
         }
 
-        /**
-         * Displays the existing invitations in a table, preventing duplicates.
-         * @param {firebase.User} currentUser - The currently logged-in user.
-         * @param {Array<Object>} invitations - An array of invitation objects.
-         * @param {Set<string>} mutualConnections - Set of email pairs with accepted connections.
-         */
-        function displayInvitations(currentUser, invitations, mutualConnections) {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            invitationsTable.innerHTML = ""; // Clear the invitation table
+       /**
+ * Displays the existing invitations in a table, showing only mutual connections once.
+ * @param {firebase.User} currentUser - The currently logged-in user.
+ * @param {Array<Object>} invitations - An array of invitation objects.
+ * @param {Set<string>} mutualConnections - Set of email pairs with accepted connections.
+ */
+function displayInvitations(currentUser, invitations, mutualConnections) {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    invitationsTable.innerHTML = ""; // Clear the invitation table
 
-            const processedConnections = new Set(); // Track processed connections
+    const processedConnections = new Set(); // Track processed connections
 
-            invitations.forEach(invite => {
-                // Ensure that it has the necessary features and is not null/undefined.
-                if (invite && invite.fromUserEmail && invite.toUserEmail) {
-                    const email1 = invite.fromUserEmail;
-                    const email2 = invite.toUserEmail;
+    invitations.forEach(invite => {
+        // Ensure that it has the necessary features and is not null/undefined.
+        if (invite && invite.fromUserEmail && invite.toUserEmail) {
+            const email1 = invite.fromUserEmail;
+            const email2 = invite.toUserEmail;
 
-                    // Create a unique connection identifier (e.g., "email1-email2" - always sorted)
-                    const connectionId = [email1, email2].sort().join('-');
+            // Create a unique, sorted connection identifier (e.g., "email1-email2")
+            const connectionId = [email1, email2].sort().join('-');
 
-                    // check is current user is a member of a mutual connection
-                    if(mutualConnections.has(connectionId)){
-                        // Skip if this connection has already been processed
-                        if (processedConnections.has(connectionId)) {
-                            return; // Skip to the next iteration of the loop
-                        }
 
-                        let otherUserEmail = (email1 === currentUser.email) ? email2 : email1; // Determine the other user
+            // Only process if it's a mutual connection AND we haven't already processed it
+            if (mutualConnections.has(connectionId) && !processedConnections.has(connectionId)) {
 
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
-                            <td>${otherUserEmail}</td>
-                            <td>Connected</td>
-                        `;
-                        invitationsTable.appendChild(tr); // Append the row to the table
+                let otherUserEmail = (email1 === currentUser.email) ? email2 : email1; // Determine the other user
 
-                        processedConnections.add(connectionId); // Mark this connection as processed
-                    }
-                } else {
-                    console.warn("Skipping invitation data:", invite);
-                }
-            });
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${otherUserEmail}</td>
+                    <td>Connected</td>
+                `;
+                invitationsTable.appendChild(tr); // Append the row to the table
+
+                processedConnections.add(connectionId); // Mark this connection as processed
+            }
+
+
+        } else {
+            console.warn("Skipping invitation data:", invite);
         }
+    });
+}
 
         /**
          * **ADD FRIEND SECTION**
