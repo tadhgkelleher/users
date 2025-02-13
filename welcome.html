@@ -270,15 +270,21 @@
             }
         });
 
-      function fetchInvitations(currentUser) {
+    function fetchInvitations(currentUser) {
     const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
     invitationsTable.innerHTML = "";
 
-    console.log("Fetching invitations...");  // Added log
+    console.log("Fetching invitations...");
+
+    if (!currentUser || !currentUser.email) {
+        console.warn("fetchInvitations called with invalid currentUser:", currentUser);
+        document.getElementById("errorMessage").textContent = "Error: No user logged in.";
+        return; // Exit the function
+    }
 
     db.collection("invitations").get()
         .then(snapshot => {
-            console.log("Invitations snapshot received:", snapshot); // Added log
+            console.log("Invitations snapshot received:", snapshot);
 
             try {
                 if (snapshot.empty) {
@@ -286,15 +292,12 @@
                     return;
                 }
 
-                const allInvitations = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    if (isValidData(data)) {
-                        allInvitations.push(data);
-                    } else {
-                        console.warn("Skipping invalid invitation data:", data);
-                    }
-                });
+                // Filter out invalid invitations immediately after fetching
+                const allInvitations = snapshot.docs
+                    .map(doc => doc.data())
+                    .filter(data => isValidData(data));
+
+                console.log("Valid invitations after filtering:", allInvitations);  // Log the valid invitations
 
                 // Identify mutual connections
                 const mutualConnections = getMutualConnections(allInvitations);
@@ -304,35 +307,32 @@
                 const connections = new Set();
 
                 allInvitations.forEach(data => {
-                    if (isValidData(data)) {
-                        const fromUserKey = data.fromUserEmail;
-                        if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                            acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName || data.fromUserEmail }); // Added default
-                        }
-                        const toUserKey = data.toUserEmail;
-                        if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                            acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName || data.toUserEmail }); // Added default
-                        }
+                    const fromUserKey = data.fromUserEmail;
+                    if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                        acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName || data.fromUserEmail });
+                    }
+                    const toUserKey = data.toUserEmail;
+                    if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                        acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName || data.toUserEmail });
+                    }
 
-                        // Create a connection string based on from and to, if it's a mutual connection
-                        if (mutualConnections.has([data.fromUserEmail, data.toUserEmail].sort().join('-'))) {
-                            const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                            connections.add(connection);
-                        }
-                    } else {
-                        console.warn("Skipping invitation data:", data);
+                    // Create a connection string based on from and to, if it's a mutual connection
+                    if (mutualConnections.has([data.fromUserEmail, data.toUserEmail].sort().join('-'))) {
+                        const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                        connections.add(connection);
                     }
                 });
 
                 const usersArray = Array.from(acceptedUsersMap.values());
                 const connectionsArray = Array.from(connections);
 
-                // Update currentUsers and currentConnections
-                currentUsers = usersArray;
+                // Validation check before calling createVisualization
+                const validUsers = usersArray.filter(user => user && user.email); // Make sure we have valid emails
+                currentUsers = validUsers; // set the users
                 currentConnections = connectionsArray;
 
-                createVisualization(currentUsers, currentConnections, currentPhysics);
-                displayInvitations(currentUser, allInvitations, mutualConnections); // Important: Pass mutualConnections to displayInvitations
+                createVisualization(currentUsers, currentConnections, currentPhysics); //call visualization here
+                displayInvitations(currentUser, allInvitations, mutualConnections);
                 suggestConnections(allInvitations, currentUser);
 
             } catch (error) {
@@ -346,6 +346,18 @@
         });
 }
 
+function isValidData(data) {
+    return (
+        data &&
+        typeof data === 'object' &&
+        data.hasOwnProperty('fromUserEmail') &&
+        typeof data.fromUserEmail === 'string' &&
+        data.fromUserEmail !== null &&
+        data.hasOwnProperty('toUserEmail') &&
+        typeof data.toUserEmail === 'string' &&
+        data.toUserEmail !== null
+    );
+}
         /**
          * Finds all mutual connections from a list of invitations.
          * @param {Array<Object>} invitations - An array of invitation objects.
