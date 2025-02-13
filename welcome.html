@@ -270,70 +270,81 @@
             }
         });
 
-        /**
-         * Fetches invitations from Firestore and updates the UI, considering only mutual invitations as established connections.
-         * @param {firebase.User} currentUser - The currently logged-in user.
-         */
-        function fetchInvitations(currentUser) {
-            const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
-            invitationsTable.innerHTML = "";
+      function fetchInvitations(currentUser) {
+    const invitationsTable = document.getElementById("invitationsTable").getElementsByTagName('tbody')[0];
+    invitationsTable.innerHTML = "";
 
-            db.collection("invitations").get()
-                .then(snapshot => {
-                    const allInvitations = [];
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (isValidData(data)) {  // Validate the structure
-                            allInvitations.push(data);
-                        } else {
-                            console.warn("Skipping invalid invitation data:", data);
-                        }
-                    });
+    console.log("Fetching invitations...");  // Added log
 
-                    // Identify mutual connections
-                    const mutualConnections = getMutualConnections(allInvitations);
+    db.collection("invitations").get()
+        .then(snapshot => {
+            console.log("Invitations snapshot received:", snapshot); // Added log
 
-                    // Process invitations to build maps
-                    const acceptedUsersMap = new Map();
-                    const connections = new Set();
+            try {
+                if (snapshot.empty) {
+                    console.log("No invitations found.");
+                    return;
+                }
 
-                    allInvitations.forEach(data => {
-                        if (isValidData(data)) {
-                            const fromUserKey = data.fromUserEmail;
-                            if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
-                                acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName });
-                            }
-                            const toUserKey = data.toUserEmail;
-                            if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
-                                acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName });
-                            }
-
-                            // Create a connection string based on from and to, if it's a mutual connection
-                            if (mutualConnections.has([data.fromUserEmail, data.toUserEmail].sort().join('-'))) {
-                                const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
-                                connections.add(connection);
-                            }
-                        } else {
-                            console.warn("Skipping invitation data:", data);
-                        }
-                    });
-
-                    const usersArray = Array.from(acceptedUsersMap.values());
-                    const connectionsArray = Array.from(connections);
-
-                    // Update currentUsers and currentConnections
-                    currentUsers = usersArray;
-                    currentConnections = connectionsArray;
-
-                    createVisualization(currentUsers, currentConnections, currentPhysics);
-                    displayInvitations(currentUser, allInvitations, mutualConnections); // Important: Pass mutualConnections to displayInvitations
-                    suggestConnections(allInvitations, currentUser);
-                })
-                .catch(error => {
-                    console.error("Error fetching invitations:", error);
-                    document.getElementById("errorMessage").textContent = "Error loading invitations.";
+                const allInvitations = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (isValidData(data)) {
+                        allInvitations.push(data);
+                    } else {
+                        console.warn("Skipping invalid invitation data:", data);
+                    }
                 });
-        }
+
+                // Identify mutual connections
+                const mutualConnections = getMutualConnections(allInvitations);
+
+                // Process invitations to build maps
+                const acceptedUsersMap = new Map();
+                const connections = new Set();
+
+                allInvitations.forEach(data => {
+                    if (isValidData(data)) {
+                        const fromUserKey = data.fromUserEmail;
+                        if (!acceptedUsersMap.has(fromUserKey) && fromUserKey !== currentUser.email) {
+                            acceptedUsersMap.set(fromUserKey, { email: data.fromUserEmail, name: data.fromUserName || data.fromUserEmail }); // Added default
+                        }
+                        const toUserKey = data.toUserEmail;
+                        if (!acceptedUsersMap.has(toUserKey) && toUserKey !== currentUser.email) {
+                            acceptedUsersMap.set(toUserKey, { email: data.toUserEmail, name: data.toUserName || data.toUserEmail }); // Added default
+                        }
+
+                        // Create a connection string based on from and to, if it's a mutual connection
+                        if (mutualConnections.has([data.fromUserEmail, data.toUserEmail].sort().join('-'))) {
+                            const connection = [data.fromUserEmail, data.toUserEmail].sort().join('-');
+                            connections.add(connection);
+                        }
+                    } else {
+                        console.warn("Skipping invitation data:", data);
+                    }
+                });
+
+                const usersArray = Array.from(acceptedUsersMap.values());
+                const connectionsArray = Array.from(connections);
+
+                // Update currentUsers and currentConnections
+                currentUsers = usersArray;
+                currentConnections = connectionsArray;
+
+                createVisualization(currentUsers, currentConnections, currentPhysics);
+                displayInvitations(currentUser, allInvitations, mutualConnections); // Important: Pass mutualConnections to displayInvitations
+                suggestConnections(allInvitations, currentUser);
+
+            } catch (error) {
+                console.error("Error processing invitations:", error);
+                document.getElementById("errorMessage").textContent = "Error processing invitations: " + error.message;
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching invitations:", error);
+            document.getElementById("errorMessage").textContent = "Error loading invitations: " + error.message;
+        });
+}
 
         /**
          * Finds all mutual connections from a list of invitations.
