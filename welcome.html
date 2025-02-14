@@ -212,16 +212,6 @@
             <div id="visualization"></div>
         </div>
 
-         <h2>Connected</h2>
-        <table id="invitationsTable">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
 
         <h2>Suggested Connections</h2>
         <table id="suggestedConnectionsTable">
@@ -332,7 +322,7 @@
                 currentConnections = connectionsArray;
 
                 createVisualization(currentUsers, currentConnections, currentPhysics); //call visualization here
-                displayInvitations(currentUser, allInvitations, mutualConnections);
+                //displayInvitations(currentUser, allInvitations, mutualConnections);
                 suggestConnections(allInvitations, currentUser);
 
             } catch (error) {
@@ -855,6 +845,7 @@ function displayInvitations(currentUser, invitations, mutualConnections) {
             });
         });
 
+     
         /**
          * Copies the invitation link to the clipboard.
          */
