@@ -1,313 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up / Log In</title>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-        <style>
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: #0a0a0a;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(76, 175, 80, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(33, 150, 243, 0.1) 0%, transparent 40%);
-            min-height: 100vh;
-            margin: 0;
-            display: grid;
-            place-items: center;
-        }
-        .container {
-            background: rgba(18, 18, 18, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 2.5rem;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 440px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-        h1 {
-            color: #fff;
-            font-size: 1.75rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            font-weight: 600;
-        }
-        .input-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 0.875rem;
-            width: 100%;
-            transition: all 0.2s;
-        }
-        input:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-        }
-        button {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 8px;
-            border: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .primary-btn {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            margin-bottom: 1rem;
-        }
-        .google-btn {
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .google-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .text-center {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        .text-center a {
-            color: #4CAF50;
-            text-decoration: none;
-        }
-        .text-center a:hover {
-            text-decoration: underline;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Mandala - Explore the Beauty of Mandalas</title>
+  <style>
+    /* Reset and Base Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      line-height: 1.6;
+    }
 
-            .error-message, 
-.debug-info {
-    display: none;
-    visibility: hidden;
-    height: 0;
-    width: 0;
-    opacity: 0;
-    position: absolute;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-}
-        .node-decoration {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: #4CAF50;
-            border-radius: 50%;
-            filter: blur(1px);
-        }
-    </style>
+    /* Header */
+    header {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    header .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    nav ul {
+      list-style: none;
+      margin-top: 10px;
+    }
+    nav ul li {
+      display: inline;
+      margin: 0 15px;
+    }
+    nav ul li a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    nav ul li a:hover {
+      text-decoration: underline;
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 50px 20px;
+      background-color: #fff;
+    }
+    .hero img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 20px;
+    }
+    .cta-button {
+      display: inline-block;
+      background-color: #ff6600;
+      color: #fff;
+      padding: 15px 30px;
+      text-decoration: none;
+      font-size: 20px;
+      border-radius: 5px;
+    }
+    .cta-button:hover {
+      background-color: #e65c00;
+    }
+
+    /* Content Section */
+    .content {
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .content h2 {
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    .teasers {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+    .teaser {
+      width: 30%;
+      min-width: 250px;
+      background-color: #fff;
+      padding: 20px;
+      margin: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .teaser h3 {
+      margin-bottom: 10px;
+    }
+    .teaser a {
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .teaser a:hover {
+      text-decoration: underline;
+    }
+    .gallery {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
+    .gallery img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin: 10px;
+    }
+
+    /* Generator Preview Section */
+    .generator-preview {
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #eee;
+    }
+    .generator-preview h2 {
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+    .try-now-button {
+      display: inline-block;
+      background-color: #0066cc;
+      color: #fff;
+      padding: 15px 30px;
+      text-decoration: none;
+      font-size: 20px;
+      border-radius: 5px;
+    }
+    .try-now-button:hover {
+      background-color: #005bb5;
+    }
+
+    /* Footer */
+    footer {
+      background-color: #333;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+    .social-links a {
+      color: #fff;
+      margin: 0 10px;
+      text-decoration: none;
+    }
+    .social-links a:hover {
+      text-decoration: underline;
+    }
+    .newsletter {
+      margin-top: 10px;
+    }
+    .newsletter input {
+      padding: 10px;
+      width: 200px;
+      border: none;
+      border-radius: 5px 0 0 5px;
+    }
+    .newsletter button {
+      padding: 10px 20px;
+      background-color: #ff6600;
+      color: #fff;
+      border: none;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+    }
+    .newsletter button:hover {
+      background-color: #e65c00;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Sign Up / Log In</h1>
 
-        <!-- Invite Message -->
-        <div id="inviteMessage"></div>
-        <div id="inviteInfo" class="invite-info"></div>
+  <!-- Header Section -->
+  <header>
+    <div class="logo">My Mandala</div>
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/history">History of Mandalas</a></li>
+        <li><a href="/meanings">Deeper Meanings</a></li>
+        <li><a href="/far-out">Far-Out Ideas</a></li>
+      </ul>
+    </nav>
+    <p>Welcome to My Mandala - Explore the beauty and meaning of mandalas.</p>
+  </header>
 
-        <!-- Error Message -->
-        <div id="errorMessage" class="error-message"></div>
+  <!-- Hero Section -->
+  <section class="hero">
+    <img src="hero-mandala.jpg" alt="A beautiful mandala design">
+    <a href="/generator.html" class="cta-button">Generate Your Mandala</a>
+  </section>
 
-        <!-- Debug Info -->
-        <div id="debugInfo" class="debug-info"></div>
-
-        <!-- Form to Sign Up or Log In -->
-        <form id="authForm">
-            <div class="name-fields">
-                <input type="text" id="firstName" placeholder="First Name" required>
-                <input type="text" id="lastName" placeholder="Last Name" required>
-            </div>
-            <input type="email" id="email" placeholder="Enter your email" required>
-            <input type="password" id="password" placeholder="Enter your password" required>
-            <input type="hidden" id="inviteId">
-            <button type="submit">Sign Up</button>
-        </form>
-
-        <!-- Google Login Button -->
-        <button class="google-btn" id="googleSignInBtn">Sign In with Google</button>
-
-        <div class="text-center">
-            <p>Already have an account? <a href="javascript:void(0);" onclick="switchToLoginForm()">Log In</a></p>
-        </div>
+  <!-- Content Section -->
+  <section class="content">
+    <h2>What are Mandalas?</h2>
+    <p>Mandalas are intricate geometric designs that hold deep spiritual and cultural significance. They are used in various traditions for meditation, healing, and self-expression.</p>
+    <div class="teasers">
+      <div class="teaser">
+        <h3>History of Mandalas</h3>
+        <p>Discover the origins and evolution of mandalas across different cultures.</p>
+        <a href="/history">Read More</a>
+      </div>
+      <div class="teaser">
+        <h3>Deeper Meanings</h3>
+        <p>Explore the spiritual and symbolic significance of mandalas.</p>
+        <a href="/meanings">Read More</a>
+      </div>
+      <div class="teaser">
+        <h3>Far-Out Ideas</h3>
+        <p>Delve into unconventional and creative interpretations of mandalas.</p>
+        <a href="/far-out">Read More</a>
+      </div>
     </div>
+    <div class="gallery">
+      <img src="mandala1.jpg" alt="Sample Mandala 1">
+      <img src="mandala2.jpg" alt="Sample Mandala 2">
+      <img src="mandala3.jpg" alt="Sample Mandala 3">
+    </div>
+  </section>
 
-    <script>
-       // Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyA8nC973Wex5WJVgovi_MVzDtmuL4IOhjE",
-    authDomain: "mandala-5165e.firebaseapp.com",
-    projectId: "mandala-5165e",
-    storageBucket: "mandala-5165e.appspot.com",
-    messagingSenderId: "569537405023",
-    appId: "1:569537405023:web:e7f795e6280f7a21e9bbea",
-    measurementId: "G-TER99X7NBT"
-};
+  <!-- Generator Preview Section -->
+  <section class="generator-preview">
+    <h2>Try Our Mandala Generator</h2>
+    <p>Create your own unique mandala with just a click.</p>
+    <a href="/generator.html" class="try-now-button">Try It Now</a>
+  </section>
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+  <!-- Footer Section -->
+  <footer>
+    <p>&copy; 2023 My Mandala. All rights reserved.</p>
+    <div class="social-links">
+      <a href="#">Facebook</a>
+      <a href="#">Twitter</a>
+      <a href="#">Instagram</a>
+    </div>
+    <form class="newsletter">
+      <input type="email" placeholder="Enter your email">
+      <button type="submit">Subscribe</button>
+    </form>
+  </footer>
 
-// Debug function
-function logDebug(message, data = null) {
-    const debugInfo = document.getElementById('debugInfo');
-    debugInfo.style.display = 'block';
-    const timestamp = new Date().toISOString();
-    const debugMessage = `${timestamp}: ${message}${data ? '\nData: ' + JSON.stringify(data) : ''}`;
-    debugInfo.innerHTML += debugMessage + '<br>';
-    console.log(debugMessage, data);
-}
-
-// Handle inviteId from URL
-const urlParams = new URLSearchParams(window.location.search);
-const inviteId = urlParams.get('inviteId');
-
-document.getElementById('inviteId').value = inviteId || '';
-
-if (inviteId) {
-    logDebug('Invite ID found:', inviteId);
-    const inviteMessage = document.getElementById('inviteMessage');
-    const inviteInfo = document.getElementById('inviteInfo');
-
-    const invitationRef = db.collection('invitations').doc(inviteId);
-    invitationRef.get().then((docSnapshot) => {
-        if (docSnapshot.exists) {
-            const invitationData = docSnapshot.data();
-            logDebug('Invitation data retrieved:', invitationData);
-            const sender = invitationData.fromUserName || invitationData.fromUserEmail;
-            inviteMessage.textContent = `You have been invited by ${sender}. Please sign up to accept the invite.`;
-            inviteInfo.innerHTML = `Sender: ${sender}<br>Email: ${invitationData.fromUserEmail}`;
-        } else {
-            logDebug('Invalid invite ID - document does not exist');
-            inviteMessage.textContent = "Invalid invite link.";
-        }
-    }).catch((error) => {
-        logDebug('Error fetching invitation:', error);
-    });
-}
-
-// Handle form submission
-async function handleAuth(event, isSignUp) {
-    event.preventDefault();
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const firstName = document.getElementById('firstName')?.value || '';
-    const lastName = document.getElementById('lastName')?.value || '';
-    const inviteId = document.getElementById('inviteId').value;
-
-    try {
-        let userCredential;
-        if (isSignUp) {
-            userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            logDebug('User signed up successfully', { uid: userCredential.user.uid });
-        } else {
-            userCredential = await auth.signInWithEmailAndPassword(email, password);
-            logDebug('User logged in successfully', { uid: userCredential.user.uid });
-        }
-        
-        const user = userCredential.user;
-        if (isSignUp) {
-            await db.collection('users').doc(user.uid).set({
-                firstName, lastName, email: user.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-
-        if (inviteId) {
-            logDebug('Processing invitation acceptance');
-            const invitationRef = db.collection('invitations').doc(inviteId);
-            await invitationRef.update({
-                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                acceptedByUser: firebase.firestore.FieldValue.arrayUnion({
-                    id: user.uid,
-                    name: `${firstName} ${lastName}`,
-                    email: user.email
-                })
-            });
-            logDebug('Invitation marked as accepted');
-        }
-
-        window.location.href = '/welcome.html';
-    } catch (error) {
-        logDebug('Authentication error:', error);
-        document.getElementById('errorMessage').textContent = error.message;
-    }
-}
-
-document.getElementById('authForm').addEventListener('submit', (event) => {
-    const isSignUp = document.querySelector('button[type="submit"]').textContent === 'Sign Up';
-    handleAuth(event, isSignUp);
-});
-
-// Google login handler
-document.getElementById('googleSignInBtn').addEventListener('click', async function () {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    try {
-        logDebug('Starting Google sign-in process');
-        const result = await auth.signInWithPopup(provider);
-        const user = result.user;
-        const displayName = user.displayName || '';
-        const names = displayName.split(' ');
-        const firstName = names[0] || '';
-        const lastName = names.slice(1).join(' ') || '';
-
-        logDebug('Google sign-in successful', { uid: user.uid });
-        await db.collection('users').doc(user.uid).set({
-            firstName, lastName, email: user.email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-
-        if (inviteId) {
-            logDebug('Processing invitation acceptance for Google sign-in');
-            const invitationRef = db.collection('invitations').doc(inviteId);
-            await invitationRef.update({
-                acceptedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                acceptedByUser: firebase.firestore.FieldValue.arrayUnion({
-                    id: user.uid,
-                    name: `${firstName} ${lastName}`,
-                    email: user.email
-                })
-            });
-            logDebug('Invitation marked as accepted');
-        }
-
-        window.location.href = '/welcome.html';
-    } catch (error) {
-        logDebug('Error during Google sign-in:', error);
-        document.getElementById('errorMessage').textContent = error.message;
-    }
-});
-
-        // Switch to login form
-        function switchToLoginForm() {
-            const authForm = document.getElementById('authForm');
-            authForm.innerHTML = `
-                <input type="email" id="email" placeholder="Enter your email" required>
-                <input type="password" id="password" placeholder="Enter your password" required>
-                <input type="hidden" id="inviteId" value="${inviteId || ''}">
-                <button type="submit">Log In</button>
-            `;
-            document.querySelector('button[type="submit"]').textContent = 'Log In'; // Change button text to 'Log In'
-            logDebug('Switched to login form');
-        }
-    </script>
 </body>
 </html>
