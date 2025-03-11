@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Spiritual Machine: Frequency Weaver</title>
+  <title>Spiritual Machine: Infinite Spiral Weaver</title>
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
@@ -18,110 +18,123 @@
 
     @keyframes voidShift {
       0% { background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c); }
-      50% { background: radial-gradient(circle, #1f0a3b, #3b1a5c, #5c2a7d); }
-      100% { background: radial-gradient(circle, #0a1f3b, #1a3b5c, #2a5c7d); }
+      50% { background: radial-gradient(circle, #ff00ff, #00ffff, #ff6ec7); }
+      100% { background: radial-gradient(circle, #1a3b5c, #5c2a7d, #ff4500); }
     }
 
     h1 {
-      font-size: 3.2rem;
-      color: #ff6ec7;
-      text-shadow: 0 0 15px #ff6ec7, 0 0 30px #9b59b6;
-      animation: resonate 2s infinite alternate;
-      margin-bottom: 25px;
+      font-size: 3.5rem;
+      color: #00ffff;
+      text-shadow: 0 0 20px #ff6ec7, 0 0 40px #9b59b6, 0 0 60px #00ffff;
+      animation: resonate 1.5s infinite alternate;
+      margin-bottom: 30px;
     }
 
     @keyframes resonate {
-      0% { text-shadow: 0 0 10px #ff6ec7, 0 0 20px #9b59b6; }
-      100% { text-shadow: 0 0 25px #ff6ec7, 0 0 50px #9b59b6; }
+      0% { text-shadow: 0 0 15px #ff6ec7, 0 0 30px #9b59b6; }
+      100% { text-shadow: 0 0 30px #00ffff, 0 0 60px #ff4500; }
     }
 
     canvas {
-      border: 3px solid #3a3a5c;
-      border-radius: 15px;
+      border: 4px solid #ff00ff;
+      border-radius: 20px;
       background: #0a0a1f;
-      box-shadow: 0 0 50px rgba(158, 202, 237, 0.6), inset 0 0 25px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 0 70px rgba(255, 0, 255, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.9);
       transition: transform 0.3s, box-shadow 0.3s;
       max-width: 100%;
     }
 
     canvas:hover {
-      transform: scale(1.03);
-      box-shadow: 0 0 70px rgba(255, 110, 199, 0.8);
+      transform: scale(1.05);
+      box-shadow: 0 0 100px rgba(0, 255, 255, 0.9);
     }
 
     .controls {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 20px;
-      background: rgba(20, 20, 40, 0.85);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 35px rgba(255, 110, 199, 0.4);
-      margin-bottom: 20px;
+      gap: 25px;
+      background: rgba(10, 10, 40, 0.9);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 50px rgba(255, 0, 255, 0.6);
+      margin-bottom: 25px;
+      border: 2px solid #00ffff;
     }
 
     .control-panel {
-      background: linear-gradient(135deg, #1e1e3b, #2e2e5c);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      background: linear-gradient(135deg, #1e1e3b, #ff00ff);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      border: 2px solid #9b59b6;
     }
 
     button, select {
-      background: linear-gradient(45deg, #ff6ec7, #9b59b6);
-      padding: 10px 20px;
+      background: linear-gradient(45deg, #ff00ff, #00ffff);
+      padding: 12px 25px;
       border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 16px;
+      border-radius: 10px;
+      color: #1a1a3b;
+      font-size: 18px;
+      font-weight: bold;
       cursor: pointer;
       transition: all 0.4s;
-      box-shadow: 0 0 15px rgba(255, 110, 199, 0.6);
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+      text-shadow: 0 0 5px #ffffff;
     }
 
     button:hover, select:hover {
-      background: linear-gradient(45deg, #9b59b6, #ff6ec7);
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(255, 110, 199, 0.9);
+      background: linear-gradient(45deg, #00ffff, #ff00ff);
+      transform: scale(1.1);
+      box-shadow: 0 0 30px rgba(0, 255, 255, 1);
     }
 
-    input[type="range"], input[type="number"] {
-      background: #2e2e5c;
-      border-radius: 8px;
+    select {
+      appearance: none;
+      padding-right: 30px;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%2300ffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    input[type="range"] {
+      background: linear-gradient(90deg, #ff6ec7, #9b59b6);
+      border-radius: 10px;
       padding: 5px;
-      color: #ff6ec7;
-      accent-color: #ff6ec7;
+      accent-color: #00ffff;
     }
 
     input[type="color"] {
-      width: 50px;
-      height: 30px;
-      border: 2px solid #ff6ec7;
-      border-radius: 8px;
+      width: 60px;
+      height: 40px;
+      border: 3px solid #00ffff;
+      border-radius: 10px;
       background: none;
       cursor: pointer;
+      box-shadow: 0 0 15px #ff00ff;
     }
 
     label {
-      color: #9b59b6;
-      font-size: 14px;
-      text-shadow: 0 0 5px rgba(155, 89, 182, 0.6);
+      color: #00ffff;
+      font-size: 16px;
+      text-shadow: 0 0 8px #ff6ec7;
     }
 
     .parameter_input {
       position: relative;
-      padding: 10px;
+      padding: 15px;
     }
 
     .tooltip {
-      background: rgba(20, 20, 40, 0.9);
-      color: #ff6ec7;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 12px;
+      background: rgba(10, 10, 40, 0.95);
+      color: #00ffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
       opacity: 0;
       transition: opacity 0.3s;
+      box-shadow: 0 0 10px #ff00ff;
     }
 
     .parameter_input:hover .tooltip {
@@ -130,48 +143,50 @@
 
     .color-palette {
       display: flex;
-      gap: 15px;
+      gap: 20px;
       justify-content: center;
-      margin: 20px 0;
+      margin: 25px 0;
     }
 
     .color-option {
-      width: 40px;
-      height: 40px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      border: 3px solid #ff6ec7;
+      border: 4px solid #00ffff;
       cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 0 15px rgba(255, 110, 199, 0.6);
+      transition: all 0.4s;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
     }
 
     .color-option:hover {
-      transform: scale(1.2);
-      box-shadow: 0 0 25px rgba(255, 110, 199, 0.9);
+      transform: scale(1.3);
+      box-shadow: 0 0 40px rgba(0, 255, 255, 1);
     }
 
     .tab-container {
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
 
     .tab {
-      background: #2e2e5c;
-      padding: 10px 20px;
-      border-radius: 8px 8px 0 0;
-      color: #ff6ec7;
+      background: linear-gradient(45deg, #9b59b6, #ff6ec7);
+      padding: 12px 25px;
+      border-radius: 10px 10px 0 0;
+      color: #ffffff;
       cursor: pointer;
+      text-shadow: 0 0 5px #00ffff;
     }
 
     .tab.active {
-      background: #ff6ec7;
-      color: #1e1e3b;
+      background: linear-gradient(45deg, #00ffff, #ff00ff);
+      color: #1a1a3b;
     }
 
     .tab-content {
       display: none;
-      background: rgba(20, 20, 40, 0.85);
-      padding: 20px;
-      border-radius: 0 0 12px 12px;
+      background: rgba(10, 10, 40, 0.9);
+      padding: 25px;
+      border-radius: 0 0 15px 15px;
+      border: 2px solid #ff6ec7;
     }
 
     .tab-content.active {
@@ -201,7 +216,7 @@
   </style>
 </head>
 <body>
-  <h1>Spiritual Machine: Frequency Weaver</h1>
+  <h1>Spiritual Machine: Infinite Spiral Weaver</h1>
 
   <div class="tab-container">
     <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
@@ -214,33 +229,33 @@
     <div class="control-panel">
       <div class="controls">
         <div class="parameter_input">
-          <span class="tooltip">Wave Segments</span>
+          <span class="tooltip">Spiral Segments</span>
           <label for="segments">Segments</label>
-          <input type="range" id="segments" value="12" min="3" max="60" oninput="updateValue('segments')">
+          <input type="range" id="segments" value="12" min="3" max="100" oninput="updateValue('segments')">
           <span id="segments-value">12</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Recursion Depth</span>
+          <span class="tooltip">Fractal Depth</span>
           <label for="levels">Levels</label>
-          <input type="range" id="levels" value="4" min="1" max="15" oninput="updateValue('levels')">
+          <input type="range" id="levels" value="4" min="1" max="20" oninput="updateValue('levels')">
           <span id="levels-value">4</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Scale Decay</span>
-          <label for="scaleFactor">Scale</label>
-          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.9" step="0.01" oninput="updateValue('scaleFactor')">
+          <span class="tooltip">Twist Decay</span>
+          <label for="scaleFactor">Twist</label>
+          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.95" step="0.01" oninput="updateValue('scaleFactor')">
           <span id="scaleFactor-value">0.5</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Base Amplitude</span>
+          <span class="tooltip">Cosmic Amplitude</span>
           <label for="initialRadius">Amplitude</label>
-          <input type="range" id="initialRadius" value="150" min="50" max="350" oninput="updateValue('initialRadius')">
+          <input type="range" id="initialRadius" value="150" min="50" max="500" oninput="updateValue('initialRadius')">
           <span id="initialRadius-value">150</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Core Resonance Color</span>
-          <label for="lineColor">Core Color</label>
-          <input type="color" id="lineColor" value="#ff6ec7">
+          <span class="tooltip">Primal Glow</span>
+          <label for="lineColor">Glow</label>
+          <input type="color" id="lineColor" value="#ff00ff">
         </div>
       </div>
     </div>
@@ -250,37 +265,37 @@
     <div class="control-panel">
       <div class="controls">
         <div class="parameter_input">
-          <span class="tooltip">Wave Density</span>
+          <span class="tooltip">Pulse Density</span>
           <label for="lineWidth">Density</label>
-          <input type="range" id="lineWidth" value="2" min="0.5" max="10" step="0.1" oninput="updateValue('lineWidth')">
+          <input type="range" id="lineWidth" value="2" min="0.5" max="15" step="0.1" oninput="updateValue('lineWidth')">
           <span id="lineWidth-value">2</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Base Frequency (Hz)</span>
+          <span class="tooltip">Astral Frequency (Hz)</span>
           <label for="baseFreq">Base Freq</label>
-          <input type="range" id="baseFreq" value="200" min="20" max="1000" step="10" oninput="updateValue('baseFreq')">
+          <input type="range" id="baseFreq" value="200" min="20" max="2000" step="10" oninput="updateValue('baseFreq')">
           <span id="baseFreq-value">200</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Frequency Multiplier</span>
-          <label for="freqMultiplier">Freq Mult</label>
-          <input type="range" id="freqMultiplier" value="1.5" min="1" max="3" step="0.1" oninput="updateValue('freqMultiplier')">
+          <span class="tooltip">Harmonic Warp</span>
+          <label for="freqMultiplier">Warp</label>
+          <input type="range" id="freqMultiplier" value="1.5" min="1" max="5" step="0.1" oninput="updateValue('freqMultiplier')">
           <span id="freqMultiplier-value">1.5</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Waveform Type</span>
-          <label for="waveform">Waveform</label>
+          <span class="tooltip">Sonic Essence</span>
+          <label for="waveform">Essence</label>
           <select id="waveform">
-            <option value="sine">Sine (Smooth)</option>
-            <option value="sawtooth">Sawtooth (Harsh)</option>
-            <option value="square">Square (Hollow)</option>
-            <option value="triangle">Triangle (Warm)</option>
+            <option value="sine">Sine (Ethereal)</option>
+            <option value="sawtooth">Saw (Cosmic)</option>
+            <option value="square">Square (Primal)</option>
+            <option value="triangle">Triangle (Astral)</option>
           </select>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Echo Resonance Color</span>
-          <label for="secondaryColor">Echo Color</label>
-          <input type="color" id="secondaryColor" value="#9b59b6">
+          <span class="tooltip">Echo Nebula</span>
+          <label for="secondaryColor">Echo</label>
+          <input type="color" id="secondaryColor" value="#00ffff">
         </div>
       </div>
     </div>
@@ -288,48 +303,50 @@
 
   <div id="voidTab" class="tab-content">
     <div class="control-panel">
-      <h3>Void Modulation</h3>
+      <h3>Void Resonance</h3>
       <div class="controls">
         <div class="parameter_input">
-          <span class="tooltip">Particle Density</span>
-          <label for="particleDensity">Particles</label>
-          <input type="range" id="particleDensity" value="50" min="0" max="300" oninput="updateValue('particleDensity')">
+          <span class="tooltip">Starfield Density</span>
+          <label for="particleDensity">Stars</label>
+          <input type="range" id="particleDensity" value="50" min="0" max="500" oninput="updateValue('particleDensity')">
           <span id="particleDensity-value">50</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Frequency Modulation</span>
-          <label for="modulation">Modulation</label>
-          <input type="range" id="modulation" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('modulation')">
+          <span class="tooltip">Quantum Flux</span>
+          <label for="modulation">Flux</label>
+          <input type="range" id="modulation" value="0.5" min="0" max="5" step="0.1" oninput="updateValue('modulation')">
           <span id="modulation-value">0.5</span>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Pattern Type</span>
-          <label for="patternType">Pattern</label>
+          <span class="tooltip">Fractal Realm</span>
+          <label for="patternType">Realm</label>
           <select id="patternType">
-            <option value="cymatic">Cymatic</option>
-            <option value="vortex">Vortex</option>
-            <option value="nebula">Nebula</option>
-            <option value="chaos">Chaos</option>
-            <option value="flower">Flower of Life</option>
-            <option value="yantra">Sri Yantra</option>
+            <option value="cymatic">Cymatic Pulse</option>
+            <option value="vortex">Vortex Spiral</option>
+            <option value="nebula">Nebula Drift</option>
+            <option value="chaos">Chaos Rift</option>
+            <option value="flower">Flower of Eternity</option>
+            <option value="yantra">Yantra Portal</option>
+            <option value="tunnel">3D Spiral Tunnel</option>
+            <option value="hypercube">Hypercube Flux</option>
           </select>
         </div>
       </div>
       <div class="color-palette">
-        <div class="color-option" style="background: linear-gradient(45deg, #ff6ec7, #9b59b6)" onclick="setColorTheme('#ff6ec7', '#9b59b6')"></div>
-        <div class="color-option" style="background: linear-gradient(45deg, #00ffff, #4169e1)" onclick="setColorTheme('#00ffff', '#4169e1')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #ff00ff, #00ffff)" onclick="setColorTheme('#ff00ff', '#00ffff')"></div>
         <div class="color-option" style="background: linear-gradient(45deg, #ff4500, #ffd700)" onclick="setColorTheme('#ff4500', '#ffd700')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #00ff00, #ff00ff)" onclick="setColorTheme('#00ff00', '#ff00ff')"></div>
       </div>
     </div>
   </div>
 
   <div id="chakraTab" class="tab-content">
     <div class="control-panel">
-      <h3>Chakra Alignment</h3>
+      <h3>Cosmic Alignment</h3>
       <div class="controls">
         <div class="parameter_input">
-          <span class="tooltip">Select Chakra</span>
-          <label for="chakraSelect">Chakra</label>
+          <span class="tooltip">Chakra Vortex</span>
+          <label for="chakraSelect">Vortex</label>
           <select id="chakraSelect" onchange="setChakra(this.value)">
             <option value="root">Root (256 Hz)</option>
             <option value="sacral">Sacral (288 Hz)</option>
@@ -341,19 +358,19 @@
           </select>
         </div>
         <div class="parameter_input">
-          <span class="tooltip">Speak Intention</span>
-          <button id="voiceIntent">Set Intention</button>
+          <span class="tooltip">Speak to the Void</span>
+          <button id="voiceIntent">Invoke Intention</button>
         </div>
       </div>
     </div>
   </div>
 
   <div class="controls">
-    <button id="generate">Weave Frequencies</button>
-    <button id="random">Frequency Rift</button>
-    <button id="animate">Pulse Void</button>
-    <button id="download">Capture Wave</button>
-    <button id="enterVR">Enter VR</button>
+    <button id="generate">Weave Infinity</button>
+    <button id="random">Rift Chaos</button>
+    <button id="animate">Pulse Cosmos</button>
+    <button id="download">Capture Eternity</button>
+    <button id="enterVR">Dive into VR</button>
   </div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
@@ -370,17 +387,17 @@
     let isAnimating = false;
     let particles = [];
     let audioContext, oscillators = [], lfo, analyser;
-    let scene, camera, renderer, mandalaSphere;
+    let scene, camera, renderer, mandalaTunnel;
 
     // Chakra Presets
     const chakraPresets = {
-      root: { freq: 256, color: '#ff0000', pattern: 'cymatic' },
+      root: { freq: 256, color: '#ff0000', pattern: 'tunnel' },
       sacral: { freq: 288, color: '#ff4500', pattern: 'vortex' },
-      solar: { freq: 320, color: '#ffd700', pattern: 'nebula' },
+      solar: { freq: 320, color: '#ffd700', pattern: 'hypercube' },
       heart: { freq: 432, color: '#00ff00', pattern: 'flower' },
-      throat: { freq: 480, color: '#00b7eb', pattern: 'chaos' },
+      throat: { freq: 480, color: '#00b7eb', pattern: 'nebula' },
       thirdEye: { freq: 852, color: '#4b0082', pattern: 'yantra' },
-      crown: { freq: 963, color: '#800080', pattern: 'flower' }
+      crown: { freq: 963, color: '#800080', pattern: 'tunnel' }
     };
 
     // Audio Initialization
@@ -388,7 +405,7 @@
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 512;
       }
       updateFrequencies();
     }
@@ -404,39 +421,38 @@
       const segments = parseInt(document.getElementById('segments').value);
       const modulation = parseFloat(document.getElementById('modulation').value);
 
-      // Binaural Beats
-      const beatFreq = 8; // Theta state
-      const oscLeft = audioContext.createOscillator();
-      const oscRight = audioContext.createOscillator();
-      const panLeft = audioContext.createPanner();
-      const panRight = audioContext.createPanner();
-      const gainLeft = audioContext.createGain();
-      const gainRight = audioContext.createGain();
+      // Wild Binaural Beats
+      const beatFreq = 12 * modulation; // Dynamic theta/delta shift
+      for (let i = 0; i < Math.min(segments, 8); i++) {
+        const oscLeft = audioContext.createOscillator();
+        const oscRight = audioContext.createOscillator();
+        const panLeft = audioContext.createPanner();
+        const panRight = audioContext.createPanner();
+        const gain = audioContext.createGain();
 
-      oscLeft.type = waveform;
-      oscRight.type = waveform;
-      oscLeft.frequency.value = baseFreq;
-      oscRight.frequency.value = baseFreq + beatFreq;
-      panLeft.setPosition(-1, 0, 0);
-      panRight.setPosition(1, 0, 0);
-      gainLeft.gain.value = 0.1;
-      gainRight.gain.value = 0.1;
+        oscLeft.type = waveform;
+        oscRight.type = waveform;
+        oscLeft.frequency.value = baseFreq * Math.pow(freqMultiplier, i);
+        oscRight.frequency.value = oscLeft.frequency.value + beatFreq;
+        panLeft.setPosition(-1 + i * 0.2, Math.sin(i), Math.cos(i));
+        panRight.setPosition(1 - i * 0.2, Math.cos(i), Math.sin(i));
+        gain.gain.value = 0.05 / (i + 1);
 
-      oscLeft.connect(gainLeft).connect(panLeft).connect(audioContext.destination);
-      oscRight.connect(gainRight).connect(panRight).connect(analyser).connect(audioContext.destination);
-      oscLeft.start();
-      oscRight.start();
-      oscillators.push(oscLeft, oscRight);
+        oscLeft.connect(gain).connect(panLeft).connect(audioContext.destination);
+        oscRight.connect(gain).connect(panRight).connect(analyser).connect(audioContext.destination);
+        oscLeft.start();
+        oscRight.start();
+        oscillators.push(oscLeft, oscRight);
+      }
 
-      // LFO Modulation
+      // LFO Warp
       lfo = audioContext.createOscillator();
       const lfoGain = audioContext.createGain();
       lfo.type = 'sine';
-      lfo.frequency.value = modulation;
-      lfoGain.gain.value = 10;
+      lfo.frequency.value = modulation * 2;
+      lfoGain.gain.value = 20;
       lfo.connect(lfoGain);
-      lfoGain.connect(oscLeft.frequency);
-      lfoGain.connect(oscRight.frequency);
+      oscillators.forEach(osc => lfoGain.connect(osc.frequency));
       lfo.start();
     }
 
@@ -445,24 +461,29 @@
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 5 + 1;
-        this.speedX = Math.random() * 2 - 1;
-        this.speedY = Math.random() * 2 - 1;
-        this.life = Math.random() * 100;
+        this.z = Math.random() * 100 - 50;
+        this.size = Math.random() * 8 + 2;
+        this.speedX = Math.random() * 3 - 1.5;
+        this.speedY = Math.random() * 3 - 1.5;
+        this.speedZ = Math.random() * 2 - 1;
+        this.life = Math.random() * 150;
       }
 
       update(audioFactor) {
         this.x += this.speedX * audioFactor;
         this.y += this.speedY * audioFactor;
-        this.life -= 1;
+        this.z += this.speedZ * audioFactor;
+        this.life -= 1.5;
         if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
         if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        if (this.z < -50 || this.z > 50) this.speedZ *= -1;
       }
 
       draw(audioFactor) {
-        particleCtx.fillStyle = `rgba(255, 110, 199, ${this.life / 100 * audioFactor})`;
+        const perspective = 50 / (50 + this.z);
+        particleCtx.fillStyle = `rgba(0, 255, 255, ${this.life / 150 * audioFactor})`;
         particleCtx.beginPath();
-        particleCtx.arc(this.x, this.y, this.size * audioFactor, 0, Math.PI * 2);
+        particleCtx.arc(this.x, this.y, this.size * perspective * audioFactor, 0, Math.PI * 2);
         particleCtx.fill();
       }
     }
@@ -487,40 +508,77 @@
       }
     }
 
-    // VR Setup
+    // VR Setup with Trippy Shaders
     function initVR() {
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: canvas });
+      camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
       renderer.xr.enabled = true;
       document.body.appendChild(renderer.domElement);
 
-      const geometry = new THREE.SphereGeometry(10, 32, 32);
-      const material = new THREE.MeshBasicMaterial({
-        color: 0xff6ec7,
-        wireframe: true,
-        transparent: true,
-        opacity: 0.7
-      });
-      mandalaSphere = new THREE.Mesh(geometry, material);
-      scene.add(mandalaSphere);
-      camera.position.z = 15;
+      const vertexShader = `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        uniform float time;
+        void main() {
+          vUv = uv;
+          vPosition = position;
+          vec3 pos = position;
+          pos.z += sin(pos.x * 5.0 + time) * cos(pos.y * 5.0 + time) * 0.5;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `;
+      const fragmentShader = `
+        varying vec2 vUv;
+        varying vec3 vPosition;
+        uniform float time;
+        uniform vec3 color1;
+        uniform vec3 color2;
+        void main() {
+          float tunnel = sin(vUv.x * 10.0 + time) * cos(vUv.y * 10.0 + time);
+          vec3 color = mix(color1, color2, abs(tunnel));
+          gl_FragColor = vec4(color * (1.0 + sin(time + vPosition.z)), 1.0);
+        }
+      `;
 
-      const vrButton = document.createElement('button');
-      vrButton.textContent = 'Enter VR';
-      vrButton.style = 'position: absolute; bottom: 20px; left: 20px;';
-      vrButton.onclick = () => renderer.xr.enabled && renderer.xr.getSession() ? renderer.xr.getSession().end() : renderer.xr.setSession('immersive-vr');
-      document.body.appendChild(vrButton);
+      const geometry = new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3([
+          new THREE.Vector3(0, 0, -10),
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0, 10)
+        ], true), 100, 5, 32, true
+      );
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: {
+          time: { value: 0 },
+          color1: { value: new THREE.Color('#ff00ff') },
+          color2: { value: new THREE.Color('#00ffff') }
+        },
+        side: THREE.DoubleSide,
+        transparent: true
+      });
+      mandalaTunnel = new THREE.Mesh(geometry, material);
+      scene.add(mandalaTunnel);
+      camera.position.z = 0;
 
       document.getElementById('enterVR').addEventListener('click', () => {
         renderer.setAnimationLoop(animateVR);
+        if (renderer.xr.isPresenting) return;
+        renderer.xr.enabled && renderer.xr.setSession('immersive-vr');
       });
     }
 
     function animateVR() {
       const audioFactor = getAudioFactor();
-      mandalaSphere.scale.set(audioFactor, audioFactor, audioFactor);
-      mandalaSphere.rotation.y += 0.01 * audioFactor;
+      const time = Date.now() * 0.001;
+      mandalaTunnel.material.uniforms.time.value = time * audioFactor;
+      mandalaTunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
+      mandalaTunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
+      mandalaTunnel.rotation.z += 0.02 * audioFactor;
+      camera.position.z += 0.05 * audioFactor;
+      if (camera.position.z > 10) camera.position.z = -10;
       renderer.render(scene, camera);
     }
 
@@ -562,7 +620,7 @@
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       analyser.getByteFrequencyData(dataArray);
       const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      return 1 + (avg / 255) * 0.5;
+      return 1 + (avg / 255) * 1.5;
     }
 
     function generateMandala() {
@@ -582,13 +640,13 @@
       function drawRecursiveShape(x, y, r, level, audioFactor = 1) {
         if (level > levels) return;
 
-        const gradient = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
+        const gradient = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
         gradient.addColorStop(0, lineColor);
         gradient.addColorStop(1, secondaryColor);
 
-        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.7) * audioFactor;
+        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.8) * audioFactor;
         ctx.strokeStyle = gradient;
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 30;
         ctx.shadowColor = lineColor;
 
         switch (patternType) {
@@ -598,6 +656,8 @@
           case 'chaos': drawChaos(x, y, r, level); break;
           case 'flower': drawFlower(x, y, r, audioFactor); break;
           case 'yantra': drawYantra(x, y, r, audioFactor); break;
+          case 'tunnel': drawTunnel(x, y, r, level, audioFactor); break;
+          case 'hypercube': drawHypercube(x, y, r, level, audioFactor); break;
         }
 
         drawRecursiveShape(x, y, r * scaleFactor, level + 1, audioFactor);
@@ -605,11 +665,10 @@
 
       function drawCymatic(x, y, r, level, audioFactor) {
         ctx.beginPath();
-        const points = segments;
-        for (let i = 0; i < points; i++) {
-          const angle = (i / points) * Math.PI * 2;
-          const mod = Math.sin(angle * level + Date.now() * 0.001) * audioFactor;
-          const dist = r * (0.5 + mod * 0.5);
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const mod = Math.sin(angle * level * 2 + Date.now() * 0.002) * audioFactor;
+          const dist = r * (0.5 + mod * 0.8);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
@@ -619,11 +678,11 @@
       function drawVortex(x, y, r, segments) {
         ctx.beginPath();
         for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2;
+          const angle = (i / segments) * Math.PI * 2 + Date.now() * 0.001;
           const x1 = x + r * Math.cos(angle);
           const y1 = y + r * Math.sin(angle);
-          const x2 = x + r * 0.5 * Math.cos(angle + Math.PI / segments);
-          const y2 = y + r * 0.5 * Math.sin(angle + Math.PI / segments);
+          const x2 = x + r * 0.3 * Math.cos(angle + Math.PI / segments);
+          const y2 = y + r * 0.3 * Math.sin(angle + Math.PI / segments);
           ctx.moveTo(x, y);
           ctx.quadraticCurveTo(x1, y1, x2, y2);
         }
@@ -632,9 +691,9 @@
 
       function drawNebula(x, y, r) {
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.2;
-          const dist = r * (0.5 + Math.random() * 0.5);
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + Math.random() * 0.5;
+          const dist = r * (0.4 + Math.random() * 0.6);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
@@ -643,10 +702,10 @@
 
       function drawChaos(x, y, r, level) {
         ctx.beginPath();
-        const points = Math.floor(Math.random() * 5) + 3;
+        const points = Math.floor(Math.random() * 7) + 4;
         for (let i = 0; i < points; i++) {
-          const angle = (i / points) * Math.PI * 2 + Math.random() * 0.3;
-          const dist = r * (0.3 + Math.random() * 0.7);
+          const angle = (i / points) * Math.PI * 2 + Math.random() * 0.5;
+          const dist = r * (0.2 + Math.random() * 0.8);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
@@ -655,27 +714,51 @@
 
       function drawFlower(x, y, r, audioFactor) {
         ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const angle = (i / 6) * Math.PI * 2;
-          const dist = r * audioFactor;
-          ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + Date.now() * 0.001;
+          const dist = r * audioFactor * 0.5;
+          ctx.arc(x + Math.cos(angle) * r * 0.4, y + Math.sin(angle) * r * 0.4, dist * 0.4, 0, Math.PI * 2);
         }
         ctx.stroke();
       }
 
       function drawYantra(x, y, r, audioFactor) {
         ctx.beginPath();
-        for (let i = 0; i < 3; i++) {
-          const angle = (i / 3) * Math.PI * 2;
+        for (let i = 0; i < 4; i++) {
+          const angle = (i / 4) * Math.PI * 2 + audioFactor * 0.1;
           ctx.moveTo(x, y);
           ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
         }
         ctx.stroke();
       }
 
+      function drawTunnel(x, y, r, level, audioFactor) {
+        ctx.beginPath();
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2 + Date.now() * 0.002;
+          const depth = Math.sin(level * 0.5 + Date.now() * 0.001) * r * 0.3 * audioFactor;
+          const dist = r * (1 - level / levels) * audioFactor;
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawHypercube(x, y, r, level, audioFactor) {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + Date.now() * 0.003;
+          const mod = Math.cos(level + Date.now() * 0.002) * audioFactor;
+          const dist = r * (0.5 + mod * 0.5);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
       const audioFactor = getAudioFactor();
       for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
+        const angle = (i / segments) * Math.PI * 2 + audioFactor * 0.1;
         const x = centerX + radius * Math.cos(angle);
         const y = centerY + radius * Math.sin(angle);
         drawRecursiveShape(x, y, radius * scaleFactor, 1, audioFactor);
@@ -683,17 +766,17 @@
     }
 
     function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 57) + 3;
-      document.getElementById('levels').value = Math.floor(Math.random() * 14) + 1;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.8 + 0.1).toFixed(2);
-      document.getElementById('initialRadius').value = Math.floor(Math.random() * 300) + 50;
-      document.getElementById('lineWidth').value = (Math.random() * 9.5 + 0.5).toFixed(1);
-      document.getElementById('baseFreq').value = Math.floor(Math.random() * 980) + 20;
-      document.getElementById('freqMultiplier').value = (Math.random() * 2 + 1).toFixed(1);
+      document.getElementById('segments').value = Math.floor(Math.random() * 97) + 3;
+      document.getElementById('levels').value = Math.floor(Math.random() * 19) + 1;
+      document.getElementById('scaleFactor').value = (Math.random() * 0.85 + 0.1).toFixed(2);
+      document.getElementById('initialRadius').value = Math.floor(Math.random() * 450) + 50;
+      document.getElementById('lineWidth').value = (Math.random() * 14.5 + 0.5).toFixed(1);
+      document.getElementById('baseFreq').value = Math.floor(Math.random() * 1980) + 20;
+      document.getElementById('freqMultiplier').value = (Math.random() * 4 + 1).toFixed(1);
       document.getElementById('waveform').value = ['sine', 'sawtooth', 'square', 'triangle'][Math.floor(Math.random() * 4)];
-      document.getElementById('particleDensity').value = Math.floor(Math.random() * 300);
-      document.getElementById('modulation').value = (Math.random() * 2).toFixed(1);
-      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra'][Math.floor(Math.random() * 6)];
+      document.getElementById('particleDensity').value = Math.floor(Math.random() * 500);
+      document.getElementById('modulation').value = (Math.random() * 5).toFixed(1);
+      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra', 'tunnel', 'hypercube'][Math.floor(Math.random() * 8)];
       document.getElementById('lineColor').value = randomColor();
       document.getElementById('secondaryColor').value = randomColor();
       updateValueDisplays();
@@ -707,7 +790,7 @@
 
     function downloadMandala() {
       const link = document.createElement('a');
-      link.download = 'spiritual-machine.png';
+      link.download = 'infinite-spiral.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
@@ -715,10 +798,10 @@
     function toggleAnimation() {
       if (isAnimating) {
         cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Pulse Void';
+        document.getElementById('animate').textContent = 'Pulse Cosmos';
         isAnimating = false;
       } else {
-        document.getElementById('animate').textContent = 'Collapse Void';
+        document.getElementById('animate').textContent = 'Collapse Cosmos';
         isAnimating = true;
         animate();
       }
@@ -728,8 +811,8 @@
       const modulation = parseFloat(document.getElementById('modulation').value);
       const audioFactor = getAudioFactor();
 
-      document.getElementById('initialRadius').value = 150 + Math.sin(Date.now() * 0.001) * 50 * audioFactor;
-      document.getElementById('scaleFactor').value = (0.5 + Math.cos(Date.now() * 0.0005) * 0.4).toFixed(2);
+      document.getElementById('initialRadius').value = 150 + Math.sin(Date.now() * 0.002) * 100 * audioFactor;
+      document.getElementById('scaleFactor').value = (0.5 + Math.cos(Date.now() * 0.001) * 0.45).toFixed(2);
 
       updateValueDisplays();
       generateMandala();
@@ -757,8 +840,11 @@
       const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.onresult = (event) => {
         const intent = event.results[0][0].transcript;
-        alert(`Intention Set: ${intent}`);
-        // Could pulse mandala here based on intent
+        alert(`Cosmic Intention: ${intent}`);
+        const audioFactor = getAudioFactor() * 2;
+        for (let i = 0; i < 10; i++) {
+          setTimeout(() => generateMandala(), i * 100); // Pulse effect
+        }
       };
       recognition.start();
     }
