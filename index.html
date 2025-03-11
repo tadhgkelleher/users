@@ -3,520 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Cymatics: Rhythm of the Void</title>
+  <title>Mandala Test</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      text-align: center;
-      background: linear-gradient(135deg, #1a1a2e, #2a2a4c, #3b3b6d);
-      color: #d0d0ff;
+      background: #1a1a2e;
       margin: 0;
       padding: 20px;
-      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
     }
-
-    h1 {
-      font-size: 2.5rem;
-      color: #8a4af3;
-      text-shadow: 0 0 5px #8a4af3;
-      margin-bottom: 20px;
-    }
-
     #canvasContainer {
       position: relative;
       width: 800px;
       height: 800px;
-      margin: 0 auto;
     }
-
     canvas {
       position: absolute;
       top: 0;
       left: 0;
       border: 1px solid #4c4c7d;
-      border-radius: 5px;
       background: #0a0a1f;
-      box-shadow: 0 0 20px rgba(138, 74, 243, 0.3);
-    }
-
-    #particleCanvas {
-      z-index: 1;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(138, 74, 243, 0.2);
-      margin-bottom: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    button, select {
-      background: linear-gradient(45deg, #8a4af3, #d06bff);
-      padding: 6px 12px;
-      border: none;
-      border-radius: 5px;
-      color: #fff;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    button:hover, select:hover {
-      background: linear-gradient(45deg, #d06bff, #8a4af3);
-      transform: scale(1.05);
-    }
-
-    input[type="range"] {
-      background: #3e3e7d;
-      border-radius: 5px;
-      accent-color: #d06bff;
-    }
-
-    input[type="color"] {
-      width: 30px;
-      height: 20px;
-      border: 1px solid #8a4af3;
-      border-radius: 5px;
-    }
-
-    label {
-      color: #d0d0ff;
-      font-size: 12px;
-    }
-
-    .tab-container {
-      margin-bottom: 15px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .tab {
-      background: #3e3e7d;
-      padding: 6px 12px;
-      border-radius: 5px 5px 0 0;
-      color: #d0d0ff;
-      cursor: pointer;
-    }
-
-    .tab.active {
-      background: #8a4af3;
-      color: #fff;
-    }
-
-    .tab-content {
-      display: none;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 0 0 8px 8px;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    @media (max-width: 768px) {
-      #canvasContainer {
-        width: 100%;
-        height: auto;
-      }
-      canvas {
-        width: 100%;
-        height: auto;
-      }
     }
   </style>
 </head>
 <body>
-  <h1>Fractal Cymatics: Rhythm of the Void</h1>
-
-  <div class="tab-container">
-    <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
-    <button class="tab" onclick="openTab(event, 'rhythmTab')">Rhythm</button>
-    <button class="tab" onclick="openTab(event, 'voidTab')">Void</button>
-  </div>
-
-  <div id="formTab" class="tab-content active">
-    <div class="controls">
-      <div>
-        <label for="segments">Segments</label>
-        <input type="range" id="segments" value="12" min="6" max="36" oninput="updateValue('segments')">
-        <span id="segments-value">12</span>
-      </div>
-      <div>
-        <label for="levels">Levels</label>
-        <input type="range" id="levels" value="4" min="2" max="8" oninput="updateValue('levels')">
-        <span id="levels-value">4</span>
-      </div>
-      <div>
-        <label for="scaleFactor">Scale</label>
-        <input type="range" id="scaleFactor" value="0.6" min="0.4" max="0.8" step="0.01" oninput="updateValue('scaleFactor')">
-        <span id="scaleFactor-value">0.6</span>
-      </div>
-      <div>
-        <label for="baseRadius">Base Radius</label>
-        <input type="range" id="baseRadius" value="150" min="50" max="300" oninput="updateValue('baseRadius')">
-        <span id="baseRadius-value">150</span>
-      </div>
-      <div>
-        <label for="lineColor">Color</label>
-        <input type="color" id="lineColor" value="#8a4af3">
-      </div>
-    </div>
-  </div>
-
-  <div id="rhythmTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="scale">Scale</label>
-        <select id="scale" onchange="updateValue('scale')">
-          <option value="pentatonic">Pentatonic</option>
-          <option value="minor">Natural Minor</option>
-          <option value="major">Major</option>
-        </select>
-      </div>
-      <div>
-        <label for="rootNote">Root Note</label>
-        <select id="rootNote" onchange="updateValue('rootNote')">
-          <option value="C">C</option>
-          <option value="D">D</option>
-          <option value="E">E</option>
-          <option value="F">F</option>
-          <option value="G">G</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-      </div>
-      <div>
-        <label for="bpm">BPM</label>
-        <input type="range" id="bpm" value="100" min="60" max="180" step="5" oninput="updateValue('bpm')">
-        <span id="bpm-value">100</span>
-      </div>
-      <div>
-        <label for="droneVolume">Drone Volume</label>
-        <input type="range" id="droneVolume" value="0.15" min="0" max="0.3" step="0.01" oninput="updateValue('droneVolume')">
-        <span id="droneVolume-value">0.15</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="voidTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="particleDensity">Particles</label>
-        <input type="range" id="particleDensity" value="50" min="0" max="200" oninput="updateValue('particleDensity')">
-        <span id="particleDensity-value">50</span>
-      </div>
-      <div>
-        <label for="rotationSpeed">Rotation</label>
-        <input type="range" id="rotationSpeed" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('rotationSpeed')">
-        <span id="rotationSpeed-value">0.5</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="controls">
-    <button id="generate">Weave Rhythm</button>
-    <button id="random">Void Pulse</button>
-    <button id="animate">Resonate</button>
-    <button id="download">Capture</button>
-  </div>
-
   <div id="canvasContainer">
     <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-    <canvas id="particleCanvas" width="800" height="800"></canvas>
   </div>
 
   <script>
     const canvas = document.getElementById('mandalaCanvas');
+    console.log("Canvas element:", canvas);
+
     const ctx = canvas.getContext('2d');
-    const particleCanvas = document.getElementById('particleCanvas');
-    const particleCtx = particleCanvas.getContext('2d');
+    console.log("2D Context:", ctx);
 
-    let animationId = null;
-    let isAnimating = false;
-    let particles = [];
-    let audioContext = null;
-    let droneOsc = null;
-    let melodyOsc = null;
-    let droneGain = null;
-    let melodyGain = null;
-    let rotationAngle = 0;
-    let beatCounter = 0;
-
-    const scales = {
-      pentatonic: [0, 3, 5, 7, 10],
-      minor: [0, 2, 3, 5, 7, 8, 10],
-      major: [0, 2, 4, 5, 7, 9, 11]
-    };
-
-    const rootFrequencies = {
-      'C': 261.63, 'D': 293.66, 'E': 329.63, 'F': 349.23, 'G': 392.00, 'A': 440.00, 'B': 493.88
-    };
-
-    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0];
-
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        console.log("AudioContext initialized");
-        if (audioContext.state === 'suspended') audioContext.resume();
-      }
-      updateAudio();
-    }
-
-    function updateAudio() {
-      if (droneOsc) droneOsc.stop();
-      if (melodyOsc) melodyOsc.stop();
-      if (droneGain) droneGain.disconnect();
-      if (melodyGain) melodyGain.disconnect();
-
-      const rootNote = document.getElementById('rootNote').value;
-      const scaleType = document.getElementById('scale').value;
-      const bpm = parseInt(document.getElementById('bpm').value);
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
-      const rootFreq = rootFrequencies[rootNote];
-      const scale = scales[scaleType];
-
-      droneOsc = audioContext.createOscillator();
-      droneGain = audioContext.createGain();
-      droneOsc.type = 'sine';
-      droneOsc.frequency.value = rootFreq / 2;
-      droneGain.gain.value = droneVolume;
-      droneOsc.connect(droneGain);
-      droneGain.connect(audioContext.destination);
-      droneOsc.start();
-
-      melodyOsc = audioContext.createOscillator();
-      melodyGain = audioContext.createGain();
-      melodyOsc.type = 'triangle';
-      melodyGain.gain.value = 0;
-      melodyOsc.connect(melodyGain);
-      melodyGain.connect(audioContext.destination);
-      melodyOsc.start();
-
-      const beatInterval = 60000 / bpm / 2;
-      let beatIndex = 0;
-      clearInterval(window.rhythmInterval);
-      window.rhythmInterval = setInterval(() => {
-        if (rhythmPattern[beatIndex % rhythmPattern.length] === 1) {
-          const note = scale[Math.floor(Math.random() * scale.length)];
-          const freq = rootFreq * Math.pow(2, note / 12);
-          melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
-          melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
-          melodyGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-        }
-        beatIndex++;
-        beatCounter++;
-      }, beatInterval);
-    }
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.z = Math.random() * 100 - 50;
-        this.size = Math.random() * 3 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
-        this.life = Math.random() * 50 + 50;
-      }
-
-      update(audioFactor) {
-        this.x += this.speedX * audioFactor;
-        this.y += this.speedY * audioFactor;
-        this.life -= 1;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        const alpha = this.life / 100;
-        particleCtx.fillStyle = `rgba(208, 107, 255, ${alpha})`;
-        particleCtx.beginPath();
-        particleCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        particleCtx.fill();
-      }
-    }
-
-    function initParticles() {
-      particles = [];
-      const density = parseInt(document.getElementById('particleDensity').value);
-      for (let i = 0; i < density; i++) {
-        particles.push(new Particle());
-      }
-      console.log("Particles initialized:", particles.length);
-    }
-
-    function animateParticles(audioFactor) {
-      particleCtx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p, i) => {
-        p.update(audioFactor);
-        p.draw();
-        if (p.life <= 0) particles.splice(i, 1);
-      });
-      const targetDensity = parseInt(document.getElementById('particleDensity').value);
-      while (particles.length < targetDensity) {
-        particles.push(new Particle());
-      }
-    }
-
-    function init() {
-      console.log("Initializing...");
-      document.getElementById('generate').addEventListener('click', () => {
-        initAudio();
-        generateMandala();
-      });
-      document.getElementById('random').addEventListener('click', () => {
-        initAudio();
-        randomizeMandala();
-      });
-      document.getElementById('download').addEventListener('click', downloadMandala);
-      document.getElementById('animate').addEventListener('click', toggleAnimation);
-      updateValueDisplays();
-      initParticles();
-      generateMandala();
-      console.log("Init complete");
-    }
-
-    function updateValueDisplays() {
-      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
-      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
-      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
-      document.getElementById('baseRadius-value').textContent = document.getElementById('baseRadius').value;
-      document.getElementById('bpm-value').textContent = document.getElementById('bpm').value;
-      document.getElementById('droneVolume-value').textContent = document.getElementById('droneVolume').value;
-      document.getElementById('particleDensity-value').textContent = document.getElementById('particleDensity').value;
-      document.getElementById('rotationSpeed-value').textContent = document.getElementById('rotationSpeed').value;
-    }
-
-    function updateValue(id) {
-      updateValueDisplays();
-      if (!isAnimating) generateMandala();
-      if (id === 'particleDensity') initParticles();
-      if (audioContext && ['scale', 'rootNote', 'bpm', 'droneVolume'].includes(id)) updateAudio();
-    }
-
-    function generateMandala() {
-      console.log("Generating mandala...");
-      const segments = parseInt(document.getElementById('segments').value);
-      const levels = parseInt(document.getElementById('levels').value);
-      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
-      const baseRadius = parseInt(document.getElementById('baseRadius').value);
-      const lineColor = document.getElementById('lineColor').value;
-
+    function drawTest() {
+      console.log("Starting drawTest...");
+      
+      // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       console.log("Canvas cleared");
 
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      // Fallback: Draw a simple red square to ensure rendering
+      // Draw a red circle
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, 100, 0, Math.PI * 2);
       ctx.fillStyle = 'red';
-      ctx.fillRect(centerX - 50, centerY - 50, 100, 100);
-      console.log("Fallback red square drawn");
+      ctx.fill();
+      console.log("Red circle drawn");
 
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotationAngle);
-      ctx.translate(-centerX, -centerY);
-      console.log("Context transformed");
-
-      function drawMandala(x, y, radius, level) {
-        if (level > levels) return;
-
-        ctx.beginPath();
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2;
-        console.log(`Drawing level ${level}, radius ${radius}`);
-
-        // Simple star pattern
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2;
-          const outerX = x + Math.cos(angle) * radius;
-          const outerY = y + Math.sin(angle) * radius;
-          const innerX = x + Math.cos(angle + Math.PI / segments) * (radius * 0.5);
-          const innerY = y + Math.sin(angle + Math.PI / segments) * (radius * 0.5);
-          ctx.moveTo(x, y);
-          ctx.lineTo(outerX, outerY);
-          ctx.lineTo(innerX, innerY);
-          ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        console.log(`Level ${level} star drawn`);
-
-        drawMandala(x, y, radius * scaleFactor, level + 1);
-      }
-
-      drawMandala(centerX, centerY, baseRadius, 1);
-      ctx.restore();
-      console.log("Mandala rendering complete");
-    }
-
-    function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 30) + 6;
-      document.getElementById('levels').value = Math.floor(Math.random() * 6) + 2;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.4 + 0.4).toFixed(2);
-      document.getElementById('baseRadius').value = Math.floor(Math.random() * 250) + 50;
-      document.getElementById('bpm').value = Math.floor(Math.random() * 120) + 60;
-      document.getElementById('droneVolume').value = (Math.random() * 0.2 + 0.1).toFixed(2);
-      document.getElementById('particleDensity').value = Math.floor(Math.random() * 150) + 50;
-      document.getElementById('rotationSpeed').value = (Math.random() * 1.5 + 0.5).toFixed(1);
-      document.getElementById('scale').value = ['pentatonic', 'minor', 'major'][Math.floor(Math.random() * 3)];
-      document.getElementById('rootNote').value = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][Math.floor(Math.random() * 7)];
-      updateValueDisplays();
-      initParticles();
-      generateMandala();
-    }
-
-    function downloadMandala() {
-      const link = document.createElement('a');
-      link.download = 'cymatic-rhythm.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }
-
-    function toggleAnimation() {
-      if (isAnimating) {
-        cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Resonate';
-        isAnimating = false;
-      } else {
-        initAudio();
-        document.getElementById('animate').textContent = 'Pause';
-        isAnimating = true;
-        animate();
-      }
-    }
-
-    function animate() {
-      const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
-      const audioFactor = 1 + Math.sin(beatCounter * 0.05) * 0.5;
-      rotationAngle += rotationSpeed * 0.005;
-
-      generateMandala();
-      animateParticles(audioFactor);
-
-      if (isAnimating) animationId = requestAnimationFrame(animate);
-    }
-
-    function openTab(evt, tabName) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      evt.currentTarget.classList.add('active');
+      // Draw a purple outline
+      ctx.strokeStyle = '#8a4af3';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      console.log("Purple outline drawn");
     }
 
     window.onload = () => {
       console.log("Window loaded");
-      init();
+      drawTest();
+      console.log("drawTest complete");
     };
   </script>
 </body>
