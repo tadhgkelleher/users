@@ -174,6 +174,9 @@
 <body>
   <h1>Spiritual Machine: Infinite Spiral Weaver</h1>
 
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="vrCanvas"></canvas>
+
   <div class="tab-container">
     <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
     <button class="tab" onclick="openTab(event, 'freqTab')">Frequencies</button>
@@ -221,6 +224,7 @@
         </div>
         <div class="parameter_input">
           <label for="baseFreq">Base Freq</label>
+          <input type="range" Roberto: I think you should be charging more than $5 for these tutorials considering the effort you put in and how much detail you go into. I hope you get great karma for this — you deserve it! Your explanations are always so clear, and I love how you break things down step-by-step. Thanks for sharing your knowledge so generously!Freq</label>
           <input type="range" id="baseFreq" value="200" min="20" max="1000" step="10" oninput="updateValue('baseFreq')">
           <span id="baseFreq-value">200</span>
         </div>
@@ -278,10 +282,6 @@
     <button id="download">Capture Eternity</button>
     <button id="enterVR">Dive into VR</button>
   </div>
-
-
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-  <canvas id="vrCanvas"></canvas>
 
   <script src="three.min.js"></script>
   <script>
@@ -393,17 +393,12 @@
         varying vec3 vPosition;
         uniform float time;
         uniform float audioFactor;
-        uniform float segments;
-        uniform float levels;
+        uniform float modulation;
         void main() {
           vUv = uv;
           vPosition = position;
           vec3 pos = position;
-          float spiral1 = sin(pos.z * segments * 0.1 + time) * audioFactor;
-          float spiral2 = cos(pos.z * levels * 0.05 + time) * audioFactor;
-          pos.x += (spiral1 + spiral2) * 2.0;
-          pos.y += (spiral1 - spiral2) * 2.0;
-          pos.z += sin(time + pos.x) * audioFactor * 0.5 + cos(time + pos.y) * 0.3;
+          pos.z += sin(time * modulation + pos.x) * audioFactor * 0.5;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
         }
       `;
@@ -415,25 +410,14 @@
         uniform vec3 color1;
         uniform vec3 color2;
         void main() {
-          float pulse = sin(vUv.x * 20.0 + time * 2.0) * cos(vUv.y * 15.0 + time) * audioFactor;
+          float pulse = sin(vUv.x * 15.0 + time * 2.0) * cos(vUv.y * 10.0 + time) * audioFactor;
           vec3 color = mix(color1, color2, abs(pulse));
           float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor * 1.5;
-          float noise = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453) * 0.2;
-          gl_FragColor = vec4(color * glow + noise, 0.8 + audioFactor * 0.2);
+          gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.2);
         }
       `;
 
-      const points = [];
-      const levels = parseInt(document.getElementById('levels').value);
-      for (let z = -50; z < 50; z += 0.5) {
-        const angle = z * 0.2;
-        const radius = 5 + Math.sin(z * levels * 0.1) * 3 + Math.cos(z * 0.5) * 2;
-        points.push(new THREE.Vector3(
-          Math.cos(angle) * radius,
-          Math.sin(angle) * radius,
-          z
-        ));
-      }
+      const points = generateVRPath();
       const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 200, 5, 32, true);
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -441,10 +425,9 @@
         uniforms: {
           time: { value: 0 },
           audioFactor: { value: 1 },
-          segments: { value: parseInt(document.getElementById('segments').value) },
-          levels: { value: levels },
-          color1: { value: new THREE.Color('#ff00ff') },
-          color2: { value: new THREE.Color('#00ffff') }
+          modulation: { value: parseFloat(document.getElementById('modulation').value) },
+          color1: { value: new THREE.Color(document.getElementById('lineColor').value) },
+          color2: { value: new THREE.Color(document.getElementById('secondaryColor').value) }
         },
         side: THREE.DoubleSide,
         transparent: true,
@@ -481,15 +464,84 @@
       });
     }
 
+    function generateVRPath() {
+      const points = [];
+      const segments = parseInt(document.getElementById('segments').value);
+      const levels = parseInt(document.getElementById('levels').value);
+      const radius = Math.min(parseInt(document.getElementById('initialRadius').value), 400);
+      const patternType = document.getElementById('patternType').value;
+      const modulation = parseFloat(document.getElementById('modulation').value);
+      const audioFactor = getAudioFactor();
+
+      for (let z = -50; z < 50; z += 0.5) {
+        let x, y;
+        const time = performance.now() * 0.001 * modulation;
+
+        switch (patternType) {
+          case 'cymatic':
+            const angleCymatic = (z / 50) * Math.PI * 2 + time * 0.5;
+            const modCymatic = Math.sin(angleCymatic * levels * 3 + time) * audioFactor;
+            x = Math.cos(angleCymatic) * radius * (0.6 + modCymatic * 0.9) * 0.02;
+            y = Math.sin(angleCymatic) * radius * (0.6 + modCymatic * 0.9) * 0.02;
+            break;
+          case 'vortex':
+            const angleVortex = (z / 50) * Math.PI * 2 + time * 1.2;
+            x = Math.cos(angleVortex) * radius * 0.02;
+            y = Math.sin(angleVortex) * radius * 0.02;
+            break;
+          case 'nebula':
+            const angleNebula = (z / 50) * Math.PI * 2 + Math.sin(time * 0.4) * audioFactor;
+            x = Math.cos(angleNebula) * radius * (0.5 + Math.cos(time + z) * 0.7 * audioFactor) * 0.02;
+            y = Math.sin(angleNebula) * radius * (0.5 + Math.cos(time + z) * 0.7 * audioFactor) * 0.02;
+            break;
+          case 'chaos':
+            const angleChaos = (z / 50) * Math.PI * 2 + Math.random() * 0.6 + time;
+            x = Math.cos(angleChaos) * radius * (0.3 + Math.sin(time + levels) * 0.9 * audioFactor) * 0.02;
+            y = Math.sin(angleChaos) * radius * (0.3 + Math.sin(time + levels) * 0.9 * audioFactor) * 0.02;
+            break;
+          case 'flower':
+            const angleFlower = (z / 50) * Math.PI * 2 + time * 0.8;
+            const distFlower = radius * audioFactor * (0.6 + Math.sin(time) * 0.4);
+            x = Math.cos(angleFlower) * distFlower * 0.5 * 0.02;
+            y = Math.sin(angleFlower) * distFlower * 0.5 * 0.02;
+            break;
+          case 'yantra':
+            const angleYantra = (z / 50) * Math.PI * 2 + time * 0.5;
+            x = Math.cos(angleYantra) * radius * audioFactor * 0.02;
+            y = Math.sin(angleYantra) * radius * audioFactor * 0.02;
+            break;
+          case 'tunnel':
+            const angleTunnel = (z / 50) * Math.PI * 2 + time * 0.9;
+            const depthTunnel = Math.sin(levels * 0.6 + time) * radius * 0.4 * audioFactor;
+            x = Math.cos(angleTunnel) * radius * (1 + Math.cos(time) * 0.3) * 0.02;
+            y = Math.sin(angleTunnel) * radius * (1 + Math.cos(time) * 0.3) * 0.02 + depthTunnel * 0.02;
+            break;
+          case 'hypercube':
+            const angleHypercube = (z / 50) * Math.PI * 2 + time * 1.1;
+            const modHypercube = Math.cos(levels + time) * audioFactor;
+            x = Math.cos(angleHypercube) * radius * (0.6 + modHypercube * 0.6) * 0.02;
+            y = Math.sin(angleHypercube) * radius * (0.6 + modHypercube * 0.6) * 0.02;
+            break;
+        }
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      return points;
+    }
+
     function animateVR() {
       const audioFactor = getAudioFactor();
       const time = performance.now() * 0.001;
       spiralTunnel.material.uniforms.time.value = time;
       spiralTunnel.material.uniforms.audioFactor.value = audioFactor;
-      spiralTunnel.material.uniforms.segments.value = parseInt(document.getElementById('segments').value);
-      spiralTunnel.material.uniforms.levels.value = parseInt(document.getElementById('levels').value);
+      spiralTunnel.material.uniforms.modulation.value = parseFloat(document.getElementById('modulation').value);
       spiralTunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
       spiralTunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
+
+      // Regenerate path if parameters change significantly
+      const newPoints = generateVRPath();
+      spiralTunnel.geometry.dispose();
+      spiralTunnel.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(newPoints), 200, 5, 32, true);
+
       spiralTunnel.rotation.z += 0.01 * audioFactor;
       camera.position.z += 0.1 * audioFactor;
       if (camera.position.z > 50) camera.position.z = -50;
