@@ -42,7 +42,7 @@
       box-shadow: 0 0 70px rgba(255, 0, 255, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.9);
       transition: transform 0.3s, box-shadow 0.3s;
       max-width: 100%;
-      position: relative; /* Ensure stacking context */
+      position: relative;
     }
 
     canvas:hover {
@@ -56,11 +56,12 @@
 
     #particleCanvas {
       position: absolute;
-      top: 20px; /* Adjust for padding */
+      top: 20px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 2; /* Above mandala */
       pointer-events: none;
+      opacity: 0.5; /* Semi-transparent until particles animate */
     }
 
     #vrCanvas {
@@ -450,6 +451,7 @@
 
     function animateParticles(audioFactor) {
       particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+      particleCanvas.style.opacity = '1'; // Full opacity when animating
       particles.forEach((p, i) => {
         p.update(audioFactor);
         p.draw(audioFactor);
@@ -486,7 +488,6 @@
         renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true, context: gl });
         renderer.xr.enabled = true;
         renderer.setSize(window.innerWidth, window.innerHeight);
-        // Do NOT set display: block here—keep it hidden until VR is activated
         console.log('WebGLRenderer initialized');
       } catch (e) {
         console.error('Failed to create WebGLRenderer:', e);
@@ -573,7 +574,7 @@
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
-          vrCanvas.style.display = 'block'; // Show VR canvas only when activated
+          vrCanvas.style.display = 'block';
           console.log('VR session started successfully');
           document.getElementById('enterVR').textContent = 'VR Active';
         } catch (err) {
@@ -621,7 +622,7 @@
       updateValueDisplays();
       initParticles();
       initVR();
-      generateMandala(); // Initial draw
+      generateMandala();
       console.log('Init completed');
     }
 
@@ -693,7 +694,7 @@
           case 'chaos': drawChaos(x, y, r, level, timeFactor); break;
           case 'flower': drawFlower(x, y, r, audioFactor, timeFactor); break;
           case 'yantra': drawYantra(x, y, r, audioFactor, timeFactor); break;
-          case 'tunnel': drawTunnel(x, y volcanoes, r, level, audioFactor, timeFactor); break;
+          case 'tunnel': drawTunnel(x, y, r, level, audioFactor, timeFactor); break;
           case 'hypercube': drawHypercube(x, y, r, level, audioFactor, timeFactor); break;
         }
 
