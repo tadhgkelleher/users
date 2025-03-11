@@ -251,25 +251,17 @@
     let rotationAngle = 0;
     let beatCounter = 0;
 
-    // Musical scales in semitones from root (C4 = 261.63 Hz)
     const scales = {
-      pentatonic: [0, 3, 5, 7, 10], // C, Eb, F, G, Bb
-      minor: [0, 2, 3, 5, 7, 8, 10], // C, D, Eb, F, G, Ab, Bb
-      major: [0, 2, 4, 5, 7, 9, 11]  // C, D, E, F, G, A, B
+      pentatonic: [0, 3, 5, 7, 10],
+      minor: [0, 2, 3, 5, 7, 8, 10],
+      major: [0, 2, 4, 5, 7, 9, 11]
     };
 
     const rootFrequencies = {
-      'C': 261.63, // C4
-      'D': 293.66, // D4
-      'E': 329.63, // E4
-      'F': 349.23, // F4
-      'G': 392.00, // G4
-      'A': 440.00, // A4
-      'B': 493.88  // B4
+      'C': 261.63, 'D': 293.66, 'E': 329.63, 'F': 349.23, 'G': 392.00, 'A': 440.00, 'B': 493.88
     };
 
-    // Simple 4/4 rhythm pattern (1 = note, 0 = rest)
-    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0]; // Quarter notes with alternating beats
+    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0];
 
     function initAudio() {
       if (!audioContext) {
@@ -293,17 +285,15 @@
       const rootFreq = rootFrequencies[rootNote];
       const scale = scales[scaleType];
 
-      // Drone
       droneOsc = audioContext.createOscillator();
       droneGain = audioContext.createGain();
       droneOsc.type = 'sine';
-      droneOsc.frequency.value = rootFreq / 2; // Octave down
+      droneOsc.frequency.value = rootFreq / 2;
       droneGain.gain.value = droneVolume;
       droneOsc.connect(droneGain);
       droneGain.connect(audioContext.destination);
       droneOsc.start();
 
-      // Melody
       melodyOsc = audioContext.createOscillator();
       melodyGain = audioContext.createGain();
       melodyOsc.type = 'triangle';
@@ -312,13 +302,12 @@
       melodyGain.connect(audioContext.destination);
       melodyOsc.start();
 
-      // Rhythm and melody
-      const beatInterval = 60000 / bpm / 2; // Eighth notes
+      const beatInterval = 60000 / bpm / 2;
       let beatIndex = 0;
       clearInterval(window.rhythmInterval);
       window.rhythmInterval = setInterval(() => {
         if (rhythmPattern[beatIndex % rhythmPattern.length] === 1) {
-          const note = scale[Math.floor(Math.random() * scale.length)]; // Random scale note
+          const note = scale[Math.floor(Math.random() * scale.length)];
           const freq = rootFreq * Math.pow(2, note / 12);
           melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
           melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
@@ -422,55 +411,53 @@
       const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
       const baseRadius = parseInt(document.getElementById('baseRadius').value);
       const lineColor = document.getElementById('lineColor').value;
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      console.log("Canvas cleared");
+
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
+
+      // Fallback: Draw a simple red square to ensure rendering
+      ctx.fillStyle = 'red';
+      ctx.fillRect(centerX - 50, centerY - 50, 100, 100);
+      console.log("Fallback red square drawn");
 
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(rotationAngle);
       ctx.translate(-centerX, -centerY);
+      console.log("Context transformed");
 
       function drawMandala(x, y, radius, level) {
         if (level > levels) return;
 
         ctx.beginPath();
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 1.5;
-        const audioFactor = 1 + droneVolume * 2 + Math.sin(beatCounter * 0.05) * 0.3;
+        ctx.lineWidth = 2;
+        console.log(`Drawing level ${level}, radius ${radius}`);
 
-        // Outer ring with modulation
+        // Simple star pattern
         for (let i = 0; i < segments; i++) {
           const angle = (i / segments) * Math.PI * 2;
-          const r = radius * (1 + Math.sin(angle * level + beatCounter * 0.02) * 0.1 * audioFactor);
-          const xPos = x + Math.cos(angle) * r;
-          const yPos = y + Math.sin(angle) * r;
-          if (i === 0) ctx.moveTo(xPos, yPos);
-          else ctx.lineTo(xPos, yPos);
+          const outerX = x + Math.cos(angle) * radius;
+          const outerY = y + Math.sin(angle) * radius;
+          const innerX = x + Math.cos(angle + Math.PI / segments) * (radius * 0.5);
+          const innerY = y + Math.sin(angle + Math.PI / segments) * (radius * 0.5);
+          ctx.moveTo(x, y);
+          ctx.lineTo(outerX, outerY);
+          ctx.lineTo(innerX, innerY);
+          ctx.lineTo(x, y);
         }
-        ctx.closePath();
         ctx.stroke();
-
-        // Inner connections
-        for (let i = 0; i < segments; i++) {
-          const angle1 = (i / segments) * Math.PI * 2;
-          const angle2 = ((i + 1) % segments) / segments * Math.PI * 2;
-          const r1 = radius * 0.7;
-          const r2 = radius * 0.5;
-          ctx.beginPath();
-          ctx.moveTo(x + Math.cos(angle1) * r1, y + Math.sin(angle1) * r1);
-          ctx.quadraticCurveTo(x, y, x + Math.cos(angle2) * r2, y + Math.sin(angle2) * r2);
-          ctx.stroke();
-        }
+        console.log(`Level ${level} star drawn`);
 
         drawMandala(x, y, radius * scaleFactor, level + 1);
       }
 
       drawMandala(centerX, centerY, baseRadius, 1);
       ctx.restore();
-      console.log("Mandala rendered");
+      console.log("Mandala rendering complete");
     }
 
     function randomizeMandala() {
