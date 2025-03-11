@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Cymatics: Frequency Weaver</title>
+  <title>Spiritual Machine: Frequency Weaver</title>
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
@@ -201,12 +201,13 @@
   </style>
 </head>
 <body>
-  <h1>Fractal Cymatics: Frequency Weaver</h1>
+  <h1>Spiritual Machine: Frequency Weaver</h1>
 
   <div class="tab-container">
     <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
     <button class="tab" onclick="openTab(event, 'freqTab')">Frequencies</button>
     <button class="tab" onclick="openTab(event, 'voidTab')">Void</button>
+    <button class="tab" onclick="openTab(event, 'chakraTab')">Chakras</button>
   </div>
 
   <div id="formTab" class="tab-content active">
@@ -309,6 +310,8 @@
             <option value="vortex">Vortex</option>
             <option value="nebula">Nebula</option>
             <option value="chaos">Chaos</option>
+            <option value="flower">Flower of Life</option>
+            <option value="yantra">Sri Yantra</option>
           </select>
         </div>
       </div>
@@ -320,37 +323,79 @@
     </div>
   </div>
 
+  <div id="chakraTab" class="tab-content">
+    <div class="control-panel">
+      <h3>Chakra Alignment</h3>
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Select Chakra</span>
+          <label for="chakraSelect">Chakra</label>
+          <select id="chakraSelect" onchange="setChakra(this.value)">
+            <option value="root">Root (256 Hz)</option>
+            <option value="sacral">Sacral (288 Hz)</option>
+            <option value="solar">Solar Plexus (320 Hz)</option>
+            <option value="heart">Heart (432 Hz)</option>
+            <option value="throat">Throat (480 Hz)</option>
+            <option value="thirdEye">Third Eye (852 Hz)</option>
+            <option value="crown">Crown (963 Hz)</option>
+          </select>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Speak Intention</span>
+          <button id="voiceIntent">Set Intention</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="controls">
     <button id="generate">Weave Frequencies</button>
     <button id="random">Frequency Rift</button>
     <button id="animate">Pulse Void</button>
     <button id="download">Capture Wave</button>
+    <button id="enterVR">Enter VR</button>
   </div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script>
+    // Core Variables
     const canvas = document.getElementById('mandalaCanvas');
     const ctx = canvas.getContext('2d');
     const particleCanvas = document.getElementById('particleCanvas');
     const particleCtx = particleCanvas.getContext('2d');
-
     let animationId = null;
     let isAnimating = false;
     let particles = [];
-    let audioContext, oscillators = [], lfo;
+    let audioContext, oscillators = [], lfo, analyser;
+    let scene, camera, renderer, mandalaSphere;
 
-    // Initialize audio with frequency generator
+    // Chakra Presets
+    const chakraPresets = {
+      root: { freq: 256, color: '#ff0000', pattern: 'cymatic' },
+      sacral: { freq: 288, color: '#ff4500', pattern: 'vortex' },
+      solar: { freq: 320, color: '#ffd700', pattern: 'nebula' },
+      heart: { freq: 432, color: '#00ff00', pattern: 'flower' },
+      throat: { freq: 480, color: '#00b7eb', pattern: 'chaos' },
+      thirdEye: { freq: 852, color: '#4b0082', pattern: 'yantra' },
+      crown: { freq: 963, color: '#800080', pattern: 'flower' }
+    };
+
+    // Audio Initialization
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
       }
       updateFrequencies();
     }
 
     function updateFrequencies() {
       oscillators.forEach(osc => osc.stop());
+      if (lfo) lfo.stop();
       oscillators = [];
 
       const baseFreq = parseFloat(document.getElementById('baseFreq').value);
@@ -359,32 +404,43 @@
       const segments = parseInt(document.getElementById('segments').value);
       const modulation = parseFloat(document.getElementById('modulation').value);
 
-      // Generate frequencies based on segments
-      for (let i = 0; i < Math.min(segments, 5); i++) { // Limit to 5 oscillators to avoid overload
-        const osc = audioContext.createOscillator();
-        const gain = audioContext.createGain();
-        osc.type = waveform;
-        osc.frequency.value = baseFreq * Math.pow(freqMultiplier, i);
-        gain.gain.value = 0.1 / (i + 1); // Decrease volume for higher harmonics
-        osc.connect(gain);
-        gain.connect(audioContext.destination);
-        osc.start();
-        oscillators.push(osc);
-      }
+      // Binaural Beats
+      const beatFreq = 8; // Theta state
+      const oscLeft = audioContext.createOscillator();
+      const oscRight = audioContext.createOscillator();
+      const panLeft = audioContext.createPanner();
+      const panRight = audioContext.createPanner();
+      const gainLeft = audioContext.createGain();
+      const gainRight = audioContext.createGain();
 
-      // Add LFO (Low Frequency Oscillator) for modulation
-      if (lfo) lfo.stop();
+      oscLeft.type = waveform;
+      oscRight.type = waveform;
+      oscLeft.frequency.value = baseFreq;
+      oscRight.frequency.value = baseFreq + beatFreq;
+      panLeft.setPosition(-1, 0, 0);
+      panRight.setPosition(1, 0, 0);
+      gainLeft.gain.value = 0.1;
+      gainRight.gain.value = 0.1;
+
+      oscLeft.connect(gainLeft).connect(panLeft).connect(audioContext.destination);
+      oscRight.connect(gainRight).connect(panRight).connect(analyser).connect(audioContext.destination);
+      oscLeft.start();
+      oscRight.start();
+      oscillators.push(oscLeft, oscRight);
+
+      // LFO Modulation
       lfo = audioContext.createOscillator();
       const lfoGain = audioContext.createGain();
       lfo.type = 'sine';
       lfo.frequency.value = modulation;
-      lfoGain.gain.value = 10; // Modulation depth
+      lfoGain.gain.value = 10;
       lfo.connect(lfoGain);
-      oscillators.forEach(osc => lfoGain.connect(osc.frequency));
+      lfoGain.connect(oscLeft.frequency);
+      lfoGain.connect(oscRight.frequency);
       lfo.start();
     }
 
-    // Particle system
+    // Particle System
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
@@ -431,15 +487,54 @@
       }
     }
 
-    // Core initialization
+    // VR Setup
+    function initVR() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: canvas });
+      renderer.xr.enabled = true;
+      document.body.appendChild(renderer.domElement);
+
+      const geometry = new THREE.SphereGeometry(10, 32, 32);
+      const material = new THREE.MeshBasicMaterial({
+        color: 0xff6ec7,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.7
+      });
+      mandalaSphere = new THREE.Mesh(geometry, material);
+      scene.add(mandalaSphere);
+      camera.position.z = 15;
+
+      const vrButton = document.createElement('button');
+      vrButton.textContent = 'Enter VR';
+      vrButton.style = 'position: absolute; bottom: 20px; left: 20px;';
+      vrButton.onclick = () => renderer.xr.enabled && renderer.xr.getSession() ? renderer.xr.getSession().end() : renderer.xr.setSession('immersive-vr');
+      document.body.appendChild(vrButton);
+
+      document.getElementById('enterVR').addEventListener('click', () => {
+        renderer.setAnimationLoop(animateVR);
+      });
+    }
+
+    function animateVR() {
+      const audioFactor = getAudioFactor();
+      mandalaSphere.scale.set(audioFactor, audioFactor, audioFactor);
+      mandalaSphere.rotation.y += 0.01 * audioFactor;
+      renderer.render(scene, camera);
+    }
+
+    // Core Functions
     function init() {
       document.getElementById('generate').addEventListener('click', () => { generateMandala(); updateFrequencies(); });
       document.getElementById('random').addEventListener('click', () => { randomizeMandala(); updateFrequencies(); });
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
+      document.getElementById('voiceIntent').addEventListener('click', startVoiceIntent);
       updateValueDisplays();
       initAudio();
       initParticles();
+      initVR();
       generateMandala();
     }
 
@@ -462,6 +557,14 @@
       if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id)) updateFrequencies();
     }
 
+    function getAudioFactor() {
+      if (!analyser) return 1;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      return 1 + (avg / 255) * 0.5;
+    }
+
     function generateMandala() {
       const segments = parseInt(document.getElementById('segments').value);
       const levels = parseInt(document.getElementById('levels').value);
@@ -471,7 +574,6 @@
       const secondaryColor = document.getElementById('secondaryColor').value;
       const lineWidth = parseFloat(document.getElementById('lineWidth').value);
       const patternType = document.getElementById('patternType').value;
-      const baseFreq = parseFloat(document.getElementById('baseFreq').value);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerX = canvas.width / 2;
@@ -490,18 +592,12 @@
         ctx.shadowColor = lineColor;
 
         switch (patternType) {
-          case 'cymatic':
-            drawCymatic(x, y, r, level, audioFactor);
-            break;
-          case 'vortex':
-            drawVortex(x, y, r, segments / level);
-            break;
-          case 'nebula':
-            drawNebula(x, y, r);
-            break;
-          case 'chaos':
-            drawChaos(x, y, r, level);
-            break;
+          case 'cymatic': drawCymatic(x, y, r, level, audioFactor); break;
+          case 'vortex': drawVortex(x, y, r, segments / level); break;
+          case 'nebula': drawNebula(x, y, r); break;
+          case 'chaos': drawChaos(x, y, r, level); break;
+          case 'flower': drawFlower(x, y, r, audioFactor); break;
+          case 'yantra': drawYantra(x, y, r, audioFactor); break;
         }
 
         drawRecursiveShape(x, y, r * scaleFactor, level + 1, audioFactor);
@@ -557,7 +653,27 @@
         ctx.stroke();
       }
 
-      const audioFactor = 1 + Math.sin(Date.now() * 0.001) * 0.5; // Simple oscillation for now
+      function drawFlower(x, y, r, audioFactor) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const dist = r * audioFactor;
+          ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      }
+
+      function drawYantra(x, y, r, audioFactor) {
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const angle = (i / 3) * Math.PI * 2;
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+        }
+        ctx.stroke();
+      }
+
+      const audioFactor = getAudioFactor();
       for (let i = 0; i < segments; i++) {
         const angle = (i / segments) * Math.PI * 2;
         const x = centerX + radius * Math.cos(angle);
@@ -577,7 +693,7 @@
       document.getElementById('waveform').value = ['sine', 'sawtooth', 'square', 'triangle'][Math.floor(Math.random() * 4)];
       document.getElementById('particleDensity').value = Math.floor(Math.random() * 300);
       document.getElementById('modulation').value = (Math.random() * 2).toFixed(1);
-      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos'][Math.floor(Math.random() * 4)];
+      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra'][Math.floor(Math.random() * 6)];
       document.getElementById('lineColor').value = randomColor();
       document.getElementById('secondaryColor').value = randomColor();
       updateValueDisplays();
@@ -591,7 +707,7 @@
 
     function downloadMandala() {
       const link = document.createElement('a');
-      link.download = 'frequency-mandala.png';
+      link.download = 'spiritual-machine.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
@@ -610,7 +726,7 @@
 
     function animate() {
       const modulation = parseFloat(document.getElementById('modulation').value);
-      const audioFactor = 1 + Math.sin(Date.now() * 0.001 * modulation) * 0.5;
+      const audioFactor = getAudioFactor();
 
       document.getElementById('initialRadius').value = 150 + Math.sin(Date.now() * 0.001) * 50 * audioFactor;
       document.getElementById('scaleFactor').value = (0.5 + Math.cos(Date.now() * 0.0005) * 0.4).toFixed(2);
@@ -626,6 +742,25 @@
       document.getElementById('lineColor').value = primary;
       document.getElementById('secondaryColor').value = secondary;
       generateMandala();
+    }
+
+    function setChakra(chakra) {
+      const preset = chakraPresets[chakra];
+      document.getElementById('baseFreq').value = preset.freq;
+      document.getElementById('lineColor').value = preset.color;
+      document.getElementById('patternType').value = preset.pattern;
+      updateFrequencies();
+      generateMandala();
+    }
+
+    function startVoiceIntent() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.onresult = (event) => {
+        const intent = event.results[0][0].transcript;
+        alert(`Intention Set: ${intent}`);
+        // Could pulse mandala here based on intent
+      };
+      recognition.start();
     }
 
     function openTab(evt, tabName) {
