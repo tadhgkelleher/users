@@ -42,11 +42,25 @@
       box-shadow: 0 0 70px rgba(255, 0, 255, 0.8), inset 0 0 30px rgba(0, 0, 0, 0.9);
       transition: transform 0.3s, box-shadow 0.3s;
       max-width: 100%;
+      position: relative; /* Ensure stacking context */
     }
 
     canvas:hover {
       transform: scale(1.05);
       box-shadow: 0 0 100px rgba(0, 255, 255, 0.9);
+    }
+
+    #mandalaCanvas {
+      z-index: 1; /* Base layer */
+    }
+
+    #particleCanvas {
+      position: absolute;
+      top: 20px; /* Adjust for padding */
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2; /* Above mandala */
+      pointer-events: none;
     }
 
     #vrCanvas {
@@ -55,8 +69,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 10;
-      display: none;
+      z-index: 10; /* Top layer when active */
+      display: none; /* Hidden until VR starts */
     }
 
     .controls {
@@ -70,6 +84,8 @@
       box-shadow: 0 0 50px rgba(255, 0, 255, 0.6);
       margin-bottom: 25px;
       border: 2px solid #00ffff;
+      position: relative;
+      z-index: 3; /* Above canvases */
     }
 
     .control-panel {
@@ -179,16 +195,6 @@
 
     .tab-content.active {
       display: block;
-    }
-
-    .particle-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
     }
   </style>
 </head>
@@ -320,7 +326,7 @@
   </div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-  <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
+  <canvas id="particleCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
   <script src="three.min.js"></script>
@@ -443,7 +449,7 @@
     }
 
     function animateParticles(audioFactor) {
-      particleCtx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+      particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
       particles.forEach((p, i) => {
         p.update(audioFactor);
         p.draw(audioFactor);
@@ -452,6 +458,7 @@
       while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
         particles.push(new Particle());
       }
+      console.log('Particles animated');
     }
 
     // VR Setup with Sine-Wave Spiral Tunnel
@@ -479,7 +486,7 @@
         renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true, context: gl });
         renderer.xr.enabled = true;
         renderer.setSize(window.innerWidth, window.innerHeight);
-        vrCanvas.style.display = 'block';
+        // Do NOT set display: block here—keep it hidden until VR is activated
         console.log('WebGLRenderer initialized');
       } catch (e) {
         console.error('Failed to create WebGLRenderer:', e);
@@ -566,6 +573,7 @@
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
+          vrCanvas.style.display = 'block'; // Show VR canvas only when activated
           console.log('VR session started successfully');
           document.getElementById('enterVR').textContent = 'VR Active';
         } catch (err) {
@@ -594,6 +602,7 @@
       camera.position.z += 0.1 * audioFactor;
       if (camera.position.z > 50) camera.position.z = -50;
       renderer.render(scene, camera);
+      console.log('VR frame rendered');
     }
 
     // Core Functions
@@ -601,7 +610,7 @@
       console.log('Init started');
       document.getElementById('generate').addEventListener('click', () => {
         generateMandala();
-        initAudio(); // Audio starts on user gesture
+        initAudio();
       });
       document.getElementById('random').addEventListener('click', () => {
         randomizeMandala();
@@ -612,7 +621,7 @@
       updateValueDisplays();
       initParticles();
       initVR();
-      generateMandala(); // Initial draw without audio
+      generateMandala(); // Initial draw
       console.log('Init completed');
     }
 
@@ -644,6 +653,14 @@
     }
 
     function generateMandala(timeFactor = 0) {
+      console.log('Generating mandala...');
+      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+
+      // Test 2D canvas with a red square
+      ctx.fillStyle = 'red';
+      ctx.fillRect(100, 100, 200, 200);
+      console.log('Red square drawn');
+
       const segments = parseInt(document.getElementById('segments').value);
       const levels = parseInt(document.getElementById('levels').value);
       const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
@@ -654,7 +671,6 @@
       const patternType = document.getElementById('patternType').value;
       const modulation = parseFloat(document.getElementById('modulation').value);
 
-      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
 
@@ -677,7 +693,7 @@
           case 'chaos': drawChaos(x, y, r, level, timeFactor); break;
           case 'flower': drawFlower(x, y, r, audioFactor, timeFactor); break;
           case 'yantra': drawYantra(x, y, r, audioFactor, timeFactor); break;
-          case 'tunnel': drawTunnel(x, y, r, level, audioFactor, timeFactor); break;
+          case 'tunnel': drawTunnel(x, y volcanoes, r, level, audioFactor, timeFactor); break;
           case 'hypercube': drawHypercube(x, y, r, level, audioFactor, timeFactor); break;
         }
 
