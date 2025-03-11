@@ -338,7 +338,7 @@
     let animationId = null;
     let isAnimating = false;
     let particles = [];
-    let audioContext = null; // Initialize as null
+    let audioContext = null;
     let oscillators = [];
     let rhythmGain = null;
     let beatCounter = 0;
@@ -454,9 +454,10 @@
         p.draw(audioFactor);
         if (p.life <= 0) particles.splice(i, 1);
       });
-      while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
+      const targetDensity = parseInt(document.getElementById('particleDensity').value);
+      while (particles.length < targetDensity) {
         particles.push(new Particle());
-      });
+      }
     }
 
     // Core initialization
