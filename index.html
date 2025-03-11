@@ -376,7 +376,7 @@
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" onload="initThreeLoaded = true" onerror="console.error('Failed to load Three.js')"></script>
   <script>
     // Core Variables
     const canvas = document.getElementById('mandalaCanvas');
@@ -388,6 +388,7 @@
     let particles = [];
     let audioContext, oscillators = [], lfo, analyser;
     let scene, camera, renderer, mandalaTunnel;
+    let initThreeLoaded = false;
 
     // Chakra Presets
     const chakraPresets = {
@@ -479,9 +480,10 @@
 
       draw(audioFactor) {
         const perspective = 50 / (50 + this.z);
+        const radius = Math.max(this.size * perspective * audioFactor, 0); // Clamp to 0
         particleCtx.fillStyle = `rgba(0, 255, 255, ${this.life / 150 * audioFactor})`;
         particleCtx.beginPath();
-        particleCtx.arc(this.x, this.y, this.size * perspective * audioFactor, 0, Math.PI * 2);
+        particleCtx.arc(this.x, this.y, radius, 0, Math.PI * 2);
         particleCtx.fill();
       }
     }
@@ -508,6 +510,12 @@
 
     // VR Setup with Trippy Shaders
     function initVR() {
+      if (!window.THREE) {
+        console.error('Three.js not loaded. VR unavailable.');
+        document.getElementById('enterVR').disabled = true;
+        return;
+      }
+
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -590,7 +598,19 @@
       updateValueDisplays();
       initAudio();
       initParticles();
-      initVR();
+
+      // Delay VR init until Three.js is loaded
+      if (initThreeLoaded) {
+        initVR();
+      } else {
+        const checkThree = setInterval(() => {
+          if (initThreeLoaded) {
+            initVR();
+            clearInterval(checkThree);
+          }
+        }, 100);
+      }
+
       generateMandala();
     }
 
@@ -810,7 +830,6 @@
       const audioFactor = getAudioFactor();
       const time = performance.now() * 0.001 * modulation;
 
-      // Update mandala with time-based animation
       generateMandala(time);
       animateParticles(audioFactor);
 
