@@ -286,7 +286,7 @@
 
       droneOsc = audioContext.createOscillator();
       droneGain = audioContext.createGain();
-      droneOsc.type = 'sine';
+      drone Osc.type = 'sine';
       droneOsc.frequency.value = rootFreq / 2;
       droneGain.gain.value = droneVolume;
       droneOsc.connect(droneGain);
@@ -362,7 +362,7 @@
       const targetDensity = parseInt(document.getElementById('particleDensity').value);
       while (particles.length < targetDensity) {
         particles.push(new Particle());
-      });
+      }
     }
 
     function init() {
