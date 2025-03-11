@@ -40,31 +40,45 @@
     const ctx = canvas.getContext('2d');
     console.log("2D Context:", ctx);
 
-    function drawTest() {
-      console.log("Starting drawTest...");
+    function drawMandala() {
+      console.log("Starting drawMandala...");
       
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       console.log("Canvas cleared");
 
-      // Draw a red circle
-      ctx.beginPath();
-      ctx.arc(canvas.width / 2, canvas.height / 2, 100, 0, Math.PI * 2);
-      ctx.fillStyle = 'red';
-      ctx.fill();
-      console.log("Red circle drawn");
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 150;
+      const segments = 12;
 
-      // Draw a purple outline
+      // Draw a simple mandala (star pattern)
+      ctx.beginPath();
       ctx.strokeStyle = '#8a4af3';
       ctx.lineWidth = 2;
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const outerX = centerX + Math.cos(angle) * radius;
+        const outerY = centerY + Math.sin(angle) * radius;
+        const innerAngle = angle + Math.PI / segments;
+        const innerX = centerX + Math.cos(innerAngle) * (radius * 0.5);
+        const innerY = centerY + Math.sin(innerAngle) * (radius * 0.5);
+
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(outerX, outerY);
+        ctx.lineTo(innerX, innerY);
+        ctx.lineTo(centerX, centerY);
+      }
+
       ctx.stroke();
-      console.log("Purple outline drawn");
+      console.log("Mandala drawn");
     }
 
     window.onload = () => {
       console.log("Window loaded");
-      drawTest();
-      console.log("drawTest complete");
+      drawMandala();
+      console.log("drawMandala complete");
     };
   </script>
 </body>
