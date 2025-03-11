@@ -3,82 +3,610 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Mandala - Explore the Beauty of Mandalas</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Fractal Mandala: Cosmic Dreamweaver</title>
+  <style>
+    body {
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      background: radial-gradient(circle, #0d0b1e, #1e1a3b, #2e2a5c);
+      color: #e0e0ff;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
+      animation: cosmicPulse 15s infinite alternate;
+    }
+
+    @keyframes cosmicPulse {
+      0% { background: radial-gradient(circle, #0d0b1e, #1e1a3b, #2e2a5c); }
+      50% { background: radial-gradient(circle, #1e0b3e, #3b1a5c, #5c2a7d); }
+      100% { background: radial-gradient(circle, #0b1e3e, #1a3b5c, #2a5c7d); }
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #ff6ec7;
+      text-shadow: 0 0 15px #ff6ec7, 0 0 30px #9b59b6;
+      animation: glow 2s infinite alternate;
+      margin-bottom: 30px;
+    }
+
+    @keyframes glow {
+      0% { text-shadow: 0 0 10px #ff6ec7, 0 0 20px #9b59b6; }
+      100% { text-shadow: 0 0 20px #ff6ec7, 0 0 40px #9b59b6; }
+    }
+
+    canvas {
+      border: 3px solid #3a3a5c;
+      border-radius: 15px;
+      background: #0a0a1f;
+      box-shadow: 0 0 40px rgba(158, 202, 237, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.8);
+      transition: transform 0.3s, box-shadow 0.3s;
+      max-width: 100%;
+    }
+
+    canvas:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 60px rgba(255, 110, 199, 0.7);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      background: rgba(20, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 30px rgba(255, 110, 199, 0.3);
+      margin-bottom: 20px;
+    }
+
+    .control-panel {
+      background: linear-gradient(135deg, #1e1e3b, #2e2e5c);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    button, select {
+      background: linear-gradient(45deg, #ff6ec7, #9b59b6);
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.4s;
+      box-shadow: 0 0 10px rgba(255, 110, 199, 0.5);
+    }
+
+    button:hover, select:hover {
+      background: linear-gradient(45deg, #9b59b6, #ff6ec7);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 110, 199, 0.8);
+    }
+
+    input[type="range"], input[type="number"] {
+      background: #2e2e5c;
+      border-radius: 8px;
+      padding: 5px;
+      color: #ff6ec7;
+      accent-color: #ff6ec7;
+    }
+
+    input[type="color"] {
+      width: 50px;
+      height: 30px;
+      border: 2px solid #ff6ec7;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+    }
+
+    label {
+      color: #9b59b6;
+      font-size: 14px;
+      text-shadow: 0 0 5px rgba(155, 89, 182, 0.5);
+    }
+
+    .parameter_input {
+      position: relative;
+      padding: 10px;
+    }
+
+    .tooltip {
+      background: rgba(20, 20, 40, 0.9);
+      color: #ff6ec7;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .parameter_input:hover .tooltip {
+      opacity: 1;
+    }
+
+    .color-palette {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .color-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid #ff6ec7;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 15px rgba(255, 110, 199, 0.5);
+    }
+
+    .color-option:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 25px rgba(255, 110, 199, 0.8);
+    }
+
+    .tab-container {
+      margin-bottom: 20px;
+    }
+
+    .tab {
+      background: #2e2e5c;
+      padding: 10px 20px;
+      border-radius: 8px 8px 0 0;
+      color: #ff6ec7;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: #ff6ec7;
+      color: #1e1e3b;
+    }
+
+    .tab-content {
+      display: none;
+      background: rgba(20, 20, 40, 0.8);
+      padding: 20px;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .particle-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      canvas {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
 </head>
 <body>
+  <h1>Fractal Mandala: Cosmic Dreamweaver</h1>
 
-  <!-- Custom Header Section -->
-  <header>
-    <div class="logo">
-      <img src="mandala-logo.png" alt="Mandala Icon" class="logo-icon">
-      <span>My Mandala</span>
-    </div>
-    <nav>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="generator.html">Generator</a></li>
-        <li><a href="history.html">History</a></li>
-        <li><a href="meanings.html">Meanings</a></li>
-        <li><a href="far-out.html">Far-Out</a></li>
-      </ul>
-    </nav>
-  </header>
+  <div class="tab-container">
+    <button class="tab active" onclick="openTab(event, 'basicTab')">Essence</button>
+    <button class="tab" onclick="openTab(event, 'advancedTab')">Aether</button>
+    <button class="tab" onclick="openTab(event, 'cosmicTab')">Cosmos</button>
+  </div>
 
-  <!-- Hero Section -->
-  <section class="hero">
-    <img src="hero-mandala.jpg" alt="A beautiful mandala design">
-    <a href="generator.html" class="cta-button">Generate Your Mandala</a>
-  </section>
-
-  <!-- Content Section -->
-  <section class="main-content">
-    <h1>What are Mandalas?</h1>
-    <p>Mandalas are intricate geometric designs that hold deep spiritual and cultural significance. They are used in various traditions for meditation, healing, and self-expression.</p>
-    <div class="teasers">
-      <div class="teaser">
-        <h2>History of Mandalas</h2>
-        <p>Discover the origins and evolution of mandalas across different cultures.</p>
-        <a href="history.html">Read More</a>
-      </div>
-      <div class="teaser">
-        <h2>Deeper Meanings</h2>
-        <p>Explore the spiritual and symbolic significance of mandalas.</p>
-        <a href="meanings.html">Read More</a>
-      </div>
-      <div class="teaser">
-        <h2>Far-Out Ideas</h2>
-        <p>Delve into unconventional and creative interpretations of mandalas.</p>
-        <a href="far-out.html">Read More</a>
+  <div id="basicTab" class="tab-content active">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Celestial Divisions</span>
+          <label for="segments">Segments</label>
+          <input type="range" id="segments" value="12" min="3" max="50" oninput="updateValue('segments')">
+          <span id="segments-value">12</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Fractal Dimensions</span>
+          <label for="levels">Levels</label>
+          <input type="range" id="levels" value="4" min="1" max="12" oninput="updateValue('levels')">
+          <span id="levels-value">4</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Quantum Scaling</span>
+          <label for="scaleFactor">Scale</label>
+          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.9" step="0.01" oninput="updateValue('scaleFactor')">
+          <span id="scaleFactor-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Astral Radius</span>
+          <label for="initialRadius">Radius</label>
+          <input type="range" id="initialRadius" value="150" min="50" max="300" oninput="updateValue('initialRadius')">
+          <span id="initialRadius-value">150</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Nebula Hue</span>
+          <label for="lineColor">Core Color</label>
+          <input type="color" id="lineColor" value="#ff6ec7">
+        </div>
       </div>
     </div>
-    <div class="gallery">
-      <img src="mandala1.jpg" alt="Sample Mandala 1">
-      <img src="mandala2.jpg" alt="Sample Mandala 2">
-      <img src="mandala3.jpg" alt="Sample Mandala 3">
+  </div>
+
+  <div id="advancedTab" class="tab-content">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Ethereal Density</span>
+          <label for="lineWidth">Density</label>
+          <input type="range" id="lineWidth" value="2" min="0.5" max="8" step="0.1" oninput="updateValue('lineWidth')">
+          <span id="lineWidth-value">2</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Galactic Spin</span>
+          <label for="rotation">Spin</label>
+          <input type="range" id="rotation" value="0" min="0" max="360" oninput="updateValue('rotation')">
+          <span id="rotation-value">0°</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Void Texture</span>
+          <label for="patternType">Texture</label>
+          <select id="patternType">
+            <option value="vortex">Vortex</option>
+            <option value="nebula">Nebula</option>
+            <option value="crystal">Crystal</option>
+            <option value="chaos">Chaos</option>
+          </select>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Stellar Echo</span>
+          <label for="secondaryColor">Echo Color</label>
+          <input type="color" id="secondaryColor" value="#9b59b6">
+        </div>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Generator Preview Section -->
-  <section class="generator-preview">
-    <h1>Try Our Mandala Generator</h1>
-    <p>Create your own unique mandala with just a click.</p>
-    <a href="generator.html" class="try-now-button">Try It Now</a>
-  </section>
-
-  <!-- Footer Section -->
-  <footer>
-    <p>© 2023 My Mandala. All rights reserved.</p>
-    <div class="social-links">
-      <a href="#">Facebook</a>
-      <a href="#">Twitter</a>
-      <a href="#">Instagram</a>
+  <div id="cosmicTab" class="tab-content">
+    <div class="control-panel">
+      <h3>Cosmic Resonances</h3>
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Particle Density</span>
+          <label for="particleDensity">Particles</label>
+          <input type="range" id="particleDensity" value="50" min="0" max="200" oninput="updateValue('particleDensity')">
+          <span id="particleDensity-value">50</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Time Warp Speed</span>
+          <label for="warpSpeed">Warp</label>
+          <input type="range" id="warpSpeed" value="1" min="0" max="5" step="0.1" oninput="updateValue('warpSpeed')">
+          <span id="warpSpeed-value">1</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Audio Sensitivity</span>
+          <label for="audioSensitivity">Audio</label>
+          <input type="range" id="audioSensitivity" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('audioSensitivity')">
+          <span id="audioSensitivity-value">0.5</span>
+        </div>
+      </div>
+      <div class="color-palette">
+        <div class="color-option" style="background: linear-gradient(45deg, #ff6ec7, #9b59b6)" onclick="setColorTheme('#ff6ec7', '#9b59b6')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #00ffff, #4169e1)" onclick="setColorTheme('#00ffff', '#4169e1')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #ff4500, #ffd700)" onclick="setColorTheme('#ff4500', '#ffd700')"></div>
+      </div>
     </div>
-    <form class="newsletter">
-      <input type="email" placeholder="Enter your email">
-      <button type="submit">Subscribe</button>
-    </form>
-  </footer>
+  </div>
 
+  <div class="controls">
+    <button id="generate">Weave Reality</button>
+    <button id="random">Chaos Rift</button>
+    <button id="animate">Time Vortex</button>
+    <button id="download">Capture Eternity</button>
+  </div>
+
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
+
+  <audio id="cosmicAudio" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const canvas = document.getElementById('mandalaCanvas');
+    const ctx = canvas.getContext('2d');
+    const particleCanvas = document.getElementById('particleCanvas');
+    const particleCtx = particleCanvas.getContext('2d');
+    const audio = document.getElementById('cosmicAudio');
+    
+    let animationId = null;
+    let isAnimating = false;
+    let particles = [];
+    let audioContext, analyser, dataArray;
+
+    // Initialize audio
+    function initAudio() {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+      analyser.fftSize = 256;
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+      audio.play();
+    }
+
+    // Particle system
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 5 + 1;
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 - 1;
+        this.life = Math.random() * 100;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life -= 1;
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+
+      draw() {
+        particleCtx.fillStyle = `rgba(255, 110, 199, ${this.life / 100})`;
+        particleCtx.beginPath();
+        particleCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        particleCtx.fill();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      const density = parseInt(document.getElementById('particleDensity').value);
+      for (let i = 0; i < density; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      particleCtx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, i) => {
+        p.update();
+        p.draw();
+        if (p.life <= 0) particles.splice(i, 1);
+      });
+      while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
+        particles.push(new Particle());
+      }
+    }
+
+    // Core initialization
+    function init() {
+      document.getElementById('generate').addEventListener('click', generateMandala);
+      document.getElementById('random').addEventListener('click', randomizeMandala);
+      document.getElementById('download').addEventListener('click', downloadMandala);
+      document.getElementById('animate').addEventListener('click', toggleAnimation);
+      updateValueDisplays();
+      initAudio();
+      initParticles();
+      generateMandala();
+    }
+
+    function updateValueDisplays() {
+      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
+      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
+      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
+      document.getElementById('initialRadius-value').textContent = document.getElementById('initialRadius').value;
+      document.getElementById('lineWidth-value').textContent = document.getElementById('lineWidth').value;
+      document.getElementById('rotation-value').textContent = document.getElementById('rotation').value + '°';
+      document.getElementById('particleDensity-value').textContent = document.getElementById('particleDensity').value;
+      document.getElementById('warpSpeed-value').textContent = document.getElementById('warpSpeed').value;
+      document.getElementById('audioSensitivity-value').textContent = document.getElementById('audioSensitivity').value;
+    }
+
+    function updateValue(id) {
+      updateValueDisplays();
+      if (!isAnimating) generateMandala();
+      if (id === 'particleDensity') initParticles();
+    }
+
+    function generateMandala() {
+      const segments = parseInt(document.getElementById('segments').value);
+      const levels = parseInt(document.getElementById('levels').value);
+      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
+      const radius = parseInt(document.getElementById('initialRadius').value);
+      const lineColor = document.getElementById('lineColor').value;
+      const secondaryColor = document.getElementById('secondaryColor').value;
+      const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+      const rotation = parseInt(document.getElementById('rotation').value) * Math.PI / 180;
+      const patternType = document.getElementById('patternType').value;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rotation);
+      ctx.translate(-centerX, -centerY);
+
+      function drawRecursiveShape(x, y, r, level, audioFactor = 1) {
+        if (level > levels) return;
+
+        const gradient = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
+        gradient.addColorStop(0, lineColor);
+        gradient.addColorStop(1, secondaryColor);
+
+        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.7) * audioFactor;
+        ctx.strokeStyle = gradient;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = lineColor;
+
+        switch (patternType) {
+          case 'vortex':
+            drawVortex(x, y, r, segments / level);
+            break;
+          case 'nebula':
+            drawNebula(x, y, r);
+            break;
+          case 'crystal':
+            drawCrystal(x, y, r);
+            break;
+          case 'chaos':
+            drawChaos(x, y, r, level);
+            break;
+        }
+
+        drawRecursiveShape(x, y, r * scaleFactor, level + 1, audioFactor);
+      }
+
+      function drawVortex(x, y, r, segments) {
+        ctx.beginPath();
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const x1 = x + r * Math.cos(angle);
+          const y1 = y + r * Math.sin(angle);
+          const x2 = x + r * 0.5 * Math.cos(angle + Math.PI / segments);
+          const y2 = y + r * 0.5 * Math.sin(angle + Math.PI / segments);
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x1, y1, x2, y2);
+        }
+        ctx.stroke();
+      }
+
+      function drawNebula(x, y, r) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.2;
+          const dist = r * (0.5 + Math.random() * 0.5);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawCrystal(x, y, r) {
+        ctx.beginPath();
+        const sides = 8;
+        for (let i = 0; i < sides; i++) {
+          const angle = (i / sides) * Math.PI * 2;
+          ctx.lineTo(x + Math.cos(angle) * r, y + Math.sin(angle) * r);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawChaos(x, y, r, level) {
+        ctx.beginPath();
+        const points = Math.floor(Math.random() * 5) + 3;
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2 + Math.random() * 0.3;
+          const dist = r * (0.3 + Math.random() * 0.7);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      analyser.getByteFrequencyData(dataArray);
+      const audioFactor = 1 + (dataArray.reduce((a, b) => a + b) / dataArray.length) / 255 * document.getElementById('audioSensitivity').value;
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        drawRecursiveShape(x, y, radius * scaleFactor, 1, audioFactor);
+      }
+
+      ctx.restore();
+    }
+
+    function randomizeMandala() {
+      document.getElementById('segments').value = Math.floor(Math.random() * 47) + 3;
+      document.getElementById('levels').value = Math.floor(Math.random() * 11) + 1;
+      document.getElementById('scaleFactor').value = (Math.random() * 0.8 + 0.1).toFixed(2);
+      document.getElementById('initialRadius').value = Math.floor(Math.random() * 250) + 50;
+      document.getElementById('lineWidth').value = (Math.random() * 7.5 + 0.5).toFixed(1);
+      document.getElementById('rotation').value = Math.floor(Math.random() * 360);
+      document.getElementById('lineColor').value = randomColor();
+      document.getElementById('secondaryColor').value = randomColor();
+      document.getElementById('patternType').value = ['vortex', 'nebula', 'crystal', 'chaos'][Math.floor(Math.random() * 4)];
+      document.getElementById('particleDensity').value = Math.floor(Math.random() * 200);
+      document.getElementById('warpSpeed').value = (Math.random() * 5).toFixed(1);
+      document.getElementById('audioSensitivity').value = (Math.random() * 2).toFixed(1);
+      updateValueDisplays();
+      initParticles();
+      generateMandala();
+    }
+
+    function randomColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    }
+
+    function downloadMandala() {
+      const link = document.createElement('a');
+      link.download = 'cosmic-mandala.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function toggleAnimation() {
+      if (isAnimating) {
+        cancelAnimationFrame(animationId);
+        document.getElementById('animate').textContent = 'Time Vortex';
+        isAnimating = false;
+      } else {
+        document.getElementById('animate').textContent = 'Collapse Vortex';
+        isAnimating = true;
+        animate();
+      }
+    }
+
+    function animate() {
+      const warpSpeed = parseFloat(document.getElementById('warpSpeed').value);
+      analyser.getByteFrequencyData(dataArray);
+      const audioFactor = dataArray.reduce((a, b) => a + b) / dataArray.length / 255;
+
+      document.getElementById('rotation').value = (parseInt(document.getElementById('rotation').value) + warpSpeed) % 360;
+      document.getElementById('initialRadius').value = 150 + Math.sin(Date.now() * 0.001 * warpSpeed) * 50 * audioFactor;
+      document.getElementById('scaleFactor').value = (0.5 + Math.cos(Date.now() * 0.0005 * warpSpeed) * 0.4).toFixed(2);
+
+      updateValueDisplays();
+      generateMandala();
+      animateParticles();
+
+      if (isAnimating) animationId = requestAnimationFrame(animate);
+    }
+
+    function setColorTheme(primary, secondary) {
+      document.getElementById('lineColor').value = primary;
+      document.getElementById('secondaryColor').value = secondary;
+      generateMandala();
+    }
+
+    function openTab(evt, tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      evt.currentTarget.classList.add('active');
+    }
+
+    window.onload = init;
+  </script>
 </body>
 </html>
