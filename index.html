@@ -145,12 +145,6 @@
       opacity: 0;
       transition: opacity 0.3s;
       box-shadow: 0 0 10px #ff00ff;
-      position: absolute;
-      top: -30px; /* Adjust for desired tooltip position */
-      left: 50%;
-      transform: translateX(-50%);
-      white-space: nowrap; /* Prevent line breaks */
-      z-index: 1;       /* Ensure tooltip is above other elements */
     }
 
     .parameter_input:hover .tooltip {
@@ -168,7 +162,6 @@
       color: #ffffff;
       cursor: pointer;
       text-shadow: 0 0 5px #00ffff;
-      border: none;
     }
 
     .tab.active {
@@ -238,7 +231,7 @@
         <div class="parameter_input">
           <span class="tooltip">Primal Glow</span>
           <label for="lineColor">Glow</label>
-          <input type="color" id="lineColor" value="#ff00ff" oninput="generateMandala();">
+          <input type="color" id="lineColor" value="#ff00ff">
         </div>
       </div>
     </div>
@@ -268,7 +261,7 @@
         <div class="parameter_input">
           <span class="tooltip">Sonic Essence</span>
           <label for="waveform">Essence</label>
-          <select id="waveform" onchange="updateFrequencies()">
+          <select id="waveform">
             <option value="sine">Sine (Ethereal)</option>
             <option value="sawtooth">Saw (Cosmic)</option>
             <option value="square">Square (Primal)</option>
@@ -278,7 +271,7 @@
         <div class="parameter_input">
           <span class="tooltip">Echo Nebula</span>
           <label for="secondaryColor">Echo</label>
-          <input type="color" id="secondaryColor" value="#00ffff" oninput="generateMandala();">
+          <input type="color" id="secondaryColor" value="#00ffff">
         </div>
       </div>
     </div>
@@ -303,7 +296,7 @@
         <div class="parameter_input">
           <span class="tooltip">Fractal Realm</span>
           <label for="patternType">Realm</label>
-          <select id="patternType" onchange="generateMandala()">
+          <select id="patternType">
             <option value="cymatic">Cymatic Pulse</option>
             <option value="vortex">Vortex Spiral</option>
             <option value="nebula">Nebula Drift</option>
@@ -355,8 +348,6 @@
     }
 
     function updateFrequencies() {
-      if (!audioContext) return; // Ensure audioContext is initialized
-
       oscillators.forEach(osc => osc.stop());
       if (lfo) lfo.stop();
       oscillators = [];
@@ -406,7 +397,7 @@
         this.x = Math.random() * mandalaCanvas.width;
         this.y = Math.random() * mandalaCanvas.height;
         this.z = Math.random() * 100 - 50;
-        this.size = Math.random() * 8 + 2; // Corrected this line
+        this.size = Math.random() * 8 + 2;
         this.speedX = Math.random() * 3 - 1.5;
         this.speedY = Math.random() * 3 - 1.5;
         this.speedZ = Math.random() * 2 - 1;
@@ -505,7 +496,7 @@
         uniform vec3 color1;
         uniform vec3 color2;
         void main() {
-          float pulse = sin(vUv.x * 20.0 + time * 2.0) * audioFactor;
+          float pulse = sin(vUv.x * 20.0 + time * 2.0) * cos(vUv.y * 15.0 + time) * audioFactor;
           vec3 color = mix(color1, color2, abs(pulse));
           float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor * 1.5;
           float noise = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453) * 0.2;
@@ -570,7 +561,6 @@
     }
 
     function animateVR() {
-      if (!spiralTunnel) return; // Ensure spiralTunnel is initialized
       const audioFactor = getAudioFactor();
       const time = performance.now() * 0.001;
       spiralTunnel.material.uniforms.time.value = time;
