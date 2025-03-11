@@ -122,6 +122,10 @@
       font-size: 11px;
       opacity: 0;
       transition: opacity 0.3s;
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
     .parameter_input:hover .tooltip {
@@ -334,7 +338,10 @@
     let animationId = null;
     let isAnimating = false;
     let particles = [];
-    let audioContext, oscillators = [], rhythmGain, beatCounter = 0;
+    let audioContext = null; // Initialize as null
+    let oscillators = [];
+    let rhythmGain = null;
+    let beatCounter = 0;
     let rotationAngle = 0;
 
     // Sacred frequencies and musical keys
@@ -347,12 +354,19 @@
       'Em': [329.63, 415.30, 493.88]  // E Minor: E4, G#4, B4
     };
 
-    // Initialize audio with rhythmic generation
+    // Initialize audio only after user gesture
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+        updateFrequencies();
+      } else if (audioContext.state === 'suspended') {
+        audioContext.resume().then(updateFrequencies);
+      } else {
+        updateFrequencies();
       }
-      updateFrequencies();
     }
 
     function updateFrequencies() {
@@ -383,7 +397,8 @@
       // Rhythm generator
       const beatInterval = 60000 / bpm; // ms per beat
       let beatIndex = 0;
-      setInterval(() => {
+      clearInterval(window.rhythmInterval); // Clear any existing interval
+      window.rhythmInterval = setInterval(() => {
         rhythmGain.gain.setValueAtTime(0.2, audioContext.currentTime);
         rhythmGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
         beatIndex = (beatIndex + 1) % beats;
@@ -441,19 +456,27 @@
       });
       while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
         particles.push(new Particle());
-      }
+      });
     }
 
     // Core initialization
     function init() {
-      document.getElementById('generate').addEventListener('click', () => { generateMandala(); updateFrequencies(); });
-      document.getElementById('random').addEventListener('click', () => { randomizeMandala(); updateFrequencies(); });
+      document.getElementById('generate').addEventListener('click', () => {
+        initAudio(); // Start audio on user gesture
+        generateMandala();
+      });
+      document.getElementById('random').addEventListener('click', () => {
+        initAudio(); // Start audio on user gesture
+        randomizeMandala();
+      });
       document.getElementById('download').addEventListener('click', downloadMandala);
-      document.getElementById('animate').addEventListener('click', toggleAnimation);
+      document.getElementById('animate').addEventListener('click', () => {
+        initAudio(); // Start audio on user gesture if not already started
+        toggleAnimation();
+      });
       updateValueDisplays();
-      initAudio();
       initParticles();
-      generateMandala();
+      generateMandala(); // Initial draw without audio
     }
 
     function updateValueDisplays() {
@@ -473,7 +496,7 @@
       updateValueDisplays();
       if (!isAnimating) generateMandala();
       if (id === 'particleDensity') initParticles();
-      if (['baseFreq', 'key', 'waveform', 'bpm', 'timeSignature'].includes(id)) updateFrequencies();
+      if (audioContext && ['baseFreq', 'key', 'waveform', 'bpm', 'timeSignature'].includes(id)) updateFrequencies();
     }
 
     function generateMandala() {
