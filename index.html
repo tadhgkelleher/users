@@ -49,6 +49,16 @@
       box-shadow: 0 0 100px rgba(0, 255, 255, 0.9);
     }
 
+    #vrCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      display: none;
+    }
+
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -57,7 +67,7 @@
       background: rgba(10, 10, 40, 0.9);
       padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 0 50px rgba(255, 0, 255, 0.6);
+      box-shadow: 0 0 50px rgba(255, 0, 255érique, 0.6);
       margin-bottom: 25px;
       border: 2px solid #00ffff;
     }
@@ -311,14 +321,16 @@
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
+  <canvas id="vrCanvas"></canvas>
 
   <script src="three.min.js"></script>
   <script>
     // Core Variables
-    const canvas = document.getElementById('mandalaCanvas');
-    const ctx = canvas.getContext('2d');
+    const mandalaCanvas = document.getElementById('mandalaCanvas');
+    const ctx = mandalaCanvas.getContext('2d');
     const particleCanvas = document.getElementById('particleCanvas');
     const particleCtx = particleCanvas.getContext('2d');
+    const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let isAnimating = false;
     let particles = [];
@@ -382,8 +394,8 @@
     // Particle System
     class Particle {
       constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
+        this.x = Math.random() * mandalaCanvas.width;
+        this.y = Math.random() * mandalaCanvas.height;
         this.z = Math.random() * 100 - 50;
         this.size = Math.random() * 8 + 2;
         this.speedX = Math.random() * 3 - 1.5;
@@ -397,8 +409,8 @@
         this.y += this.speedY * audioFactor;
         this.z += this.speedZ * audioFactor;
         this.life -= 1.5;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        if (this.x < 0 || this.x > mandalaCanvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > mandalaCanvas.height) this.speedY *= -1;
         if (this.z < -50 || this.z > 50) this.speedZ *= -1;
       }
 
@@ -421,7 +433,7 @@
     }
 
     function animateParticles(audioFactor) {
-      particleCtx.clearRect(0, 0, canvas.width, canvas.height);
+      particleCtx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       particles.forEach((p, i) => {
         p.update(audioFactor);
         p.draw(audioFactor);
@@ -441,11 +453,21 @@
         return;
       }
 
+      const gl = vrCanvas.getContext('webgl') || vrCanvas.getContext('experimental-webgl');
+      if (!gl) {
+        console.error('WebGL not supported on this device/browser.');
+        alert('WebGL not supported. Check browser settings or hardware.');
+        document.getElementById('enterVR').textContent = 'VR Not Supported';
+        document.getElementById('enterVR').disabled = true;
+        return;
+      }
+
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true, context: gl });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
+      vrCanvas.style.display = 'block';
 
       const vertexShader = `
         varying vec2 vUv;
@@ -458,10 +480,11 @@
           vUv = uv;
           vPosition = position;
           vec3 pos = position;
-          float spiral = sin(pos.z * segments * 0.1 + time) * cos(pos.z * 0.5 + time) * audioFactor;
-          pos.x += spiral * 2.0 * (1.0 + sin(levels * pos.z * 0.05));
-          pos.y += spiral * 2.0 * (1.0 + cos(levels * pos.z * 0.05));
-          pos.z += sin(time + pos.x) * audioFactor * 0.5;
+          float spiral1 = sin(pos.z * segments * 0.1 + time) * audioFactor;
+          float spiral2 = cos(pos.z * levels * 0.05 + time) * audioFactor;
+          pos.x += (spiral1 + spiral2) * 2.0;
+          pos.y += (spiral1 - spiral2) * 2.0;
+          pos.z += sin(time + pos.x) * audioFactor * 0.5 + cos(time + pos.y) * 0.3;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
         }
       `;
@@ -476,7 +499,8 @@
           float pulse = sin(vUv.x * 20.0 + time * 2.0) * cos(vUv.y * 15.0 + time) * audioFactor;
           vec3 color = mix(color1, color2, abs(pulse));
           float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor * 1.5;
-          gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.2);
+          float noise = fract(sin(dot(vUv.xy, vec2(12.9898, 78.233))) * 43758.5453) * 0.2;
+          gl_FragColor = vec4(color * glow + noise, 0.8 + audioFactor * 0.2);
         }
       `;
 
@@ -602,9 +626,9 @@
       const patternType = document.getElementById('patternType').value;
       const modulation = parseFloat(document.getElementById('modulation').value);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
+      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+      const centerX = mandalaCanvas.width / 2;
+      const centerY = mandalaCanvas.height / 2;
 
       function drawRecursiveShape(x, y, r, level, audioFactor = 1) {
         if (level > levels) return;
@@ -694,7 +718,7 @@
       function drawYantra(x, y, r, audioFactor, time) {
         ctx.beginPath();
         for (let i = 0; i < 4; i++) {
-          const angle = (i / 4) * Math.PI * 2 + audioFactor * 0.1 + time * 0.4;
+          const angle = (i / 4) * Math.PI * 2 + audioFactor *  préserver0.1 + time * 0.4;
           ctx.moveTo(x, y);
           ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
         }
@@ -760,7 +784,7 @@
     function downloadMandala() {
       const link = document.createElement('a');
       link.download = 'infinite-spiral.png';
-      link.href = canvas.toDataURL('image/png');
+      link.href = mandalaCanvas.toDataURL('image/png');
       link.click();
     }
 
