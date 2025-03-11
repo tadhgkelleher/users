@@ -147,23 +147,23 @@
     <div class="controls">
       <div>
         <label for="segments">Segments</label>
-        <input type="range" id="segments" value="8" min="3" max="24" oninput="updateValue('segments')">
-        <span id="segments-value">8</span>
+        <input type="range" id="segments" value="12" min="6" max="36" oninput="updateValue('segments')">
+        <span id="segments-value">12</span>
       </div>
       <div>
         <label for="levels">Levels</label>
-        <input type="range" id="levels" value="3" min="1" max="6" oninput="updateValue('levels')">
-        <span id="levels-value">3</span>
+        <input type="range" id="levels" value="4" min="2" max="8" oninput="updateValue('levels')">
+        <span id="levels-value">4</span>
       </div>
       <div>
         <label for="scaleFactor">Scale</label>
-        <input type="range" id="scaleFactor" value="0.7" min="0.3" max="0.9" step="0.01" oninput="updateValue('scaleFactor')">
-        <span id="scaleFactor-value">0.7</span>
+        <input type="range" id="scaleFactor" value="0.6" min="0.4" max="0.8" step="0.01" oninput="updateValue('scaleFactor')">
+        <span id="scaleFactor-value">0.6</span>
       </div>
       <div>
         <label for="baseRadius">Base Radius</label>
-        <input type="range" id="baseRadius" value="100" min="50" max="200" oninput="updateValue('baseRadius')">
-        <span id="baseRadius-value">100</span>
+        <input type="range" id="baseRadius" value="150" min="50" max="300" oninput="updateValue('baseRadius')">
+        <span id="baseRadius-value">150</span>
       </div>
       <div>
         <label for="lineColor">Color</label>
@@ -196,13 +196,13 @@
       </div>
       <div>
         <label for="bpm">BPM</label>
-        <input type="range" id="bpm" value="90" min="60" max="180" step="5" oninput="updateValue('bpm')">
-        <span id="bpm-value">90</span>
+        <input type="range" id="bpm" value="100" min="60" max="180" step="5" oninput="updateValue('bpm')">
+        <span id="bpm-value">100</span>
       </div>
       <div>
         <label for="droneVolume">Drone Volume</label>
-        <input type="range" id="droneVolume" value="0.2" min="0" max="0.5" step="0.01" oninput="updateValue('droneVolume')">
-        <span id="droneVolume-value">0.2</span>
+        <input type="range" id="droneVolume" value="0.15" min="0" max="0.3" step="0.01" oninput="updateValue('droneVolume')">
+        <span id="droneVolume-value">0.15</span>
       </div>
     </div>
   </div>
@@ -268,9 +268,13 @@
       'B': 493.88  // B4
     };
 
+    // Simple 4/4 rhythm pattern (1 = note, 0 = rest)
+    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0]; // Quarter notes with alternating beats
+
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log("AudioContext initialized");
         if (audioContext.state === 'suspended') audioContext.resume();
       }
       updateAudio();
@@ -293,7 +297,7 @@
       droneOsc = audioContext.createOscillator();
       droneGain = audioContext.createGain();
       droneOsc.type = 'sine';
-      droneOsc.frequency.value = rootFreq / 2; // Octave down for drone
+      droneOsc.frequency.value = rootFreq / 2; // Octave down
       droneGain.gain.value = droneVolume;
       droneOsc.connect(droneGain);
       droneGain.connect(audioContext.destination);
@@ -303,22 +307,24 @@
       melodyOsc = audioContext.createOscillator();
       melodyGain = audioContext.createGain();
       melodyOsc.type = 'triangle';
-      melodyGain.gain.value = 0; // Controlled by rhythm
+      melodyGain.gain.value = 0;
       melodyOsc.connect(melodyGain);
       melodyGain.connect(audioContext.destination);
       melodyOsc.start();
 
-      // Rhythm and melody generator
-      const beatInterval = 60000 / bpm;
-      let noteIndex = 0;
+      // Rhythm and melody
+      const beatInterval = 60000 / bpm / 2; // Eighth notes
+      let beatIndex = 0;
       clearInterval(window.rhythmInterval);
       window.rhythmInterval = setInterval(() => {
-        const note = scale[noteIndex % scale.length];
-        const freq = rootFreq * Math.pow(2, note / 12);
-        melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
-        melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
-        melodyGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
-        noteIndex++;
+        if (rhythmPattern[beatIndex % rhythmPattern.length] === 1) {
+          const note = scale[Math.floor(Math.random() * scale.length)]; // Random scale note
+          const freq = rootFreq * Math.pow(2, note / 12);
+          melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
+          melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+          melodyGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+        }
+        beatIndex++;
         beatCounter++;
       }, beatInterval);
     }
@@ -357,6 +363,7 @@
       for (let i = 0; i < density; i++) {
         particles.push(new Particle());
       }
+      console.log("Particles initialized:", particles.length);
     }
 
     function animateParticles(audioFactor) {
@@ -373,6 +380,7 @@
     }
 
     function init() {
+      console.log("Initializing...");
       document.getElementById('generate').addEventListener('click', () => {
         initAudio();
         generateMandala();
@@ -386,6 +394,7 @@
       updateValueDisplays();
       initParticles();
       generateMandala();
+      console.log("Init complete");
     }
 
     function updateValueDisplays() {
@@ -407,6 +416,7 @@
     }
 
     function generateMandala() {
+      console.log("Generating mandala...");
       const segments = parseInt(document.getElementById('segments').value);
       const levels = parseInt(document.getElementById('levels').value);
       const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
@@ -428,35 +438,48 @@
 
         ctx.beginPath();
         ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2 - level * 0.3;
-        const sides = segments + level * 2;
-        const angleStep = Math.PI * 2 / sides;
-        const audioFactor = droneVolume * 2 + Math.sin(beatCounter * 0.1) * 0.5;
+        ctx.lineWidth = 1.5;
+        const audioFactor = 1 + droneVolume * 2 + Math.sin(beatCounter * 0.05) * 0.3;
 
-        for (let i = 0; i < sides; i++) {
-          const angle = i * angleStep;
-          const r = radius * (1 + Math.sin(angle * 3 + beatCounter * 0.05) * 0.2 * audioFactor);
-          const nextAngle = (i + 1) * angleStep;
-          const nextR = radius * (1 + Math.sin(nextAngle * 3 + beatCounter * 0.05) * 0.2 * audioFactor);
-          ctx.moveTo(x + Math.cos(angle) * r, y + Math.sin(angle) * r);
-          ctx.lineTo(x + Math.cos(nextAngle) * nextR, y + Math.sin(nextAngle) * nextR);
+        // Outer ring with modulation
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const r = radius * (1 + Math.sin(angle * level + beatCounter * 0.02) * 0.1 * audioFactor);
+          const xPos = x + Math.cos(angle) * r;
+          const yPos = y + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(xPos, yPos);
+          else ctx.lineTo(xPos, yPos);
         }
+        ctx.closePath();
         ctx.stroke();
+
+        // Inner connections
+        for (let i = 0; i < segments; i++) {
+          const angle1 = (i / segments) * Math.PI * 2;
+          const angle2 = ((i + 1) % segments) / segments * Math.PI * 2;
+          const r1 = radius * 0.7;
+          const r2 = radius * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(x + Math.cos(angle1) * r1, y + Math.sin(angle1) * r1);
+          ctx.quadraticCurveTo(x, y, x + Math.cos(angle2) * r2, y + Math.sin(angle2) * r2);
+          ctx.stroke();
+        }
 
         drawMandala(x, y, radius * scaleFactor, level + 1);
       }
 
       drawMandala(centerX, centerY, baseRadius, 1);
       ctx.restore();
+      console.log("Mandala rendered");
     }
 
     function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 21) + 3;
-      document.getElementById('levels').value = Math.floor(Math.random() * 5) + 1;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.6 + 0.3).toFixed(2);
-      document.getElementById('baseRadius').value = Math.floor(Math.random() * 150) + 50;
+      document.getElementById('segments').value = Math.floor(Math.random() * 30) + 6;
+      document.getElementById('levels').value = Math.floor(Math.random() * 6) + 2;
+      document.getElementById('scaleFactor').value = (Math.random() * 0.4 + 0.4).toFixed(2);
+      document.getElementById('baseRadius').value = Math.floor(Math.random() * 250) + 50;
       document.getElementById('bpm').value = Math.floor(Math.random() * 120) + 60;
-      document.getElementById('droneVolume').value = (Math.random() * 0.3 + 0.1).toFixed(2);
+      document.getElementById('droneVolume').value = (Math.random() * 0.2 + 0.1).toFixed(2);
       document.getElementById('particleDensity').value = Math.floor(Math.random() * 150) + 50;
       document.getElementById('rotationSpeed').value = (Math.random() * 1.5 + 0.5).toFixed(1);
       document.getElementById('scale').value = ['pentatonic', 'minor', 'major'][Math.floor(Math.random() * 3)];
@@ -488,7 +511,7 @@
 
     function animate() {
       const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
-      const audioFactor = 1 + Math.sin(beatCounter * 0.1) * 0.5;
+      const audioFactor = 1 + Math.sin(beatCounter * 0.05) * 0.5;
       rotationAngle += rotationSpeed * 0.005;
 
       generateMandala();
@@ -504,7 +527,10 @@
       evt.currentTarget.classList.add('active');
     }
 
-    window.onload = init;
+    window.onload = () => {
+      console.log("Window loaded");
+      init();
+    };
   </script>
 </body>
 </html>
