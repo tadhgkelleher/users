@@ -6,7 +6,7 @@
   <title>Spiritual Machine: Infinite Spiral Weaver</title>
   <style>
     body {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Arial', sans-serif;
       text-align: center;
       background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c);
       color: #e0e0ff;
@@ -62,7 +62,15 @@
       border: 2px solid #00ffff;
     }
 
-    button {
+    .control-panel {
+      background: linear-gradient(135deg, #1e1e3b, #ff00ff);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+      border: 2px solid #9b59b6;
+    }
+
+    button, select {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
       padding: 12px 25px;
       border: none;
@@ -76,10 +84,41 @@
       text-shadow: 0 0 5px #ffffff;
     }
 
-    button:hover {
+    button:hover, select:hover {
       background: linear-gradient(45deg, #00ffff, #ff00ff);
       transform: scale(1.1);
       box-shadow: 0 0 30px rgba(0, 255, 255, 1);
+    }
+
+    select {
+      appearance: none;
+      padding-right: 30px;
+      background-image: url('data:image/svg+xml;utf8,<svg fill="%2300ffff" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    input[type="range"] {
+      background: linear-gradient(90deg, #ff6ec7, #9b59b6);
+      border-radius: 10px;
+      padding: 5px;
+      accent-color: #00ffff;
+    }
+
+    input[type="color"] {
+      width: 60px;
+      height: 40px;
+      border: 3px solid #00ffff;
+      border-radius: 10px;
+      background: none;
+      cursor: pointer;
+      box-shadow: 0 0 15px #ff00ff;
+    }
+
+    label {
+      color: #00ffff;
+      font-size: 16px;
+      text-shadow: 0 0 8px #ff6ec7;
     }
 
     .parameter_input {
@@ -102,6 +141,36 @@
       opacity: 1;
     }
 
+    .tab-container {
+      margin-bottom: 25px;
+    }
+
+    .tab {
+      background: linear-gradient(45deg, #9b59b6, #ff6ec7);
+      padding: 12px 25px;
+      border-radius: 10px 10px 0 0;
+      color: #ffffff;
+      cursor: pointer;
+      text-shadow: 0 0 5px #00ffff;
+    }
+
+    .tab.active {
+      background: linear-gradient(45deg, #00ffff, #ff00ff);
+      color: #1a1a3b;
+    }
+
+    .tab-content {
+      display: none;
+      background: rgba(10, 10, 40, 0.9);
+      padding: 25px;
+      border-radius: 0 0 15px 15px;
+      border: 2px solid #ff6ec7;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     .particle-layer {
       position: absolute;
       top: 0;
@@ -116,6 +185,122 @@
 <body>
   <h1>Spiritual Machine: Infinite Spiral Weaver</h1>
 
+  <div class="tab-container">
+    <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
+    <button class="tab" onclick="openTab(event, 'freqTab')">Frequencies</button>
+    <button class="tab" onclick="openTab(event, 'voidTab')">Void</button>
+  </div>
+
+  <div id="formTab" class="tab-content active">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Spiral Segments</span>
+          <label for="segments">Segments</label>
+          <input type="range" id="segments" value="12" min="3" max="100" oninput="updateValue('segments')">
+          <span id="segments-value">12</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Fractal Depth</span>
+          <label for="levels">Levels</label>
+          <input type="range" id="levels" value="4" min="1" max="20" oninput="updateValue('levels')">
+          <span id="levels-value">4</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Twist Decay</span>
+          <label for="scaleFactor">Twist</label>
+          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.95" step="0.01" oninput="updateValue('scaleFactor')">
+          <span id="scaleFactor-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Cosmic Amplitude</span>
+          <label for="initialRadius">Amplitude</label>
+          <input type="range" id="initialRadius" value="150" min="50" max="500" oninput="updateValue('initialRadius')">
+          <span id="initialRadius-value">150</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Primal Glow</span>
+          <label for="lineColor">Glow</label>
+          <input type="color" id="lineColor" value="#ff00ff">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="freqTab" class="tab-content">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Pulse Density</span>
+          <label for="lineWidth">Density</label>
+          <input type="range" id="lineWidth" value="2" min="0.5" max="15" step="0.1" oninput="updateValue('lineWidth')">
+          <span id="lineWidth-value">2</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Astral Frequency (Hz)</span>
+          <label for="baseFreq">Base Freq</label>
+          <input type="range" id="baseFreq" value="200" min="20" max="2000" step="10" oninput="updateValue('baseFreq')">
+          <span id="baseFreq-value">200</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Harmonic Warp</span>
+          <label for="freqMultiplier">Warp</label>
+          <input type="range" id="freqMultiplier" value="1.5" min="1" max="5" step="0.1" oninput="updateValue('freqMultiplier')">
+          <span id="freqMultiplier-value">1.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Sonic Essence</span>
+          <label for="waveform">Essence</label>
+          <select id="waveform">
+            <option value="sine">Sine (Ethereal)</option>
+            <option value="sawtooth">Saw (Cosmic)</option>
+            <option value="square">Square (Primal)</option>
+            <option value="triangle">Triangle (Astral)</option>
+          </select>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Echo Nebula</span>
+          <label for="secondaryColor">Echo</label>
+          <input type="color" id="secondaryColor" value="#00ffff">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="voidTab" class="tab-content">
+    <div class="control-panel">
+      <h3>Void Resonance</h3>
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Starfield Density</span>
+          <label for="particleDensity">Stars</label>
+          <input type="range" id="particleDensity" value="50" min="0" max="500" oninput="updateValue('particleDensity')">
+          <span id="particleDensity-value">50</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Quantum Flux</span>
+          <label for="modulation">Flux</label>
+          <input type="range" id="modulation" value="0.5" min="0" max="5" step="0.1" oninput="updateValue('modulation')">
+          <span id="modulation-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Fractal Realm</span>
+          <label for="patternType">Realm</label>
+          <select id="patternType">
+            <option value="cymatic">Cymatic Pulse</option>
+            <option value="vortex">Vortex Spiral</option>
+            <option value="nebula">Nebula Drift</option>
+            <option value="chaos">Chaos Rift</option>
+            <option value="flower">Flower of Eternity</option>
+            <option value="yantra">Yantra Portal</option>
+            <option value="tunnel">3D Spiral Tunnel</option>
+            <option value="hypercube">Hypercube Flux</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="controls">
     <button id="generate">Weave Infinity</button>
     <button id="random">Rift Chaos</button>
@@ -124,17 +309,10 @@
     <button id="enterVR">Dive into VR</button>
   </div>
 
-  <div class="parameter_input">
-    <span class="tooltip">Quantum Flux</span>
-    <label for="modulation">Flux</label>
-    <input type="range" id="modulation" value="0.5" min="0" max="5" step="0.1" oninput="updateValue('modulation')">
-    <span id="modulation-value">0.5</span>
-  </div>
-
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js" onload="initThreeLoaded = true" onerror="console.error('Failed to load Three.js')"></script>
+  <script src="three.min.js"></script>
   <script>
     // Core Variables
     const canvas = document.getElementById('mandalaCanvas');
@@ -144,9 +322,8 @@
     let animationId = null;
     let isAnimating = false;
     let particles = [];
-    let audioContext, analyser;
+    let audioContext, oscillators = [], lfo, analyser;
     let scene, camera, renderer, spiralTunnel;
-    let initThreeLoaded = false;
 
     // Audio Initialization
     function initAudio() {
@@ -154,23 +331,52 @@
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 512;
-
-        const osc = audioContext.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = 432; // Heart chakra vibe
-        const gain = audioContext.createGain();
-        gain.gain.value = 0.1;
-        osc.connect(gain).connect(analyser).connect(audioContext.destination);
-        osc.start();
       }
+      updateFrequencies();
     }
 
-    function getAudioFactor() {
-      if (!analyser) return 1;
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
-      const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      return 1 + (avg / 255) * 2;
+    function updateFrequencies() {
+      oscillators.forEach(osc => osc.stop());
+      if (lfo) lfo.stop();
+      oscillators = [];
+
+      const baseFreq = parseFloat(document.getElementById('baseFreq').value);
+      const freqMultiplier = parseFloat(document.getElementById('freqMultiplier').value);
+      const waveform = document.getElementById('waveform').value;
+      const segments = parseInt(document.getElementById('segments').value);
+      const modulation = parseFloat(document.getElementById('modulation').value);
+
+      const beatFreq = 12 * modulation;
+      for (let i = 0; i < Math.min(segments, 8); i++) {
+        const oscLeft = audioContext.createOscillator();
+        const oscRight = audioContext.createOscillator();
+        const panLeft = audioContext.createPanner();
+        const panRight = audioContext.createPanner();
+        const gain = audioContext.createGain();
+
+        oscLeft.type = waveform;
+        oscRight.type = waveform;
+        oscLeft.frequency.value = baseFreq * Math.pow(freqMultiplier, i);
+        oscRight.frequency.value = oscLeft.frequency.value + beatFreq;
+        panLeft.setPosition(-1 + i * 0.2, Math.sin(i), Math.cos(i));
+        panRight.setPosition(1 - i * 0.2, Math.cos(i), Math.sin(i));
+        gain.gain.value = 0.05 / (i + 1);
+
+        oscLeft.connect(gain).connect(panLeft).connect(audioContext.destination);
+        oscRight.connect(gain).connect(panRight).connect(analyser).connect(audioContext.destination);
+        oscLeft.start();
+        oscRight.start();
+        oscillators.push(oscLeft, oscRight);
+      }
+
+      lfo = audioContext.createOscillator();
+      const lfoGain = audioContext.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.value = modulation * 2;
+      lfoGain.gain.value = 20;
+      lfo.connect(lfoGain);
+      oscillators.forEach(osc => lfoGain.connect(osc.frequency));
+      lfo.start();
     }
 
     // Particle System
@@ -208,7 +414,8 @@
 
     function initParticles() {
       particles = [];
-      for (let i = 0; i < 100; i++) {
+      const density = parseInt(document.getElementById('particleDensity').value);
+      for (let i = 0; i < density; i++) {
         particles.push(new Particle());
       }
     }
@@ -220,7 +427,9 @@
         p.draw(audioFactor);
         if (p.life <= 0) particles.splice(i, 1);
       });
-      while (particles.length < 100) particles.push(new Particle());
+      while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
+        particles.push(new Particle());
+      }
     }
 
     // VR Setup with Sine-Wave Spiral Tunnel
@@ -243,14 +452,16 @@
         varying vec3 vPosition;
         uniform float time;
         uniform float audioFactor;
+        uniform float segments;
+        uniform float levels;
         void main() {
           vUv = uv;
           vPosition = position;
           vec3 pos = position;
-          float spiral = sin(pos.z * 5.0 + time) * cos(pos.z * 3.0 + time) * audioFactor;
-          pos.x += spiral * 2.0;
-          pos.y += spiral * 2.0;
-          pos.z += sin(time + pos.x) * audioFactor;
+          float spiral = sin(pos.z * segments * 0.1 + time) * cos(pos.z * 0.5 + time) * audioFactor;
+          pos.x += spiral * 2.0 * (1.0 + sin(levels * pos.z * 0.05));
+          pos.y += spiral * 2.0 * (1.0 + cos(levels * pos.z * 0.05));
+          pos.z += sin(time + pos.x) * audioFactor * 0.5;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
         }
       `;
@@ -264,15 +475,16 @@
         void main() {
           float pulse = sin(vUv.x * 20.0 + time * 2.0) * cos(vUv.y * 15.0 + time) * audioFactor;
           vec3 color = mix(color1, color2, abs(pulse));
-          float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor;
-          gl_FragColor = vec4(color * glow, 1.0);
+          float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor * 1.5;
+          gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.2);
         }
       `;
 
       const points = [];
+      const levels = parseInt(document.getElementById('levels').value);
       for (let z = -50; z < 50; z += 0.5) {
         const angle = z * 0.2;
-        const radius = 5 + Math.sin(z * 0.5) * 2;
+        const radius = 5 + Math.sin(z * levels * 0.1) * 3 + Math.cos(z * 0.5) * 2;
         points.push(new THREE.Vector3(
           Math.cos(angle) * radius,
           Math.sin(angle) * radius,
@@ -286,11 +498,14 @@
         uniforms: {
           time: { value: 0 },
           audioFactor: { value: 1 },
+          segments: { value: parseInt(document.getElementById('segments').value) },
+          levels: { value: levels },
           color1: { value: new THREE.Color('#ff00ff') },
           color2: { value: new THREE.Color('#00ffff') }
         },
         side: THREE.DoubleSide,
-        transparent: true
+        transparent: true,
+        blending: THREE.AdditiveBlending
       });
       spiralTunnel = new THREE.Mesh(geometry, material);
       scene.add(spiralTunnel);
@@ -306,7 +521,8 @@
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
-          console.log('VR session started');
+          console.log('VR session started successfully');
+          document.getElementById('enterVR').textContent = 'VR Active';
         } catch (err) {
           console.error('Failed to start VR:', err);
           alert('Failed to enter VR: ' + err.message);
@@ -325,8 +541,10 @@
       const time = performance.now() * 0.001;
       spiralTunnel.material.uniforms.time.value = time;
       spiralTunnel.material.uniforms.audioFactor.value = audioFactor;
-      spiralTunnel.material.uniforms.color1.value.setStyle('#ff00ff');
-      spiralTunnel.material.uniforms.color2.value.setStyle('#00ffff');
+      spiralTunnel.material.uniforms.segments.value = parseInt(document.getElementById('segments').value);
+      spiralTunnel.material.uniforms.levels.value = parseInt(document.getElementById('levels').value);
+      spiralTunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
+      spiralTunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
       spiralTunnel.rotation.z += 0.01 * audioFactor;
       camera.position.z += 0.1 * audioFactor;
       if (camera.position.z > 50) camera.position.z = -50;
@@ -335,69 +553,208 @@
 
     // Core Functions
     function init() {
-      document.getElementById('generate').addEventListener('click', generateMandala);
-      document.getElementById('random').addEventListener('click', randomizeMandala);
+      document.getElementById('generate').addEventListener('click', () => { generateMandala(); updateFrequencies(); });
+      document.getElementById('random').addEventListener('click', () => { randomizeMandala(); updateFrequencies(); });
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
       updateValueDisplays();
       initAudio();
       initParticles();
-      if (initThreeLoaded) {
-        initVR();
-      } else {
-        const checkThree = setInterval(() => {
-          if (initThreeLoaded) {
-            initVR();
-            clearInterval(checkThree);
-          }
-        }, 100);
-      }
+      initVR();
       generateMandala();
     }
 
     function updateValueDisplays() {
+      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
+      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
+      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
+      document.getElementById('initialRadius-value').textContent = document.getElementById('initialRadius').value;
+      document.getElementById('lineWidth-value').textContent = document.getElementById('lineWidth').value;
+      document.getElementById('baseFreq-value').textContent = document.getElementById('baseFreq').value;
+      document.getElementById('freqMultiplier-value').textContent = document.getElementById('freqMultiplier').value;
+      document.getElementById('particleDensity-value').textContent = document.getElementById('particleDensity').value;
       document.getElementById('modulation-value').textContent = document.getElementById('modulation').value;
     }
 
     function updateValue(id) {
       updateValueDisplays();
       if (!isAnimating) generateMandala();
+      if (id === 'particleDensity') initParticles();
+      if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id)) updateFrequencies();
+    }
+
+    function getAudioFactor() {
+      if (!analyser) return 1;
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      return 1 + (avg / 255) * 2;
     }
 
     function generateMandala(timeFactor = 0) {
+      const segments = parseInt(document.getElementById('segments').value);
+      const levels = parseInt(document.getElementById('levels').value);
+      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
+      const radius = parseInt(document.getElementById('initialRadius').value);
+      const lineColor = document.getElementById('lineColor').value;
+      const secondaryColor = document.getElementById('secondaryColor').value;
+      const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+      const patternType = document.getElementById('patternType').value;
       const modulation = parseFloat(document.getElementById('modulation').value);
-      const radius = 150;
-      const segments = 12;
-      const audioFactor = getAudioFactor();
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
 
-      ctx.lineWidth = 2 * audioFactor;
-      ctx.strokeStyle = `hsl(${timeFactor * 50 % 360}, 100%, 50%)`;
-      ctx.shadowBlur = 30;
-      ctx.shadowColor = '#ff00ff';
+      function drawRecursiveShape(x, y, r, level, audioFactor = 1) {
+        if (level > levels) return;
 
-      for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * Math.PI * 2 + timeFactor * 0.3;
-        const x = centerX + radius * Math.cos(angle) * audioFactor;
-        const y = centerY + radius * Math.sin(angle) * audioFactor;
+        const gradient = ctx.createRadialGradient(x, y, r * 0.2, x, y, r);
+        gradient.addColorStop(0, lineColor);
+        gradient.addColorStop(1, secondaryColor);
+
+        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.8) * audioFactor;
+        ctx.strokeStyle = gradient;
+        ctx.shadowBlur = 30;
+        ctx.shadowColor = lineColor;
+
+        switch (patternType) {
+          case 'cymatic': drawCymatic(x, y, r, level, audioFactor, timeFactor); break;
+          case 'vortex': drawVortex(x, y, r, segments / level, timeFactor); break;
+          case 'nebula': drawNebula(x, y, r, timeFactor); break;
+          case 'chaos': drawChaos(x, y, r, level, timeFactor); break;
+          case 'flower': drawFlower(x, y, r, audioFactor, timeFactor); break;
+          case 'yantra': drawYantra(x, y, r, audioFactor, timeFactor); break;
+          case 'tunnel': drawTunnel(x, y, r, level, audioFactor, timeFactor); break;
+          case 'hypercube': drawHypercube(x, y, r, level, audioFactor, timeFactor); break;
+        }
+
+        drawRecursiveShape(x, y, r * scaleFactor, level + 1, audioFactor);
+      }
+
+      function drawCymatic(x, y, r, level, audioFactor, time) {
         ctx.beginPath();
-        for (let j = 0; j < 360; j++) {
-          const theta = (j / 360) * Math.PI * 2;
-          const r = radius * Math.sin(theta * 5 + timeFactor * modulation) * audioFactor;
-          ctx.lineTo(x + r * Math.cos(theta), y + r * Math.sin(theta));
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2 + time * 0.5;
+          const mod = Math.sin(angle * level * 2 + time) * audioFactor;
+          const dist = r * (0.5 + mod * 0.8);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
         ctx.stroke();
       }
+
+      function drawVortex(x, y, r, segments, time) {
+        ctx.beginPath();
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2 + time * 0.8;
+          const x1 = x + r * Math.cos(angle);
+          const y1 = y + r * Math.sin(angle);
+          const x2 = x + r * 0.3 * Math.cos(angle + Math.PI / segments);
+          const y2 = y + r * 0.3 * Math.sin(angle + Math.PI / segments);
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x1, y1, x2, y2);
+        }
+        ctx.stroke();
+      }
+
+      function drawNebula(x, y, r, time) {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + Math.sin(time * 0.3) * 0.5;
+          const dist = r * (0.4 + Math.cos(time + i) * 0.6);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawChaos(x, y, r, level, time) {
+        ctx.beginPath();
+        const points = Math.floor(Math.random() * 7) + 4;
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2 + Math.random() * 0.5 + time;
+          const dist = r * (0.2 + Math.sin(time + level) * 0.8);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawFlower(x, y, r, audioFactor, time) {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + time * 0.6;
+          const dist = r * audioFactor * (0.5 + Math.sin(time) * 0.3);
+          ctx.arc(x + Math.cos(angle) * r * 0.4, y + Math.sin(angle) * r * 0.4, dist * 0.4, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      }
+
+      function drawYantra(x, y, r, audioFactor, time) {
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+          const angle = (i / 4) * Math.PI * 2 + audioFactor * 0.1 + time * 0.4;
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+        }
+        ctx.stroke();
+      }
+
+      function drawTunnel(x, y, r, level, audioFactor, time) {
+        ctx.beginPath();
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2 + time * 0.7;
+          const depth = Math.sin(level * 0.5 + time) * r * 0.3 * audioFactor;
+          const dist = r * (1 - level / levels) * audioFactor * (1 + Math.cos(time) * 0.2);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawHypercube(x, y, r, level, audioFactor, time) {
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2 + time * 0.9;
+          const mod = Math.cos(level + time) * audioFactor;
+          const dist = r * (0.5 + mod * 0.5);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      const audioFactor = getAudioFactor();
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2 + timeFactor * modulation;
+        const x = centerX + radius * Math.cos(angle) * audioFactor;
+        const y = centerY + radius * Math.sin(angle) * audioFactor;
+        drawRecursiveShape(x, y, radius * scaleFactor, 1, audioFactor);
+      }
     }
 
     function randomizeMandala() {
+      document.getElementById('segments').value = Math.floor(Math.random() * 97) + 3;
+      document.getElementById('levels').value = Math.floor(Math.random() * 19) + 1;
+      document.getElementById('scaleFactor').value = (Math.random() * 0.85 + 0.1).toFixed(2);
+      document.getElementById('initialRadius').value = Math.floor(Math.random() * 450) + 50;
+      document.getElementById('lineWidth').value = (Math.random() * 14.5 + 0.5).toFixed(1);
+      document.getElementById('baseFreq').value = Math.floor(Math.random() * 1980) + 20;
+      document.getElementById('freqMultiplier').value = (Math.random() * 4 + 1).toFixed(1);
+      document.getElementById('waveform').value = ['sine', 'sawtooth', 'square', 'triangle'][Math.floor(Math.random() * 4)];
+      document.getElementById('particleDensity').value = Math.floor(Math.random() * 500);
       document.getElementById('modulation').value = (Math.random() * 5).toFixed(1);
+      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra', 'tunnel', 'hypercube'][Math.floor(Math.random() * 8)];
+      document.getElementById('lineColor').value = randomColor();
+      document.getElementById('secondaryColor').value = randomColor();
       updateValueDisplays();
+      initParticles();
       generateMandala();
+    }
+
+    function randomColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
     }
 
     function downloadMandala() {
@@ -430,6 +787,13 @@
       if (isAnimating) {
         animationId = requestAnimationFrame(animate);
       }
+    }
+
+    function openTab(evt, tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabName).classList.add('active');
+      evt.currentTarget.classList.add('active');
     }
 
     window.onload = init;
