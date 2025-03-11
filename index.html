@@ -67,7 +67,7 @@
       background: rgba(10, 10, 40, 0.9);
       padding: 25px;
       border-radius: 15px;
-      box-shadow: 0 0 50px rgba(255, 0, 255érique, 0.6);
+      box-shadow: 0 0 50px rgba(255, 0, 255, 0.6);
       margin-bottom: 25px;
       border: 2px solid #00ffff;
     }
@@ -91,7 +91,7 @@
       cursor: pointer;
       transition: all 0.4s;
       box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
-      text-shadow: 0 0 5px #ffffff;
+      text Operatorshadow: 0 0 5px #ffffff;
     }
 
     button:hover, select:hover {
@@ -397,7 +397,7 @@
         this.x = Math.random() * mandalaCanvas.width;
         this.y = Math.random() * mandalaCanvas.height;
         this.z = Math.random() * 100 - 50;
-        this.size = Math.random() * 8 + 2;
+        this.size = Math.random() * 8 + 2 sape;
         this.speedX = Math.random() * 3 - 1.5;
         this.speedY = Math.random() * 3 - 1.5;
         this.speedZ = Math.random() * 2 - 1;
@@ -718,7 +718,7 @@
       function drawYantra(x, y, r, audioFactor, time) {
         ctx.beginPath();
         for (let i = 0; i < 4; i++) {
-          const angle = (i / 4) * Math.PI * 2 + audioFactor *  préserver0.1 + time * 0.4;
+          const angle = (i / 4) * Math.PI * 2 + audioFactor * 0.1 + time * 0.4;
           ctx.moveTo(x, y);
           ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
         }
