@@ -3,129 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Cymatics: Rhythm of the Void</title>
+  <title>Fractal Cymatics: Frequency Weaver</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Orbitron', sans-serif;
       text-align: center;
-      background: linear-gradient(135deg, #1a1a2e, #2a2a4c, #3b3b6d);
-      color: #d0d0ff;
+      background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c);
+      color: #e0e0ff;
       margin: 0;
       padding: 20px;
       overflow: hidden;
+      animation: voidShift 20s infinite alternate;
+    }
+
+    @keyframes voidShift {
+      0% { background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c); }
+      50% { background: radial-gradient(circle, #1f0a3b, #3b1a5c, #5c2a7d); }
+      100% { background: radial-gradient(circle, #0a1f3b, #1a3b5c, #2a5c7d); }
     }
 
     h1 {
-      font-size: 2.5rem;
-      color: #8a4af3;
-      text-shadow: 0 0 5px #8a4af3;
-      margin-bottom: 20px;
+      font-size: 3.2rem;
+      color: #ff6ec7;
+      text-shadow: 0 0 15px #ff6ec7, 0 0 30px #9b59b6;
+      animation: resonate 2s infinite alternate;
+      margin-bottom: 25px;
     }
 
-    #canvasContainer {
-      position: relative;
-      width: 800px;
-      height: 800px;
-      margin: 0 auto;
+    @keyframes resonate {
+      0% { text-shadow: 0 0 10px #ff6ec7, 0 0 20px #9b59b6; }
+      100% { text-shadow: 0 0 25px #ff6ec7, 0 0 50px #9b59b6; }
     }
 
     canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      border: 1px solid #4c4c7d;
-      border-radius: 5px;
+      border: 3px solid #3a3a5c;
+      border-radius: 15px;
       background: #0a0a1f;
-      box-shadow: 0 0 20px rgba(138, 74, 243, 0.3);
+      box-shadow: 0 0 50px rgba(158, 202, 237, 0.6), inset 0 0 25px rgba(0, 0, 0, 0.9);
+      transition: transform 0.3s, box-shadow 0.3s;
+      max-width: 100%;
     }
 
-    #particleCanvas {
-      z-index: 1;
+    canvas:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 70px rgba(255, 110, 199, 0.8);
     }
 
     .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(138, 74, 243, 0.2);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      background: rgba(20, 20, 40, 0.85);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 35px rgba(255, 110, 199, 0.4);
       margin-bottom: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
+    }
+
+    .control-panel {
+      background: linear-gradient(135deg, #1e1e3b, #2e2e5c);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
     }
 
     button, select {
-      background: linear-gradient(45deg, #8a4af3, #d06bff);
-      padding: 6px 12px;
+      background: linear-gradient(45deg, #ff6ec7, #9b59b6);
+      padding: 10px 20px;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       color: #fff;
-      font-size: 13px;
+      font-size: 16px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.4s;
+      box-shadow: 0 0 15px rgba(255, 110, 199, 0.6);
     }
 
     button:hover, select:hover {
-      background: linear-gradient(45deg, #d06bff, #8a4af3);
+      background: linear-gradient(45deg, #9b59b6, #ff6ec7);
       transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 110, 199, 0.9);
     }
 
-    input[type="range"] {
-      background: #3e3e7d;
-      border-radius: 5px;
-      accent-color: #d06bff;
+    input[type="range"], input[type="number"] {
+      background: #2e2e5c;
+      border-radius: 8px;
+      padding: 5px;
+      color: #ff6ec7;
+      accent-color: #ff6ec7;
     }
 
     input[type="color"] {
-      width: 30px;
-      height: 20px;
-      border: 1px solid #8a4af3;
-      border-radius: 5px;
+      width: 50px;
+      height: 30px;
+      border: 2px solid #ff6ec7;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
     }
 
     label {
-      color: #d0d0ff;
+      color: #9b59b6;
+      font-size: 14px;
+      text-shadow: 0 0 5px rgba(155, 89, 182, 0.6);
+    }
+
+    .parameter_input {
+      position: relative;
+      padding: 10px;
+    }
+
+    .tooltip {
+      background: rgba(20, 20, 40, 0.9);
+      color: #ff6ec7;
+      padding: 5px 10px;
+      border-radius: 5px;
       font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .parameter_input:hover .tooltip {
+      opacity: 1;
+    }
+
+    .color-palette {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .color-option {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 3px solid #ff6ec7;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 15px rgba(255, 110, 199, 0.6);
+    }
+
+    .color-option:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 25px rgba(255, 110, 199, 0.9);
     }
 
     .tab-container {
-      margin-bottom: 15px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
+      margin-bottom: 20px;
     }
 
     .tab {
-      background: #3e3e7d;
-      padding: 6px 12px;
-      border-radius: 5px 5px 0 0;
-      color: #d0d0ff;
+      background: #2e2e5c;
+      padding: 10px 20px;
+      border-radius: 8px 8px 0 0;
+      color: #ff6ec7;
       cursor: pointer;
     }
 
     .tab.active {
-      background: #8a4af3;
-      color: #fff;
+      background: #ff6ec7;
+      color: #1e1e3b;
     }
 
     .tab-content {
       display: none;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 0 0 8px 8px;
+      background: rgba(20, 20, 40, 0.85);
+      padding: 20px;
+      border-radius: 0 0 12px 12px;
     }
 
     .tab-content.active {
       display: block;
     }
 
+    .particle-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
     @media (max-width: 768px) {
-      #canvasContainer {
-        width: 100%;
-        height: auto;
+      .controls {
+        flex-direction: column;
+        align-items: center;
       }
       canvas {
         width: 100%;
@@ -135,104 +201,134 @@
   </style>
 </head>
 <body>
-  <h1>Fractal Cymatics: Rhythm of the Void</h1>
+  <h1>Fractal Cymatics: Frequency Weaver</h1>
 
   <div class="tab-container">
     <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
-    <button class="tab" onclick="openTab(event, 'rhythmTab')">Rhythm</button>
+    <button class="tab" onclick="openTab(event, 'freqTab')">Frequencies</button>
     <button class="tab" onclick="openTab(event, 'voidTab')">Void</button>
   </div>
 
   <div id="formTab" class="tab-content active">
-    <div class="controls">
-      <div>
-        <label for="segments">Segments</label>
-        <input type="range" id="segments" value="12" min="6" max="36" oninput="updateValue('segments')">
-        <span id="segments-value">12</span>
-      </div>
-      <div>
-        <label for="levels">Levels</label>
-        <input type="range" id="levels" value="4" min="2" max="8" oninput="updateValue('levels')">
-        <span id="levels-value">4</span>
-      </div>
-      <div>
-        <label for="scaleFactor">Scale</label>
-        <input type="range" id="scaleFactor" value="0.6" min="0.4" max="0.8" step="0.01" oninput="updateValue('scaleFactor')">
-        <span id="scaleFactor-value">0.6</span>
-      </div>
-      <div>
-        <label for="baseRadius">Base Radius</label>
-        <input type="range" id="baseRadius" value="150" min="50" max="300" oninput="updateValue('baseRadius')">
-        <span id="baseRadius-value">150</span>
-      </div>
-      <div>
-        <label for="lineColor">Color</label>
-        <input type="color" id="lineColor" value="#8a4af3">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Wave Segments</span>
+          <label for="segments">Segments</label>
+          <input type="range" id="segments" value="12" min="3" max="60" oninput="updateValue('segments')">
+          <span id="segments-value">12</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Recursion Depth</span>
+          <label for="levels">Levels</label>
+          <input type="range" id="levels" value="4" min="1" max="15" oninput="updateValue('levels')">
+          <span id="levels-value">4</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Scale Decay</span>
+          <label for="scaleFactor">Scale</label>
+          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.9" step="0.01" oninput="updateValue('scaleFactor')">
+          <span id="scaleFactor-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Base Amplitude</span>
+          <label for="initialRadius">Amplitude</label>
+          <input type="range" id="initialRadius" value="150" min="50" max="350" oninput="updateValue('initialRadius')">
+          <span id="initialRadius-value">150</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Core Resonance Color</span>
+          <label for="lineColor">Core Color</label>
+          <input type="color" id="lineColor" value="#ff6ec7">
+        </div>
       </div>
     </div>
   </div>
 
-  <div id="rhythmTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="scale">Scale</label>
-        <select id="scale" onchange="updateValue('scale')">
-          <option value="pentatonic">Pentatonic</option>
-          <option value="minor">Natural Minor</option>
-          <option value="major">Major</option>
-        </select>
-      </div>
-      <div>
-        <label for="rootNote">Root Note</label>
-        <select id="rootNote" onchange="updateValue('rootNote')">
-          <option value="C">C</option>
-          <option value="D">D</option>
-          <option value="E">E</option>
-          <option value="F">F</option>
-          <option value="G">G</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-      </div>
-      <div>
-        <label for="bpm">BPM</label>
-        <input type="range" id="bpm" value="100" min="60" max="180" step="5" oninput="updateValue('bpm')">
-        <span id="bpm-value">100</span>
-      </div>
-      <div>
-        <label for="droneVolume">Drone Volume</label>
-        <input type="range" id="droneVolume" value="0.15" min="0" max="0.3" step="0.01" oninput="updateValue('droneVolume')">
-        <span id="droneVolume-value">0.15</span>
+  <div id="freqTab" class="tab-content">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Wave Density</span>
+          <label for="lineWidth">Density</label>
+          <input type="range" id="lineWidth" value="2" min="0.5" max="10" step="0.1" oninput="updateValue('lineWidth')">
+          <span id="lineWidth-value">2</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Base Frequency (Hz)</span>
+          <label for="baseFreq">Base Freq</label>
+          <input type="range" id="baseFreq" value="200" min="20" max="1000" step="10" oninput="updateValue('baseFreq')">
+          <span id="baseFreq-value">200</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Frequency Multiplier</span>
+          <label for="freqMultiplier">Freq Mult</label>
+          <input type="range" id="freqMultiplier" value="1.5" min="1" max="3" step="0.1" oninput="updateValue('freqMultiplier')">
+          <span id="freqMultiplier-value">1.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Waveform Type</span>
+          <label for="waveform">Waveform</label>
+          <select id="waveform">
+            <option value="sine">Sine (Smooth)</option>
+            <option value="sawtooth">Sawtooth (Harsh)</option>
+            <option value="square">Square (Hollow)</option>
+            <option value="triangle">Triangle (Warm)</option>
+          </select>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Echo Resonance Color</span>
+          <label for="secondaryColor">Echo Color</label>
+          <input type="color" id="secondaryColor" value="#9b59b6">
+        </div>
       </div>
     </div>
   </div>
 
   <div id="voidTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="particleDensity">Particles</label>
-        <input type="range" id="particleDensity" value="50" min="0" max="200" oninput="updateValue('particleDensity')">
-        <span id="particleDensity-value">50</span>
+    <div class="control-panel">
+      <h3>Void Modulation</h3>
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Particle Density</span>
+          <label for="particleDensity">Particles</label>
+          <input type="range" id="particleDensity" value="50" min="0" max="300" oninput="updateValue('particleDensity')">
+          <span id="particleDensity-value">50</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Frequency Modulation</span>
+          <label for="modulation">Modulation</label>
+          <input type="range" id="modulation" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('modulation')">
+          <span id="modulation-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Pattern Type</span>
+          <label for="patternType">Pattern</label>
+          <select id="patternType">
+            <option value="cymatic">Cymatic</option>
+            <option value="vortex">Vortex</option>
+            <option value="nebula">Nebula</option>
+            <option value="chaos">Chaos</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <label for="rotationSpeed">Rotation</label>
-        <input type="range" id="rotationSpeed" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('rotationSpeed')">
-        <span id="rotationSpeed-value">0.5</span>
+      <div class="color-palette">
+        <div class="color-option" style="background: linear-gradient(45deg, #ff6ec7, #9b59b6)" onclick="setColorTheme('#ff6ec7', '#9b59b6')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #00ffff, #4169e1)" onclick="setColorTheme('#00ffff', '#4169e1')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #ff4500, #ffd700)" onclick="setColorTheme('#ff4500', '#ffd700')"></div>
       </div>
     </div>
   </div>
 
   <div class="controls">
-    <button id="generate">Weave Rhythm</button>
-    <button id="random">Void Pulse</button>
-    <button id="animate">Resonate</button>
-    <button id="download">Capture</button>
+    <button id="generate">Weave Frequencies</button>
+    <button id="random">Frequency Rift</button>
+    <button id="animate">Pulse Void</button>
+    <button id="download">Capture Wave</button>
   </div>
 
-  <div id="canvasContainer">
-    <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-    <canvas id="particleCanvas" width="800" height="800"></canvas>
-  </div>
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="particleCanvas" class="particle-layer" width="800" height="800"></canvas>
 
   <script>
     const canvas = document.getElementById('mandalaCanvas');
@@ -243,88 +339,60 @@
     let animationId = null;
     let isAnimating = false;
     let particles = [];
-    let audioContext = null;
-    let droneOsc = null;
-    let melodyOsc = null;
-    let droneGain = null;
-    let melodyGain = null;
-    let rotationAngle = 0;
-    let beatCounter = 0;
+    let audioContext, oscillators = [], lfo;
 
-    const scales = {
-      pentatonic: [0, 3, 5, 7, 10],
-      minor: [0, 2, 3, 5, 7, 8, 10],
-      major: [0, 2, 4, 5, 7, 9, 11]
-    };
-
-    const rootFrequencies = {
-      'C': 261.63, 'D': 293.66, 'E': 329.63, 'F': 349.23, 'G': 392.00, 'A': 440.00, 'B': 493.88
-    };
-
-    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0];
-
+    // Initialize audio with frequency generator
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioContext.state === 'suspended') audioContext.resume();
       }
-      updateAudio();
+      updateFrequencies();
     }
 
-    function updateAudio() {
-      if (droneOsc) droneOsc.stop();
-      if (melodyOsc) melodyOsc.stop();
-      if (droneGain) droneGain.disconnect();
-      if (melodyGain) melodyGain.disconnect();
+    function updateFrequencies() {
+      oscillators.forEach(osc => osc.stop());
+      oscillators = [];
 
-      const rootNote = document.getElementById('rootNote').value;
-      const scaleType = document.getElementById('scale').value;
-      const bpm = parseInt(document.getElementById('bpm').value);
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
-      const rootFreq = rootFrequencies[rootNote];
-      const scale = scales[scaleType];
+      const baseFreq = parseFloat(document.getElementById('baseFreq').value);
+      const freqMultiplier = parseFloat(document.getElementById('freqMultiplier').value);
+      const waveform = document.getElementById('waveform').value;
+      const segments = parseInt(document.getElementById('segments').value);
+      const modulation = parseFloat(document.getElementById('modulation').value);
 
-      droneOsc = audioContext.createOscillator();
-      droneGain = audioContext.createGain();
-    drone Osc.type = 'sine'; 
-      droneOsc.frequency.value = rootFreq / 2;
-      droneGain.gain.value = droneVolume;
-      droneOsc.connect(droneGain);
-      droneGain.connect(audioContext.destination);
-      droneOsc.start();
+      // Generate frequencies based on segments
+      for (let i = 0; i < Math.min(segments, 5); i++) { // Limit to 5 oscillators to avoid overload
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.type = waveform;
+        osc.frequency.value = baseFreq * Math.pow(freqMultiplier, i);
+        gain.gain.value = 0.1 / (i + 1); // Decrease volume for higher harmonics
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        osc.start();
+        oscillators.push(osc);
+      }
 
-      melodyOsc = audioContext.createOscillator();
-      melodyGain = audioContext.createGain();
-      melodyOsc.type = 'triangle';
-      melodyGain.gain.value = 0;
-      melodyOsc.connect(melodyGain);
-      melodyGain.connect(audioContext.destination);
-      melodyOsc.start();
-
-      const beatInterval = 60000 / bpm / 2;
-      let beatIndex = 0;
-      clearInterval(window.rhythmInterval);
-      window.rhythmInterval = setInterval(() => {
-        if (rhythmPattern[beatIndex % rhythmPattern.length] === 1) {
-          const note = scale[Math.floor(Math.random() * scale.length)];
-          const freq = rootFreq * Math.pow(2, note / 12);
-          melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
-          melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
-          melodyGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
-        }
-        beatIndex++;
-        beatCounter++;
-      }, beatInterval);
+      // Add LFO (Low Frequency Oscillator) for modulation
+      if (lfo) lfo.stop();
+      lfo = audioContext.createOscillator();
+      const lfoGain = audioContext.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.value = modulation;
+      lfoGain.gain.value = 10; // Modulation depth
+      lfo.connect(lfoGain);
+      oscillators.forEach(osc => lfoGain.connect(osc.frequency));
+      lfo.start();
     }
 
+    // Particle system
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
-        this.life = Math.random() * 50 + 50;
+        this.size = Math.random() * 5 + 1;
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 - 1;
+        this.life = Math.random() * 100;
       }
 
       update(audioFactor) {
@@ -335,11 +403,10 @@
         if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
       }
 
-      draw() {
-        const alpha = this.life / 100;
-        particleCtx.fillStyle = `rgba(208, 107, 255, ${alpha})`;
+      draw(audioFactor) {
+        particleCtx.fillStyle = `rgba(255, 110, 199, ${this.life / 100 * audioFactor})`;
         particleCtx.beginPath();
-        particleCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        particleCtx.arc(this.x, this.y, this.size * audioFactor, 0, Math.PI * 2);
         particleCtx.fill();
       }
     }
@@ -356,27 +423,22 @@
       particleCtx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p, i) => {
         p.update(audioFactor);
-        p.draw();
+        p.draw(audioFactor);
         if (p.life <= 0) particles.splice(i, 1);
       });
-      const targetDensity = parseInt(document.getElementById('particleDensity').value);
-      while (particles.length < targetDensity) {
+      while (particles.length < parseInt(document.getElementById('particleDensity').value)) {
         particles.push(new Particle());
       }
     }
 
+    // Core initialization
     function init() {
-      document.getElementById('generate').addEventListener('click', () => {
-        initAudio();
-        generateMandala();
-      });
-      document.getElementById('random').addEventListener('click', () => {
-        initAudio();
-        randomizeMandala();
-      });
+      document.getElementById('generate').addEventListener('click', () => { generateMandala(); updateFrequencies(); });
+      document.getElementById('random').addEventListener('click', () => { randomizeMandala(); updateFrequencies(); });
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
       updateValueDisplays();
+      initAudio();
       initParticles();
       generateMandala();
     }
@@ -385,86 +447,151 @@
       document.getElementById('segments-value').textContent = document.getElementById('segments').value;
       document.getElementById('levels-value').textContent = document.getElementById('levels').value;
       document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
-      document.getElementById('baseRadius-value').textContent = document.getElementById('baseRadius').value;
-      document.getElementById('bpm-value').textContent = document.getElementById('bpm').value;
-      document.getElementById('droneVolume-value').textContent = document.getElementById('droneVolume').value;
+      document.getElementById('initialRadius-value').textContent = document.getElementById('initialRadius').value;
+      document.getElementById('lineWidth-value').textContent = document.getElementById('lineWidth').value;
+      document.getElementById('baseFreq-value').textContent = document.getElementById('baseFreq').value;
+      document.getElementById('freqMultiplier-value').textContent = document.getElementById('freqMultiplier').value;
       document.getElementById('particleDensity-value').textContent = document.getElementById('particleDensity').value;
-      document.getElementById('rotationSpeed-value').textContent = document.getElementById('rotationSpeed').value;
+      document.getElementById('modulation-value').textContent = document.getElementById('modulation').value;
     }
 
     function updateValue(id) {
       updateValueDisplays();
       if (!isAnimating) generateMandala();
       if (id === 'particleDensity') initParticles();
-      if (audioContext && ['scale', 'rootNote', 'bpm', 'droneVolume'].includes(id)) updateAudio();
+      if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id)) updateFrequencies();
     }
 
     function generateMandala() {
       const segments = parseInt(document.getElementById('segments').value);
       const levels = parseInt(document.getElementById('levels').value);
       const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
-      const baseRadius = parseInt(document.getElementById('baseRadius').value);
+      const radius = parseInt(document.getElementById('initialRadius').value);
       const lineColor = document.getElementById('lineColor').value;
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
+      const secondaryColor = document.getElementById('secondaryColor').value;
+      const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+      const patternType = document.getElementById('patternType').value;
+      const baseFreq = parseFloat(document.getElementById('baseFreq').value);
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
 
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotationAngle);
-      ctx.translate(-centerX, -centerY);
-
-      function drawMandala(x, y, radius, level) {
+      function drawRecursiveShape(x, y, r, level, audioFactor = 1) {
         if (level > levels) return;
 
-        ctx.beginPath();
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2 - (level - 1) * 0.3;
-        const audioFactor = 1 + droneVolume * 2 + Math.sin(beatCounter * 0.05) * 0.3;
+        const gradient = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
+        gradient.addColorStop(0, lineColor);
+        gradient.addColorStop(1, secondaryColor);
 
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2;
-          const outerX = x + Math.cos(angle) * radius * audioFactor;
-          const outerY = y + Math.sin(angle) * radius * audioFactor;
-          const innerAngle = angle + Math.PI / segments;
-          const innerX = x + Math.cos(innerAngle) * (radius * 0.5) * audioFactor;
-          const innerY = y + Math.sin(innerAngle) * (radius * 0.5) * audioFactor;
+        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.7) * audioFactor;
+        ctx.strokeStyle = gradient;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = lineColor;
 
-          ctx.moveTo(x, y);
-          ctx.lineTo(outerX, outerY);
-          ctx.lineTo(innerX, innerY);
-          ctx.lineTo(x, y);
+        switch (patternType) {
+          case 'cymatic':
+            drawCymatic(x, y, r, level, audioFactor);
+            break;
+          case 'vortex':
+            drawVortex(x, y, r, segments / level);
+            break;
+          case 'nebula':
+            drawNebula(x, y, r);
+            break;
+          case 'chaos':
+            drawChaos(x, y, r, level);
+            break;
         }
-        ctx.stroke();
 
-        drawMandala(x, y, radius * scaleFactor, level + 1);
+        drawRecursiveShape(x, y, r * scaleFactor, level + 1, audioFactor);
       }
 
-      drawMandala(centerX, centerY, baseRadius, 1);
-      ctx.restore();
+      function drawCymatic(x, y, r, level, audioFactor) {
+        ctx.beginPath();
+        const points = segments;
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const mod = Math.sin(angle * level + Date.now() * 0.001) * audioFactor;
+          const dist = r * (0.5 + mod * 0.5);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawVortex(x, y, r, segments) {
+        ctx.beginPath();
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const x1 = x + r * Math.cos(angle);
+          const y1 = y + r * Math.sin(angle);
+          const x2 = x + r * 0.5 * Math.cos(angle + Math.PI / segments);
+          const y2 = y + r * 0.5 * Math.sin(angle + Math.PI / segments);
+          ctx.moveTo(x, y);
+          ctx.quadraticCurveTo(x1, y1, x2, y2);
+        }
+        ctx.stroke();
+      }
+
+      function drawNebula(x, y, r) {
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.2;
+          const dist = r * (0.5 + Math.random() * 0.5);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      function drawChaos(x, y, r, level) {
+        ctx.beginPath();
+        const points = Math.floor(Math.random() * 5) + 3;
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2 + Math.random() * 0.3;
+          const dist = r * (0.3 + Math.random() * 0.7);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      const audioFactor = 1 + Math.sin(Date.now() * 0.001) * 0.5; // Simple oscillation for now
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const x = centerX + radius * Math.cos(angle);
+        const y = centerY + radius * Math.sin(angle);
+        drawRecursiveShape(x, y, radius * scaleFactor, 1, audioFactor);
+      }
     }
 
     function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 30) + 6;
-      document.getElementById('levels').value = Math.floor(Math.random() * 6) + 2;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.4 + 0.4).toFixed(2);
-      document.getElementById('baseRadius').value = Math.floor(Math.random() * 250) + 50;
-      document.getElementById('bpm').value = Math.floor(Math.random() * 120) + 60;
-      document.getElementById('droneVolume').value = (Math.random() * 0.2 + 0.1).toFixed(2);
-      document.getElementById('particleDensity').value = Math.floor(Math.random() * 150) + 50;
-      document.getElementById('rotationSpeed').value = (Math.random() * 1.5 + 0.5).toFixed(1);
-      document.getElementById('scale').value = ['pentatonic', 'minor', 'major'][Math.floor(Math.random() * 3)];
-      document.getElementById('rootNote').value = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][Math.floor(Math.random() * 7)];
+      document.getElementById('segments').value = Math.floor(Math.random() * 57) + 3;
+      document.getElementById('levels').value = Math.floor(Math.random() * 14) + 1;
+      document.getElementById('scaleFactor').value = (Math.random() * 0.8 + 0.1).toFixed(2);
+      document.getElementById('initialRadius').value = Math.floor(Math.random() * 300) + 50;
+      document.getElementById('lineWidth').value = (Math.random() * 9.5 + 0.5).toFixed(1);
+      document.getElementById('baseFreq').value = Math.floor(Math.random() * 980) + 20;
+      document.getElementById('freqMultiplier').value = (Math.random() * 2 + 1).toFixed(1);
+      document.getElementById('waveform').value = ['sine', 'sawtooth', 'square', 'triangle'][Math.floor(Math.random() * 4)];
+      document.getElementById('particleDensity').value = Math.floor(Math.random() * 300);
+      document.getElementById('modulation').value = (Math.random() * 2).toFixed(1);
+      document.getElementById('patternType').value = ['cymatic', 'vortex', 'nebula', 'chaos'][Math.floor(Math.random() * 4)];
+      document.getElementById('lineColor').value = randomColor();
+      document.getElementById('secondaryColor').value = randomColor();
       updateValueDisplays();
       initParticles();
       generateMandala();
     }
 
+    function randomColor() {
+      return '#' + Math.floor(Math.random() * 16777215).toString(16);
+    }
+
     function downloadMandala() {
       const link = document.createElement('a');
-      link.download = 'cymatic-rhythm.png';
+      link.download = 'frequency-mandala.png';
       link.href = canvas.toDataURL('image/png');
       link.click();
     }
@@ -472,25 +599,33 @@
     function toggleAnimation() {
       if (isAnimating) {
         cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Resonate';
+        document.getElementById('animate').textContent = 'Pulse Void';
         isAnimating = false;
       } else {
-        initAudio();
-        document.getElementById('animate').textContent = 'Pause';
+        document.getElementById('animate').textContent = 'Collapse Void';
         isAnimating = true;
         animate();
       }
     }
 
     function animate() {
-      const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
-      const audioFactor = 1 + Math.sin(beatCounter * 0.05) * 0.5;
-      rotationAngle += rotationSpeed * 0.005;
+      const modulation = parseFloat(document.getElementById('modulation').value);
+      const audioFactor = 1 + Math.sin(Date.now() * 0.001 * modulation) * 0.5;
 
+      document.getElementById('initialRadius').value = 150 + Math.sin(Date.now() * 0.001) * 50 * audioFactor;
+      document.getElementById('scaleFactor').value = (0.5 + Math.cos(Date.now() * 0.0005) * 0.4).toFixed(2);
+
+      updateValueDisplays();
       generateMandala();
       animateParticles(audioFactor);
 
       if (isAnimating) animationId = requestAnimationFrame(animate);
+    }
+
+    function setColorTheme(primary, secondary) {
+      document.getElementById('lineColor').value = primary;
+      document.getElementById('secondaryColor').value = secondary;
+      generateMandala();
     }
 
     function openTab(evt, tabName) {
@@ -500,9 +635,7 @@
       evt.currentTarget.classList.add('active');
     }
 
-    window.onload = () => {
-      init();
-    };
+    window.onload = init;
   </script>
 </body>
 </html>
