@@ -27,7 +27,7 @@
       color: #00ffff;
       text-shadow: 0 0 20px #ff6ec7, 0 0 40px #9b59b6, 0 0 60px #00ffff;
       animation: resonate 1.5s infinite alternate;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     @keyframes resonate {
@@ -43,6 +43,8 @@
       transition: transform 0.3s, box-shadow 0.3s;
       max-width: 100%;
       z-index: 1;
+      display: block;
+      margin: 20px auto;
     }
 
     #mandalaCanvas:hover {
@@ -69,12 +71,10 @@
       padding: 15px;
       border-radius: 15px;
       box-shadow: 0 0 50px rgba(255, 0, 255, 0.6);
-      margin-top: 20px;
       border: 2px solid #00ffff;
       z-index: 3;
       max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 0 auto 20px auto;
     }
 
     .control-panel {
@@ -140,8 +140,10 @@
     }
 
     .tab-container {
-      margin-top: 20px;
       margin-bottom: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .tab {
@@ -164,6 +166,8 @@
       padding: 15px;
       border-radius: 0 0 10px 10px;
       border: 2px solid #ff6ec7;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
     .tab-content.active {
@@ -173,9 +177,6 @@
 </head>
 <body>
   <h1>Spiritual Machine: Infinite Spiral Weaver</h1>
-
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-  <canvas id="vrCanvas"></canvas>
 
   <div class="tab-container">
     <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
@@ -224,7 +225,6 @@
         </div>
         <div class="parameter_input">
           <label for="baseFreq">Base Freq</label>
-          <input type="range" Roberto: I think you should be charging more than $5 for these tutorials considering the effort you put in and how much detail you go into. I hope you get great karma for this — you deserve it! Your explanations are always so clear, and I love how you break things down step-by-step. Thanks for sharing your knowledge so generously!Freq</label>
           <input type="range" id="baseFreq" value="200" min="20" max="1000" step="10" oninput="updateValue('baseFreq')">
           <span id="baseFreq-value">200</span>
         </div>
@@ -282,6 +282,9 @@
     <button id="download">Capture Eternity</button>
     <button id="enterVR">Dive into VR</button>
   </div>
+
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="vrCanvas"></canvas>
 
   <script src="three.min.js"></script>
   <script>
@@ -537,7 +540,6 @@
       spiralTunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
       spiralTunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
 
-      // Regenerate path if parameters change significantly
       const newPoints = generateVRPath();
       spiralTunnel.geometry.dispose();
       spiralTunnel.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(newPoints), 200, 5, 32, true);
