@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Mandala Generator</title>
+  <title>Cosmic Mandala Generator - 3D Version</title>
   <style>
     body {
       font-family: 'Roboto', Arial, sans-serif;
@@ -74,7 +74,7 @@
       transform: translateY(-3px);
       box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
     }
-    
+
     button:active {
       transform: translateY(0);
     }
@@ -105,19 +105,19 @@
     input[type="color"]::-webkit-color-swatch-wrapper {
       padding: 0;
     }
-    
+
     input[type="color"]::-webkit-color-swatch {
       border: none;
       border-radius: 5px;
     }
-    
+
     .parameter_input {
       padding: 8px;
       margin: 12px;
       position: relative;
       transition: transform 0.2s;
     }
-    
+
     .parameter_input:hover {
       transform: scale(1.05);
     }
@@ -273,11 +273,11 @@
       padding: 10px 18px;
       font-size: 15px;
     }
-    
+
     #download {
       background-color: #5c6bc0;
     }
-    
+
     #download:hover {
       background-color: #455a64;
     }
@@ -285,7 +285,7 @@
     #random {
       background-color: #9c27b0;
     }
-    
+
     #random:hover {
       background-color: #7b1fa2;
     }
@@ -293,7 +293,7 @@
     #animate {
       background-color: #d32f2f;
     }
-    
+
     #animate:hover {
       background-color: #c62828;
     }
@@ -346,11 +346,11 @@
         flex-direction: column;
         align-items: center;
       }
-      
+
       .parameter_input {
         text-align: left;
       }
-      
+
       canvas {
         max-width: 100%;
         height: auto;
@@ -410,7 +410,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="preset-container">
       <button class="preset-btn" onclick="loadPreset('floral')">Floral</button>
       <button class="preset-btn" onclick="loadPreset('star')">Star</button>
@@ -504,7 +504,7 @@
     </div>
   </div>
 
-    <div id="spiritualTab" class="tab-content">
+  <div id="spiritualTab" class="tab-content">
     <div class="control-panel">
       <h3>VR Experience</h3>
       <p>Enter a fully immersive VR experience with your mandala.</p>
@@ -528,23 +528,52 @@
 
   <canvas id="mandalaCanvas" width="600" height="600"></canvas>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script>
     const canvas = document.getElementById('mandalaCanvas');
-    const ctx = canvas.getContext('2d');
-    
-    let animationId = null;
-    let isAnimating = false;
-    let animationParams = {
-      angle: 0,
-      scale: 1,
-      evolution: 0,
-      colorHue: 0
-    };
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    renderer.setSize(canvas.width, canvas.height);
+    renderer.setClearColor(0x000000);
+    const particleCount = 5000;
+    const particles = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const vortexRadius = 5;
+    const vortexHeight = 10;
+    const spiralStrength = 2;
 
-    document.getElementById('vrButton').addEventListener('click', function() {
-      alert('VR Mode not yet implemented. Imagine a serene, immersive experience!');
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * vortexRadius;
+        const height = (Math.random() - 0.5) * vortexHeight;
+        positions[i3 + 0] = radius * Math.cos(angle);
+        positions[i3 + 1] = height + spiralStrength * Math.sin(radius * 5);
+        positions[i3 + 2] = radius * Math.sin(angle);
+        const color = new THREE.Color(Math.random(), Math.random(), Math.random());
+        colors[i3 + 0] = color.r;
+        colors[i3 + 1] = color.g;
+        colors[i3 + 2] = color.b;
+    }
+
+    particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+        size: 0.05,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.7
     });
 
+    const particleSystem = new THREE.Points(particles, particleMaterial);
+    scene.add(particleSystem);
+
+    camera.position.z = 15;
+
+    // Audio
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillatorLeft = audioContext.createOscillator();
     const oscillatorRight = audioContext.createOscillator();
@@ -597,446 +626,103 @@
       brainwaveStateDisplay.textContent = state;
     });
 
-    function init() {
-      document.getElementById('generate').addEventListener('click', generateMandala);
-      document.getElementById('random').addEventListener('click', randomizeMandala);
-      document.getElementById('download').addEventListener('click', downloadMandala);
-      document.getElementById('animate').addEventListener('click', toggleAnimation);
-      frequencySlider.dispatchEvent(new Event('input'));
+    frequencySlider.dispatchEvent(new Event('input'));
 
-      updateValueDisplays();
-      generateMandala();
+    // Animation Loop
+    let animationFrame = 0;
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Subtle Rotation of the entire vortex
+        particleSystem.rotation.y += 0.001;
+        particleSystem.rotation.x += 0.0005;
+
+        // Vortex evolution synched to sound
+        animationFrame++;
+        const beatFrequency = parseFloat(frequencySlider.value);
+        const scaleFactor = 0.5 + 0.3 * Math.sin(animationFrame * 0.02 + beatFrequency * 0.1);
+        particleSystem.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+        const vortexColor = new THREE.Color(`hsl(${(animationFrame * 0.5) % 360}, 100%, 50%)`);
+        particleMaterial.color.copy(vortexColor);
+        particleMaterial.needsUpdate = true;
+
+        renderer.render(scene, camera);
     }
 
-    function updateValueDisplays() {
-      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
-      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
-      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
-      document.getElementById('initialRadius-value').textContent = document.getElementById('initialRadius').value;
-      document.getElementById('lineWidth-value').textContent = document.getElementById('lineWidth').value;
-      document.getElementById('rotation-value').textContent = document.getElementById('rotation').value + '°';
-    }
-
-    function updateValue(id) {
-      document.getElementById(id + '-value').textContent = id === 'rotation'
-        ? document.getElementById(id).value + '°'
-        : document.getElementById(id).value;
-      
-      if (!isAnimating) {
-        generateMandala();
-      }
-    }
-
-    function generateMandala() {
-      const numSegments = parseInt(document.getElementById('segments').value);
-      const levels = parseInt(document.getElementById('levels').value);
-      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
-      const initialRadius = parseInt(document.getElementById('initialRadius').value);
-      const lineColor = document.getElementById('lineColor').value;
-      const secondaryColor = document.getElementById('secondaryColor').value;
-      const lineWidth = parseFloat(document.getElementById('lineWidth').value);
-      const rotation = parseInt(document.getElementById('rotation').value) * Math.PI / 180;
-      const lineCap = document.getElementById('lineCap').value;
-      const patternType = document.getElementById('patternType').value;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotation);
-      ctx.translate(-centerX, -centerY);
-
-      function drawRecursiveShape(x, y, radius, level) {
-        if (level > levels) return;
-        
-        const gradient = ctx.createLinearGradient(
-          centerX - radius, centerY - radius,
-          centerX + radius, centerY + radius
-        );
-        gradient.addColorStop(0, lineColor);
-        gradient.addColorStop(1, secondaryColor);
-        
-        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.5);
-        ctx.lineCap = lineCap;
-        
-        let shape = patternType;
-        if (patternType === 'mixed') {
-          const shapes = ['circles', 'triangles', 'squares', 'stars', 'waves'];
-          shape = shapes[level % shapes.length];
-        }
-
-        switch (shape) {
-          case 'triangles':
-            drawTriangle(x, y, radius, gradient);
-            break;
-          case 'squares':
-            drawSquare(x, y, radius, gradient);
-            break;
-          case 'stars':
-            drawStar(x, y, radius, gradient, 5);
-            break;
-          case 'waves':
-            drawWave(x, y, radius, gradient);
-            break;
-          default:
-            drawCircle(x, y, radius, gradient);
-        }
-
-        drawRecursiveShape(x, y, radius * scaleFactor, level + 1);
-      }
-
-      function drawCircle(x, y, radius, gradient) {
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = gradient;
-        ctx.stroke();
-      }
-
-      function drawTriangle(x, y, radius, gradient) {
-        const sides = 3;
-        ctx.beginPath();
-        for (let i = 0; i < sides; i++) {
-          const angle = (i / sides) * 2 * Math.PI;
-          const pointX = x + radius * Math.cos(angle);
-          const pointY = y + radius * Math.sin(angle);
-          
-          if (i === 0) {
-            ctx.moveTo(pointX, pointY);
-          } else {
-            ctx.lineTo(pointX, pointY);
-          }
-        }
-        ctx.closePath();
-        ctx.strokeStyle = gradient;
-        ctx.stroke();
-      }
-
-      function drawSquare(x, y, radius, gradient) {
-        const size = radius * 1.8;
-        ctx.beginPath();
-        ctx.rect(x - size/2, y - size/2, size, size);
-        ctx.strokeStyle = gradient;
-        ctx.stroke();
-      }
-
-      function drawStar(x, y, radius, gradient, points) {
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(Math.PI / points);
-
-          ctx.beginPath();
-          for (let i = 0; i < 2 * points; i++) {
-              const angle = i * Math.PI / points;
-              const r = (i % 2 === 0) ? radius : radius / 2;
-              const starX = r * Math.cos(angle);
-              const starY = r * Math.sin(angle);
-              ctx.lineTo(starX, starY);
-          }
-          ctx.closePath();
-          ctx.fillStyle = gradient;
-          ctx.fill();  // Fill the star
-          ctx.strokeStyle = gradient;
-          ctx.stroke();
-          ctx.restore();
-      }
-
-      function drawWave(x, y, radius, gradient) {
-        ctx.beginPath();
-        ctx.moveTo(x - radius, y);
-        ctx.quadraticCurveTo(x, y - radius, x + radius, y);
-        ctx.quadraticCurveTo(x, y + radius, x - radius, y);
-        ctx.closePath();
-        ctx.fillStyle = gradient;
-        ctx.fill();
-        ctx.strokeStyle = gradient;
-        ctx.stroke();
-      }
-
-      for (let i = 0; i < numSegments; i++) {
-        const angle = (i / numSegments) * 2 * Math.PI;
-        const x = centerX + initialRadius * Math.cos(angle);
-        const y = centerY + initialRadius * Math.sin(angle);
-        
-        drawRecursiveShape(x, y, initialRadius * scaleFactor, 1);
-      }
-      
-      ctx.restore();
-    }
-
-    function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 33) + 3;
-      document.getElementById('levels').value = Math.floor(Math.random() * 7) + 1;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.8 + 0.1).toFixed(2);
-      document.getElementById('initialRadius').value = Math.floor(Math.random() * 190) + 10;
-      document.getElementById('lineWidth').value = (Math.random() * 4.5 + 0.5).toFixed(1);
-      document.getElementById('rotation').value = Math.floor(Math.random() * 360);
-      
-      document.getElementById('lineColor').value = randomColor();
-      document.getElementById('secondaryColor').value = randomColor();
-      
-      const patterns = ['circles', 'triangles', 'squares', 'stars', 'waves'];
-      document.getElementById('patternType').value = patterns[Math.floor(Math.random() * patterns.length)];
-      
-      const caps = ['round', 'butt', 'square'];
-      document.getElementById('lineCap').value = caps[Math.floor(Math.random() * caps.length)];
-      
-      updateValueDisplays();
-      generateMandala();
-    }
-
-    function randomColor() {
-      const letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    }
-
-    function downloadMandala() {
-      const link = document.createElement('a');
-      link.download = 'fractal-mandala.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    }
-
-    function toggleAnimation() {
-      const animationType = document.getElementById('animationType').value;
-      
-      if (isAnimating) {
-        cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Animate';
-        isAnimating = false;
-      } else {
-        document.getElementById('animate').textContent = 'Stop';
-        isAnimating = true;
-        animationParams = { angle: 0, scale: 1, evolution: 0, colorHue: 0 };
-        
-        const animate = () => {
-          switch (animationType) {
-            case 'rotate':
-              animateRotation();
-              break;
-            case 'pulse':
-              animatePulse();
-              break;
-            case 'evolve':
-              animateEvolution();
-              break;
-            case 'colorShift':
-              animateColorShift();
-              break;
-            case 'complex':
-              animateComplex();
-              break;
-          }
-          
-          if (isAnimating) {
-            animationId = requestAnimationFrame(animate);
-          }
-        };
-        
-        animate();
-      }
-    }
-
-    function animateRotation() {
-      document.getElementById('rotation').value =
-        (parseInt(document.getElementById('rotation').value) + 1) % 360;
-      document.getElementById('rotation-value').textContent =
-        document.getElementById('rotation').value + '°';
-      generateMandala();
-    }
-
-    function animatePulse() {
-      animationParams.scale = 0.95 + Math.sin(animationParams.angle) * 0.05;
-      animationParams.angle += 0.05;
-      
-      const currentRadius = parseInt(document.getElementById('initialRadius').value);
-      const baseRadius = 100;
-      const newRadius = Math.floor(baseRadius * animationParams.scale);
-      
-      document.getElementById('initialRadius').value = newRadius;
-      document.getElementById('initialRadius-value').textContent = newRadius;
-      
-      generateMandala();
-    }
-
-    function animateEvolution() {
-      animationParams.evolution += 0.01;
-      
-      const scaleFactor = 0.3 + 0.4 * Math.sin(animationParams.evolution * 0.5);
-      document.getElementById('scaleFactor').value = scaleFactor.toFixed(2);
-      document.getElementById('scaleFactor-value').textContent = scaleFactor.toFixed(2);
-      
-      if (Math.floor(animationParams.evolution * 10) % 20 === 0) {
-        const segments = parseInt(document.getElementById('segments').value);
-        document.getElementById('segments').value =
-          ((segments + 1) > 36) ? 3 : segments + 1;
-        document.getElementById('segments-value').textContent =
-          document.getElementById('segments').value;
-      }
-      
-      generateMandala();
-    }
-
-    function animateColorShift() {
-        animationParams.colorHue = (animationParams.colorHue + 1) % 360; // Cycle through hues
-
-        // Convert HSL to hex for primary color
-        let hsl = `hsl(${animationParams.colorHue}, 100%, 50%)`;
-        document.getElementById('lineColor').value = hslToHex(hsl);
-
-        // Convert HSL to hex for secondary color (shifted hue)
-        let secondaryHue = (animationParams.colorHue + 180) % 360; // Opposite hue
-        let secondaryHsl = `hsl(${secondaryHue}, 100%, 50%)`;
-        document.getElementById('secondaryColor').value = hslToHex(secondaryHsl);
-
-        generateMandala();
-    }
-
-    function animateComplex() {
-        animateEvolution(); // Incorporate evolution
-        animateRotation(); // Incorporate rotation
-        animateColorShift(); // Incorporate color shift
-    }
-
-    function hslToHex(hsl) {
-        let sep = hsl.indexOf(",") > -1 ? "," : " ";
-        hsl = hsl.substring(4).split(")")[0].split(sep);
-
-        let h = parseInt(hsl[0]) / 360;
-        let s = parseInt(hsl[1].substring(0, hsl[1].length - 1)) / 100;
-        let l = parseInt(hsl[2].substring(0, hsl[2].length - 1)) / 100;
-
-        let r, g, b;
-
-        if (s === 0) {
-            r = g = b = l; // achromatic
-        } else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1/6) return p + (q - p) * 6 * t;
-                if (t < 1/2) return q;
-                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1/3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1/3);
-        }
-
-        const toHex = x => {
-            const shortHex = Math.round(x * 255).toString(16);
-            return shortHex.length === 1 ? "0" + shortHex : shortHex;
-        };
-
-        return "#" + toHex(r) + toHex(g) + toHex(b);
-    }
-
-    function loadPreset(type) {
-      switch(type) {
-        case 'floral':
-          document.getElementById('segments').value = 8;
-          document.getElementById('levels').value = 5;
-          document.getElementById('scaleFactor').value = 0.7;
-          document.getElementById('initialRadius').value = 130;
-          document.getElementById('lineWidth').value = 1.5;
-          document.getElementById('rotation').value = 25;
-          document.getElementById('lineColor').value = '#ff7eb9';
-          document.getElementById('secondaryColor').value = '#7afcff';
-          document.getElementById('patternType').value = 'circles';
-          document.getElementById('lineCap').value = 'round';
-          break;
-        case 'star':
-          document.getElementById('segments').value = 12;
-          document.getElementById('levels').value = 3;
-          document.getElementById('scaleFactor').value = 0.55;
-          document.getElementById('initialRadius').value = 150;
-          document.getElementById('lineWidth').value = 2;
-          document.getElementById('rotation').value = 15;
-          document.getElementById('lineColor').value = '#ffd700';
-          document.getElementById('secondaryColor').value = '#ff4500';
-          document.getElementById('patternType').value = 'triangles';
-          document.getElementById('lineCap').value = 'butt';
-          break;
-        case 'crystal':
-          document.getElementById('segments').value = 6;
-          document.getElementById('levels').value = 7;
-          document.getElementById('scaleFactor').value = 0.6;
-          document.getElementById('initialRadius').value = 120;
-          document.getElementById('lineWidth').value = 1;
-          document.getElementById('rotation').value = 30;
-          document.getElementById('lineColor').value = '#00ffff';
-          document.getElementById('secondaryColor').value = '#4169e1';
-          document.getElementById('patternType').value = 'squares';
-          document.getElementById('lineCap').value = 'square';
-          break;
-        case 'cosmic':
-          document.getElementById('segments').value = 24;
-          document.getElementById('levels').value = 4;
-          document.getElementById('scaleFactor').value = 0.4;
-          document.getElementById('initialRadius').value = 140;
-          document.getElementById('lineWidth').value = 1.5;
-          document.getElementById('rotation').value = 0;
-          document.getElementById('lineColor').value = '#9400d3';
-          document.getElementById('secondaryColor').value = '#ff1493';
-          document.getElementById('patternType').value = 'mixed';
-          document.getElementById('lineCap').value = 'round';
-          break;
-        case 'psychedelic':
-          document.getElementById('segments').value = 16;
-          document.getElementById('levels').value = 6;
-          document.getElementById('scaleFactor').value = 0.65;
-          document.getElementById('initialRadius').value = 110;
-          document.getElementById('lineWidth').value = 2;
-          document.getElementById('rotation').value = 45;
-          document.getElementById('lineColor').value = '#ff00ff';
-          document.getElementById('secondaryColor').value = '#00ffff';
-          document.getElementById('patternType').value = 'waves';
-          document.getElementById('lineCap').value = 'round';
-          break;
-      }
-      
-      updateValueDisplays();
-      generateMandala();
-    }
-
-    function setColorTheme(primary, secondary) {
-      document.getElementById('lineColor').value = primary;
-      document.getElementById('secondaryColor').value = secondary;
-      generateMandala();
-    }
-
-    function setTheme(bg, text) {
-      document.body.style.backgroundColor = bg;
-      document.body.style.color = text;
-      generateMandala();
-    }
-
+    // Tab Functionality
     function openTab(evt, tabName) {
       const tabcontent = document.getElementsByClassName("tab-content");
       for (let i = 0; i < tabcontent.length; i++) {
         tabcontent[i].classList.remove("active");
       }
-      
+
       const tablinks = document.getElementsByClassName("tab");
       for (let i = 0; i < tablinks.length; i++) {
         tablinks[i].classList.remove("active");
       }
-      
+
       document.getElementById(tabName).classList.add("active");
       evt.currentTarget.classList.add("active");
     }
+     // Theme Functionality
+    function setColorTheme(primary, secondary) {
+      // Placeholder for 3D color changes
+      console.log("Color theme set to:", primary, secondary);
+      // TODO: Implement 3D material color changes here
+    }
 
-    window.onload = init;
+    function setTheme(bg, text) {
+      document.body.style.backgroundColor = bg;
+      document.body.style.color = text;
+      // Placeholder for 3D scene background change
+      console.log("Theme set to:", bg, text);
+      // TODO: Implement 3D scene background change
+    }
+
+    // Update Value Displays (Placeholder)
+    function updateValueDisplays() {
+      // TODO: Implement UI element value updates if needed for Three.js
+    }
+
+    // Update Value (Placeholder)
+    function updateValue(id) {
+      // TODO: Connect UI input elements to Three.js scene parameters
+    }
+
+    // Preset Loading (Placeholder)
+    function loadPreset(type) {
+      // TODO: Implement 3D scene preset loading
+    }
+
+    // Download Functionality (Placeholder)
+    function downloadMandala() {
+      // TODO: Implement 3D scene download/export
+      alert("Download functionality not yet implemented for 3D.");
+    }
+
+    // VR Button (Placeholder)
+    document.getElementById('vrButton').addEventListener('click', function() {
+      alert('VR Mode not yet implemented. Imagine a serene, immersive experience!');
+    });
+
+    // Generate, Random, Animate Buttons (Placeholders)
+    document.getElementById('generate').addEventListener('click', function() {
+      // TODO: Trigger 3D scene generation with current parameters
+      console.log("Generate button clicked");
+    });
+
+    document.getElementById('random').addEventListener('click', function() {
+      // TODO: Randomize 3D scene parameters
+      console.log("Random button clicked");
+    });
+
+    document.getElementById('animate').addEventListener('click', function() {
+        // TODO: Implement animation toggling for 3D scene
+        console.log("Animate button clicked");
+    });
+
+    animate();
   </script>
 </body>
 </html>
