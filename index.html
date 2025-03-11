@@ -294,7 +294,7 @@
     let animationId = null;
     let isAnimating = false;
     let audioContext, oscillators = [], lfo, analyser;
-    let scene, camera, renderer, spiralTunnel;
+    let scene, camera, renderer, spiralGroup;
 
     function initAudio() {
       if (!audioContext) {
@@ -401,7 +401,9 @@
           vUv = uv;
           vPosition = position;
           vec3 pos = position;
-          pos.z += sin(time * modulation + pos.x) * audioFactor * 0.5;
+          pos.z += sin(time * modulation + pos.x * 0.1) * audioFactor * 0.5;
+          pos.x += cos(time * modulation + pos.z * 0.1) * audioFactor * 0.3;
+          pos.y += sin(time * modulation + pos.z * 0.1) * audioFactor * 0.3;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
         }
       `;
@@ -413,33 +415,17 @@
         uniform vec3 color1;
         uniform vec3 color2;
         void main() {
-          float pulse = sin(vUv.x * 15.0 + time * 2.0) * cos(vUv.y * 10.0 + time) * audioFactor;
-          vec3 color = mix(color1, color2, abs(pulse));
-          float glow = 1.0 + sin(time + vPosition.z * 5.0) * audioFactor * 1.5;
+          float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * 0.1 + time)));
+          vec3 color = mix(color1, color2, gradient);
+          float glow = 1.0 + sin(time + vPosition.z * 0.5) * audioFactor * 1.5;
           gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.2);
         }
       `;
 
-      const points = generateVRPath();
-      const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 200, 5, 32, true);
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          time: { value: 0 },
-          audioFactor: { value: 1 },
-          modulation: { value: parseFloat(document.getElementById('modulation').value) },
-          color1: { value: new THREE.Color(document.getElementById('lineColor').value) },
-          color2: { value: new THREE.Color(document.getElementById('secondaryColor').value) }
-        },
-        side: THREE.DoubleSide,
-        transparent: true,
-        blending: THREE.AdditiveBlending
-      });
-      spiralTunnel = new THREE.Mesh(geometry, material);
-      scene.add(spiralTunnel);
+      spiralGroup = new THREE.Group();
+      updateVRMandala();
+      scene.add(spiralGroup);
       camera.position.z = -10;
-      console.log('VR tunnel created');
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         if (!navigator.xr) {
@@ -467,84 +453,159 @@
       });
     }
 
-    function generateVRPath() {
-      const points = [];
+    function updateVRMandala() {
+      if (!scene) return;
+      spiralGroup.clear();
+
       const segments = parseInt(document.getElementById('segments').value);
       const levels = parseInt(document.getElementById('levels').value);
-      const radius = Math.min(parseInt(document.getElementById('initialRadius').value), 400);
+      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
+      const radius = Math.min(parseInt(document.getElementById('initialRadius').value), 400) * 0.02;
+      const lineColor = document.getElementById('lineColor').value;
+      const secondaryColor = document.getElementById('secondaryColor').value;
       const patternType = document.getElementById('patternType').value;
       const modulation = parseFloat(document.getElementById('modulation').value);
       const audioFactor = getAudioFactor();
 
-      for (let z = -50; z < 50; z += 0.5) {
-        let x, y;
-        const time = performance.now() * 0.001 * modulation;
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: {
+          time: { value: 0 },
+          audioFactor: { value: audioFactor },
+          modulation: { value: modulation },
+          color1: { value: new THREE.Color(lineColor) },
+          color2: { value: new THREE.Color(secondaryColor) }
+        },
+        side: THREE.DoubleSide,
+        transparent: true,
+        blending: THREE.AdditiveBlending
+      });
+
+      function generateRecursivePath(xOffset, yOffset, r, level, zStart, zEnd) {
+        if (level > levels) return [];
+
+        const points = [];
+        const zStep = (zEnd - zStart) / segments;
 
         switch (patternType) {
           case 'cymatic':
-            const angleCymatic = (z / 50) * Math.PI * 2 + time * 0.5;
-            const modCymatic = Math.sin(angleCymatic * levels * 3 + time) * audioFactor;
-            x = Math.cos(angleCymatic) * radius * (0.6 + modCymatic * 0.9) * 0.02;
-            y = Math.sin(angleCymatic) * radius * (0.6 + modCymatic * 0.9) * 0.02;
+            for (let i = 0; i < segments; i++) {
+              const angle = (i / segments) * Math.PI * 2;
+              const mod = Math.sin(angle * level * 3) * audioFactor;
+              const dist = r * (0.6 + mod * 0.9);
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'vortex':
-            const angleVortex = (z / 50) * Math.PI * 2 + time * 1.2;
-            x = Math.cos(angleVortex) * radius * 0.02;
-            y = Math.sin(angleVortex) * radius * 0.02;
+            for (let i = 0; i < segments / level; i++) {
+              const angle = (i / (segments / level)) * Math.PI * 2;
+              const x1 = xOffset + r * Math.cos(angle);
+              const y1 = yOffset + r * Math.sin(angle);
+              const x2 = xOffset + r * 0.4 * Math.cos(angle + Math.PI / (segments / level));
+              const y2 = yOffset + r * 0.4 * Math.sin(angle + Math.PI / (segments / level));
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x1, y1, z));
+              points.push(new THREE.Vector3(x2, y2, z));
+            }
             break;
           case 'nebula':
-            const angleNebula = (z / 50) * Math.PI * 2 + Math.sin(time * 0.4) * audioFactor;
-            x = Math.cos(angleNebula) * radius * (0.5 + Math.cos(time + z) * 0.7 * audioFactor) * 0.02;
-            y = Math.sin(angleNebula) * radius * (0.5 + Math.cos(time + z) * 0.7 * audioFactor) * 0.02;
+            for (let i = 0; i < 12; i++) {
+              const angle = (i / 12) * Math.PI * 2;
+              const dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'chaos':
-            const angleChaos = (z / 50) * Math.PI * 2 + Math.random() * 0.6 + time;
-            x = Math.cos(angleChaos) * radius * (0.3 + Math.sin(time + levels) * 0.9 * audioFactor) * 0.02;
-            y = Math.sin(angleChaos) * radius * (0.3 + Math.sin(time + levels) * 0.9 * audioFactor) * 0.02;
+            const pointsCount = Math.floor(Math.random() * 8) + 5;
+            for (let i = 0; i < pointsCount; i++) {
+              const angle = (i / pointsCount) * Math.PI * 2 + Math.random() * 0.6;
+              const dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'flower':
-            const angleFlower = (z / 50) * Math.PI * 2 + time * 0.8;
-            const distFlower = radius * audioFactor * (0.6 + Math.sin(time) * 0.4);
-            x = Math.cos(angleFlower) * distFlower * 0.5 * 0.02;
-            y = Math.sin(angleFlower) * distFlower * 0.5 * 0.02;
+            for (let i = 0; i < 10; i++) {
+              const angle = (i / 10) * Math.PI * 2;
+              const dist = r * audioFactor * (0.6 + 0.4);
+              const x = xOffset + Math.cos(angle) * r * 0.5;
+              const y = yOffset + Math.sin(angle) * r * 0.5;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'yantra':
-            const angleYantra = (z / 50) * Math.PI * 2 + time * 0.5;
-            x = Math.cos(angleYantra) * radius * audioFactor * 0.02;
-            y = Math.sin(angleYantra) * radius * audioFactor * 0.02;
+            for (let i = 0; i < 6; i++) {
+              const angle = (i / 6) * Math.PI * 2;
+              const dist = r * audioFactor;
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'tunnel':
-            const angleTunnel = (z / 50) * Math.PI * 2 + time * 0.9;
-            const depthTunnel = Math.sin(levels * 0.6 + time) * radius * 0.4 * audioFactor;
-            x = Math.cos(angleTunnel) * radius * (1 + Math.cos(time) * 0.3) * 0.02;
-            y = Math.sin(angleTunnel) * radius * (1 + Math.cos(time) * 0.3) * 0.02 + depthTunnel * 0.02;
+            for (let i = 0; i < segments; i++) {
+              const angle = (i / segments) * Math.PI * 2;
+              const depth = Math.sin(level * 0.6) * r * 0.4 * audioFactor;
+              const dist = r * (1 - level / levels) * (1 + 0.3);
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist + depth;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
           case 'hypercube':
-            const angleHypercube = (z / 50) * Math.PI * 2 + time * 1.1;
-            const modHypercube = Math.cos(levels + time) * audioFactor;
-            x = Math.cos(angleHypercube) * radius * (0.6 + modHypercube * 0.6) * 0.02;
-            y = Math.sin(angleHypercube) * radius * (0.6 + modHypercube * 0.6) * 0.02;
+            for (let i = 0; i < 8; i++) {
+              const angle = (i / 8) * Math.PI * 2;
+              const mod = Math.cos(level) * audioFactor;
+              const dist = r * (0.6 + mod * 0.6);
+              const x = xOffset + Math.cos(angle) * dist;
+              const y = yOffset + Math.sin(angle) * dist;
+              const z = zStart + i * zStep;
+              points.push(new THREE.Vector3(x, y, z));
+            }
             break;
         }
-        points.push(new THREE.Vector3(x, y, z));
+
+        const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 100, 0.5 / level, 16, false);
+        const tunnel = new THREE.Mesh(geometry, material);
+        spiralGroup.add(tunnel);
+
+        const nextPoints = generateRecursivePath(xOffset, yOffset, r * scaleFactor, level + 1, zStart, zEnd);
+        return points.concat(nextPoints);
       }
-      return points;
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const xOffset = Math.cos(angle) * radius * audioFactor;
+        const yOffset = Math.sin(angle) * radius * audioFactor;
+        generateRecursivePath(xOffset, yOffset, radius * scaleFactor, 1, -50, 50);
+      }
+      console.log('VR mandala updated');
     }
 
     function animateVR() {
       const audioFactor = getAudioFactor();
       const time = performance.now() * 0.001;
-      spiralTunnel.material.uniforms.time.value = time;
-      spiralTunnel.material.uniforms.audioFactor.value = audioFactor;
-      spiralTunnel.material.uniforms.modulation.value = parseFloat(document.getElementById('modulation').value);
-      spiralTunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
-      spiralTunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
+      spiralGroup.children.forEach(tunnel => {
+        tunnel.material.uniforms.time.value = time;
+        tunnel.material.uniforms.audioFactor.value = audioFactor;
+        tunnel.material.uniforms.modulation.value = parseFloat(document.getElementById('modulation').value);
+        tunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
+        tunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
+      });
 
-      const newPoints = generateVRPath();
-      spiralTunnel.geometry.dispose();
-      spiralTunnel.geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(newPoints), 200, 5, 32, true);
-
-      spiralTunnel.rotation.z += 0.01 * audioFactor;
+      spiralGroup.rotation.z += 0.01 * audioFactor;
       camera.position.z += 0.1 * audioFactor;
       if (camera.position.z > 50) camera.position.z = -50;
       renderer.render(scene, camera);
@@ -555,10 +616,12 @@
       document.getElementById('generate').addEventListener('click', () => {
         generateMandala();
         initAudio();
+        updateVRMandala();
       });
       document.getElementById('random').addEventListener('click', () => {
         randomizeMandala();
         initAudio();
+        updateVRMandala();
       });
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
@@ -583,6 +646,7 @@
       updateValueDisplays();
       if (!isAnimating) generateMandala();
       if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id) && audioContext) updateFrequencies();
+      updateVRMandala();
     }
 
     function getAudioFactor() {
