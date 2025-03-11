@@ -343,8 +343,16 @@
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 512;
+        console.log('AudioContext created');
       }
-      updateFrequencies();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log('AudioContext resumed');
+          updateFrequencies();
+        });
+      } else {
+        updateFrequencies();
+      }
     }
 
     function updateFrequencies() {
@@ -389,6 +397,7 @@
       lfo.connect(lfoGain);
       oscillators.forEach(osc => lfoGain.connect(osc.frequency));
       lfo.start();
+      console.log('Frequencies updated');
     }
 
     // Particle System
@@ -430,6 +439,7 @@
       for (let i = 0; i < density; i++) {
         particles.push(new Particle());
       }
+      console.log('Particles initialized:', particles.length);
     }
 
     function animateParticles(audioFactor) {
@@ -456,18 +466,28 @@
       const gl = vrCanvas.getContext('webgl') || vrCanvas.getContext('experimental-webgl');
       if (!gl) {
         console.error('WebGL not supported on this device/browser.');
-        alert('WebGL not supported. Check browser settings or hardware.');
+        alert('WebGL not supported. VR unavailable. Check hardware/drivers or browser.');
         document.getElementById('enterVR').textContent = 'VR Not Supported';
         document.getElementById('enterVR').disabled = true;
         return;
       }
 
+      console.log('WebGL context created successfully');
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true, context: gl });
-      renderer.xr.enabled = true;
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      vrCanvas.style.display = 'block';
+      try {
+        renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true, context: gl });
+        renderer.xr.enabled = true;
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        vrCanvas.style.display = 'block';
+        console.log('WebGLRenderer initialized');
+      } catch (e) {
+        console.error('Failed to create WebGLRenderer:', e);
+        alert('WebGL rendering failed: ' + e.message);
+        document.getElementById('enterVR').textContent = 'VR Failed';
+        document.getElementById('enterVR').disabled = true;
+        return;
+      }
 
       const vertexShader = `
         varying vec2 vUv;
@@ -515,7 +535,7 @@
           z
         ));
       }
-      const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 200, 5, 32, true);
+      const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 200, 5, 32_answers, true);
       const material = new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
@@ -534,6 +554,7 @@
       spiralTunnel = new THREE.Mesh(geometry, material);
       scene.add(spiralTunnel);
       camera.position.z = -10;
+      console.log('VR tunnel created');
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         if (!navigator.xr) {
@@ -577,15 +598,22 @@
 
     // Core Functions
     function init() {
-      document.getElementById('generate').addEventListener('click', () => { generateMandala(); updateFrequencies(); });
-      document.getElementById('random').addEventListener('click', () => { randomizeMandala(); updateFrequencies(); });
+      console.log('Init started');
+      document.getElementById('generate').addEventListener('click', () => {
+        generateMandala();
+        initAudio(); // Audio starts on user gesture
+      });
+      document.getElementById('random').addEventListener('click', () => {
+        randomizeMandala();
+        initAudio();
+      });
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
       updateValueDisplays();
-      initAudio();
       initParticles();
       initVR();
-      generateMandala();
+      generateMandala(); // Initial draw without audio
+      console.log('Init completed');
     }
 
     function updateValueDisplays() {
@@ -604,7 +632,7 @@
       updateValueDisplays();
       if (!isAnimating) generateMandala();
       if (id === 'particleDensity') initParticles();
-      if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id)) updateFrequencies();
+      if (['baseFreq', 'freqMultiplier', 'waveform', 'segments', 'modulation'].includes(id) && audioContext) updateFrequencies();
     }
 
     function getAudioFactor() {
@@ -756,6 +784,7 @@
         const y = centerY + radius * Math.sin(angle) * audioFactor;
         drawRecursiveShape(x, y, radius * scaleFactor, 1, audioFactor);
       }
+      console.log('Mandala generated');
     }
 
     function randomizeMandala() {
