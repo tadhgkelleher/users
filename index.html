@@ -286,9 +286,9 @@
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <!-- Local Three.js—download from https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js -->
-  <script src="three.min.js"></script>
-  <!-- Fallback CDN if local file isn’t present -->
+  <!-- Local Three.js for GitHub Pages or clone -->
+  <script src="./three.min.js"></script>
+  <!-- Fallback CDN for GitHub Pages if local fails -->
   <script>if (!window.THREE) document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"><\/script>');</script>
 
   <script>
@@ -370,7 +370,7 @@
         console.error('initVR: Three.js failed to load');
         vrButton.textContent = 'VR Unavailable (No Three.js)';
         vrButton.disabled = true;
-        alert('Three.js didn’t load—check if three.min.js is in the same folder or internet is on for CDN');
+        alert('Three.js didn’t load—check three.min.js in repo or internet for CDN');
         return;
       }
       console.log('initVR: Three.js loaded');
@@ -389,7 +389,7 @@
         console.error('initVR: WebXR not supported');
         vrButton.textContent = 'VR Unavailable (No WebXR)';
         vrButton.disabled = true;
-        alert('WebXR not supported—use a VR-ready browser (e.g., Chrome 79+)');
+        alert('WebXR not supported—use Chrome 79+ or enable chrome://flags/#webxr');
         return;
       }
       console.log('initVR: WebXR available');
