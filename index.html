@@ -194,7 +194,7 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator, droneGain, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup;
+    let scene, camera, renderer, mandalaGroup, controlGroup, raycaster, controllers = [];
     let intention = '';
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0, totalRotation = 0;
@@ -361,7 +361,7 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // VR Initialization
+    // VR Initialization with Full Control Panel
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
@@ -376,13 +376,48 @@
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
+      controlGroup = new THREE.Group();
       scene.add(mandalaGroup);
+      scene.add(controlGroup);
 
-      console.log('VR renderer setup complete. Checking WebXR support...');
-      if (!navigator.xr) {
-        console.error('WebXR not supported by this browser or device');
-        document.getElementById('enterVR').textContent = 'VR Not Supported';
-        return;
+      // VR Control Panel (Curved Layout)
+      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const buttons = [
+        { name: 'Generate', action: () => generateMandala(timeFactor), x: -1.2 },
+        { name: 'Presets', action: showVRPresets, x: -0.6 },
+        { name: 'Drone', action: toggleDrone, x: 0 },
+        { name: 'Journey', action: startGuidedMeditation, x: 0.6 },
+        { name: 'Download', action: downloadMandala, x: 1.2 }
+      ];
+
+      buttons.forEach(btn => {
+        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
+        button.position.set(btn.x, 0, -1.5); // Curved panel at 1.5 units away
+        button.userData = { action: btn.action, baseScale: button.scale.clone() };
+        controlGroup.add(button);
+      });
+
+      // Raycaster and Controllers
+      raycaster = new THREE.Raycaster();
+      for (let i = 0; i < 2; i++) {
+        const controller = renderer.xr.getController(i);
+        scene.add(controller);
+        controllers.push(controller);
+
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(0, 0, -1)
+        ]);
+        const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0x00ffff }));
+        line.scale.z = 5;
+        controller.add(line);
+
+        controller.addEventListener('selectstart', () => {
+          controller.userData.isSelecting = true;
+          handleControllerInteraction(controller);
+        });
+        controller.addEventListener('selectend', () => controller.userData.isSelecting = false);
       }
 
       updateVRMandala();
@@ -402,6 +437,12 @@
         }
 
         console.log('Attempting to enter VR...');
+        if (!navigator.xr) {
+          console.error('WebXR not supported');
+          enterVRButton.textContent = 'VR Not Supported';
+          return;
+        }
+
         try {
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
           console.log('VR session started successfully');
@@ -421,7 +462,7 @@
 
           if (!voiceAnalyser) initVoiceControl();
         } catch (err) {
-          console.error('VR session failed to start:', err);
+          console.error('VR session failed:', err);
           enterVRButton.textContent = 'VR Failed: ' + err.message;
         }
       });
@@ -430,6 +471,66 @@
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function handleControllerInteraction(controller) {
+      const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
+      raycaster.set(controller.position, direction);
+
+      const intersects = raycaster.intersectObjects(controlGroup.children);
+      controlGroup.children.forEach(btn => {
+        btn.scale.copy(btn.userData.baseScale); // Reset scale
+        btn.material.color.set(0xff00ff); // Reset color
+      });
+
+      if (intersects.length > 0) {
+        const intersected = intersects[0].object;
+        intersected.scale.multiplyScalar(1.1); // Hover effect
+        if (controller.userData.isSelecting) {
+          intersected.userData.action();
+          intersected.material.color.set(0x00ffff); // Click feedback
+          setTimeout(() => intersected.material.color.set(0xff00ff), 200);
+        }
+      }
+    }
+
+    function showVRPresets() {
+      controlGroup.clear();
+      const presetOptions = [
+        { name: 'Mandala', action: () => applyPreset('mandala'), x: -0.9 },
+        { name: 'Yantra', action: () => applyPreset('yantra'), x: -0.3 },
+        { name: 'Sufi', action: () => applyPreset('sufi'), x: 0.3 },
+        { name: 'Zen', action: () => applyPreset('zen'), x: 0.9 }
+      ];
+
+      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      presetOptions.forEach(opt => {
+        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
+        button.position.set(opt.x, -0.3, -1.5);
+        button.userData = { action: () => { opt.action(); initVRControlPanel(); }, baseScale: button.scale.clone() };
+        controlGroup.add(button);
+      });
+    }
+
+    function initVRControlPanel() {
+      controlGroup.clear();
+      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      const buttons = [
+        { name: 'Generate', action: () => generateMandala(timeFactor), x: -1.2 },
+        { name: 'Presets', action: showVRPresets, x: -0.6 },
+        { name: 'Drone', action: toggleDrone, x: 0 },
+        { name: 'Journey', action: startGuidedMeditation, x: 0.6 },
+        { name: 'Download', action: downloadMandala, x: 1.2 }
+      ];
+
+      buttons.forEach(btn => {
+        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
+        button.position.set(btn.x, 0, -1.5);
+        button.userData = { action: btn.action, baseScale: button.scale.clone() };
+        controlGroup.add(button);
       });
     }
 
@@ -472,6 +573,7 @@
     function animateVR(time) {
       totalRotation += rotationSpeed;
       updateVRMandala();
+      controllers.forEach(handleControllerInteraction);
       renderer.render(scene, camera);
     }
 
@@ -480,7 +582,6 @@
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
-      const audioFactor = voiceAmplitude + droneAmplitude;
 
       function drawRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
