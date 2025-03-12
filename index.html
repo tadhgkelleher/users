@@ -254,7 +254,7 @@
   <canvas id="mandalaCanvas" width="1000" height="1000"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r147/three.min.js"></script>
+  <script src="./three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
@@ -278,7 +278,7 @@
       secondaryColor: '#00ffff',
       modulation: 1.5,
       patternType: 'hyperchaos',
-      particleCount: 200 // Reduced for VR stability
+      particleCount: 200
     };
 
     // Audio Initialization with Chaos
@@ -468,8 +468,9 @@
     // VR Initialization with Particle System
     function initVR() {
       if (!window.THREE) {
-        console.error('Three.js failed to load');
+        console.error('Three.js failed to load - ensure three.min.js is in the correct directory');
         document.getElementById('enterVR').textContent = 'VR Unavailable';
+        document.body.innerHTML += '<p style="color: red;">Error: Three.js not loaded. Check file path.</p>';
         return;
       }
 
@@ -482,7 +483,7 @@
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      // Particle System (reduced complexity)
+      // Particle System
       const particleGeometry = new THREE.BufferGeometry();
       const positions = new Float32Array(params.particleCount * 3);
       const colors = new Float32Array(params.particleCount * 3);
@@ -512,7 +513,7 @@
       enterVRButton.addEventListener('click', async () => {
         console.log('Attempting to enter VR...');
         if (!navigator.xr) {
-          console.error('WebXR not supported');
+          console.error('WebXR not supported by this browser or device');
           enterVRButton.textContent = 'VR Not Supported';
           return;
         }
@@ -833,9 +834,10 @@
 
     window.onload = () => {
       if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load. VR unavailable.</p>';
+        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
+        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load. Check file path.</p>';
       } else {
+        console.log('Three.js loaded successfully, version:', THREE.REVISION);
         init();
       }
     };
