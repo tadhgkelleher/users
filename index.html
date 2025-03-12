@@ -154,7 +154,7 @@
       box-shadow: 0 0 30px rgba(0, 255, 255, 1);
     }
 
-    .intention-modal {
+    .intention-modal, .preset-modal {
       position: fixed;
       top: 50%;
       left: 50%;
@@ -167,11 +167,11 @@
       display: none;
     }
 
-    .intention-modal.active {
+    .intention-modal.active, .preset-modal.active {
       display: block;
     }
 
-    .intention-modal input {
+    .intention-modal input, .preset-modal button {
       margin: 10px;
       padding: 5px;
       border-radius: 5px;
@@ -195,7 +195,7 @@
 
   <div class="controls">
     <button id="generate">Weave Cosmos</button>
-    <button id="random">Chaos Rift</button>
+    <button id="presets">Sacred Patterns</button>
     <button id="animate">Pulse Eternity</button>
     <button id="journey">Guided Journey</button>
     <button id="download">Capture Void</button>
@@ -206,6 +206,13 @@
     <label for="intentionInput">Set Your Intention:</label>
     <input type="text" id="intentionInput" placeholder="e.g., Peace, Clarity">
     <button onclick="startWithIntention()">Begin</button>
+  </div>
+
+  <div id="presetModal" class="preset-modal">
+    <button onclick="applyPreset('mandala')">Tibetan Mandala</button>
+    <button onclick="applyPreset('yantra')">Hindu Yantra</button>
+    <button onclick="applyPreset('sufi')">Sufi Spiral</button>
+    <button onclick="applyPreset('zen')">Zen Enso</button>
   </div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
@@ -221,10 +228,11 @@
     let isAnimating = false;
     let audioContext, oscillators = [], lfo, analyser, voiceAnalyser;
     let scene, camera, renderer, spiralGroup;
-    let breathFactor = 1;
     let intention = '';
     let voicePitch = 200; // Default pitch in Hz
     let voiceAmplitude = 0; // Default amplitude (0-1)
+    let rotationSpeed = 0.005; // VR rotation speed
+    let twistFactor = 0; // VR twist effect
 
     const params = {
       segments: 12,
@@ -314,6 +322,7 @@
             voiceAmplitude = getAmplitude(dataArray);
 
             if (pitch !== -1) voicePitch = pitch;
+            updateVoiceParams();
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -362,20 +371,43 @@
       return Math.min(1, sum / buf.length / 0.5); // Normalize to 0-1
     }
 
+    let pitchHistory = [];
+    function updateVoiceParams() {
+      pitchHistory.push(voicePitch);
+      if (pitchHistory.length > 20) pitchHistory.shift();
+      const stability = voicePitchStability();
+
+      if (voiceAmplitude > 0.1 && stability > 0.8) { // Holding a note
+        params.segments = Math.min(50, params.segments + 0.1); // Increase segments
+        rotationSpeed = Math.min(0.05, rotationSpeed + 0.0005); // Increase rotation
+        twistFactor = Math.min(1, twistFactor + 0.01); // Increase twist
+      } else { // No singing
+        params.segments = Math.max(3, params.segments - 0.05); // Decrease segments
+        rotationSpeed = Math.max(0.005, rotationSpeed - 0.0002); // Slow rotation
+        twistFactor = Math.max(0, twistFactor - 0.005); // Reduce twist
+      }
+    }
+
+    function voicePitchStability() {
+      const avg = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
+      const variance = pitchHistory.reduce((a, b) => a + Math.abs(b - avg), 0) / pitchHistory.length;
+      return Math.min(1, 1 - variance / 200); // 0-1 stability
+    }
+
     // VR Shaders
     const vertexShader = `
       varying vec2 vUv;
       varying vec3 vPosition;
       uniform float time;
       uniform float audioFactor;
-      uniform float modulation;
+      uniform float twistFactor;
       void main() {
         vUv = uv;
         vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time * modulation + pos.x * 0.1) * audioFactor * 0.5;
-        pos.x += cos(time * modulation + pos.z * 0.1) * audioFactor * 0.2;
-        pos.y += sin(time * modulation + pos.z * 0.1) * audioFactor * 0.2;
+        pos.z += sin(time + pos.x * twistFactor) * audioFactor * 0.5;
+        pos.x += cos(time + pos.z * twistFactor) * audioFactor * 0.2;
+        pos.y += sin(time + pos.z * twistFactor) * audioFactor * 0.2;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
@@ -442,13 +474,6 @@
       if (!spiralGroup) return;
       spiralGroup.clear();
 
-      // Voice-controlled parameters
-      params.segments = Math.floor(map(voicePitch, 100, 1000, 3, 50));
-      params.initialRadius = map(voiceAmplitude, 0, 1, 50, 400);
-      params.lineWidth = map(voiceAmplitude, 0, 1, 1, 10);
-      params.scaleFactor = map(voicePitchStability(), 0, 1, 0.3, 0.9);
-      params.levels = Math.floor(map(voicePitchVariation(), 0, 1, 1, 15));
-
       const radius = Math.min(params.initialRadius, 400) * 0.02;
       const audioFactor = getAudioFactor();
       const material = new THREE.ShaderMaterial({
@@ -457,7 +482,7 @@
         uniforms: {
           time: { value: 0 },
           audioFactor: { value: audioFactor },
-          modulation: { value: params.modulation },
+          twistFactor: { value: twistFactor },
           color1: { value: new THREE.Color(params.lineColor) },
           color2: { value: new THREE.Color(params.secondaryColor) }
         },
@@ -552,42 +577,20 @@
 
     function animateVR(time) {
       const audioFactor = getAudioFactor();
-      updateVRMandala(); // Rebuild mandala with voice input
+      updateVRMandala(); // Rebuild with voice input
       spiralGroup.children.forEach(obj => {
         if (obj.material.uniforms) {
           obj.material.uniforms.time.value = time * 0.001;
           obj.material.uniforms.audioFactor.value = audioFactor;
+          obj.material.uniforms.twistFactor.value = twistFactor;
         }
-        obj.rotation.z += 0.01 * audioFactor;
-        obj.scale.setScalar(1 + voiceAmplitude * 0.1); // Pulse with voice amplitude
+        obj.rotation.z += rotationSpeed * audioFactor; // Voice-controlled rotation
       });
-      spiralGroup.rotation.z += 0.005 * audioFactor;
+      spiralGroup.rotation.z += rotationSpeed;
       renderer.render(scene, camera);
     }
 
-    // Helper Functions for Voice Mapping
-    function map(value, inMin, inMax, outMin, outMax) {
-      return outMin + (outMax - outMin) * ((value - inMin) / (inMax - inMin));
-    }
-
-    let pitchHistory = [];
-    function voicePitchStability() {
-      pitchHistory.push(voicePitch);
-      if (pitchHistory.length > 20) pitchHistory.shift();
-      const avg = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
-      const variance = pitchHistory.reduce((a, b) => a + Math.abs(b - avg), 0) / pitchHistory.length;
-      return Math.min(1, 1 - variance / 200); // 0-1 stability
-    }
-
-    function voicePitchVariation() {
-      pitchHistory.push(voicePitch);
-      if (pitchHistory.length > 20) pitchHistory.shift();
-      const min = Math.min(...pitchHistory);
-      const max = Math.max(...pitchHistory);
-      return Math.min(1, (max - min) / 500); // 0-1 variation
-    }
-
-    // 2D Mandala Generation (Unchanged)
+    // 2D Mandala Generation
     function generateMandala(timeFactor = 0) {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
@@ -749,6 +752,48 @@
       initAudio();
     }
 
+    // Preset Modal
+    function showPresetModal() {
+      document.getElementById('presetModal').classList.add('active');
+    }
+
+    function applyPreset(preset) {
+      document.getElementById('presetModal').classList.remove('active');
+      switch (preset) {
+        case 'mandala':
+          Object.assign(params, {
+            segments: 16, levels: 5, scaleFactor: 0.8, initialRadius: 250,
+            lineColor: '#ff4500', secondaryColor: '#ffd700', patternType: 'cymatic',
+            baseFreq: 110, waveform: 'sine', modulation: 0.5
+          });
+          break;
+        case 'yantra':
+          Object.assign(params, {
+            segments: 6, levels: 3, scaleFactor: 0.6, initialRadius: 200,
+            lineColor: '#8a2be2', secondaryColor: '#ff00ff', patternType: 'yantra',
+            baseFreq: 136.1, waveform: 'triangle', modulation: 1
+          });
+          break;
+        case 'sufi':
+          Object.assign(params, {
+            segments: 12, levels: 4, scaleFactor: 0.7, initialRadius: 300,
+            lineColor: '#00ced1', secondaryColor: '#228b22', patternType: 'vortex',
+            baseFreq: 174, waveform: 'sawtooth', modulation: 1.5
+          });
+          break;
+        case 'zen':
+          Object.assign(params, {
+            segments: 1, levels: 1, scaleFactor: 0.9, initialRadius: 150,
+            lineColor: '#000000', secondaryColor: '#ffffff', patternType: 'flower',
+            baseFreq: 0, waveform: 'sine', modulation: 0
+          });
+          break;
+      }
+      generateMandala();
+      initAudio();
+      updateVRMandala();
+    }
+
     // Orb Interface
     function createOrbControl(id, x, y, updateCallback) {
       const orb = document.createElement('div');
@@ -772,28 +817,6 @@
       analyser.getByteFrequencyData(dataArray);
       const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
       return 1 + (avg / 255) * 2;
-    }
-
-    function randomizeMandala() {
-      params.segments = Math.floor(Math.random() * 47) + 3;
-      params.levels = Math.floor(Math.random() * 14) + 1;
-      params.scaleFactor = (Math.random() * 0.6 + 0.3).toFixed(2);
-      params.initialRadius = Math.floor(Math.random() * 350) + 50;
-      params.lineWidth = (Math.random() * 9 + 1).toFixed(1);
-      params.baseFreq = Math.floor(Math.random() * 980) + 20;
-      params.freqMultiplier = (Math.random() * 2 + 1).toFixed(1);
-      params.waveform = ['sine', 'sawtooth', 'square', 'triangle'][Math.floor(Math.random() * 4)];
-      params.modulation = (Math.random() * 2.9 + 0.1).toFixed(1);
-      params.patternType = ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra', 'tunnel', 'hypercube'][Math.floor(Math.random() * 8)];
-      params.lineColor = randomColor();
-      params.secondaryColor = randomColor();
-      generateMandala();
-      initAudio();
-      updateVRMandala();
-    }
-
-    function randomColor() {
-      return '#' + Math.floor(Math.random() * 16777215).toString(16);
     }
 
     function downloadMandala() {
@@ -831,7 +854,7 @@
     // Initialization
     function init() {
       document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
-      document.getElementById('random').addEventListener('click', randomizeMandala);
+      document.getElementById('presets').addEventListener('click', showPresetModal);
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
       document.getElementById('journey').addEventListener('click', startGuidedMeditation);
