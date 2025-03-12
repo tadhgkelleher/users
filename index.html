@@ -15,46 +15,24 @@
       padding: 0;
       min-height: 100vh;
       overflow: hidden;
-      animation: voidPulse 60s infinite alternate;
-    }
-
-    @keyframes voidPulse {
-      0% { background: radial-gradient(circle, #000022, #1a0033, #330066); }
-      25% { background: radial-gradient(circle, #ff0066, #00ccff, #6600cc); }
-      50% { background: radial-gradient(circle, #ffcc00, #003399, #ff33cc); }
-      75% { background: radial-gradient(circle, #00ff99, #9900ff, #ff6600); }
-      100% { background: radial-gradient(circle, #330066, #6600cc, #000022); }
     }
 
     h1 {
       font-family: 'Cinzel', serif;
       font-size: 5rem;
       color: #ff00ff;
-      text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc, 0 0 150px #ffcc00;
-      animation: astralShift 5s infinite alternate;
+      text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
       margin: 30px 0;
-    }
-
-    @keyframes astralShift {
-      0% { transform: translateY(0); text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc; }
-      50% { transform: translateY(-20px) scale(1.05); text-shadow: 0 0 80px #ffcc00, 0 0 120px #00ff99; }
-      100% { transform: translateY(0); text-shadow: 0 0 50px #ff00ff, 0 0 150px #6600cc; }
     }
 
     #mandalaCanvas {
       border: 8px double #ff66cc;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
-      box-shadow: 0 0 200px rgba(255, 0, 255, 1), inset 0 0 100px rgba(0, 255, 255, 0.8);
+      box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
       max-width: 95vw;
       max-height: 95vh;
       margin: 20px auto;
-      transition: all 0.8s ease;
-    }
-
-    #mandalaCanvas:hover {
-      transform: scale(1.15) rotate(5deg);
-      box-shadow: 0 0 300px rgba(0, 255, 255, 1), 0 0 150px rgba(255, 0, 255, 1);
     }
 
     #vrCanvas {
@@ -75,69 +53,45 @@
       border-radius: 15px 15px 0 0;
       color: #e6ccff;
       cursor: pointer;
-      text-shadow: 0 0 15px #00ffff;
       transition: all 0.5s;
-      animation: glyphPulse 2s infinite;
-    }
-
-    @keyframes glyphPulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
     }
 
     .glyph-tab:hover, .glyph-tab.active {
       background: linear-gradient(135deg, #00ffff, #ff00ff);
       color: #000022;
-      transform: translateY(-10px) scale(1.2);
-      box-shadow: 0 0 40px rgba(0, 255, 255, 1);
+      transform: translateY(-5px);
     }
 
     .tab-content {
       display: none;
       background: rgba(0, 0, 34, 0.98);
-      padding: 30px;
+      padding: 20px;
       border-radius: 0 0 20px 20px;
       border: 4px solid #ff33cc;
-      max-width: 1000px;
+      max-width: 800px;
       margin: 0 auto;
-      box-shadow: 0 0 80px rgba(255, 0, 255, 1);
     }
 
     .tab-content.active {
       display: block;
     }
 
-    .control-panel {
-      background: linear-gradient(135deg, #330066, #ff00ff);
-      padding: 25px;
-      border-radius: 20px;
-      box-shadow: 0 0 60px rgba(0, 255, 255, 0.8);
-    }
-
     button {
-      background: linear-gradient(45deg, #ff00ff, #00ffff, #ffcc00);
-      padding: 15px 30px;
+      background: linear-gradient(45deg, #ff00ff, #00ffff);
+      padding: 10px 20px;
       border: none;
-      border-radius: 15px;
+      border-radius: 10px;
       color: #000022;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.6s;
-      box-shadow: 0 0 40px rgba(255, 0, 255, 1);
-      animation: buttonGlow 3s infinite alternate;
-    }
-
-    @keyframes buttonGlow {
-      0% { box-shadow: 0 0 40px rgba(255, 0, 255, 1); }
-      100% { box-shadow: 0 0 60px rgba(0, 255, 255, 1); }
+      transition: all 0.3s;
+      margin: 5px;
     }
 
     button:hover {
-      background: linear-gradient(45deg, #00ff99, #ff6600, #ff00ff);
-      transform: scale(1.2) rotate(3deg);
-      box-shadow: 0 0 80px rgba(0, 255, 255, 1);
+      background: linear-gradient(45deg, #00ff99, #ff6600);
+      transform: scale(1.1);
     }
 
     .modal {
@@ -146,12 +100,11 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 34, 0.98);
-      padding: 30px;
-      border: 5px double #00ffff;
-      border-radius: 20px;
+      padding: 20px;
+      border: 3px double #00ffff;
+      border-radius: 15px;
       z-index: 100;
       display: none;
-      box-shadow: 0 0 100px rgba(255, 0, 255, 1);
     }
 
     .modal.active {
@@ -159,9 +112,9 @@
     }
 
     .modal input, .modal button {
-      margin: 15px;
-      padding: 10px;
-      border-radius: 10px;
+      margin: 10px;
+      padding: 8px;
+      border-radius: 8px;
       border: 2px solid #ff33cc;
       background: #000022;
       color: #e6ccff;
@@ -169,30 +122,27 @@
 
     #soundMeter {
       position: fixed;
-      bottom: 30px;
-      left: 30px;
-      width: 300px;
-      height: 30px;
-      background: linear-gradient(90deg, #330066, #6600cc);
-      border: 3px solid #00ffff;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background: #330066;
+      border: 2px solid #00ffff;
+      border-radius: 5px;
     }
 
     #soundBar {
       height: 100%;
-      background: linear-gradient(90deg, #ff00ff, #00ffff, #ffcc00);
+      background: linear-gradient(90deg, #ff00ff, #00ffff);
       transition: width 0.2s;
-      box-shadow: inset 0 0 20px rgba(255, 0, 255, 1);
     }
 
     #soundInfo {
       position: fixed;
-      bottom: 70px;
-      left: 30px;
+      bottom: 50px;
+      left: 20px;
       color: #00ffff;
-      text-shadow: 0 0 20px #ff00ff;
-      font-size: 1.2rem;
+      font-size: 1rem;
     }
 
     #narrative {
@@ -201,8 +151,8 @@
       left: 50%;
       transform: translateX(-50%);
       color: #ffcc00;
-      text-shadow: 0 0 30px #00ffff;
-      font-size: 1.5rem;
+      text-shadow: 0 0 20px #00ffff;
+      font-size: 1.2rem;
       opacity: 0;
       transition: opacity 1s;
     }
@@ -251,7 +201,7 @@
   <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz | Chaos: 0</div>
   <div id="narrative"></div>
 
-  <canvas id="mandalaCanvas" width="1000" height="1000"></canvas>
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
@@ -260,41 +210,35 @@
     const ctx = mandalaCanvas.getContext('2d');
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
-    let audioContext, droneOscillator, droneGain, voiceAnalyser, chaosOscillator;
-    let scene, camera, renderer, mandalaGroup, particleSystem;
+    let audioContext, droneOscillator, droneGain, voiceAnalyser;
+    let scene, camera, renderer, mandalaGroup;
     let intention = '';
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0;
 
     const params = {
       segments: 3,
-      levels: 6,
+      levels: 4, // Reduced for stability
       scaleFactor: 0.65,
-      initialRadius: 300,
+      initialRadius: 200,
       lineColor: '#ff00ff',
-      lineWidth: 4,
+      lineWidth: 2,
       baseFreq: 110,
       waveform: 'sine',
       secondaryColor: '#00ffff',
       modulation: 1.5,
       patternType: 'hyperchaos',
-      particleCount: 200
+      particleCount: 100 // Reduced for performance
     };
 
-    // Audio Initialization with Chaos
+    // Audio Initialization
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        chaosOscillator = audioContext.createOscillator();
-        chaosOscillator.type = 'sawtooth';
-        chaosOscillator.frequency.value = 0.1;
-        chaosOscillator.connect(audioContext.destination);
-        chaosOscillator.start();
       }
       if (audioContext.state === 'suspended') audioContext.resume();
     }
 
-    // Drone with Binaural Chaos
     function toggleDrone() {
       initAudio();
       if (droneOscillator) {
@@ -308,8 +252,8 @@
         droneGain = audioContext.createGain();
         droneOscillator.type = params.waveform;
         droneOscillator.frequency.value = params.baseFreq;
-        droneGain.gain.value = 0.15;
-        droneAmplitude = 0.15;
+        droneGain.gain.value = 0.1;
+        droneAmplitude = 0.1;
         droneOscillator.connect(droneGain).connect(audioContext.destination);
         droneOscillator.start();
         document.getElementById('drone').textContent = 'Silence Resonance';
@@ -319,9 +263,8 @@
 
     function updateDroneParams() {
       if (droneOscillator) {
-        rotationSpeed = Math.min(0.1, droneAmplitude * chaosFactor * 0.8);
-        timeFactor += droneAmplitude * 0.02 + chaosFactor * 0.01;
-        chaosOscillator.frequency.value = Math.max(0.1, voicePitch * 0.01 * chaosFactor);
+        rotationSpeed = Math.min(0.05, droneAmplitude * chaosFactor * 0.5);
+        timeFactor += droneAmplitude * 0.01;
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -329,14 +272,13 @@
       }
     }
 
-    // Voice Detection with Chaos Modulation
     function initVoiceControl() {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
           initAudio();
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 4096;
+          voiceAnalyser.fftSize = 2048; // Reduced for performance
           voiceAnalyser.smoothingTimeConstant = 0.7;
           source.connect(voiceAnalyser);
 
@@ -351,7 +293,7 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(1, voiceAmplitude * 2 + Math.random() * 0.2);
+            chaosFactor = Math.min(1, voiceAmplitude * 1.5);
             updateVoiceParams();
             updateSoundMeter();
             if (droneOscillator || voiceAmplitude > 0.05) animate();
@@ -367,9 +309,9 @@
       let rms = 0;
       for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
       rms = Math.sqrt(rms / SIZE);
-      if (rms < 0.005) return -1;
+      if (rms < 0.01) return -1;
 
-      let r1 = 0, r2 = SIZE - 1, thres = 0.15;
+      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
       for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
       for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
 
@@ -389,11 +331,6 @@
       }
       let T0 = maxpos;
 
-      let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-      let a = (x1 + x3 - 2 * x2) / 2;
-      let b = (x3 - x1) / 2;
-      if (a) T0 = T0 - b / (2 * a);
-
       return sampleRate / T0;
     }
 
@@ -403,25 +340,9 @@
       return Math.min(1, sum / buf.length / 0.3);
     }
 
-    let pitchHistory = [];
     function updateVoiceParams() {
-      pitchHistory.push(voicePitch);
-      if (pitchHistory.length > 30) pitchHistory.shift();
-      const stability = voicePitchStability();
-
-      if (voiceAmplitude > 0.05 && stability > 0.7) {
-        params.segments = Math.min(50, params.segments + chaosFactor * 2);
-      } else {
-        params.segments = Math.max(3, params.segments - chaosFactor * 0.5);
-      }
-      params.modulation = 1 + chaosFactor * 2;
-    }
-
-    function voicePitchStability() {
-      if (pitchHistory.length < 2) return 0;
-      const avg = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
-      const variance = pitchHistory.reduce((a, b) => a + Math.abs(b - avg), 0) / pitchHistory.length;
-      return Math.min(1, 1 - variance / 300);
+      params.segments = Math.max(3, Math.min(20, params.segments + chaosFactor));
+      params.modulation = 1 + chaosFactor;
     }
 
     function updateSoundMeter() {
@@ -430,47 +351,30 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // VR Shaders with Hyper-Dimensional Effects
+    // Simplified VR Shaders
     const vertexShader = `
       varying vec2 vUv;
-      varying vec3 vPosition;
       uniform float time;
-      uniform float audioFactor;
-      uniform float chaosFactor;
       void main() {
         vUv = uv;
-        vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time * chaosFactor + pos.x * audioFactor) * 1.5;
-        pos.x += cos(time * chaosFactor + pos.y) * audioFactor;
-        pos.y += sin(time * chaosFactor + pos.z * audioFactor);
+        pos.z += sin(time + pos.x) * 0.5;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
 
     const fragmentShader = `
       varying vec2 vUv;
-      varying vec3 vPosition;
       uniform float time;
-      uniform float audioFactor;
-      uniform float chaosFactor;
-      uniform vec3 color1;
-      uniform vec3 color2;
       void main() {
-        float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * chaosFactor * 0.1 + time)));
-        vec3 color = mix(color1, color2, gradient);
-        float glow = 1.0 + sin(time * chaosFactor + vPosition.z) * audioFactor * 2.0;
-        float noise = fract(sin(dot(vUv, vec2(12.9898, 78.233))) * 43758.5453 * chaosFactor);
-        gl_FragColor = vec4(color * glow + noise * 0.2, 0.8 + audioFactor * 0.4);
+        gl_FragColor = vec4(sin(time), cos(time), 1.0, 0.8);
       }
     `;
 
-    // VR Initialization with Particle System
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js failed to load - ensure three.min.js is in the correct directory');
         document.getElementById('enterVR').textContent = 'VR Unavailable';
-        document.body.innerHTML += '<p style="color: red;">Error: Three.js not loaded. Check file path.</p>';
         return;
       }
 
@@ -483,44 +387,31 @@
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      // Particle System
-      const particleGeometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(params.particleCount * 3);
-      const colors = new Float32Array(params.particleCount * 3);
-      for (let i = 0; i < params.particleCount; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 50;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
-        colors[i * 3] = Math.random();
-        colors[i * 3 + 1] = Math.random();
-        colors[i * 3 + 2] = Math.random();
-      }
-      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-      const particleMaterial = new THREE.PointsMaterial({
-        size: 0.3,
-        vertexColors: true,
-        transparent: true,
-        blending: THREE.AdditiveBlending
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: { time: { value: 0 } },
+        side: THREE.DoubleSide,
+        transparent: true
       });
-      particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-      scene.add(particleSystem);
+      const geometry = new THREE.TorusGeometry(3, 1, 16, 32);
+      const torus = new THREE.Mesh(geometry, material);
+      mandalaGroup.add(torus);
 
-      updateVRMandala();
       camera.position.z = 10;
 
       const enterVRButton = document.getElementById('enterVR');
       enterVRButton.addEventListener('click', async () => {
         console.log('Attempting to enter VR...');
         if (!navigator.xr) {
-          console.error('WebXR not supported by this browser or device');
+          console.error('WebXR not supported');
           enterVRButton.textContent = 'VR Not Supported';
           return;
         }
 
         try {
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          console.log('VR session started:', session);
+          console.log('VR session started');
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
@@ -535,7 +426,7 @@
 
           if (!voiceAnalyser) initVoiceControl();
         } catch (err) {
-          console.error('Failed to enter VR:', err);
+          console.error('VR Failed:', err);
           enterVRButton.textContent = 'VR Failed: ' + err.message;
         }
       });
@@ -547,81 +438,14 @@
       });
     }
 
-    function updateVRMandala() {
-      mandalaGroup.clear();
-      const radius = params.initialRadius * 0.05;
-      const audioFactor = voiceAmplitude + droneAmplitude;
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          time: { value: timeFactor },
-          audioFactor: { value: audioFactor },
-          chaosFactor: { value: chaosFactor },
-          color1: { value: new THREE.Color(params.lineColor) },
-          color2: { value: new THREE.Color(params.secondaryColor) }
-        },
-        side: THREE.DoubleSide,
-        transparent: true,
-        blending: THREE.AdditiveBlending
-      });
-
-      function generateRecursiveShape(x, y, r, level) {
-        if (level > params.levels) return;
-        const points = [];
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-          let dist = r * (1 + Math.sin(angle * level * 5 + timeFactor) * chaosFactor * audioFactor);
-          points.push(new THREE.Vector3(
-            x + Math.cos(angle) * dist,
-            y + Math.sin(angle) * dist,
-            Math.sin(angle + level + timeFactor) * r * chaosFactor * 0.3
-          ));
-        }
-
-        const curve = new THREE.CatmullRomCurve3(points, true);
-        const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + audioFactor), 8, true);
-        const tube = new THREE.Mesh(tubeGeometry, material.clone());
-        tube.scale.setScalar(1 + chaosFactor * audioFactor);
-        mandalaGroup.add(tube);
-
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2;
-          const nextX = x + Math.cos(angle) * r * (1 + chaosFactor);
-          const nextY = y + Math.sin(angle) * r * (1 + chaosFactor);
-          generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
-        }
-      }
-
-      generateRecursiveShape(0, 0, radius, 1);
-    }
-
     function animateVR(time) {
-      const audioFactor = voiceAmplitude + droneAmplitude;
-      updateVRMandala();
       mandalaGroup.children.forEach(obj => {
-        if (obj.material.uniforms) {
-          obj.material.uniforms.time.value = timeFactor;
-          obj.material.uniforms.audioFactor.value = audioFactor;
-          obj.material.uniforms.chaosFactor.value = chaosFactor;
-        }
-        obj.rotation.z += rotationSpeed * chaosFactor;
+        if (obj.material.uniforms) obj.material.uniforms.time.value = timeFactor;
+        obj.rotation.z += rotationSpeed;
       });
-      mandalaGroup.rotation.z += rotationSpeed;
-
-      // Particle Animation
-      const positions = particleSystem.geometry.attributes.position.array;
-      for (let i = 0; i < params.particleCount; i++) {
-        positions[i * 3] += Math.sin(timeFactor + i) * audioFactor * 0.05;
-        positions[i * 3 + 1] += Math.cos(timeFactor + i) * audioFactor * 0.05;
-        positions[i * 3 + 2] += Math.sin(timeFactor + i) * chaosFactor * 0.03;
-      }
-      particleSystem.geometry.attributes.position.needsUpdate = true;
-
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala with Extreme Chaos
     function generateMandala(timeFactor) {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
@@ -630,95 +454,50 @@
 
       function drawRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
-        const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
-        gradient.addColorStop(0, params.lineColor);
-        gradient.addColorStop(0.5, params.secondaryColor);
-        gradient.addColorStop(1, params.lineColor);
-
-        ctx.lineWidth = params.lineWidth * (1 + chaosFactor * audioFactor);
-        ctx.strokeStyle = gradient;
-        ctx.shadowBlur = 60 * (audioFactor + chaosFactor);
-        ctx.shadowColor = params.secondaryColor;
-
-        switch (params.patternType) {
-          case 'hyperchaos':
-            ctx.beginPath();
-            for (let i = 0; i < params.segments; i++) {
-              const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-              const dist = r * (0.5 + Math.sin(angle * level * 7 + timeFactor) * chaosFactor * 1.5);
-              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            break;
-          case 'fractalvoid':
-            ctx.beginPath();
-            for (let i = 0; i < params.segments; i++) {
-              const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 2;
-              const dist = r * (0.7 + Math.cos(angle * chaosFactor) * audioFactor);
-              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            break;
-          case 'astralweb':
-            ctx.beginPath();
-            for (let i = 0; i < params.segments; i++) {
-              const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 1.5;
-              const dist = r * (0.6 + Math.sin(timeFactor + i * chaosFactor) * audioFactor);
-              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            break;
+        ctx.beginPath();
+        ctx.strokeStyle = params.lineColor;
+        ctx.lineWidth = params.lineWidth;
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
-
+        ctx.closePath();
+        ctx.stroke();
         drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
       }
 
       for (let i = 0; i < params.segments; i++) {
-        const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
-        const x = centerX + params.initialRadius * Math.cos(angle) * (1 + chaosFactor);
-        const y = centerY + params.initialRadius * Math.sin(angle) * (1 + chaosFactor);
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
+        const x = centerX + params.initialRadius * Math.cos(angle);
+        const y = centerY + params.initialRadius * Math.sin(angle);
         drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
-      }
-
-      // Chaos Particles
-      ctx.fillStyle = params.secondaryColor;
-      for (let i = 0; i < 100; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = params.initialRadius * (Math.random() * chaosFactor + 0.5) * audioFactor;
-        ctx.beginPath();
-        ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 3 * (audioFactor + chaosFactor), 0, Math.PI * 2);
-        ctx.fill();
       }
     }
 
-    // Cosmic Narrative
     const narrativeLines = [
-      "The void whispers secrets of forgotten aeons...",
-      "Through your voice, the cosmos bends and frays...",
-      "Chaos weaves the threads of infinite realms...",
-      "Sing, and the abyss shall sing back to you...",
-      "The temple rises from the echoes of eternity..."
+      "The void whispers...",
+      "Cosmos bends...",
+      "Chaos weaves...",
+      "Abyss sings...",
+      "Temple rises..."
     ];
 
     function updateNarrative() {
       const narrativeElement = document.getElementById('narrative');
-      if (voiceAmplitude > 0.2 || droneAmplitude > 0) {
+      if (voiceAmplitude > 0.1 || droneAmplitude > 0) {
         narrativeElement.textContent = narrativeLines[narrativePhase % narrativeLines.length];
         narrativeElement.classList.add('active');
-        setTimeout(() => narrativeElement.classList.remove('active'), 5000);
+        setTimeout(() => narrativeElement.classList.remove('active'), 3000);
         narrativePhase++;
       }
     }
 
-    // Guided Astral Voyage
     function startGuidedMeditation() {
       const phases = [
-        { duration: 200000, pattern: 'hyperchaos', freq: 90, color: '#ff0066', narrative: "Awaken the primal chaos..." },
-        { duration: 200000, pattern: 'fractalvoid', freq: 333, color: '#00ccff', narrative: "Dive into the fractal abyss..." },
-        { duration: 200000, pattern: 'astralweb', freq: 666, color: '#ffcc00', narrative: "Weave the web of eternity..." }
+        { duration: 10000, pattern: 'hyperchaos', freq: 90, color: '#ff0066', narrative: "Awaken chaos..." },
+        { duration: 10000, pattern: 'fractalvoid', freq: 333, color: '#00ccff', narrative: "Dive into abyss..." },
+        { duration: 10000, pattern: 'astralweb', freq: 666, color: '#ffcc00', narrative: "Weave eternity..." }
       ];
       let phaseIndex = 0;
 
@@ -731,7 +510,7 @@
         if (droneOscillator) droneOscillator.frequency.value = phase.freq;
         document.getElementById('narrative').textContent = phase.narrative;
         document.getElementById('narrative').classList.add('active');
-        setTimeout(() => document.getElementById('narrative').classList.remove('active'), 10000);
+        setTimeout(() => document.getElementById('narrative').classList.remove('active'), 5000);
         generateMandala(0);
         setTimeout(nextPhase, phase.duration);
         phaseIndex++;
@@ -739,7 +518,6 @@
       nextPhase();
     }
 
-    // Intention and Presets
     function showIntentionModal() {
       document.getElementById('intentionModal').classList.add('active');
     }
@@ -759,40 +537,22 @@
       document.getElementById('presetModal').classList.remove('active');
       switch (preset) {
         case 'mandala':
-          Object.assign(params, {
-            segments: 5, levels: 7, scaleFactor: 0.75, initialRadius: 350,
-            lineColor: '#ff0066', secondaryColor: '#ffcc00', patternType: 'hyperchaos',
-            baseFreq: 90, waveform: 'sine', modulation: 2
-          });
+          Object.assign(params, { segments: 5, levels: 4, lineColor: '#ff0066', baseFreq: 90 });
           break;
         case 'yantra':
-          Object.assign(params, {
-            segments: 4, levels: 5, scaleFactor: 0.6, initialRadius: 300,
-            lineColor: '#00ccff', secondaryColor: '#ff00ff', patternType: 'fractalvoid',
-            baseFreq: 136.1, waveform: 'triangle', modulation: 1.5
-          });
+          Object.assign(params, { segments: 4, levels: 3, lineColor: '#00ccff', baseFreq: 136.1 });
           break;
         case 'sufi':
-          Object.assign(params, {
-            segments: 6, levels: 6, scaleFactor: 0.7, initialRadius: 400,
-            lineColor: '#ffcc00', secondaryColor: '#00ff99', patternType: 'astralweb',
-            baseFreq: 174, waveform: 'sawtooth', modulation: 2.5
-          });
+          Object.assign(params, { segments: 6, levels: 4, lineColor: '#ffcc00', baseFreq: 174 });
           break;
         case 'zen':
-          Object.assign(params, {
-            segments: 3, levels: 2, scaleFactor: 0.85, initialRadius: 200,
-            lineColor: '#000022', secondaryColor: '#e6ccff', patternType: 'hyperchaos',
-            baseFreq: 0, waveform: 'sine', modulation: 0.5
-          });
+          Object.assign(params, { segments: 3, levels: 2, lineColor: '#000022', baseFreq: 0 });
           break;
       }
       if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
       generateMandala(0);
-      updateVRMandala();
     }
 
-    // Utilities
     function downloadMandala() {
       const link = document.createElement('a');
       link.download = 'abyssal-weave.png';
@@ -801,13 +561,11 @@
     }
 
     function animate() {
-      if (voiceAmplitude > 0.05 || droneOscillator) {
-        generateMandala(timeFactor);
-        updateNarrative();
+      if (animationId) cancelAnimationFrame(animationId);
+      generateMandala(timeFactor);
+      updateNarrative();
+      if (droneOscillator || voiceAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
-      } else {
-        cancelAnimationFrame(animationId);
-        generateMandala(0);
       }
     }
 
@@ -818,7 +576,6 @@
       evt.currentTarget.classList.add('active');
     }
 
-    // Initialization
     function init() {
       console.log('Initializing Cosmic Weaver...');
       document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
@@ -835,9 +592,9 @@
     window.onload = () => {
       if (typeof THREE === 'undefined') {
         console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
-        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load. Check file path.</p>';
+        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load.</p>';
       } else {
-        console.log('Three.js loaded successfully, version:', THREE.REVISION);
+        console.log('Three.js loaded, version:', THREE.REVISION);
         init();
       }
     };
