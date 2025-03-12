@@ -14,7 +14,7 @@
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      overflow: hidden;
+      /* overflow: hidden; Remove to enable scroll if needed */
     }
     h1 {
       font-family: 'Cinzel', serif;
@@ -187,7 +187,7 @@
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="./three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
@@ -198,6 +198,7 @@
     let intention = '';
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0;
+    let isVRActive = false;
 
     const params = {
       segments: 3,
@@ -278,7 +279,7 @@
             chaosFactor = Math.min(1, voiceAmplitude * 3); // Amplified chaos
             updateVoiceParams();
             updateSoundMeter();
-            if (droneOscillator || voiceAmplitude > 0.05) animate();
+            animate();  //Trigger animation here
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -369,12 +370,14 @@
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
           enterVRButton.textContent = 'Exit VR Mode';
+          isVRActive = true; //set flag
 
           session.addEventListener('end', () => {
             console.log('VR session ended');
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
             enterVRButton.textContent = 'Enter VR Mode';
+            isVRActive = false; // unset flag
           });
 
           if (!voiceAnalyser) initVoiceControl();
@@ -393,6 +396,7 @@
 
     // Generate VR Mandala as Exact Copy of 2D
     function updateVRMandala() {
+      if(!isVRActive) return; // exit early if not active
       mandalaGroup.clear();
       const audioFactor = voiceAmplitude + droneAmplitude;
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -554,12 +558,13 @@
     }
 
     function animate() {
-      if (animationId) cancelAnimationFrame(animationId);
-      generateMandala(timeFactor);
+      //if (animationId) cancelAnimationFrame(animationId);
+      if(!isVRActive) generateMandala(timeFactor);  // only update if VR isnt active
       updateNarrative();
-      if (droneOscillator || voiceAmplitude > 0.05) {
-        animationId = requestAnimationFrame(animate);
-      }
+      //if (droneOscillator || voiceAmplitude > 0.05) {
+        //animationId = requestAnimationFrame(animate); //moved the call to initVoiceControl
+      //}
+      if(!isVRActive) requestAnimationFrame(animate);
     }
 
     function openTab(evt, tabName) {
@@ -579,7 +584,8 @@
 
       initVoiceControl();
       initVR();
-      generateMandala(0);
+      generateMandala(0); // Initial draw of the 2D canvas
+      if(!isVRActive) animate();
     }
 
     window.onload = () => {
