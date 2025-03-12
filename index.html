@@ -204,7 +204,7 @@
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="./three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
@@ -350,6 +350,21 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
+    // Synchronize parameters:
+    function syncParams(params){
+      params.segments = params.segments;
+      params.levels = params.levels;
+      params.scaleFactor = params.scaleFactor;
+      params.initialRadius = params.initialRadius;
+      params.lineColor = params.lineColor;
+      params.lineWidth = params.lineWidth;
+      params.baseFreq = params.baseFreq;
+      params.waveform = params.waveform;
+      params.secondaryColor = params.secondaryColor;
+      params.modulation = params.modulation;
+      params.patternType = params.patternType;
+    }
+
     // VR Shaders Reflecting Mandala
     const vertexShader = `
       varying vec2 vUv;
@@ -394,7 +409,7 @@
       scene.add(mandalaGroup);
 
       updateVRMandala(); // Initial VR mandala setup
-      camera.position.z = 0;
+      camera.position.z = -5; // Camera moved on Z axis so the object could be seen better
 
       const enterVRButton = document.getElementById('enterVR');
       enterVRButton.addEventListener('click', async () => {
@@ -436,14 +451,14 @@
 
     function updateVRMandala() {
       mandalaGroup.clear();
-      const audioFactor = voiceAmplitude + droneAmplitude;
+
       const material = new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
         uniforms: {
           time: { value: timeFactor },
-          audioFactor: { value: audioFactor },
-          chaosFactor: { value: chaosFactor }
+          audioFactor: { value: 0 }, // Initial value. Update in animation loop.
+          chaosFactor: { value: 0 }  // Initial value. Update in animation loop.
         },
         side: THREE.DoubleSide,
         transparent: true,
@@ -452,20 +467,21 @@
 
       function generateRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
+
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * audioFactor);
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * (voiceAmplitude + droneAmplitude)); // use amplitude
           points.push(new THREE.Vector3(
             x + Math.cos(angle) * dist,
             y + Math.sin(angle) * dist,
-            Math.sin(angle + timeFactor) * chaosFactor // 3D depth
+            0 //Flatten to 2D for better comparison
           ));
         }
 
         const curve = new THREE.CatmullRomCurve3(points, true);
-        const tubeGeometry = new THREE.TubeGeometry(curve, 32, 0.1 * (1 + audioFactor), 8, true);
-        const tube = new THREE.Mesh(tubeGeometry, material.clone());
+        const tubeGeometry = new THREE.TubeGeometry(curve, 32, 0.1 , 8, true); // Smaller radius to match 2D
+        const tube = new THREE.Mesh(tubeGeometry, material.clone()); //Clone each object so the material and variables can be updated independently
         mandalaGroup.add(tube);
 
         for (let i = 0; i < params.segments; i++) {
@@ -476,21 +492,27 @@
         }
       }
 
-      generateRecursiveShape(0, 0, 2, 1); // Initial radius scaled for VR
-      mandalaGroup.position.z = -5 + voicePitch * 0.05; // Stronger voice-driven depth
+      generateRecursiveShape(0, 0, params.initialRadius/300, 1); //Use parameters from main mandala. Scale the radius down
+      mandalaGroup.position.z = -5 + voicePitch * 0.05; // Voice-driven depth
       mandalaGroup.scale.setScalar(0.5 + voiceAmplitude); // Voice amplitude scales size
     }
 
     function animateVR(time) {
       const audioFactor = voiceAmplitude + droneAmplitude;
-      updateVRMandala();
+
+      // First Update values
+      timeFactor = time * 0.001;
+      updateVRMandala()
+
+      //Then update uniforms based on values
       mandalaGroup.children.forEach(obj => {
-        if (obj.material.uniforms) {
-          obj.material.uniforms.time.value = timeFactor;
-          obj.material.uniforms.audioFactor.value = audioFactor;
-          obj.material.uniforms.chaosFactor.value = chaosFactor;
-        }
-        obj.rotation.z += rotationSpeed;
+          if (obj.material && obj.material.uniforms) { //Make sure object have uniforms and material
+              obj.material.uniforms.time.value = timeFactor;
+              obj.material.uniforms.audioFactor.value = audioFactor;
+              obj.material.uniforms.chaosFactor.value = chaosFactor;
+              obj.material.needsUpdate = true; // Necessary for uniforms to update properly
+          }
+          obj.rotation.z += rotationSpeed;
       });
       mandalaGroup.rotation.y += rotationSpeed * 0.5;
       renderer.render(scene, camera);
@@ -514,7 +536,7 @@
         }
         ctx.closePath();
         ctx.stroke();
-        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
+        if(params.scaleFactor) drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
       }
 
       for (let i = 0; i < params.segments; i++) {
@@ -562,6 +584,7 @@
         document.getElementById('narrative').classList.add('active');
         setTimeout(() => document.getElementById('narrative').classList.remove('active'), 5000);
         generateMandala(0);
+        updateVRMandala(); //Update to VR mandala
         setTimeout(nextPhase, phase.duration);
         phaseIndex++;
       }
@@ -576,6 +599,7 @@
       intention = document.getElementById('intentionInput').value || 'Infinite Chaos';
       document.getElementById('intentionModal').classList.remove('active');
       generateMandala(0);
+      updateVRMandala(); // Update the vr mandala
       updateNarrative();
     }
 
@@ -614,6 +638,7 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       generateMandala(timeFactor);
+      updateVRMandala(); // Update the vr mandala
       updateNarrative();
       if (droneOscillator || voiceAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
