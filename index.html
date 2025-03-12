@@ -484,143 +484,217 @@
     console.log('initVR: Setup complete');
   }
 
-  function updateVRMandala() {
-    if (!scene || !spiralGroup) return;
-    spiralGroup.clear();
+function updateVRMandala() {
+  if (!scene || !spiralGroup) return;
+  spiralGroup.clear();
 
-    const segments = parseInt(document.getElementById('segments').value);
-    const levels = parseInt(document.getElementById('levels').value);
-    const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
-    const radius = Math.min(parseInt(document.getElementById('initialRadius').value), 400) * 0.02;
-    const lineColor = document.getElementById('lineColor').value;
-    const secondaryColor = document.getElementById('secondaryColor').value;
-    const patternType = document.getElementById('patternType').value;
-    const modulation = parseFloat(document.getElementById('modulation').value);
-    const audioFactor = getAudioFactor();
+  const segments = parseInt(document.getElementById('segments').value);
+  const levels = parseInt(document.getElementById('levels').value);
+  const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
+  const radius = Math.min(parseInt(document.getElementById('initialRadius').value), 400) * 0.02; // Scale for VR
+  const lineColor = document.getElementById('lineColor').value;
+  const secondaryColor = document.getElementById('secondaryColor').value;
+  const patternType = document.getElementById('patternType').value;
+  const modulation = parseFloat(document.getElementById('modulation').value);
+  const audioFactor = getAudioFactor();
 
-    const material = new THREE.ShaderMaterial({
-      vertexShader,
-      fragmentShader,
-      uniforms: {
-        time: { value: 0 },
-        audioFactor: { value: audioFactor },
-        modulation: { value: modulation },
-        color1: { value: new THREE.Color(lineColor) },
-        color2: { value: new THREE.Color(secondaryColor) }
-      },
-      side: THREE.DoubleSide,
-      transparent: true,
-      blending: THREE.AdditiveBlending
-    });
+  const material = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms: {
+      time: { value: 0 },
+      audioFactor: { value: audioFactor },
+      modulation: { value: modulation },
+      color1: { value: new THREE.Color(lineColor) },
+      color2: { value: new THREE.Color(secondaryColor) }
+    },
+    side: THREE.DoubleSide,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+  });
 
-    function generateRecursivePath(xOffset, yOffset, r, level, zStart, zEnd) {
-      if (level > levels) return;
+  function generateRecursivePath(xOffset, yOffset, r, level, zStart, zEnd) {
+    if (level > levels) return;
 
-      const points = [];
-      const zStep = (zEnd - zStart) / segments;
+    const points = [];
+    const zStep = (zEnd - zStart) / segments;
 
-      switch (patternType) {
-        case 'cymatic':
-          for (let i = 0; i < segments; i++) {
-            const angle = (i / segments) * Math.PI * 2;
-            const mod = Math.sin(angle * level * 3) * audioFactor;
-            const dist = r * (0.6 + mod * 0.9);
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep));
-          }
-          break;
-        case 'vortex':
-          for (let i = 0; i < segments / level; i++) {
-            const angle = (i / (segments / level)) * Math.PI * 2;
-            const x1 = xOffset + r * Math.cos(angle);
-            const y1 = yOffset + r * Math.sin(angle);
-            const z = zStart + i * zStep;
-            points.push(new THREE.Vector3(x1, y1, z));
-          }
-          break;
-        case 'nebula':
-          for (let i = 0; i < 12; i++) {
-            const angle = (i / 12) * Math.PI * 2;
-            const dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep));
-          }
-          break;
-        case 'chaos':
-          const pointsCount = Math.floor(Math.random() * 8) + 5;
-          for (let i = 0; i < pointsCount; i++) {
-            const angle = (i / pointsCount) * Math.PI * 2 + Math.random() * 0.6;
-            const dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep));
-          }
-          break;
-        case 'flower':
-          for (let i = 0; i < 10; i++) {
-            const angle = (i / 10) * Math.PI * 2;
-            const dist = r * audioFactor * (0.6 + 0.4);
-            const x = xOffset + Math.cos(angle) * r * 0.5;
-            const y = yOffset + Math.sin(angle) * r * 0.5;
-            points.push(new THREE.Vector3(x, y, zStart + i * zStep));
-          }
-          break;
-        case 'yantra':
-          for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-            const dist = r * audioFactor;
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep));
-          }
-          break;
-        case 'tunnel':
-          for (let i = 0; i < segments; i++) {
-            const angle = (i / segments) * Math.PI * 2;
-            const depth = Math.sin(level * 0.6) * r * 0.4 * audioFactor;
-            const dist = r * (1 - level / levels) * (1 + 0.3);
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist + depth, zStart + i * zStep));
-          }
-          break;
-        case 'hypercube':
-          for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            const mod = Math.cos(level) * audioFactor;
-            const dist = r * (0.6 + mod * 0.6);
-            points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep));
-          }
-          break;
+    // Mirror 2D pattern logic in 3D space
+    switch (patternType) {
+      case 'cymatic':
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const mod = Math.sin(angle * level * 3) * audioFactor;
+          const dist = r * (0.6 + mod * 0.9);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + Math.sin(angle + level) * r * 0.2 * audioFactor // Add 3D depth
+          ));
+        }
+        break;
+      case 'vortex':
+        for (let i = 0; i < segments / level; i++) {
+          const angle = (i / (segments / level)) * Math.PI * 2;
+          const dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + i * zStep * audioFactor
+          ));
+        }
+        break;
+      case 'nebula':
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          const dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + Math.sin(i + level) * r * 0.3 * audioFactor
+          ));
+        }
+        break;
+      case 'chaos':
+        const pointsCount = Math.floor(Math.random() * 8) + 5;
+        for (let i = 0; i < pointsCount; i++) {
+          const angle = (i / pointsCount) * Math.PI * 2 + Math.random() * 0.6;
+          const dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + Math.random() * r * 0.2 * audioFactor
+          ));
+        }
+        break;
+      case 'flower':
+        for (let i = 0; i < 10; i++) {
+          const angle = (i / 10) * Math.PI * 2;
+          const dist = r * audioFactor * (0.6 + 0.4);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist * 0.5,
+            yOffset + Math.sin(angle) * dist * 0.5,
+            zStart + Math.sin(angle) * r * 0.1 * audioFactor
+          ));
+        }
+        break;
+      case 'yantra':
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const dist = r * audioFactor;
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + Math.cos(angle + level) * r * 0.15 * audioFactor
+          ));
+        }
+        break;
+      case 'tunnel':
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+          const depth = Math.sin(level * 0.6) * r * 0.4 * audioFactor;
+          const dist = r * (1 - level / levels) * (1 + 0.3);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + depth
+          ));
+        }
+        break;
+      case 'hypercube':
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          const mod = Math.cos(level) * audioFactor;
+          const dist = r * (0.6 + mod * 0.6);
+          points.push(new THREE.Vector3(
+            xOffset + Math.cos(angle) * dist,
+            yOffset + Math.sin(angle) * dist,
+            zStart + Math.sin(angle + level) * r * 0.2 * audioFactor
+          ));
+        }
+        break;
+    }
+
+    // Create geometry matching 2D shapes
+    let geometry;
+    if (patternType === 'flower' || patternType === 'yantra') {
+      // Use extruded shapes for petals or lines
+      const shape = new THREE.Shape();
+      points.forEach((p, i) => {
+        if (i === 0) shape.moveTo(p.x - xOffset, p.y - yOffset);
+        else shape.lineTo(p.x - xOffset, p.y - yOffset);
+      });
+      geometry = new THREE.ExtrudeGeometry(shape, { depth: r * 0.1 * audioFactor, bevelEnabled: false });
+    } else {
+      // Use tube or line geometry for other patterns
+      const curve = new THREE.CatmullRomCurve3(points, patternType !== 'chaos'); // Open for chaos, closed for others
+      geometry = new THREE.TubeGeometry(curve, 100, 0.5 / level * audioFactor, 16, patternType !== 'chaos');
+    }
+
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(xOffset, yOffset, zStart);
+    spiralGroup.add(mesh);
+
+    // Recursive call
+    generateRecursivePath(xOffset, yOffset, r * scaleFactor, level + 1, zStart, zEnd);
+
+    // Add creative 3D flourish: glowing particles
+    if (level === 1) {
+      const particleGeo = new THREE.BufferGeometry();
+      const particlePos = [];
+      for (let i = 0; i < 50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = r * (Math.random() * 0.5 + 0.5) * audioFactor;
+        particlePos.push(
+          xOffset + Math.cos(angle) * dist,
+          yOffset + Math.sin(angle) * dist,
+          zStart + (Math.random() - 0.5) * r * 0.5
+        );
       }
-
-      const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 100, 0.5 / level, 16, false);
-      const tunnel = new THREE.Mesh(geometry, material);
-      spiralGroup.add(tunnel);
-
-      generateRecursivePath(xOffset, yOffset, r * scaleFactor, level + 1, zStart, zEnd);
+      particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particlePos, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: secondaryColor,
+        size: 0.1 * audioFactor,
+        transparent: true,
+        blending: THREE.AdditiveBlending
+      });
+      const particles = new THREE.Points(particleGeo, particleMat);
+      spiralGroup.add(particles);
     }
-
-    for (let i = 0; i < segments; i++) {
-      const angle = (i / segments) * Math.PI * 2;
-      const xOffset = Math.cos(angle) * radius * audioFactor;
-      const yOffset = Math.sin(angle) * radius * audioFactor;
-      generateRecursivePath(xOffset, yOffset, radius * scaleFactor, 1, -20, 20);
-    }
-    console.log('VR mandala updated');
   }
 
-  function animateVR(time) {
-    const audioFactor = getAudioFactor();
-    const shaderTime = time * 0.001;
-
-    spiralGroup.children.forEach(tunnel => {
-      tunnel.material.uniforms.time.value = shaderTime;
-      tunnel.material.uniforms.audioFactor.value = audioFactor;
-      tunnel.material.uniforms.modulation.value = parseFloat(document.getElementById('modulation').value);
-      tunnel.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
-      tunnel.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
-    });
-
-    spiralGroup.rotation.z += 0.005 * audioFactor;
-    camera.position.z += 0.05 * audioFactor;
-    if (camera.position.z > 20) camera.position.z = -20;
-
-    renderer.render(scene, camera);
+  // Generate mandala segments in 3D space
+  for (let i = 0; i < segments; i++) {
+    const angle = (i / segments) * Math.PI * 2;
+    const xOffset = Math.cos(angle) * radius * audioFactor;
+    const yOffset = Math.sin(angle) * radius * audioFactor;
+    generateRecursivePath(xOffset, yOffset, radius * scaleFactor, 1, -10, 10); // Smaller z-range for VR
   }
 
+  console.log('VR mandala updated to match 2D');
+}
+
+function animateVR(time) {
+  const audioFactor = getAudioFactor();
+  const shaderTime = time * 0.001;
+
+  spiralGroup.children.forEach(obj => {
+    if (obj.material.uniforms) {
+      obj.material.uniforms.time.value = shaderTime;
+      obj.material.uniforms.audioFactor.value = audioFactor;
+      obj.material.uniforms.modulation.value = parseFloat(document.getElementById('modulation').value);
+      obj.material.uniforms.color1.value.setStyle(document.getElementById('lineColor').value);
+      obj.material.uniforms.color2.value.setStyle(document.getElementById('secondaryColor').value);
+    }
+    // Rotate and pulse with audio
+    obj.rotation.z += 0.01 * audioFactor;
+    obj.scale.setScalar(1 + audioFactor * 0.05);
+  });
+
+  spiralGroup.rotation.z += 0.005 * audioFactor;
+  camera.position.z = Math.sin(shaderTime * 0.1) * 5; // Gentle oscillation
+  renderer.render(scene, camera);
+}
   function init() {
     console.log('Init started');
     document.getElementById('generate').addEventListener('click', () => {
