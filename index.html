@@ -273,7 +273,7 @@
 
     function updateDroneParams() {
       if (droneOscillator) {
-        rotationSpeed = droneAmplitude * chaosFactor * 0.05; // Adjusted for noticeable rotation
+        rotationSpeed = droneAmplitude * chaosFactor * 0.05;
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -301,10 +301,10 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(1, voiceAmplitude * 3); // Amplified chaos
+            chaosFactor = Math.min(1, voiceAmplitude * 3);
             updateVoiceParams();
-            timeFactor += voiceAmplitude * 0.05; // Voice volume speeds up evolution
-            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5); // Color changes with pitch
+            timeFactor += voiceAmplitude * 0.05;
+            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5);
             updateSoundMeter();
             if (droneOscillator || voiceAmplitude > 0.05) animate();
             requestAnimationFrame(detectPitch);
@@ -351,8 +351,8 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.max(3, Math.min(30, Math.round(voicePitch * 0.1))); // Pitch controls complexity
-      params.modulation = 1 + chaosFactor * 3; // Stronger modulation with voice
+      params.segments = Math.max(3, Math.min(30, Math.round(voicePitch * 0.1)));
+      params.modulation = 1 + chaosFactor * 3;
     }
 
     function updateSoundMeter() {
@@ -364,7 +364,7 @@
     // VR Initialization
     function initVR() {
       if (!window.THREE) {
-        console.error('Three.js failed to load - ensure three.min.js is in the correct directory');
+        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
         document.getElementById('enterVR').textContent = 'VR Unavailable';
         return;
       }
@@ -378,36 +378,50 @@
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      updateVRMandala(); // Initial VR mandala setup
+      console.log('VR renderer setup complete. Checking WebXR support...');
+      if (!navigator.xr) {
+        console.error('WebXR not supported by this browser or device');
+        document.getElementById('enterVR').textContent = 'VR Not Supported';
+        return;
+      }
+
+      updateVRMandala();
       camera.position.z = 0;
 
       const enterVRButton = document.getElementById('enterVR');
+      let isVRActive = false;
+
       enterVRButton.addEventListener('click', async () => {
-        console.log('Attempting to enter VR...');
-        if (!navigator.xr) {
-          console.error('WebXR not supported');
-          enterVRButton.textContent = 'VR Not Supported';
+        if (isVRActive) {
+          console.log('Exiting VR mode...');
+          vrCanvas.style.display = 'none';
+          renderer.setAnimationLoop(null);
+          enterVRButton.textContent = 'Enter VR Mode';
+          isVRActive = false;
           return;
         }
 
+        console.log('Attempting to enter VR...');
         try {
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          console.log('VR session started');
+          console.log('VR session started successfully');
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
           enterVRButton.textContent = 'Exit VR Mode';
+          isVRActive = true;
 
           session.addEventListener('end', () => {
             console.log('VR session ended');
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
             enterVRButton.textContent = 'Enter VR Mode';
+            isVRActive = false;
           });
 
           if (!voiceAnalyser) initVoiceControl();
         } catch (err) {
-          console.error('VR Failed:', err);
+          console.error('VR session failed to start:', err);
           enterVRButton.textContent = 'VR Failed: ' + err.message;
         }
       });
@@ -434,7 +448,7 @@
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2); // Increased distortion
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2);
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -449,14 +463,14 @@
         }
       }
 
-      generateRecursiveShape(0, 0, 5, 1); // Scaled for VR space
-      mandalaGroup.position.z = -10 + voicePitch * 0.1; // Voice moves it
-      mandalaGroup.scale.setScalar(1 + voiceAmplitude * 2); // Voice scales it
-      mandalaGroup.rotation.z = totalRotation; // Cumulative rotation
+      generateRecursiveShape(0, 0, 5, 1);
+      mandalaGroup.position.z = -10 + voicePitch * 0.1;
+      mandalaGroup.scale.setScalar(1 + voiceAmplitude * 2);
+      mandalaGroup.rotation.z = totalRotation;
     }
 
     function animateVR(time) {
-      totalRotation += rotationSpeed; // Accumulate rotation
+      totalRotation += rotationSpeed;
       updateVRMandala();
       renderer.render(scene, camera);
     }
@@ -475,7 +489,7 @@
         ctx.lineWidth = params.lineWidth;
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2); // Increased distortion
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
