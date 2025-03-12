@@ -129,20 +129,20 @@
     const ctx = mandalaCanvas.getContext('2d');
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
-    let audioContext, droneOscillator, droneGain, voiceAnalyser;
+    let audioContext, droneOscillator1, droneOscillator2, droneGain, voiceAnalyser;
     let scene, camera, renderer, mandalaGroup;
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
 
     const params = {
-      segments: 3,
+      segments: 6, // Flower of Life base
       levels: 4,
       scaleFactor: 0.65,
       initialRadius: 200,
       lineColor: '#ff00ff',
       lineWidth: 2,
       baseFreq: 110,
-      audibleFreq: 110, // Separate audible frequency
+      audibleFreq: 110,
       waveform: 'sine'
     };
 
@@ -184,29 +184,39 @@
 
     function toggleDrone() {
       initAudio();
-      if (droneOscillator) {
-        droneOscillator.stop();
-        droneOscillator = null;
+      if (droneOscillator1) {
+        droneOscillator1.stop();
+        droneOscillator2.stop();
+        droneOscillator1 = null;
+        droneOscillator2 = null;
         droneGain = null;
         droneAmplitude = 0;
         document.getElementById('drone').textContent = 'Toggle Drone';
       } else {
-        droneOscillator = audioContext.createOscillator();
+        droneOscillator1 = audioContext.createOscillator();
+        droneOscillator2 = audioContext.createOscillator();
         droneGain = audioContext.createGain();
-        droneOscillator.type = params.waveform;
-        droneOscillator.frequency.value = params.audibleFreq; // Use audible harmonic
-        droneGain.gain.value = 0.1;
-        droneAmplitude = 0.1;
-        droneOscillator.connect(droneGain).connect(audioContext.destination);
-        droneOscillator.start();
+
+        droneOscillator1.type = params.waveform;
+        droneOscillator2.type = params.waveform;
+        droneOscillator1.frequency.value = params.audibleFreq; // Base harmonic
+        droneOscillator2.frequency.value = params.audibleFreq * 1.5; // Fifth above (cosmic harmony)
+        droneGain.gain.value = 0.05; // Softer volume
+        droneAmplitude = 0.05;
+
+        droneOscillator1.connect(droneGain);
+        droneOscillator2.connect(droneGain);
+        droneGain.connect(audioContext.destination);
+        droneOscillator1.start();
+        droneOscillator2.start();
         document.getElementById('drone').textContent = 'Stop Drone';
         updateDroneParams();
       }
     }
 
     function updateDroneParams() {
-      if (droneOscillator) {
-        rotationSpeed = droneAmplitude * chaosFactor * 0.05;
+      if (droneOscillator1) {
+        rotationSpeed = droneAmplitude * chaosFactor * 0.02; // Slower rotation
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -220,7 +230,7 @@
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.8; // Smoother response
+          voiceAnalyser.smoothingTimeConstant = 0.9; // Very smooth response
           source.connect(voiceAnalyser);
 
           const bufferLength = voiceAnalyser.fftSize;
@@ -234,10 +244,10 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(0.5, voiceAmplitude * 1.5); // Cap chaos at 0.5
+            chaosFactor = Math.min(0.3, voiceAmplitude); // Subtle chaos
             updateVoiceParams();
-            timeFactor += voiceAmplitude * 0.02; // Slower evolution
-            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5);
+            timeFactor += voiceAmplitude * 0.005; // Very slow evolution
+            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
             updateSoundMeter();
             requestAnimationFrame(detectPitch);
           }
@@ -283,7 +293,7 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.round(3 + (voicePitch / 200) * 9); // 3 to 12 segments
+      params.segments = Math.round(6 + (voicePitch / 300) * 6); // 6 to 12 segments
     }
 
     function updateSoundMeter() {
@@ -363,53 +373,43 @@
       });
     }
 
-    // Generate VR Mandala
+    // Generate VR Mandala (Single Level)
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
         color: new THREE.Color(params.lineColor),
         linewidth: 2,
         transparent: true,
-        opacity: 0.8 + (voiceAmplitude + droneAmplitude) * 0.2
+        opacity: 0.8 + voiceAmplitude * 0.2
       });
 
-      function generateCymaticShape(x, y, r, level) {
-        if (level > params.levels) return;
+      function generateCymaticShape(x, y, r) {
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2;
           const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
-          const dist = r * (1 + freqFactor * chaosFactor * 0.5);
+          const dist = r * (1 + freqFactor * chaosFactor * 0.3); // Subtle distortion
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
-
-        if (level < params.levels) {
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
-            generateCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
-          }
-        }
       }
 
-      generateCymaticShape(0, 0, 5, 1);
-      mandalaGroup.position.z = -10;
-      mandalaGroup.scale.setScalar(1 + voiceAmplitude * 2);
+      generateCymaticShape(0, 0, 10); // Single level, larger base
+      mandalaGroup.position.z = -10 + voiceAmplitude * 2; // Gentle depth shift
+      mandalaGroup.scale.setScalar(1 + voiceAmplitude * 1.5);
       mandalaGroup.rotation.z = totalRotation;
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += 0.01;
-      if (voiceAnalyser) updateVRMandala(); // Ensure voice updates VR
+      timeFactor += 0.005; // Very slow base evolution
+      if (voiceAnalyser) updateVRMandala();
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala Drawing
+    // 2D Mandala Drawing (Multi-Level Preview)
     function generateMandala() {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
@@ -423,7 +423,7 @@
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2;
           const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
-          const dist = r * (1 + freqFactor * chaosFactor * 0.5);
+          const dist = r * (1 + freqFactor * chaosFactor * 0.3);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
@@ -447,43 +447,44 @@
       document.getElementById('settingsModal').classList.remove('active');
       switch (setting) {
         case 'healing':
-          params.baseFreq = 6;    // Theta
-          params.audibleFreq = 48; // 8x harmonic (6 * 8)
+          params.baseFreq = 6;
+          params.audibleFreq = 48; // 8x harmonic
           params.segments = 6;
           params.levels = 4;
           params.lineColor = '#00ccff';
           break;
         case 'sleep':
-          params.baseFreq = 2;    // Delta
-          params.audibleFreq = 32; // 16x harmonic (2 * 16)
-          params.segments = 4;
+          params.baseFreq = 2;
+          params.audibleFreq = 32; // 16x harmonic
+          params.segments = 6;
           params.levels = 3;
           params.lineColor = '#330066';
           break;
         case 'relax':
-          params.baseFreq = 10;   // Alpha
-          params.audibleFreq = 40; // 4x harmonic (10 * 4)
-          params.segments = 5;
+          params.baseFreq = 10;
+          params.audibleFreq = 40; // 4x harmonic
+          params.segments = 6;
           params.levels = 4;
           params.lineColor = '#66ff66';
           break;
         case 'enlighten':
-          params.baseFreq = 7.83; // Schumann
-          params.audibleFreq = 62.64; // 8x harmonic (7.83 * 8)
-          params.segments = 7;
+          params.baseFreq = 7.83;
+          params.audibleFreq = 62.64; // 8x harmonic
+          params.segments = 6;
           params.levels = 5;
           params.lineColor = '#ffcc00';
           break;
         case 'activate':
-          params.baseFreq = 20;   // Beta
-          params.audibleFreq = 80; // 4x harmonic (20 * 4)
-          params.segments = 8;
+          params.baseFreq = 20;
+          params.audibleFreq = 80; // 4x harmonic
+          params.segments = 6;
           params.levels = 3;
           params.lineColor = '#ff0066';
           break;
       }
-      if (droneOscillator) {
-        droneOscillator.frequency.value = params.audibleFreq;
+      if (droneOscillator1) {
+        droneOscillator1.frequency.value = params.audibleFreq;
+        droneOscillator2.frequency.value = params.audibleFreq * 1.5;
       }
       generateMandala();
     }
@@ -494,9 +495,9 @@
 
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
-      timeFactor += 0.01;
+      timeFactor += 0.005;
       generateMandala();
-      if (droneOscillator || voiceAmplitude > 0.05) {
+      if (droneOscillator1 || voiceAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
       }
     }
