@@ -65,37 +65,6 @@
       display: none;
     }
 
-    .orb-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    .orb {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 255, 255, 0.8), rgba(255, 0, 255, 0.3));
-      position: absolute;
-      animation: orbit 10s infinite linear;
-      cursor: pointer;
-      pointer-events: auto;
-      box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-
-    .orb:hover {
-      transform: scale(1.2);
-      box-shadow: 0 0 40px rgba(0, 255, 255, 1);
-    }
-
-    @keyframes orbit {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(10px) rotate(360deg); }
-    }
-
     .glyph-tab {
       display: inline-block;
       padding: 10px 20px;
@@ -209,19 +178,17 @@
   <div class="tab-container">
     <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
     <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
-    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
+    <span class="glyph-tab" onclick="open vowelsTab(event, 'voidTab')">✹</span>
   </div>
 
   <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
   <div id="freqTab" class="tab-content"><div class="control-panel"></div></div>
   <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
 
-  <div class="orb-container"></div>
-
   <div class="controls">
     <button id="generate">Weave Cosmos</button>
     <button id="presets">Sacred Patterns</button>
-    <button id="animate">Pulse Eternity</button>
+    <button id="drone">Toggle Drone</button>
     <button id="journey">Guided Journey</button>
     <button id="download">Capture Void</button>
     <button id="enterVR">Enter Temple</button>
@@ -253,25 +220,24 @@
     const ctx = mandalaCanvas.getContext('2d');
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
-    let isAnimating = false;
-    let audioContext, oscillators = [], lfo, analyser, voiceAnalyser;
+    let audioContext, droneOscillator, droneGain, voiceAnalyser;
     let scene, camera, renderer, spiralGroup;
     let intention = '';
-    let voicePitch = 0; // Default pitch in Hz
-    let voiceAmplitude = 0; // Default amplitude (0-1)
-    let rotationSpeed = 0; // VR rotation speed (starts at 0)
-    let twistFactor = 0; // VR twist effect (starts at 0)
+    let voicePitch = 0; // Voice pitch in Hz
+    let voiceAmplitude = 0; // Voice amplitude (0-1)
+    let droneAmplitude = 0; // Drone amplitude (0-1)
+    let rotationSpeed = 0; // Controlled by drone
+    let twistFactor = 0; // Static unless modified later
     let timeFactor = 0; // For 2D animation sync
 
     const params = {
-      segments: 3, // Start minimal
+      segments: 3, // Controlled by voice
       levels: 4,
       scaleFactor: 0.7,
       initialRadius: 200,
       lineColor: '#ff00ff',
       lineWidth: 3,
-      baseFreq: 200,
-      freqMultiplier: 1.5,
+      baseFreq: 110, // Drone base frequency
       waveform: 'sine',
       secondaryColor: '#00ffff',
       modulation: 1,
@@ -280,62 +246,51 @@
 
     // Audio Initialization
     function initAudio() {
-      try {
-        if (!audioContext) {
-          audioContext = new (window.AudioContext || window.webkitAudioContext)();
-          analyser = audioContext.createAnalyser();
-          analyser.fftSize = 2048;
-        }
-        if (audioContext.state === 'suspended') audioContext.resume().then(updateFrequencies);
-        else updateFrequencies();
-      } catch (e) {
-        console.error('Audio init failed:', e);
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === 'suspended') audioContext.resume();
+    }
+
+    // Drone Control
+    function toggleDrone() {
+      initAudio();
+      if (droneOscillator) {
+        droneOscillator.stop();
+        droneOscillator = null;
+        droneGain = null;
+        droneAmplitude = 0;
+        document.getElementById('drone').textContent = 'Start Drone';
+      } else {
+        droneOscillator = audioContext.createOscillator();
+        droneGain = audioContext.createGain();
+        droneOscillator.type = params.waveform;
+        droneOscillator.frequency.value = params.baseFreq;
+        droneGain.gain.value = 0.1; // Low volume drone
+        droneAmplitude = 0.1; // Initial amplitude
+        droneOscillator.connect(droneGain).connect(audioContext.destination);
+        droneOscillator.start();
+        document.getElementById('drone').textContent = 'Stop Drone';
+        updateDroneParams();
       }
     }
 
-    function updateFrequencies() {
-      oscillators.forEach(osc => osc.stop());
-      if (lfo) lfo.stop();
-      oscillators = [];
-
-      const beatFreq = 12 * params.modulation;
-      for (let i = 0; i < Math.min(params.segments, 8); i++) {
-        const oscLeft = audioContext.createOscillator();
-        const oscRight = audioContext.createOscillator();
-        const panLeft = audioContext.createPanner();
-        const panRight = audioContext.createPanner();
-        const gain = audioContext.createGain();
-
-        oscLeft.type = params.waveform;
-        oscRight.type = params.waveform;
-        oscLeft.frequency.value = params.baseFreq * Math.pow(params.freqMultiplier, i);
-        oscRight.frequency.value = oscLeft.frequency.value + beatFreq;
-        panLeft.setPosition(-1 + i * 0.2, Math.sin(i), Math.cos(i));
-        panRight.setPosition(1 - i * 0.2, Math.cos(i), Math.sin(i));
-        gain.gain.value = 0.05 / (i + 1);
-
-        oscLeft.connect(gain).connect(panLeft).connect(audioContext.destination);
-        oscRight.connect(gain).connect(panRight).connect(analyser).connect(audioContext.destination);
-        oscLeft.start();
-        oscRight.start();
-        oscillators.push(oscLeft, oscRight);
+    function updateDroneParams() {
+      if (droneOscillator) {
+        rotationSpeed = Math.min(0.05, droneAmplitude * 0.5); // Drone drives rotation
+        timeFactor += droneAmplitude * 0.01; // Sync 2D animation
+        requestAnimationFrame(updateDroneParams);
+      } else {
+        rotationSpeed = 0;
+        timeFactor = 0;
       }
-
-      lfo = audioContext.createOscillator();
-      const lfoGain = audioContext.createGain();
-      lfo.type = 'sine';
-      lfo.frequency.value = params.modulation * 2;
-      lfoGain.gain.value = 20;
-      lfo.connect(lfoGain);
-      oscillators.forEach(osc => lfoGain.connect(osc.frequency));
-      lfo.start();
     }
 
     // Voice Detection
     function initVoiceControl() {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
-          if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          initAudio();
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
@@ -355,7 +310,7 @@
 
             updateVoiceParams();
             updateSoundMeter();
-            if (isAnimating) animate(); // Trigger 2D animation only if singing
+            if (droneOscillator || voiceAmplitude > 0.2) animate(); // Animate if drone or voice active
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -410,20 +365,10 @@
       if (pitchHistory.length > 20) pitchHistory.shift();
       const stability = voicePitchStability();
 
-      if (voiceAmplitude > 0.2 && stability > 0.8) { // Singing detected
-        params.segments = Math.min(50, params.segments + 0.2); // Increase segments
-        rotationSpeed = Math.min(0.05, rotationSpeed + 0.001); // Ramp up rotation
-        twistFactor = Math.min(1, twistFactor + 0.02); // Ramp up twist
-        timeFactor += voiceAmplitude * 0.01; // Sync 2D animation to voice
-      } else { // Silence
-        params.segments = Math.max(3, params.segments - 0.1); // Decrease segments
-        rotationSpeed = Math.max(0, rotationSpeed - 0.002); // Stop rotation
-        twistFactor = Math.max(0, twistFactor - 0.01); // Collapse twist
-        timeFactor = 0; // Reset 2D animation
-        if (isAnimating) {
-          cancelAnimationFrame(animationId);
-          generateMandala(0); // Static state
-        }
+      if (voiceAmplitude > 0.2 && stability > 0.8) { // Voice active
+        params.segments = Math.min(50, params.segments + 0.2); // Voice drives segments
+      } else { // Voice silent
+        params.segments = Math.max(3, params.segments - 0.1);
       }
     }
 
@@ -497,15 +442,15 @@
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
             document.getElementById('enterVR').textContent = 'Enter Temple';
-            params.segments = 3; // Reset on VR exit
+            params.segments = 3;
             rotationSpeed = 0;
             twistFactor = 0;
           });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
-          document.getElementById('enterVR').textContent = 'Sing to Weave';
-          initVoiceControl(); // Start voice control on VR entry
+          document.getElementById('enterVR').textContent = 'Sing & Drone';
+          initVoiceControl();
         } catch (err) {
           console.error('VR Failed:', err);
           document.getElementById('enterVR').textContent = 'VR Failed';
@@ -524,7 +469,7 @@
       spiralGroup.clear();
 
       const radius = Math.min(params.initialRadius, 400) * 0.02;
-      const audioFactor = getAudioFactor();
+      const audioFactor = voiceAmplitude + droneAmplitude; // Combine inputs
       const material = new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
@@ -625,15 +570,15 @@
     }
 
     function animateVR(time) {
-      const audioFactor = getAudioFactor();
-      updateVRMandala(); // Rebuild with voice input
+      const audioFactor = voiceAmplitude + droneAmplitude;
+      updateVRMandala();
       spiralGroup.children.forEach(obj => {
         if (obj.material.uniforms) {
           obj.material.uniforms.time.value = timeFactor;
           obj.material.uniforms.audioFactor.value = audioFactor;
           obj.material.uniforms.twistFactor.value = twistFactor;
         }
-        obj.rotation.z += rotationSpeed * audioFactor; // Voice-controlled rotation
+        obj.rotation.z += rotationSpeed * audioFactor; // Drone-controlled rotation
       });
       spiralGroup.rotation.z += rotationSpeed;
       renderer.render(scene, camera);
@@ -644,7 +589,7 @@
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
-      const audioFactor = getAudioFactor();
+      const audioFactor = voiceAmplitude + droneAmplitude;
 
       function drawRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
@@ -781,8 +726,8 @@
         params.patternType = phase.pattern;
         params.baseFreq = phase.freq;
         params.lineColor = phase.color;
-        generateMandala(0); // Static unless singing
-        updateFrequencies();
+        if (droneOscillator) droneOscillator.frequency.value = phase.freq;
+        generateMandala(0);
         setTimeout(nextPhase, phase.duration);
         phaseIndex++;
       }
@@ -798,7 +743,6 @@
       intention = document.getElementById('intentionInput').value || 'Transcendence';
       document.getElementById('intentionModal').classList.remove('active');
       generateMandala(0);
-      initAudio();
     }
 
     // Preset Modal
@@ -838,36 +782,12 @@
           });
           break;
       }
+      if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
       generateMandala(0);
-      initAudio();
       updateVRMandala();
     }
 
-    // Orb Interface
-    function createOrbControl(id, x, y, updateCallback) {
-      const orb = document.createElement('div');
-      orb.className = 'orb';
-      orb.style.left = `${x}px`;
-      orb.style.top = `${y}px`;
-      orb.addEventListener('click', () => {
-        const value = prompt(`Set ${id}:`, params[id]);
-        if (value !== null) {
-          params[id] = isNaN(value) ? value : parseFloat(value);
-          updateCallback();
-        }
-      });
-      document.querySelector('.orb-container').appendChild(orb);
-    }
-
     // Utility Functions
-    function getAudioFactor() {
-      if (!analyser) return 1;
-      const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(dataArray);
-      const avg = dataArray.reduce((a, b) => a + b) / dataArray.length;
-      return 1 + (avg / 255) * 2;
-    }
-
     function downloadMandala() {
       const link = document.createElement('a');
       link.download = 'cosmic-spiral.png';
@@ -875,25 +795,13 @@
       link.click();
     }
 
-    function toggleAnimation() {
-      if (isAnimating) {
-        isAnimating = false;
-        cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Pulse Eternity';
-        generateMandala(0); // Reset to static
-      } else {
-        isAnimating = true;
-        document.getElementById('animate').textContent = 'Collapse Eternity';
-        if (voiceAmplitude > 0.2 && voicePitchStability() > 0.8) animate(); // Start only if singing
-      }
-    }
-
     function animate() {
-      if (voiceAmplitude > 0.2 && voicePitchStability() > 0.8) {
+      if (droneOscillator || (voiceAmplitude > 0.2 && voicePitchStability() > 0.8)) {
         generateMandala(timeFactor);
         animationId = requestAnimationFrame(animate);
       } else {
-        generateMandala(0); // Static when not singing
+        cancelAnimationFrame(animationId);
+        generateMandala(0); // Static when no input
       }
     }
 
@@ -908,23 +816,9 @@
     function init() {
       document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
       document.getElementById('presets').addEventListener('click', showPresetModal);
-      document.getElementById('download').addEventListener('click', downloadMandala);
-      document.getElementById('animate').addEventListener('click', toggleAnimation);
+      document.getElementById('drone').addEventListener('click', toggleDrone);
       document.getElementById('journey').addEventListener('click', startGuidedMeditation);
-
-      const orbPositions = [
-        ['segments', -150, -150], ['levels', -100, -200], ['scaleFactor', -50, -250],
-        ['initialRadius', 0, -300], ['lineColor', 50, -250], ['lineWidth', 100, -200],
-        ['baseFreq', 150, -150], ['freqMultiplier', -150, 150], ['waveform', -100, 200],
-        ['secondaryColor', -50, 250], ['modulation', 0, 300], ['patternType', 50, 250]
-      ];
-      orbPositions.forEach(([id, x, y]) => {
-        createOrbControl(id, x, y, () => {
-          generateMandala(0);
-          initAudio();
-          updateVRMandala();
-        });
-      });
+      document.getElementById('download').addEventListener('click', downloadMandala);
 
       initVR();
       generateMandala(0); // Start static
