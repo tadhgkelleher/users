@@ -16,7 +16,6 @@
       min-height: 100vh;
       overflow: hidden;
     }
-
     h1 {
       font-family: 'Cinzel', serif;
       font-size: 5rem;
@@ -24,7 +23,6 @@
       text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
       margin: 30px 0;
     }
-
     #mandalaCanvas {
       border: 8px double #ff66cc;
       border-radius: 50%;
@@ -34,7 +32,6 @@
       max-height: 95vh;
       margin: 20px auto;
     }
-
     #vrCanvas {
       position: fixed;
       top: 0;
@@ -45,7 +42,6 @@
       display: none;
       background: rgba(0, 0, 0, 0.9);
     }
-
     .glyph-tab {
       display: inline-block;
       padding: 15px 25px;
@@ -55,13 +51,11 @@
       cursor: pointer;
       transition: all 0.5s;
     }
-
     .glyph-tab:hover, .glyph-tab.active {
       background: linear-gradient(135deg, #00ffff, #ff00ff);
       color: #000022;
       transform: translateY(-5px);
     }
-
     .tab-content {
       display: none;
       background: rgba(0, 0, 34, 0.98);
@@ -71,11 +65,9 @@
       max-width: 800px;
       margin: 0 auto;
     }
-
     .tab-content.active {
       display: block;
     }
-
     button {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
       padding: 10px 20px;
@@ -88,12 +80,10 @@
       transition: all 0.3s;
       margin: 5px;
     }
-
     button:hover {
       background: linear-gradient(45deg, #00ff99, #ff6600);
       transform: scale(1.1);
     }
-
     .modal {
       position: fixed;
       top: 50%;
@@ -106,11 +96,9 @@
       z-index: 100;
       display: none;
     }
-
     .modal.active {
       display: block;
     }
-
     .modal input, .modal button {
       margin: 10px;
       padding: 8px;
@@ -119,7 +107,6 @@
       background: #000022;
       color: #e6ccff;
     }
-
     #soundMeter {
       position: fixed;
       bottom: 20px;
@@ -130,13 +117,11 @@
       border: 2px solid #00ffff;
       border-radius: 5px;
     }
-
     #soundBar {
       height: 100%;
       background: linear-gradient(90deg, #ff00ff, #00ffff);
       transition: width 0.2s;
     }
-
     #soundInfo {
       position: fixed;
       bottom: 50px;
@@ -144,7 +129,6 @@
       color: #00ffff;
       font-size: 1rem;
     }
-
     #narrative {
       position: fixed;
       top: 20px;
@@ -156,7 +140,6 @@
       opacity: 0;
       transition: opacity 1s;
     }
-
     #narrative.active {
       opacity: 1;
     }
@@ -204,7 +187,7 @@
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="./three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
@@ -292,7 +275,7 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(1, voiceAmplitude * 2); // Amplified chaos
+            chaosFactor = Math.min(1, voiceAmplitude * 3); // Amplified chaos
             updateVoiceParams();
             updateSoundMeter();
             if (droneOscillator || voiceAmplitude > 0.05) animate();
@@ -340,8 +323,8 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.max(3, Math.min(20, Math.round(voicePitch * 0.05))); // Voice pitch drives segments
-      params.modulation = 1 + chaosFactor * 2; // Stronger modulation
+      params.segments = Math.max(3, Math.min(30, Math.round(voicePitch * 0.1))); // More segments with pitch
+      params.modulation = 1 + chaosFactor * 3; // Stronger modulation
     }
 
     function updateSoundMeter() {
@@ -350,48 +333,7 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // Synchronize parameters:
-    function syncParams(params){
-      params.segments = params.segments;
-      params.levels = params.levels;
-      params.scaleFactor = params.scaleFactor;
-      params.initialRadius = params.initialRadius;
-      params.lineColor = params.lineColor;
-      params.lineWidth = params.lineWidth;
-      params.baseFreq = params.baseFreq;
-      params.waveform = params.waveform;
-      params.secondaryColor = params.secondaryColor;
-      params.modulation = params.modulation;
-      params.patternType = params.patternType;
-    }
-
-    // VR Shaders Reflecting Mandala
-    const vertexShader = `
-      varying vec2 vUv;
-      uniform float time;
-      uniform float audioFactor;
-      uniform float chaosFactor;
-      void main() {
-        vUv = uv;
-        vec3 pos = position;
-        pos.z += sin(time * chaosFactor + pos.x * audioFactor) * 1.0;
-        pos.x += cos(time * chaosFactor + pos.y) * audioFactor;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-      }
-    `;
-
-    const fragmentShader = `
-      varying vec2 vUv;
-      uniform float time;
-      uniform float audioFactor;
-      uniform float chaosFactor;
-      void main() {
-        float glow = 1.0 + sin(time * chaosFactor + vUv.x * audioFactor) * 2.0;
-        vec3 color = vec3(sin(time), cos(time * chaosFactor), 1.0);
-        gl_FragColor = vec4(color * glow, 0.8);
-      }
-    `;
-
+    // VR Initialization with Exact 2D Mandala Copy
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js failed to load - ensure three.min.js is in the correct directory');
@@ -409,7 +351,7 @@
       scene.add(mandalaGroup);
 
       updateVRMandala(); // Initial VR mandala setup
-      camera.position.z = -5; // Camera moved on Z axis so the object could be seen better
+      camera.position.z = 0;
 
       const enterVRButton = document.getElementById('enterVR');
       enterVRButton.addEventListener('click', async () => {
@@ -449,40 +391,32 @@
       });
     }
 
+    // Generate VR Mandala as Exact Copy of 2D
     function updateVRMandala() {
       mandalaGroup.clear();
-
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          time: { value: timeFactor },
-          audioFactor: { value: 0 }, // Initial value. Update in animation loop.
-          chaosFactor: { value: 0 }  // Initial value. Update in animation loop.
-        },
-        side: THREE.DoubleSide,
+      const audioFactor = voiceAmplitude + droneAmplitude;
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: new THREE.Color(params.lineColor),
+        linewidth: 2,
         transparent: true,
-        blending: THREE.AdditiveBlending
+        opacity: 0.8 + audioFactor * 0.2
       });
 
       function generateRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
-
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * (voiceAmplitude + droneAmplitude)); // use amplitude
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * audioFactor);
           points.push(new THREE.Vector3(
             x + Math.cos(angle) * dist,
             y + Math.sin(angle) * dist,
-            0 //Flatten to 2D for better comparison
+            0 // Flat in XY plane like 2D
           ));
         }
-
-        const curve = new THREE.CatmullRomCurve3(points, true);
-        const tubeGeometry = new THREE.TubeGeometry(curve, 32, 0.1 , 8, true); // Smaller radius to match 2D
-        const tube = new THREE.Mesh(tubeGeometry, material.clone()); //Clone each object so the material and variables can be updated independently
-        mandalaGroup.add(tube);
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.LineLoop(geometry, lineMaterial.clone());
+        mandalaGroup.add(line);
 
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2;
@@ -492,32 +426,18 @@
         }
       }
 
-      generateRecursiveShape(0, 0, params.initialRadius/300, 1); //Use parameters from main mandala. Scale the radius down
-      mandalaGroup.position.z = -5 + voicePitch * 0.05; // Voice-driven depth
-      mandalaGroup.scale.setScalar(0.5 + voiceAmplitude); // Voice amplitude scales size
+      generateRecursiveShape(0, 0, 5, 1); // Scaled for VR space
+      mandalaGroup.position.z = -10 + voicePitch * 0.1; // Stronger depth control
+      mandalaGroup.scale.setScalar(1 + voiceAmplitude * 2); // Dramatic scaling with voice
+      mandalaGroup.rotation.z += rotationSpeed;
     }
 
     function animateVR(time) {
-      const audioFactor = voiceAmplitude + droneAmplitude;
-
-      // First Update values
-      timeFactor = time * 0.001;
-      updateVRMandala()
-
-      //Then update uniforms based on values
-      mandalaGroup.children.forEach(obj => {
-          if (obj.material && obj.material.uniforms) { //Make sure object have uniforms and material
-              obj.material.uniforms.time.value = timeFactor;
-              obj.material.uniforms.audioFactor.value = audioFactor;
-              obj.material.uniforms.chaosFactor.value = chaosFactor;
-              obj.material.needsUpdate = true; // Necessary for uniforms to update properly
-          }
-          obj.rotation.z += rotationSpeed;
-      });
-      mandalaGroup.rotation.y += rotationSpeed * 0.5;
+      updateVRMandala();
       renderer.render(scene, camera);
     }
 
+    // 2D Mandala Drawing
     function generateMandala(timeFactor) {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
@@ -536,7 +456,7 @@
         }
         ctx.closePath();
         ctx.stroke();
-        if(params.scaleFactor) drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
+        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
       }
 
       for (let i = 0; i < params.segments; i++) {
@@ -584,7 +504,6 @@
         document.getElementById('narrative').classList.add('active');
         setTimeout(() => document.getElementById('narrative').classList.remove('active'), 5000);
         generateMandala(0);
-        updateVRMandala(); //Update to VR mandala
         setTimeout(nextPhase, phase.duration);
         phaseIndex++;
       }
@@ -599,7 +518,6 @@
       intention = document.getElementById('intentionInput').value || 'Infinite Chaos';
       document.getElementById('intentionModal').classList.remove('active');
       generateMandala(0);
-      updateVRMandala(); // Update the vr mandala
       updateNarrative();
     }
 
@@ -638,7 +556,6 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       generateMandala(timeFactor);
-      updateVRMandala(); // Update the vr mandala
       updateNarrative();
       if (droneOscillator || voiceAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
