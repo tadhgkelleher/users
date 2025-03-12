@@ -13,7 +13,7 @@
       color: #e0e0ff;
       margin: 0;
       padding: 0;
-      overflow: hidden;
+      min-height: 100vh; /* Allow scrolling */
       animation: nebulaFlow 30s infinite alternate;
     }
 
@@ -47,6 +47,7 @@
       max-height: 90vh;
       display: block;
       margin: 20px auto;
+      position: relative; /* Keep it in flow */
       transition: transform 0.5s ease, box-shadow 0.5s ease;
     }
 
@@ -56,7 +57,7 @@
     }
 
     #vrCanvas {
-      position: absolute;
+      position: fixed; /* Fixed for VR overlay */
       top: 0;
       left: 0;
       width: 100%;
@@ -309,7 +310,7 @@
 
             updateVoiceParams();
             updateSoundMeter();
-            if (droneOscillator || voiceAmplitude > 0.2) animate();
+            if (droneOscillator || voiceAmplitude > 0.1) animate(); // Lowered threshold
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -364,10 +365,10 @@
       if (pitchHistory.length > 20) pitchHistory.shift();
       const stability = voicePitchStability();
 
-      console.log(`Voice - Amplitude: ${voiceAmplitude}, Pitch: ${voicePitch}, Stability: ${stability}`);
+      console.log(`Voice - Amplitude: ${voiceAmplitude}, Pitch: ${voicePitch}, Stability: ${stability}, Segments: ${params.segments}`);
 
-      if (voiceAmplitude > 0.2 && stability > 0.8) {
-        params.segments = Math.min(50, params.segments + 1);
+      if (voiceAmplitude > 0.1 && stability > 0.8) { // Lowered threshold
+        params.segments = Math.min(30, params.segments + 1);
       } else {
         params.segments = Math.max(3, params.segments - 0.5);
       }
@@ -396,7 +397,7 @@
         vUv = uv;
         vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time + pos.x) * audioFactor * 0.5; // Voice-driven pulse
+        pos.z += sin(time + pos.x) * audioFactor * 0.5;
         pos.x += cos(time + pos.z) * audioFactor * 0.2;
         pos.y += sin(time + pos.z) * audioFactor * 0.2;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
@@ -433,7 +434,7 @@
       mandalaGroup = new THREE.Group();
       updateVRMandala();
       scene.add(mandalaGroup);
-      camera.position.z = 20;
+      camera.position.z = 10; // Adjusted for better FOV
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         try {
@@ -449,7 +450,7 @@
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
           document.getElementById('enterVR').textContent = 'Sing & Drone';
-          initVoiceControl();
+          if (!voiceAnalyser) initVoiceControl(); // Ensure voice control in VR
         } catch (err) {
           console.error('VR Failed:', err);
           document.getElementById('enterVR').textContent = 'VR Failed';
@@ -467,7 +468,7 @@
       if (!mandalaGroup) return;
       mandalaGroup.clear();
 
-      const radius = params.initialRadius * 0.02;
+      const radius = params.initialRadius * 0.05; // Increased scale for VR
       const audioFactor = voiceAmplitude + droneAmplitude;
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -522,10 +523,9 @@
         const curve = new THREE.CatmullRomCurve3(points, true);
         const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + voiceAmplitude), 8, true);
         const tube = new THREE.Mesh(tubeGeometry, material.clone());
-        tube.scale.setScalar(1 + voiceAmplitude); // Voice-driven scale
+        tube.scale.setScalar(1 + voiceAmplitude);
         mandalaGroup.add(tube);
 
-        // Add glowing ring for mandala detail
         const ringGeometry = new THREE.BufferGeometry();
         const ringVertices = points.map(p => new THREE.Vector3(p.x, p.y, p.z * 0.5));
         ringGeometry.setFromPoints(ringVertices);
@@ -557,7 +557,7 @@
           obj.material.uniforms.time.value = timeFactor;
           obj.material.uniforms.audioFactor.value = audioFactor;
         }
-        obj.rotation.z += rotationSpeed; // Drone-driven
+        obj.rotation.z += rotationSpeed;
       });
       mandalaGroup.rotation.z += rotationSpeed;
       renderer.render(scene, camera);
@@ -775,7 +775,7 @@
     }
 
     function animate() {
-      if (voiceAmplitude > 0.2 || droneOscillator) {
+      if (voiceAmplitude > 0.1 || droneOscillator) {
         generateMandala(timeFactor);
         animationId = requestAnimationFrame(animate);
       } else {
@@ -799,9 +799,9 @@
       document.getElementById('journey').addEventListener('click', startGuidedMeditation);
       document.getElementById('download').addEventListener('click', downloadMandala);
 
+      initVoiceControl(); // Start voice early
       initVR();
       generateMandala(0);
-      initVoiceControl();
     }
 
     window.onload = init;
