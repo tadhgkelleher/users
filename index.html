@@ -135,7 +135,7 @@
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
 
     const params = {
-      segments: 6, // Flower of Life base
+      segments: 6,
       levels: 4,
       scaleFactor: 0.65,
       initialRadius: 200,
@@ -143,6 +143,7 @@
       lineWidth: 2,
       baseFreq: 110,
       audibleFreq: 110,
+      spiralFactor: 0.1, // Controls spiral tightness
       waveform: 'sine'
     };
 
@@ -199,9 +200,9 @@
 
         droneOscillator1.type = params.waveform;
         droneOscillator2.type = params.waveform;
-        droneOscillator1.frequency.value = params.audibleFreq; // Base harmonic
-        droneOscillator2.frequency.value = params.audibleFreq * 1.5; // Fifth above (cosmic harmony)
-        droneGain.gain.value = 0.05; // Softer volume
+        droneOscillator1.frequency.value = params.audibleFreq;
+        droneOscillator2.frequency.value = params.audibleFreq * 1.5;
+        droneGain.gain.value = 0.05;
         droneAmplitude = 0.05;
 
         droneOscillator1.connect(droneGain);
@@ -216,7 +217,7 @@
 
     function updateDroneParams() {
       if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * chaosFactor * 0.02; // Slower rotation
+        rotationSpeed = droneAmplitude * 0.1; // Consistent rotation
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -230,7 +231,7 @@
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.9; // Very smooth response
+          voiceAnalyser.smoothingTimeConstant = 0.9;
           source.connect(voiceAnalyser);
 
           const bufferLength = voiceAnalyser.fftSize;
@@ -244,9 +245,9 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(0.3, voiceAmplitude); // Subtle chaos
+            chaosFactor = Math.min(0.5, voiceAmplitude); // Moderate chaos
             updateVoiceParams();
-            timeFactor += voiceAmplitude * 0.005; // Very slow evolution
+            timeFactor += voiceAmplitude * 0.005 + 0.001; // Slow base + voice boost
             params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
             updateSoundMeter();
             requestAnimationFrame(detectPitch);
@@ -293,7 +294,8 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.round(6 + (voicePitch / 300) * 6); // 6 to 12 segments
+      params.segments = Math.round(6 + (voicePitch / 300) * 6); // 6 to 12
+      params.levels = Math.min(params.levels, Math.floor(1 + timeFactor * 2)); // Grow levels slowly
     }
 
     function updateSoundMeter() {
@@ -332,6 +334,7 @@
           renderer.setAnimationLoop(null);
           enterVRButton.textContent = 'Enter VR Mode';
           isVRActive = false;
+          timeFactor = 0; // Reset for next VR entry
           return;
         }
 
@@ -373,7 +376,7 @@
       });
     }
 
-    // Generate VR Mandala (Single Level)
+    // Generate VR Mandala (Spiral with Depth)
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -383,63 +386,65 @@
         opacity: 0.8 + voiceAmplitude * 0.2
       });
 
-      function generateCymaticShape(x, y, r) {
+      function generateSpiralShape(level) {
+        if (level > params.levels) return;
         const points = [];
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2;
-          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
-          const dist = r * (1 + freqFactor * chaosFactor * 0.3); // Subtle distortion
-          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0));
+        const maxTheta = Math.PI * 2 * (1 + chaosFactor); // Spiral extent
+        const steps = params.segments * (1 + level);
+        for (let i = 0; i < steps; i++) {
+          const theta = (i / steps) * maxTheta;
+          const r = (level + 1) * params.spiralFactor * theta * (1 + Math.sin(timeFactor * params.baseFreq * 0.01 + theta) * chaosFactor);
+          const x = r * Math.cos(theta);
+          const y = r * Math.sin(theta);
+          const z = Math.sin(theta + timeFactor) * (level * 0.5); // 3D depth
+          points.push(new THREE.Vector3(x, y, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.LineLoop(geometry, lineMaterial.clone());
+        const line = new THREE.Line(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
       }
 
-      generateCymaticShape(0, 0, 10); // Single level, larger base
-      mandalaGroup.position.z = -10 + voiceAmplitude * 2; // Gentle depth shift
+      for (let level = 1; level <= Math.min(params.levels, Math.floor(1 + timeFactor * 2)); level++) {
+        generateSpiralShape(level);
+      }
+      mandalaGroup.position.z = -10 + voiceAmplitude * 2;
       mandalaGroup.scale.setScalar(1 + voiceAmplitude * 1.5);
       mandalaGroup.rotation.z = totalRotation;
+      mandalaGroup.rotation.y = totalRotation * 0.5; // Add spiral tilt
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += 0.005; // Very slow base evolution
-      if (voiceAnalyser) updateVRMandala();
+      updateVRMandala();
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala Drawing (Multi-Level Preview)
+    // 2D Mandala Drawing (Spiral Preview)
     function generateMandala() {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
 
-      function drawCymaticShape(x, y, r, level) {
+      function drawSpiralShape(level) {
         if (level > params.levels) return;
         ctx.beginPath();
         ctx.strokeStyle = params.lineColor;
         ctx.lineWidth = params.lineWidth;
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2;
-          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
-          const dist = r * (1 + freqFactor * chaosFactor * 0.3);
-          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        const maxTheta = Math.PI * 2 * (1 + chaosFactor);
+        const steps = params.segments * (1 + level);
+        for (let i = 0; i < steps; i++) {
+          const theta = (i / steps) * maxTheta;
+          const r = (level + 1) * params.spiralFactor * theta * (1 + Math.sin(timeFactor * params.baseFreq * 0.01 + theta) * chaosFactor);
+          const x = centerX + r * Math.cos(theta);
+          const y = centerY + r * Math.sin(theta);
+          ctx.lineTo(x, y);
         }
-        ctx.closePath();
         ctx.stroke();
-
-        if (level < params.levels) {
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
-            drawCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
-          }
-        }
       }
 
-      drawCymaticShape(centerX, centerY, params.initialRadius, 1);
+      for (let level = 1; level <= params.levels; level++) {
+        drawSpiralShape(level);
+      }
     }
 
     // Brainwave Settings
@@ -448,37 +453,42 @@
       switch (setting) {
         case 'healing':
           params.baseFreq = 6;
-          params.audibleFreq = 48; // 8x harmonic
+          params.audibleFreq = 48;
           params.segments = 6;
           params.levels = 4;
+          params.spiralFactor = 0.1;
           params.lineColor = '#00ccff';
           break;
         case 'sleep':
           params.baseFreq = 2;
-          params.audibleFreq = 32; // 16x harmonic
+          params.audibleFreq = 32;
           params.segments = 6;
           params.levels = 3;
+          params.spiralFactor = 0.15;
           params.lineColor = '#330066';
           break;
         case 'relax':
           params.baseFreq = 10;
-          params.audibleFreq = 40; // 4x harmonic
+          params.audibleFreq = 40;
           params.segments = 6;
           params.levels = 4;
+          params.spiralFactor = 0.08;
           params.lineColor = '#66ff66';
           break;
         case 'enlighten':
           params.baseFreq = 7.83;
-          params.audibleFreq = 62.64; // 8x harmonic
+          params.audibleFreq = 62.64;
           params.segments = 6;
           params.levels = 5;
+          params.spiralFactor = 0.12;
           params.lineColor = '#ffcc00';
           break;
         case 'activate':
           params.baseFreq = 20;
-          params.audibleFreq = 80; // 4x harmonic
+          params.audibleFreq = 80;
           params.segments = 6;
           params.levels = 3;
+          params.spiralFactor = 0.05;
           params.lineColor = '#ff0066';
           break;
       }
@@ -486,6 +496,7 @@
         droneOscillator1.frequency.value = params.audibleFreq;
         droneOscillator2.frequency.value = params.audibleFreq * 1.5;
       }
+      timeFactor = 0; // Reset for fresh start
       generateMandala();
     }
 
