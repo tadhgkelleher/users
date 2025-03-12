@@ -42,32 +42,6 @@
       display: none;
       background: rgba(0, 0, 0, 0.9);
     }
-    .glyph-tab {
-      display: inline-block;
-      padding: 15px 25px;
-      background: linear-gradient(135deg, #6600cc, #ff33cc);
-      border-radius: 15px 15px 0 0;
-      color: #e6ccff;
-      cursor: pointer;
-      transition: all 0.5s;
-    }
-    .glyph-tab:hover, .glyph-tab.active {
-      background: linear-gradient(135deg, #00ffff, #ff00ff);
-      color: #000022;
-      transform: translateY(-5px);
-    }
-    .tab-content {
-      display: none;
-      background: rgba(0, 0, 34, 0.98);
-      padding: 20px;
-      border-radius: 0 0 20px 20px;
-      border: 4px solid #ff33cc;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    .tab-content.active {
-      display: block;
-    }
     button {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
       padding: 10px 20px;
@@ -99,13 +73,8 @@
     .modal.active {
       display: block;
     }
-    .modal input, .modal button {
-      margin: 10px;
-      padding: 8px;
-      border-radius: 8px;
-      border: 2px solid #ff33cc;
-      background: #000022;
-      color: #e6ccff;
+    .modal button {
+      margin: 5px;
     }
     #soundMeter {
       position: fixed;
@@ -129,60 +98,27 @@
       color: #00ffff;
       font-size: 1rem;
     }
-    #narrative {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #ffcc00;
-      text-shadow: 0 0 20px #00ffff;
-      font-size: 1.2rem;
-      opacity: 0;
-      transition: opacity 1s;
-    }
-    #narrative.active {
-      opacity: 1;
-    }
   </style>
 </head>
 <body>
   <h1>Cosmic Weaver: Echoes of the Infinite Abyss</h1>
 
-  <div class="tab-container">
-    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
-    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
-    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
-  </div>
-
-  <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
-  <div id="freqTab" class="tab-content"><div class="control-panel"></div></div>
-  <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
-
   <div class="controls">
-    <button id="generate">Generate Mandala</button>
-    <button id="presets">Load Presets</button>
+    <button id="settings">Choose Setting</button>
     <button id="drone">Toggle Drone</button>
-    <button id="journey">Start Meditation</button>
-    <button id="download">Download Image</button>
     <button id="enterVR">Enter VR Mode</button>
   </div>
 
-  <div id="intentionModal" class="modal">
-    <label for="intentionInput">Set Intention:</label>
-    <input type="text" id="intentionInput" placeholder="e.g., Peace, Chaos">
-    <button onclick="startWithIntention()">Apply</button>
-  </div>
-
-  <div id="presetModal" class="modal">
-    <button onclick="applyPreset('mandala')">Mandala</button>
-    <button onclick="applyPreset('yantra')">Yantra</button>
-    <button onclick="applyPreset('sufi')">Sufi</button>
-    <button onclick="applyPreset('zen')">Zen</button>
+  <div id="settingsModal" class="modal">
+    <button onclick="applySetting('healing')">Healing (Theta, 6 Hz)</button>
+    <button onclick="applySetting('sleep')">Sleep (Delta, 2 Hz)</button>
+    <button onclick="applySetting('relax')">Relax (Alpha, 10 Hz)</button>
+    <button onclick="applySetting('enlighten')">Enlighten (Schumann, 7.83 Hz)</button>
+    <button onclick="applySetting('activate')">Activate (Beta, 20 Hz)</button>
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
   <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz | Chaos: 0</div>
-  <div id="narrative"></div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
@@ -194,10 +130,9 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator, droneGain, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, controlGroup, raycaster, controllers = [];
-    let intention = '';
+    let scene, camera, renderer, mandalaGroup;
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
-    let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0, totalRotation = 0;
+    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
 
     const params = {
       segments: 3,
@@ -207,10 +142,7 @@
       lineColor: '#ff00ff',
       lineWidth: 2,
       baseFreq: 110,
-      waveform: 'sine',
-      secondaryColor: '#00ffff',
-      modulation: 1.5,
-      patternType: 'hyperchaos'
+      waveform: 'sine'
     };
 
     // HSL to Hex Color Conversion
@@ -352,7 +284,6 @@
 
     function updateVoiceParams() {
       params.segments = Math.max(3, Math.min(30, Math.round(voicePitch * 0.1)));
-      params.modulation = 1 + chaosFactor * 3;
     }
 
     function updateSoundMeter() {
@@ -361,7 +292,7 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // VR Initialization with Full Control Panel
+    // VR Initialization (Immersive Only)
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
@@ -376,49 +307,7 @@
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
-      controlGroup = new THREE.Group();
       scene.add(mandalaGroup);
-      scene.add(controlGroup);
-
-      // VR Control Panel (Curved Layout)
-      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
-      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-      const buttons = [
-        { name: 'Generate', action: () => generateMandala(timeFactor), x: -1.2 },
-        { name: 'Presets', action: showVRPresets, x: -0.6 },
-        { name: 'Drone', action: toggleDrone, x: 0 },
-        { name: 'Journey', action: startGuidedMeditation, x: 0.6 },
-        { name: 'Download', action: downloadMandala, x: 1.2 }
-      ];
-
-      buttons.forEach(btn => {
-        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
-        button.position.set(btn.x, 0, -1.5); // Curved panel at 1.5 units away
-        button.userData = { action: btn.action, baseScale: button.scale.clone() };
-        controlGroup.add(button);
-      });
-
-      // Raycaster and Controllers
-      raycaster = new THREE.Raycaster();
-      for (let i = 0; i < 2; i++) {
-        const controller = renderer.xr.getController(i);
-        scene.add(controller);
-        controllers.push(controller);
-
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(0, 0, 0),
-          new THREE.Vector3(0, 0, -1)
-        ]);
-        const line = new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ color: 0x00ffff }));
-        line.scale.z = 5;
-        controller.add(line);
-
-        controller.addEventListener('selectstart', () => {
-          controller.userData.isSelecting = true;
-          handleControllerInteraction(controller);
-        });
-        controller.addEventListener('selectend', () => controller.userData.isSelecting = false);
-      }
 
       updateVRMandala();
       camera.position.z = 0;
@@ -474,67 +363,7 @@
       });
     }
 
-    function handleControllerInteraction(controller) {
-      const direction = new THREE.Vector3(0, 0, -1).applyQuaternion(controller.quaternion);
-      raycaster.set(controller.position, direction);
-
-      const intersects = raycaster.intersectObjects(controlGroup.children);
-      controlGroup.children.forEach(btn => {
-        btn.scale.copy(btn.userData.baseScale); // Reset scale
-        btn.material.color.set(0xff00ff); // Reset color
-      });
-
-      if (intersects.length > 0) {
-        const intersected = intersects[0].object;
-        intersected.scale.multiplyScalar(1.1); // Hover effect
-        if (controller.userData.isSelecting) {
-          intersected.userData.action();
-          intersected.material.color.set(0x00ffff); // Click feedback
-          setTimeout(() => intersected.material.color.set(0xff00ff), 200);
-        }
-      }
-    }
-
-    function showVRPresets() {
-      controlGroup.clear();
-      const presetOptions = [
-        { name: 'Mandala', action: () => applyPreset('mandala'), x: -0.9 },
-        { name: 'Yantra', action: () => applyPreset('yantra'), x: -0.3 },
-        { name: 'Sufi', action: () => applyPreset('sufi'), x: 0.3 },
-        { name: 'Zen', action: () => applyPreset('zen'), x: 0.9 }
-      ];
-
-      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
-      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-      presetOptions.forEach(opt => {
-        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
-        button.position.set(opt.x, -0.3, -1.5);
-        button.userData = { action: () => { opt.action(); initVRControlPanel(); }, baseScale: button.scale.clone() };
-        controlGroup.add(button);
-      });
-    }
-
-    function initVRControlPanel() {
-      controlGroup.clear();
-      const buttonGeometry = new THREE.BoxGeometry(0.4, 0.2, 0.1);
-      const buttonMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-      const buttons = [
-        { name: 'Generate', action: () => generateMandala(timeFactor), x: -1.2 },
-        { name: 'Presets', action: showVRPresets, x: -0.6 },
-        { name: 'Drone', action: toggleDrone, x: 0 },
-        { name: 'Journey', action: startGuidedMeditation, x: 0.6 },
-        { name: 'Download', action: downloadMandala, x: 1.2 }
-      ];
-
-      buttons.forEach(btn => {
-        const button = new THREE.Mesh(buttonGeometry, buttonMaterial.clone());
-        button.position.set(btn.x, 0, -1.5);
-        button.userData = { action: btn.action, baseScale: button.scale.clone() };
-        controlGroup.add(button);
-      });
-    }
-
-    // Generate VR Mandala
+    // Generate VR Mandala (Fractal Cymatics)
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -544,181 +373,137 @@
         opacity: 0.8 + (voiceAmplitude + droneAmplitude) * 0.2
       });
 
-      function generateRecursiveShape(x, y, r, level) {
+      function generateCymaticShape(x, y, r, level) {
         if (level > params.levels) return;
         const points = [];
         for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * chaosFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2);
+          const angle = (i / params.segments) * Math.PI * 2;
+          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle); // Cymatic oscillation
+          const dist = r * (1 + freqFactor * chaosFactor * 0.5);
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2;
-          const nextX = x + Math.cos(angle) * r * params.scaleFactor;
-          const nextY = y + Math.sin(angle) * r * params.scaleFactor;
-          generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
+        // Fractal recursion
+        if (level < params.levels) {
+          for (let i = 0; i < params.segments; i++) {
+            const angle = (i / params.segments) * Math.PI * 2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
+            generateCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
+          }
         }
       }
 
-      generateRecursiveShape(0, 0, 5, 1);
-      mandalaGroup.position.z = -10 + voicePitch * 0.1;
+      generateCymaticShape(0, 0, 5, 1);
+      mandalaGroup.position.z = -10;
       mandalaGroup.scale.setScalar(1 + voiceAmplitude * 2);
       mandalaGroup.rotation.z = totalRotation;
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
+      timeFactor += 0.01; // Slow evolution
       updateVRMandala();
-      controllers.forEach(handleControllerInteraction);
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala Drawing
-    function generateMandala(timeFactor) {
+    // 2D Mandala Drawing (Fractal Cymatics)
+    function generateMandala() {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
 
-      function drawRecursiveShape(x, y, r, level) {
+      function drawCymaticShape(x, y, r, level) {
         if (level > params.levels) return;
         ctx.beginPath();
         ctx.strokeStyle = params.lineColor;
         ctx.lineWidth = params.lineWidth;
         for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
-          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor * 2);
+          const angle = (i / params.segments) * Math.PI * 2;
+          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
+          const dist = r * (1 + freqFactor * chaosFactor * 0.5);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
         ctx.stroke();
-        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
+
+        if (level < params.levels) {
+          for (let i = 0; i < params.segments; i++) {
+            const angle = (i / params.segments) * Math.PI * 2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
+            drawCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
+          }
+        }
       }
 
-      for (let i = 0; i < params.segments; i++) {
-        const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
-        const x = centerX + params.initialRadius * Math.cos(angle);
-        const y = centerY + params.initialRadius * Math.sin(angle);
-        drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
-      }
+      drawCymaticShape(centerX, centerY, params.initialRadius, 1);
     }
 
-    const narrativeLines = [
-      "The void whispers...",
-      "Cosmos bends...",
-      "Chaos weaves...",
-      "Abyss sings...",
-      "Temple rises..."
-    ];
-
-    function updateNarrative() {
-      const narrativeElement = document.getElementById('narrative');
-      if (voiceAmplitude > 0.1 || droneAmplitude > 0) {
-        narrativeElement.textContent = narrativeLines[narrativePhase % narrativeLines.length];
-        narrativeElement.classList.add('active');
-        setTimeout(() => narrativeElement.classList.remove('active'), 3000);
-        narrativePhase++;
-      }
-    }
-
-    function startGuidedMeditation() {
-      const phases = [
-        { duration: 10000, pattern: 'hyperchaos', freq: 90, color: '#ff0066', narrative: "Awaken chaos..." },
-        { duration: 10000, pattern: 'fractalvoid', freq: 333, color: '#00ccff', narrative: "Dive into abyss..." },
-        { duration: 10000, pattern: 'astralweb', freq: 666, color: '#ffcc00', narrative: "Weave eternity..." }
-      ];
-      let phaseIndex = 0;
-
-      function nextPhase() {
-        if (phaseIndex >= phases.length) return;
-        const phase = phases[phaseIndex];
-        params.patternType = phase.pattern;
-        params.baseFreq = phase.freq;
-        params.lineColor = phase.color;
-        if (droneOscillator) droneOscillator.frequency.value = phase.freq;
-        document.getElementById('narrative').textContent = phase.narrative;
-        document.getElementById('narrative').classList.add('active');
-        setTimeout(() => document.getElementById('narrative').classList.remove('active'), 5000);
-        generateMandala(0);
-        setTimeout(nextPhase, phase.duration);
-        phaseIndex++;
-      }
-      nextPhase();
-    }
-
-    function showIntentionModal() {
-      document.getElementById('intentionModal').classList.add('active');
-    }
-
-    function startWithIntention() {
-      intention = document.getElementById('intentionInput').value || 'Infinite Chaos';
-      document.getElementById('intentionModal').classList.remove('active');
-      generateMandala(0);
-      updateNarrative();
-    }
-
-    function showPresetModal() {
-      document.getElementById('presetModal').classList.add('active');
-    }
-
-    function applyPreset(preset) {
-      document.getElementById('presetModal').classList.remove('active');
-      switch (preset) {
-        case 'mandala':
-          Object.assign(params, { segments: 5, levels: 4, lineColor: '#ff0066', baseFreq: 90 });
+    // Brainwave Settings
+    function applySetting(setting) {
+      document.getElementById('settingsModal').classList.remove('active');
+      switch (setting) {
+        case 'healing':
+          params.baseFreq = 6;   // Theta
+          params.segments = 6;
+          params.levels = 4;
+          params.lineColor = '#00ccff'; // Soothing blue
           break;
-        case 'yantra':
-          Object.assign(params, { segments: 4, levels: 3, lineColor: '#00ccff', baseFreq: 136.1 });
+        case 'sleep':
+          params.baseFreq = 2;   // Delta
+          params.segments = 4;
+          params.levels = 3;
+          params.lineColor = '#330066'; // Deep purple
           break;
-        case 'sufi':
-          Object.assign(params, { segments: 6, levels: 4, lineColor: '#ffcc00', baseFreq: 174 });
+        case 'relax':
+          params.baseFreq = 10;  // Alpha
+          params.segments = 5;
+          params.levels = 4;
+          params.lineColor = '#66ff66'; // Calm green
           break;
-        case 'zen':
-          Object.assign(params, { segments: 3, levels: 2, lineColor: '#000022', baseFreq: 0 });
+        case 'enlighten':
+          params.baseFreq = 7.83; // Schumann
+          params.segments = 7;
+          params.levels = 5;
+          params.lineColor = '#ffcc00'; // Golden yellow
+          break;
+        case 'activate':
+          params.baseFreq = 20;  // Beta
+          params.segments = 8;
+          params.levels = 3;
+          params.lineColor = '#ff0066'; // Energetic red
           break;
       }
-      if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
-      generateMandala(0);
-      updateVRMandala();
+      if (droneOscillator) {
+        droneOscillator.frequency.value = params.baseFreq;
+      }
+      generateMandala();
     }
 
-    function downloadMandala() {
-      const link = document.createElement('a');
-      link.download = 'cosmic-weave.png';
-      link.href = mandalaCanvas.toDataURL('image/png');
-      link.click();
+    function showSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
     }
 
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
-      generateMandala(timeFactor);
-      updateNarrative();
+      timeFactor += 0.01;
+      generateMandala();
       if (droneOscillator || voiceAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
       }
     }
 
-    function openTab(evt, tabName) {
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.glyph-tab').forEach(tab => tab.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
-      evt.currentTarget.classList.add('active');
-    }
-
     function init() {
       console.log('Initializing Cosmic Weaver...');
-      document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
-      document.getElementById('presets').addEventListener('click', showPresetModal);
+      document.getElementById('settings').addEventListener('click', showSettingsModal);
       document.getElementById('drone').addEventListener('click', toggleDrone);
-      document.getElementById('journey').addEventListener('click', startGuidedMeditation);
-      document.getElementById('download').addEventListener('click', downloadMandala);
-
       initVoiceControl();
       initVR();
-      generateMandala(0);
+      generateMandala();
     }
 
     window.onload = () => {
