@@ -176,25 +176,25 @@
   <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
 
   <div class="controls">
-    <button id="generate">Unravel the Void</button>
-    <button id="presets">Ancient Glyphs</button>
-    <button id="drone">Summon Resonance</button>
-    <button id="journey">Astral Voyage</button>
-    <button id="download">Seal the Echo</button>
-    <button id="enterVR">Ascend the Temple</button>
+    <button id="generate">Generate Mandala</button>
+    <button id="presets">Load Presets</button>
+    <button id="drone">Toggle Drone</button>
+    <button id="journey">Start Meditation</button>
+    <button id="download">Download Image</button>
+    <button id="enterVR">Enter VR Mode</button>
   </div>
 
   <div id="intentionModal" class="modal">
-    <label for="intentionInput">Speak to the Abyss:</label>
-    <input type="text" id="intentionInput" placeholder="e.g., Chaos, Eternity">
-    <button onclick="startWithIntention()">Invoke</button>
+    <label for="intentionInput">Set Intention:</label>
+    <input type="text" id="intentionInput" placeholder="e.g., Peace, Chaos">
+    <button onclick="startWithIntention()">Apply</button>
   </div>
 
   <div id="presetModal" class="modal">
-    <button onclick="applyPreset('mandala')">Fractal Mandala</button>
-    <button onclick="applyPreset('yantra')">Quantum Yantra</button>
-    <button onclick="applyPreset('sufi')">Sufi Nebula</button>
-    <button onclick="applyPreset('zen')">Void Enso</button>
+    <button onclick="applyPreset('mandala')">Mandala</button>
+    <button onclick="applyPreset('yantra')">Yantra</button>
+    <button onclick="applyPreset('sufi')">Sufi</button>
+    <button onclick="applyPreset('zen')">Zen</button>
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
@@ -215,10 +215,11 @@
     let intention = '';
     let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0;
+    let vrPositionZ = 0; // For voice-driven VR navigation
 
     const params = {
       segments: 3,
-      levels: 4, // Reduced for stability
+      levels: 4,
       scaleFactor: 0.65,
       initialRadius: 200,
       lineColor: '#ff00ff',
@@ -227,8 +228,7 @@
       waveform: 'sine',
       secondaryColor: '#00ffff',
       modulation: 1.5,
-      patternType: 'hyperchaos',
-      particleCount: 100 // Reduced for performance
+      patternType: 'hyperchaos'
     };
 
     // Audio Initialization
@@ -246,7 +246,7 @@
         droneOscillator = null;
         droneGain = null;
         droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Summon Resonance';
+        document.getElementById('drone').textContent = 'Toggle Drone';
       } else {
         droneOscillator = audioContext.createOscillator();
         droneGain = audioContext.createGain();
@@ -256,7 +256,7 @@
         droneAmplitude = 0.1;
         droneOscillator.connect(droneGain).connect(audioContext.destination);
         droneOscillator.start();
-        document.getElementById('drone').textContent = 'Silence Resonance';
+        document.getElementById('drone').textContent = 'Stop Drone';
         updateDroneParams();
       }
     }
@@ -278,7 +278,7 @@
           initAudio();
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 2048; // Reduced for performance
+          voiceAnalyser.fftSize = 2048;
           voiceAnalyser.smoothingTimeConstant = 0.7;
           source.connect(voiceAnalyser);
 
@@ -294,6 +294,7 @@
             else voicePitch = 0;
 
             chaosFactor = Math.min(1, voiceAmplitude * 1.5);
+            vrPositionZ = voicePitch * 0.01; // Voice-driven VR depth
             updateVoiceParams();
             updateSoundMeter();
             if (droneOscillator || voiceAmplitude > 0.05) animate();
@@ -351,14 +352,15 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // Simplified VR Shaders
+    // VR Shaders
     const vertexShader = `
       varying vec2 vUv;
       uniform float time;
+      uniform float audioFactor;
       void main() {
         vUv = uv;
         vec3 pos = position;
-        pos.z += sin(time + pos.x) * 0.5;
+        pos.z += sin(time + pos.x) * audioFactor * 0.5;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
@@ -366,8 +368,10 @@
     const fragmentShader = `
       varying vec2 vUv;
       uniform float time;
+      uniform float audioFactor;
       void main() {
-        gl_FragColor = vec4(sin(time), cos(time), 1.0, 0.8);
+        float glow = 1.0 + sin(time + vUv.x) * audioFactor;
+        gl_FragColor = vec4(sin(time), cos(time), 1.0, 0.8) * glow;
       }
     `;
 
@@ -380,7 +384,7 @@
 
       console.log('Initializing VR...');
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000); // Adjusted FOV
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -390,15 +394,16 @@
       const material = new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
-        uniforms: { time: { value: 0 } },
+        uniforms: { time: { value: 0 }, audioFactor: { value: 0 } },
         side: THREE.DoubleSide,
         transparent: true
       });
-      const geometry = new THREE.TorusGeometry(3, 1, 16, 32);
+      const geometry = new THREE.TorusGeometry(2, 0.5, 16, 32); // Smaller torus
       const torus = new THREE.Mesh(geometry, material);
       mandalaGroup.add(torus);
-
-      camera.position.z = 10;
+      mandalaGroup.position.z = -5; // Move away from camera
+      mandalaGroup.scale.set(0.5, 0.5, 0.5); // Scale down for better VR fit
+      camera.position.z = 0; // Camera at origin, objects positioned relative to it
 
       const enterVRButton = document.getElementById('enterVR');
       enterVRButton.addEventListener('click', async () => {
@@ -415,13 +420,13 @@
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
-          enterVRButton.textContent = 'Chant the Void';
+          enterVRButton.textContent = 'Exit VR Mode';
 
           session.addEventListener('end', () => {
             console.log('VR session ended');
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
-            enterVRButton.textContent = 'Ascend the Temple';
+            enterVRButton.textContent = 'Enter VR Mode';
           });
 
           if (!voiceAnalyser) initVoiceControl();
@@ -439,10 +444,15 @@
     }
 
     function animateVR(time) {
+      const audioFactor = voiceAmplitude + droneAmplitude;
       mandalaGroup.children.forEach(obj => {
-        if (obj.material.uniforms) obj.material.uniforms.time.value = timeFactor;
+        if (obj.material.uniforms) {
+          obj.material.uniforms.time.value = timeFactor;
+          obj.material.uniforms.audioFactor.value = audioFactor;
+        }
         obj.rotation.z += rotationSpeed;
       });
+      mandalaGroup.position.z = -5 + vrPositionZ; // Voice-driven depth
       renderer.render(scene, camera);
     }
 
@@ -555,7 +565,7 @@
 
     function downloadMandala() {
       const link = document.createElement('a');
-      link.download = 'abyssal-weave.png';
+      link.download = 'cosmic-weave.png';
       link.href = mandalaCanvas.toDataURL('image/png');
       link.click();
     }
