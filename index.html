@@ -261,6 +261,7 @@
     let voiceAmplitude = 0; // Default amplitude (0-1)
     let rotationSpeed = 0; // VR rotation speed (starts at 0)
     let twistFactor = 0; // VR twist effect (starts at 0)
+    let timeFactor = 0; // For 2D animation sync
 
     const params = {
       segments: 3, // Start minimal
@@ -330,7 +331,7 @@
       lfo.start();
     }
 
-    // Voice Detection for VR Control
+    // Voice Detection
     function initVoiceControl() {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
@@ -354,6 +355,7 @@
 
             updateVoiceParams();
             updateSoundMeter();
+            if (isAnimating) animate(); // Trigger 2D animation only if singing
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -412,10 +414,16 @@
         params.segments = Math.min(50, params.segments + 0.2); // Increase segments
         rotationSpeed = Math.min(0.05, rotationSpeed + 0.001); // Ramp up rotation
         twistFactor = Math.min(1, twistFactor + 0.02); // Ramp up twist
+        timeFactor += voiceAmplitude * 0.01; // Sync 2D animation to voice
       } else { // Silence
         params.segments = Math.max(3, params.segments - 0.1); // Decrease segments
         rotationSpeed = Math.max(0, rotationSpeed - 0.002); // Stop rotation
         twistFactor = Math.max(0, twistFactor - 0.01); // Collapse twist
+        timeFactor = 0; // Reset 2D animation
+        if (isAnimating) {
+          cancelAnimationFrame(animationId);
+          generateMandala(0); // Static state
+        }
       }
     }
 
@@ -489,6 +497,9 @@
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
             document.getElementById('enterVR').textContent = 'Enter Temple';
+            params.segments = 3; // Reset on VR exit
+            rotationSpeed = 0;
+            twistFactor = 0;
           });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
@@ -518,7 +529,7 @@
         vertexShader,
         fragmentShader,
         uniforms: {
-          time: { value: 0 },
+          time: { value: timeFactor },
           audioFactor: { value: audioFactor },
           twistFactor: { value: twistFactor },
           color1: { value: new THREE.Color(params.lineColor) },
@@ -618,7 +629,7 @@
       updateVRMandala(); // Rebuild with voice input
       spiralGroup.children.forEach(obj => {
         if (obj.material.uniforms) {
-          obj.material.uniforms.time.value = time * 0.001;
+          obj.material.uniforms.time.value = timeFactor;
           obj.material.uniforms.audioFactor.value = audioFactor;
           obj.material.uniforms.twistFactor.value = twistFactor;
         }
@@ -629,7 +640,7 @@
     }
 
     // 2D Mandala Generation
-    function generateMandala(timeFactor = 0) {
+    function generateMandala(timeFactor) {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
@@ -770,7 +781,7 @@
         params.patternType = phase.pattern;
         params.baseFreq = phase.freq;
         params.lineColor = phase.color;
-        generateMandala();
+        generateMandala(0); // Static unless singing
         updateFrequencies();
         setTimeout(nextPhase, phase.duration);
         phaseIndex++;
@@ -786,13 +797,13 @@
     function startWithIntention() {
       intention = document.getElementById('intentionInput').value || 'Transcendence';
       document.getElementById('intentionModal').classList.remove('active');
-      generateMandala();
+      generateMandala(0);
       initAudio();
     }
 
     // Preset Modal
     function showPresetModal() {
-      document.getElementById('Magical presetModal').classList.add('active');
+      document.getElementById('presetModal').classList.add('active');
     }
 
     function applyPreset(preset) {
@@ -827,7 +838,7 @@
           });
           break;
       }
-      generateMandala();
+      generateMandala(0);
       initAudio();
       updateVRMandala();
     }
@@ -866,20 +877,24 @@
 
     function toggleAnimation() {
       if (isAnimating) {
+        isAnimating = false;
         cancelAnimationFrame(animationId);
         document.getElementById('animate').textContent = 'Pulse Eternity';
-        isAnimating = false;
+        generateMandala(0); // Reset to static
       } else {
-        document.getElementById('animate').textContent = 'Collapse Eternity';
         isAnimating = true;
-        requestAnimationFrame(animate);
+        document.getElementById('animate').textContent = 'Collapse Eternity';
+        if (voiceAmplitude > 0.2 && voicePitchStability() > 0.8) animate(); // Start only if singing
       }
     }
 
     function animate() {
-      const time = performance.now() * 0.001 * params.modulation;
-      generateMandala(time);
-      if (isAnimating) animationId = requestAnimationFrame(animate);
+      if (voiceAmplitude > 0.2 && voicePitchStability() > 0.8) {
+        generateMandala(timeFactor);
+        animationId = requestAnimationFrame(animate);
+      } else {
+        generateMandala(0); // Static when not singing
+      }
     }
 
     function openTab(evt, tabName) {
@@ -905,15 +920,15 @@
       ];
       orbPositions.forEach(([id, x, y]) => {
         createOrbControl(id, x, y, () => {
-          generateMandala();
+          generateMandala(0);
           initAudio();
           updateVRMandala();
         });
       });
 
       initVR();
-      generateMandala();
-      initVoiceControl(); // Start voice control immediately for sound meter
+      generateMandala(0); // Start static
+      initVoiceControl(); // Start voice control immediately
     }
 
     window.onload = init;
