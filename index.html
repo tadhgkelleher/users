@@ -4,33 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Weaver: Voice of the Void</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&family=Orbitron:wght@700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Orbitron', 'Arial', sans-serif; /* A bit more futuristic */
       text-align: center;
       background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c);
       color: #e0e0ff;
       margin: 0;
       padding: 0;
-      min-height: 100vh; /* Allow scrolling */
-      animation: nebulaFlow 30s infinite alternate;
+      overflow: hidden; /* Hide scrollbars, we're controlling the universe */
+      min-height: 100vh;
+      position: relative; /* For starfield */
+      animation: nebulaFlow 60s infinite alternate; /* Slow down nebula */
+    }
+
+    /* Starfield - absolute positioned particles */
+    #starfield {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1; /* Behind everything */
+      pointer-events: none; /* Don't interfere with clicks */
+    }
+
+    #starfield canvas {
+      width: 100%;
+      height: 100%;
     }
 
     @keyframes nebulaFlow {
       0% { background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c); }
-      33% { background: radial-gradient(circle, #ff00ff, #00ffff, #9b59b6); }
+      33% { background: radial-gradient(circle, #c770f0, #f070c7, #a53794); }
       66% { background: radial-gradient(circle, #ff4500, #1a3b5c, #ff6ec7); }
       100% { background: radial-gradient(circle, #2a2a5c, #9b59b6, #0a0a1f); }
     }
 
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 4rem;
+      font-size: 5rem; /* Bigger, bolder */
       color: #00ffff;
       text-shadow: 0 0 30px #ff6ec7, 0 0 60px #9b59b6, 0 0 90px #ff4500;
-      animation: mantraGlow 3s infinite alternate;
+      animation: mantraGlow 4s infinite alternate, wobble 3s ease-in-out infinite; /* Subtle wobble */
       margin: 20px 0;
+    }
+
+    @keyframes wobble {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     @keyframes mantraGlow {
@@ -44,10 +67,10 @@
       background: radial-gradient(circle, rgba(10, 10, 31, 0.9), rgba(26, 26, 59, 0.4));
       box-shadow: 0 0 100px rgba(255, 0, 255, 0.9), inset 0 0 50px rgba(0, 255, 255, 0.5);
       max-width: 90vw;
-      max-height: 90vh;
+      max-height: 75vh; /* Less height for button bar*/
       display: block;
       margin: 20px auto;
-      position: relative; /* Keep it in flow */
+      position: relative;
       transition: transform 0.5s ease, box-shadow 0.5s ease;
     }
 
@@ -131,6 +154,12 @@
       cursor: pointer;
       transition: all 0.4s;
       box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
+      animation: pulseButton 2s infinite alternate; /* Subtle pulse animation */
+    }
+
+    @keyframes pulseButton {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
     }
 
     button:hover {
@@ -160,6 +189,11 @@
       margin: 10px;
       padding: 5px;
       border-radius: 5px;
+      transition: all 0.2s; /* Hover effect */
+    }
+
+    .intention-modal input:hover, .preset-modal button:hover {
+      background-color: rgba(0, 255, 255, 0.2);
     }
 
     #soundMeter {
@@ -186,15 +220,61 @@
       color: #00ffff;
       text-shadow: 0 0 10px #ff00ff;
     }
+
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      padding: 15px;
+      background: rgba(10, 10, 40, 0.7); /* Translucent bar */
+      border-radius: 10px;
+      margin-top: 15px;
+
+    }
+
+    /* Add the pulsating button */
+    .pulse-button {
+        background-color: #25D366;
+        border-radius: 60px;
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+        cursor: pointer;
+        animation: pulse 1.25s infinite cubic-bezier(0.66, 0, 0, 1);
+        padding: 15px 30px;
+        color: white;
+        font-size: 18px;
+        border: none;
+        font-weight: bold;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+        }
+    }
+
   </style>
 </head>
 <body>
+  <div id="starfield">
+    <canvas></canvas>
+  </div>
+
   <h1>Cosmic Weaver: Voice of the Void</h1>
 
   <div class="tab-container">
-    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
-    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
-    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
+    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴ Form</span>
+    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶ Frequency</span>
+    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹ Void</span>
   </div>
 
   <div id="formTab" class="tab-content active">
@@ -230,6 +310,7 @@
               <option value="yantra">Yantra</option>
               <option value="tunnel">Tunnel</option>
               <option value="hypercube">Hypercube</option>
+              <option value="fractal">Fractal</option> <!-- NEW -->
           </select>
 
       </div>
@@ -282,6 +363,7 @@
     <button onclick="applyPreset('yantra')">Hindu Yantra</button>
     <button onclick="applyPreset('sufi')">Sufi Spiral</button>
     <button onclick="applyPreset('zen')">Zen Enso</button>
+     <button onclick="applyPreset('kali')">Kali's Dance</button>  <!-- NEW -->
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
@@ -310,7 +392,6 @@
     const VR_PLANE_WIDTH = 16; // Adjusted based on VR viewing size
     const VR_PLANE_HEIGHT = 9; // Adjusted based on VR viewing size
 
-
     const params = {
       segments: 3, // Voice-driven
       levels: 4,
@@ -324,6 +405,45 @@
       modulation: 1,
       patternType: 'cymatic'
     };
+
+    //Starfield Initialization
+      const starfieldCanvas = document.querySelector('#starfield canvas');
+      const starfieldCtx = starfieldCanvas.getContext('2d');
+      let stars = [];
+
+      function initStarfield() {
+          starfieldCanvas.width = window.innerWidth;
+          starfieldCanvas.height = window.innerHeight;
+          stars = [];
+          for (let i = 0; i < 200; i++) {
+              stars.push({
+                  x: Math.random() * starfieldCanvas.width,
+                  y: Math.random() * starfieldCanvas.height,
+                  size: Math.random() * 3,
+                  opacity: Math.random()
+              });
+          }
+          drawStarfield();
+      }
+
+      function drawStarfield() {
+          starfieldCtx.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
+          stars.forEach(star => {
+              starfieldCtx.beginPath();
+              starfieldCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+              starfieldCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+              starfieldCtx.fill();
+          });
+      }
+
+      function animateStarfield() {
+          stars.forEach(star => {
+              star.x -= 0.1; // Subtle movement
+              if (star.x < 0) star.x = starfieldCanvas.width;
+          });
+          drawStarfield();
+          requestAnimationFrame(animateStarfield);
+      }
 
     // Audio Initialization
     function initAudio() {
@@ -546,6 +666,32 @@
     }
 
 
+      // Fractal Drawing Function
+      function drawFractal(x, y, len, angle, depth) {
+          if (depth === 0) return;
+
+          const x1 = x + len * Math.cos(angle);
+          const y1 = y + len * Math.sin(angle);
+
+          const gradient = ctx.createLinearGradient(x, y, x1, y1);
+          gradient.addColorStop(0, params.lineColor);
+          gradient.addColorStop(1, params.secondaryColor);
+
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x1, y1);
+          ctx.strokeStyle = gradient;
+          ctx.lineWidth = params.lineWidth * (1 - depth / params.levels);
+          ctx.stroke();
+
+          const splitAngle = 0.5; // Angle for branching
+          const newLen = len * 0.7;   // Length reduction for branches
+
+          drawFractal(x1, y1, newLen, angle + splitAngle, depth - 1);
+          drawFractal(x1, y1, newLen, angle - splitAngle, depth - 1);
+      }
+
+
     // 2D Mandala Generation
     function generateMandala(timeFactor) {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
@@ -592,7 +738,7 @@
             break;
           case 'nebula':
             ctx.beginPath();
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0< 12; i++) {
               const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
               const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
               ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
@@ -650,6 +796,9 @@
             }
             ctx.closePath();
             ctx.stroke();
+            break;
+          case 'fractal':
+            drawFractal(x, y, r, timeFactor, params.levels); //Use the fractal function to make the pattern.
             break;
         }
 
@@ -742,6 +891,13 @@
             baseFreq: 0, waveform: 'sine', modulation: 0
           });
           break;
+         case 'kali':  // Added Preset.
+           Object.assign(params, {
+             segments: 8, levels: 5, scaleFactor: 0.65, initialRadius: 280,
+             lineColor: '#ff0000', secondaryColor: '#000000', patternType: 'chaos',
+             baseFreq: 440, waveform: 'square', modulation: 1.2
+           });
+           break;
       }
       if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
       generateMandala(0);
@@ -805,9 +961,14 @@
       initVR();
       generateMandala(0);
       animate();
+
+      initStarfield();
+      animateStarfield();
     }
 
     window.onload = init;
+    window.addEventListener('resize', initStarfield); // Adjust starfield on resize
+
   </script>
 </body>
 </html>
