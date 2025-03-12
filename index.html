@@ -178,7 +178,7 @@
   <div class="tab-container">
     <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
     <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
-    <span class="glyph-tab" onclick="open vowelsTab(event, 'voidTab')">✹</span>
+    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
   </div>
 
   <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
@@ -221,23 +221,22 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator, droneGain, voiceAnalyser;
-    let scene, camera, renderer, spiralGroup;
+    let scene, camera, renderer, mandalaGroup;
     let intention = '';
-    let voicePitch = 0; // Voice pitch in Hz
-    let voiceAmplitude = 0; // Voice amplitude (0-1)
-    let droneAmplitude = 0; // Drone amplitude (0-1)
-    let rotationSpeed = 0; // Controlled by drone
-    let twistFactor = 0; // Static unless modified later
-    let timeFactor = 0; // For 2D animation sync
+    let voicePitch = 0;
+    let voiceAmplitude = 0;
+    let droneAmplitude = 0;
+    let rotationSpeed = 0; // Drone-driven
+    let timeFactor = 0; // For animation sync
 
     const params = {
-      segments: 3, // Controlled by voice
+      segments: 3, // Voice-driven
       levels: 4,
       scaleFactor: 0.7,
       initialRadius: 200,
       lineColor: '#ff00ff',
       lineWidth: 3,
-      baseFreq: 110, // Drone base frequency
+      baseFreq: 110, // Drone frequency
       waveform: 'sine',
       secondaryColor: '#00ffff',
       modulation: 1,
@@ -266,8 +265,8 @@
         droneGain = audioContext.createGain();
         droneOscillator.type = params.waveform;
         droneOscillator.frequency.value = params.baseFreq;
-        droneGain.gain.value = 0.1; // Low volume drone
-        droneAmplitude = 0.1; // Initial amplitude
+        droneGain.gain.value = 0.1;
+        droneAmplitude = 0.1;
         droneOscillator.connect(droneGain).connect(audioContext.destination);
         droneOscillator.start();
         document.getElementById('drone').textContent = 'Stop Drone';
@@ -277,8 +276,8 @@
 
     function updateDroneParams() {
       if (droneOscillator) {
-        rotationSpeed = Math.min(0.05, droneAmplitude * 0.5); // Drone drives rotation
-        timeFactor += droneAmplitude * 0.01; // Sync 2D animation
+        rotationSpeed = Math.min(0.05, droneAmplitude * 0.5);
+        timeFactor += droneAmplitude * 0.01;
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -310,7 +309,7 @@
 
             updateVoiceParams();
             updateSoundMeter();
-            if (droneOscillator || voiceAmplitude > 0.2) animate(); // Animate if drone or voice active
+            if (droneOscillator || voiceAmplitude > 0.2) animate();
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -366,9 +365,9 @@
       const stability = voicePitchStability();
 
       if (voiceAmplitude > 0.2 && stability > 0.8) { // Voice active
-        params.segments = Math.min(50, params.segments + 0.2); // Voice drives segments
+        params.segments = Math.min(100, params.segments + 1); // Faster, higher cap
       } else { // Voice silent
-        params.segments = Math.max(3, params.segments - 0.1);
+        params.segments = Math.max(3, params.segments - 0.5);
       }
     }
 
@@ -391,14 +390,11 @@
       varying vec3 vPosition;
       uniform float time;
       uniform float audioFactor;
-      uniform float twistFactor;
       void main() {
         vUv = uv;
         vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time + pos.x * twistFactor) * audioFactor * 0.5;
-        pos.x += cos(time + pos.z * twistFactor) * audioFactor * 0.2;
-        pos.y += sin(time + pos.z * twistFactor) * audioFactor * 0.2;
+        pos.z += sin(time + pos.x) * audioFactor * 0.2; // Subtle voice-driven pulse
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
@@ -413,8 +409,8 @@
       void main() {
         float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * 0.1 + time)));
         vec3 color = mix(color1, color2, gradient);
-        float glow = 1.0 + sin(time + vPosition.z * 0.5) * audioFactor * 1.5;
-        gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.2);
+        float glow = 1.0 + sin(time + vPosition.z * 0.5) * audioFactor * 2.0;
+        gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.4);
       }
     `;
 
@@ -430,10 +426,10 @@
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
-      spiralGroup = new THREE.Group();
+      mandalaGroup = new THREE.Group();
       updateVRMandala();
-      scene.add(spiralGroup);
-      camera.position.z = 0;
+      scene.add(mandalaGroup);
+      camera.position.z = 15; // Closer view for detail
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         try {
@@ -444,7 +440,6 @@
             document.getElementById('enterVR').textContent = 'Enter Temple';
             params.segments = 3;
             rotationSpeed = 0;
-            twistFactor = 0;
           });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
@@ -465,18 +460,17 @@
     }
 
     function updateVRMandala() {
-      if (!spiralGroup) return;
-      spiralGroup.clear();
+      if (!mandalaGroup) return;
+      mandalaGroup.clear();
 
-      const radius = Math.min(params.initialRadius, 400) * 0.02;
-      const audioFactor = voiceAmplitude + droneAmplitude; // Combine inputs
+      const radius = params.initialRadius * 0.02;
+      const audioFactor = voiceAmplitude + droneAmplitude;
       const material = new THREE.ShaderMaterial({
         vertexShader,
         fragmentShader,
         uniforms: {
           time: { value: timeFactor },
           audioFactor: { value: audioFactor },
-          twistFactor: { value: twistFactor },
           color1: { value: new THREE.Color(params.lineColor) },
           color2: { value: new THREE.Color(params.secondaryColor) }
         },
@@ -485,102 +479,69 @@
         blending: THREE.AdditiveBlending
       });
 
-      function generateRecursivePath(xOffset, yOffset, r, level, zStart, zEnd) {
+      function generateRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
-        const points = [];
-        const zStep = (zEnd - zStart) / params.segments;
+        const geometry = new THREE.PlaneGeometry(r * 2, r * 2, 1, 1);
+        const mesh = new THREE.Mesh(geometry, material.clone());
+        mesh.position.set(x, y, -level * 0.5); // Stack levels in Z
+        mesh.scale.set(1 + voiceAmplitude, 1 + voiceAmplitude, 1); // Voice-driven scale
 
-        switch (params.patternType) {
-          case 'cymatic':
-            for (let i = 0; i < params.segments; i++) {
-              const angle = (i / params.segments) * Math.PI * 2;
-              const mod = Math.sin(angle * level * 3) * audioFactor;
-              const dist = r * (0.6 + mod * 0.9);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(angle + level) * r * 0.2 * audioFactor));
-            }
-            break;
-          case 'vortex':
-            for (let i = 0; i < params.segments / level; i++) {
-              const angle = (i / (params.segments / level)) * Math.PI * 2;
-              const dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep * audioFactor));
-            }
-            break;
-          case 'nebula':
-            for (let i = 0; i < 12; i++) {
-              const angle = (i / 12) * Math.PI * 2;
-              const dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(i + level) * r * 0.3 * audioFactor));
-            }
-            break;
-          case 'chaos':
-            const pointsCount = Math.floor(Math.random() * 8) + 5;
-            for (let i = 0; i < pointsCount; i++) {
-              const angle = (i / pointsCount) * Math.PI * 2 + Math.random() * 0.6;
-              const dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.random() * r * 0.2 * audioFactor));
-            }
-            break;
-          case 'flower':
-            for (let i = 0; i < 10; i++) {
-              const angle = (i / 10) * Math.PI * 2;
-              const dist = r * audioFactor * (0.6 + 0.4);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist * 0.5, yOffset + Math.sin(angle) * dist * 0.5, zStart + Math.sin(angle) * r * 0.1 * audioFactor));
-            }
-            break;
-          case 'yantra':
-            for (let i = 0; i < 6; i++) {
-              const angle = (i / 6) * Math.PI * 2;
-              const dist = r * audioFactor;
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.cos(angle + level) * r * 0.15 * audioFactor));
-            }
-            break;
-          case 'tunnel':
-            for (let i = 0; i < params.segments; i++) {
-              const angle = (i / params.segments) * Math.PI * 2;
-              const depth = Math.sin(level * 0.6) * r * 0.4 * audioFactor;
-              const dist = r * (1 - level / params.levels) * (1 + 0.3);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + depth));
-            }
-            break;
-          case 'hypercube':
-            for (let i = 0; i < 8; i++) {
-              const angle = (i / 8) * Math.PI * 2;
-              const mod = Math.cos(level) * audioFactor;
-              const dist = r * (0.6 + mod * 0.6);
-              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(angle + level) * r * 0.2 * audioFactor));
-            }
-            break;
+        const vertices = [];
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2;
+          let dist = r;
+          switch (params.patternType) {
+            case 'cymatic':
+              const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
+              dist = r * (0.6 + mod * 0.9);
+              break;
+            case 'vortex':
+              dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor);
+              break;
+            case 'nebula':
+              dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
+              break;
+            case 'chaos':
+              dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
+              break;
+            case 'flower':
+              dist = r * audioFactor * (0.6 + 0.4);
+              break;
+            case 'yantra':
+              dist = r * audioFactor;
+              break;
+            case 'tunnel':
+              dist = r * (1 - level / params.levels) * (1 + 0.3);
+              break;
+            case 'hypercube':
+              dist = r * (0.6 + Math.cos(level) * audioFactor * 0.6);
+              break;
+          }
+          vertices.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, -level * 0.5));
         }
 
-        const curve = new THREE.CatmullRomCurve3(points, params.patternType !== 'chaos');
-        const geometry = new THREE.TubeGeometry(curve, 100, 0.5 / level * audioFactor, 16, params.patternType !== 'chaos');
-        const mesh = new THREE.Mesh(geometry, material);
-        spiralGroup.add(mesh);
-
-        generateRecursivePath(xOffset, yOffset, r * params.scaleFactor, level + 1, zStart, zEnd);
+        mandalaGroup.add(mesh);
+        for (let i = 0; i < params.segments; i++) {
+          const nextX = x + Math.cos((i / params.segments) * Math.PI * 2) * r * audioFactor;
+          const nextY = y + Math.sin((i / params.segments) * Math.PI * 2) * r * audioFactor;
+          generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
+        }
       }
 
-      for (let i = 0; i < params.segments; i++) {
-        const angle = (i / params.segments) * Math.PI * 2;
-        const xOffset = Math.cos(angle) * radius * audioFactor;
-        const yOffset = Math.sin(angle) * radius * audioFactor;
-        generateRecursivePath(xOffset, yOffset, radius * params.scaleFactor, 1, -10, 10);
-      }
+      generateRecursiveShape(0, 0, radius, 1);
     }
 
     function animateVR(time) {
       const audioFactor = voiceAmplitude + droneAmplitude;
       updateVRMandala();
-      spiralGroup.children.forEach(obj => {
+      mandalaGroup.children.forEach(obj => {
         if (obj.material.uniforms) {
           obj.material.uniforms.time.value = timeFactor;
           obj.material.uniforms.audioFactor.value = audioFactor;
-          obj.material.uniforms.twistFactor.value = twistFactor;
         }
-        obj.rotation.z += rotationSpeed * audioFactor; // Drone-controlled rotation
+        obj.rotation.z += rotationSpeed * audioFactor; // Drone-driven
       });
-      spiralGroup.rotation.z += rotationSpeed;
+      mandalaGroup.rotation.z += rotationSpeed;
       renderer.render(scene, camera);
     }
 
@@ -796,12 +757,12 @@
     }
 
     function animate() {
-      if (droneOscillator || (voiceAmplitude > 0.2 && voicePitchStability() > 0.8)) {
+      if (voiceAmplitude > 0.2 || droneOscillator) {
         generateMandala(timeFactor);
         animationId = requestAnimationFrame(animate);
       } else {
         cancelAnimationFrame(animationId);
-        generateMandala(0); // Static when no input
+        generateMandala(0);
       }
     }
 
@@ -821,8 +782,8 @@
       document.getElementById('download').addEventListener('click', downloadMandala);
 
       initVR();
-      generateMandala(0); // Start static
-      initVoiceControl(); // Start voice control immediately
+      generateMandala(0);
+      initVoiceControl();
     }
 
     window.onload = init;
