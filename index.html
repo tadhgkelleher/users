@@ -209,10 +209,10 @@
         droneOscillator3.type = params.waveform;
         lfo.type = 'sine';
 
-        droneOscillator1.frequency.value = params.audibleFreq; // Base
-        droneOscillator2.frequency.value = params.audibleFreq * 2; // Octave
-        droneOscillator3.frequency.value = params.audibleFreq * 1.498307; // Tempered fifth (slightly detuned)
-        lfo.frequency.value = 0.1; // Slow pulse
+        droneOscillator1.frequency.value = params.audibleFreq;
+        droneOscillator2.frequency.value = params.audibleFreq * 2;
+        droneOscillator3.frequency.value = params.audibleFreq * 1.498307;
+        lfo.frequency.value = 0.1;
         droneGain.gain.value = 0.05;
         droneAmplitude = 0.05;
 
@@ -260,11 +260,9 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            // Smooth amplitude with decay
-            smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95); // 5% decay per frame
+            smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
             chaosFactor = Math.min(0.5, smoothedAmplitude);
             updateVoiceParams();
-            timeFactor += chaosFactor * 0.005 + 0.001;
             params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
             updateSoundMeter();
             requestAnimationFrame(detectPitch);
@@ -312,7 +310,6 @@
 
     function updateVoiceParams() {
       params.segments = Math.round(6 + (voicePitch / 300) * 6); // 6 to 12
-      params.levels = Math.min(params.levels, Math.floor(1 + timeFactor * 2));
     }
 
     function updateSoundMeter() {
@@ -393,7 +390,7 @@
       });
     }
 
-    // Generate VR Mandala (Flower of Life + Cymatics)
+    // Generate VR Mandala
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -410,14 +407,15 @@
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
           const cymaticWave = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor * chaosFactor;
           const dist = r * (1 + cymaticWave);
-          const z = Math.sin(angle + timeFactor) * (level * 0.5) * chaosFactor; // 3D depth
+          const z = Math.sin(angle + timeFactor) * (level * 0.5) * chaosFactor;
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
-        if (level < Math.floor(1 + timeFactor * 2)) {
+        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
+        if (level < currentMaxLevels) {
           for (let i = 0; i < params.segments; i++) {
             const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
             const nextX = x + Math.cos(angle) * r * params.scaleFactor;
@@ -432,10 +430,15 @@
       mandalaGroup.scale.setScalar(1 + chaosFactor * 1.5);
       mandalaGroup.rotation.z = totalRotation;
       mandalaGroup.rotation.y = totalRotation * 0.5;
+
+      // Debug logs
+      console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}`);
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
+      timeFactor += chaosFactor * 0.005 + 0.001; // Grow with voice and time
+      updateVoiceParams(); // Sync voice params every frame
       updateVRMandala();
       renderer.render(scene, camera);
     }
