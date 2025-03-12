@@ -467,6 +467,14 @@
 
     // VR Initialization with Particle System
     function initVR() {
+      if (navigator.xr) {
+        console.log("WebXR is supported.");
+      } else {
+        console.error("WebXR is NOT supported on this browser/device.");
+        document.getElementById('enterVR').textContent = 'VR Not Supported';
+        return; // Stop further VR initialization
+      }
+
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 2000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
@@ -503,20 +511,34 @@
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         try {
+          console.log("Attempting to enter VR..."); // Add this line
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+
           session.addEventListener('end', () => {
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
             document.getElementById('enterVR').textContent = 'Ascend the Temple';
+            console.log("VR Session ended."); // Add this line
           });
-          renderer.xr.setSession(session);
+
+          renderer.xr.setSession(session); //THIS is a critical line
+          console.log("renderer.xr.setSession called"); //Add this to check setSession.
+
+          camera.position.set(0, 0, 15);  // Example position
+          camera.rotation.set(0, 0, 0);  // Example orientation
+
           renderer.setAnimationLoop(animateVR);
+          console.log("renderer.setAnimationLoop called"); //Check if it's called
+
           vrCanvas.style.display = 'block';
+          vrCanvas.style.visibility = 'visible'; //Make it visible!
+          vrCanvas.style.opacity = 1;
           document.getElementById('enterVR').textContent = 'Chant the Void';
           if (!voiceAnalyser) initVoiceControl();
+
         } catch (err) {
           console.error('VR Failed:', err);
-          document.getElementById('enterVR').textContent = 'Temple Denied';
+          document.getElementById('enterVR').textContent = 'Temple Denied: ' + err.message;
         }
       });
 
@@ -577,6 +599,8 @@
     }
 
     function animateVR(time) {
+      console.log("animateVR running"); //Check if it runs
+
       const audioFactor = voiceAmplitude + droneAmplitude;
       updateVRMandala();
       mandalaGroup.children.forEach(obj => {
@@ -667,7 +691,7 @@
       ctx.fillStyle = params.secondaryColor;
       for (let i = 0; i < 100; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = params.initialRadius * (Math.random() * chaosFactor + 0.5) * audioFactor;
+        const dist =params.initialRadius * (Math.random() * chaosFactor + 0.5) * audioFactor;
         ctx.beginPath();
         ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 3 * (audioFactor + chaosFactor), 0, Math.PI * 2);
         ctx.fill();
