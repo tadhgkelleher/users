@@ -254,7 +254,7 @@
   <canvas id="mandalaCanvas" width="1000" height="1000"></canvas>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r147/three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
@@ -278,7 +278,7 @@
       secondaryColor: '#00ffff',
       modulation: 1.5,
       patternType: 'hyperchaos',
-      particleCount: 500
+      particleCount: 200 // Reduced for VR stability
     };
 
     // Audio Initialization with Chaos
@@ -441,9 +441,9 @@
         vUv = uv;
         vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time * chaosFactor + pos.x * audioFactor) * 2.0;
-        pos.x += cos(time * chaosFactor + pos.y) * audioFactor * 1.5;
-        pos.y += sin(time * chaosFactor + pos.z * audioFactor) * 1.5;
+        pos.z += sin(time * chaosFactor + pos.x * audioFactor) * 1.5;
+        pos.x += cos(time * chaosFactor + pos.y) * audioFactor;
+        pos.y += sin(time * chaosFactor + pos.z * audioFactor);
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
@@ -457,40 +457,39 @@
       uniform vec3 color1;
       uniform vec3 color2;
       void main() {
-        float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * chaosFactor * 0.2 + time)));
+        float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * chaosFactor * 0.1 + time)));
         vec3 color = mix(color1, color2, gradient);
-        float glow = 1.5 + sin(time * chaosFactor + vPosition.z) * audioFactor * 3.0;
+        float glow = 1.0 + sin(time * chaosFactor + vPosition.z) * audioFactor * 2.0;
         float noise = fract(sin(dot(vUv, vec2(12.9898, 78.233))) * 43758.5453 * chaosFactor);
-        gl_FragColor = vec4(color * glow + noise * 0.3, 0.9 + audioFactor * 0.6);
+        gl_FragColor = vec4(color * glow + noise * 0.2, 0.8 + audioFactor * 0.4);
       }
     `;
 
     // VR Initialization with Particle System
     function initVR() {
-      if (navigator.xr) {
-        console.log("WebXR is supported.");
-      } else {
-        console.error("WebXR is NOT supported on this browser/device.");
-        document.getElementById('enterVR').textContent = 'VR Not Supported';
-        return; // Stop further VR initialization
+      if (!window.THREE) {
+        console.error('Three.js failed to load');
+        document.getElementById('enterVR').textContent = 'VR Unavailable';
+        return;
       }
 
+      console.log('Initializing VR...');
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 0.1, 2000);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      // Particle System
+      // Particle System (reduced complexity)
       const particleGeometry = new THREE.BufferGeometry();
       const positions = new Float32Array(params.particleCount * 3);
       const colors = new Float32Array(params.particleCount * 3);
       for (let i = 0; i < params.particleCount; i++) {
-        positions[i * 3] = (Math.random() - 0.5) * 100;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
-        positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+        positions[i * 3] = (Math.random() - 0.5) * 50;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 50;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 50;
         colors[i * 3] = Math.random();
         colors[i * 3 + 1] = Math.random();
         colors[i * 3 + 2] = Math.random();
@@ -498,7 +497,7 @@
       particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
       particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
       const particleMaterial = new THREE.PointsMaterial({
-        size: 0.5,
+        size: 0.3,
         vertexColors: true,
         transparent: true,
         blending: THREE.AdditiveBlending
@@ -507,38 +506,36 @@
       scene.add(particleSystem);
 
       updateVRMandala();
-      camera.position.z = 15;
+      camera.position.z = 10;
 
-      document.getElementById('enterVR').addEventListener('click', async () => {
+      const enterVRButton = document.getElementById('enterVR');
+      enterVRButton.addEventListener('click', async () => {
+        console.log('Attempting to enter VR...');
+        if (!navigator.xr) {
+          console.error('WebXR not supported');
+          enterVRButton.textContent = 'VR Not Supported';
+          return;
+        }
+
         try {
-          console.log("Attempting to enter VR..."); // Add this line
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+          console.log('VR session started:', session);
+          renderer.xr.setSession(session);
+          renderer.setAnimationLoop(animateVR);
+          vrCanvas.style.display = 'block';
+          enterVRButton.textContent = 'Chant the Void';
 
           session.addEventListener('end', () => {
+            console.log('VR session ended');
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
-            document.getElementById('enterVR').textContent = 'Ascend the Temple';
-            console.log("VR Session ended."); // Add this line
+            enterVRButton.textContent = 'Ascend the Temple';
           });
 
-          renderer.xr.setSession(session); //THIS is a critical line
-          console.log("renderer.xr.setSession called"); //Add this to check setSession.
-
-          camera.position.set(0, 0, 15);  // Example position
-          camera.rotation.set(0, 0, 0);  // Example orientation
-
-          renderer.setAnimationLoop(animateVR);
-          console.log("renderer.setAnimationLoop called"); //Check if it's called
-
-          vrCanvas.style.display = 'block';
-          vrCanvas.style.visibility = 'visible'; //Make it visible!
-          vrCanvas.style.opacity = 1;
-          document.getElementById('enterVR').textContent = 'Chant the Void';
           if (!voiceAnalyser) initVoiceControl();
-
         } catch (err) {
-          console.error('VR Failed:', err);
-          document.getElementById('enterVR').textContent = 'Temple Denied: ' + err.message;
+          console.error('Failed to enter VR:', err);
+          enterVRButton.textContent = 'VR Failed: ' + err.message;
         }
       });
 
@@ -551,7 +548,7 @@
 
     function updateVRMandala() {
       mandalaGroup.clear();
-      const radius = params.initialRadius * 0.08;
+      const radius = params.initialRadius * 0.05;
       const audioFactor = voiceAmplitude + droneAmplitude;
       const material = new THREE.ShaderMaterial({
         vertexShader,
@@ -577,12 +574,12 @@
           points.push(new THREE.Vector3(
             x + Math.cos(angle) * dist,
             y + Math.sin(angle) * dist,
-            Math.sin(angle + level + timeFactor) * r * chaosFactor * 0.5
+            Math.sin(angle + level + timeFactor) * r * chaosFactor * 0.3
           ));
         }
 
         const curve = new THREE.CatmullRomCurve3(points, true);
-        const tubeGeometry = new THREE.TubeGeometry(curve, 128, 0.2 * (1 + audioFactor), 16, true);
+        const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + audioFactor), 8, true);
         const tube = new THREE.Mesh(tubeGeometry, material.clone());
         tube.scale.setScalar(1 + chaosFactor * audioFactor);
         mandalaGroup.add(tube);
@@ -599,8 +596,6 @@
     }
 
     function animateVR(time) {
-      console.log("animateVR running"); //Check if it runs
-
       const audioFactor = voiceAmplitude + droneAmplitude;
       updateVRMandala();
       mandalaGroup.children.forEach(obj => {
@@ -616,9 +611,9 @@
       // Particle Animation
       const positions = particleSystem.geometry.attributes.position.array;
       for (let i = 0; i < params.particleCount; i++) {
-        positions[i * 3] += Math.sin(timeFactor + i) * audioFactor * 0.1;
-        positions[i * 3 + 1] += Math.cos(timeFactor + i) * audioFactor * 0.1;
-        positions[i * 3 + 2] += Math.sin(timeFactor + i) * chaosFactor * 0.05;
+        positions[i * 3] += Math.sin(timeFactor + i) * audioFactor * 0.05;
+        positions[i * 3 + 1] += Math.cos(timeFactor + i) * audioFactor * 0.05;
+        positions[i * 3 + 2] += Math.sin(timeFactor + i) * chaosFactor * 0.03;
       }
       particleSystem.geometry.attributes.position.needsUpdate = true;
 
@@ -691,7 +686,7 @@
       ctx.fillStyle = params.secondaryColor;
       for (let i = 0; i < 100; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const dist =params.initialRadius * (Math.random() * chaosFactor + 0.5) * audioFactor;
+        const dist = params.initialRadius * (Math.random() * chaosFactor + 0.5) * audioFactor;
         ctx.beginPath();
         ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 3 * (audioFactor + chaosFactor), 0, Math.PI * 2);
         ctx.fill();
@@ -824,6 +819,7 @@
 
     // Initialization
     function init() {
+      console.log('Initializing Cosmic Weaver...');
       document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
       document.getElementById('presets').addEventListener('click', showPresetModal);
       document.getElementById('drone').addEventListener('click', toggleDrone);
@@ -835,7 +831,14 @@
       generateMandala(0);
     }
 
-    window.onload = init;
+    window.onload = () => {
+      if (typeof THREE === 'undefined') {
+        console.error('Three.js not loaded');
+        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load. VR unavailable.</p>';
+      } else {
+        init();
+      }
+    };
   </script>
 </body>
 </html>
