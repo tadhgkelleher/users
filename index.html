@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Weaver: Transcendental Spiral</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Arial', sans-serif;
@@ -153,19 +154,6 @@
       box-shadow: 0 0 30px rgba(0, 255, 255, 1);
     }
 
-    input[type="range"], select, input[type="color"] {
-      background: linear-gradient(90deg, #ff6ec7, #9b59b6);
-      border-radius: 8px;
-      padding: 5px;
-      accent-color: #00ffff;
-    }
-
-    label {
-      color: #00ffff;
-      font-size: 16px;
-      text-shadow: 0 0 8px #ff6ec7;
-    }
-
     .intention-modal {
       position: fixed;
       top: 50%;
@@ -182,6 +170,12 @@
     .intention-modal.active {
       display: block;
     }
+
+    .intention-modal input {
+      margin: 10px;
+      padding: 5px;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -193,23 +187,9 @@
     <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
   </div>
 
-  <div id="formTab" class="tab-content active">
-    <div class="control-panel">
-      <!-- Controls moved to orbs -->
-    </div>
-  </div>
-
-  <div id="freqTab" class="tab-content">
-    <div class="control-panel">
-      <!-- Controls moved to orbs -->
-    </div>
-  </div>
-
-  <div id="voidTab" class="tab-content">
-    <div class="control-panel">
-      <!-- Controls moved to orbs -->
-    </div>
-  </div>
+  <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
+  <div id="freqTab" class="tab-content"><div class="control-panel"></div></div>
+  <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
 
   <div class="orb-container"></div>
 
@@ -261,13 +241,17 @@
 
     // Audio Initialization
     function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
+      try {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 2048;
+        }
+        if (audioContext.state === 'suspended') audioContext.resume().then(updateFrequencies);
+        else updateFrequencies();
+      } catch (e) {
+        console.error('Audio init failed:', e);
       }
-      if (audioContext.state === 'suspended') audioContext.resume().then(updateFrequencies);
-      else updateFrequencies();
     }
 
     function updateFrequencies() {
@@ -308,7 +292,7 @@
       lfo.start();
     }
 
-    // Breath Detection
+    // Breath Detection (Optional)
     function initBreathDetection() {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
@@ -325,7 +309,8 @@
             requestAnimationFrame(detectBreath);
           }
           detectBreath();
-        });
+        })
+        .catch(e => console.error('Breath detection failed:', e));
     }
 
     // VR Shaders
@@ -363,7 +348,11 @@
 
     // VR Initialization
     function initVR() {
-      if (!window.THREE) return console.error('Three.js not loaded');
+      if (!window.THREE) {
+        console.error('Three.js not loaded');
+        document.getElementById('enterVR').textContent = 'VR Unavailable';
+        return;
+      }
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
@@ -380,12 +369,15 @@
           session.addEventListener('end', () => {
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
+            document.getElementById('enterVR').textContent = 'Enter Temple';
           });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
+          document.getElementById('enterVR').textContent = 'VR Active';
         } catch (err) {
           console.error('VR Failed:', err);
+          document.getElementById('enterVR').textContent = 'VR Failed';
         }
       });
 
@@ -431,11 +423,62 @@
               points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(angle + level) * r * 0.2 * audioFactor));
             }
             break;
-          // Add other patterns similarly (vortex, nebula, etc.)
+          case 'vortex':
+            for (let i = 0; i < params.segments / level; i++) {
+              const angle = (i / (params.segments / level)) * Math.PI * 2;
+              const dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + i * zStep * audioFactor));
+            }
+            break;
+          case 'nebula':
+            for (let i = 0; i < 12; i++) {
+              const angle = (i / 12) * Math.PI * 2;
+              const dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(i + level) * r * 0.3 * audioFactor));
+            }
+            break;
+          case 'chaos':
+            const pointsCount = Math.floor(Math.random() * 8) + 5;
+            for (let i = 0; i < pointsCount; i++) {
+              const angle = (i / pointsCount) * Math.PI * 2 + Math.random() * 0.6;
+              const dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.random() * r * 0.2 * audioFactor));
+            }
+            break;
+          case 'flower':
+            for (let i = 0; i < 10; i++) {
+              const angle = (i / 10) * Math.PI * 2;
+              const dist = r * audioFactor * (0.6 + 0.4);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist * 0.5, yOffset + Math.sin(angle) * dist * 0.5, zStart + Math.sin(angle) * r * 0.1 * audioFactor));
+            }
+            break;
+          case 'yantra':
+            for (let i = 0; i < 6; i++) {
+              const angle = (i / 6) * Math.PI * 2;
+              const dist = r * audioFactor;
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.cos(angle + level) * r * 0.15 * audioFactor));
+            }
+            break;
+          case 'tunnel':
+            for (let i = 0; i < params.segments; i++) {
+              const angle = (i / params.segments) * Math.PI * 2;
+              const depth = Math.sin(level * 0.6) * r * 0.4 * audioFactor;
+              const dist = r * (1 - level / params.levels) * (1 + 0.3);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + depth));
+            }
+            break;
+          case 'hypercube':
+            for (let i = 0; i < 8; i++) {
+              const angle = (i / 8) * Math.PI * 2;
+              const mod = Math.cos(level) * audioFactor;
+              const dist = r * (0.6 + mod * 0.6);
+              points.push(new THREE.Vector3(xOffset + Math.cos(angle) * dist, yOffset + Math.sin(angle) * dist, zStart + Math.sin(angle + level) * r * 0.2 * audioFactor));
+            }
+            break;
         }
 
-        const curve = new THREE.CatmullRomCurve3(points, true);
-        const geometry = new THREE.TubeGeometry(curve, 100, 0.5 / level * audioFactor, 16, true);
+        const curve = new THREE.CatmullRomCurve3(points, params.patternType !== 'chaos');
+        const geometry = new THREE.TubeGeometry(curve, 100, 0.5 / level * audioFactor, 16, params.patternType !== 'chaos');
         const mesh = new THREE.Mesh(geometry, material);
         spiralGroup.add(mesh);
 
@@ -495,7 +538,80 @@
             ctx.closePath();
             ctx.stroke();
             break;
-          // Add other patterns (vortex, nebula, etc.)
+          case 'vortex':
+            ctx.beginPath();
+            for (let i = 0; i < params.segments / level; i++) {
+              const angle = (i / (params.segments / level)) * Math.PI * 2 + timeFactor * 1.2;
+              const x1 = x + r * Math.cos(angle);
+              const y1 = y + r * Math.sin(angle);
+              const x2 = x + r * 0.4 * Math.cos(angle + Math.PI / (params.segments / level));
+              const y2 = y + r * 0.4 * Math.sin(angle + Math.PI / (params.segments / level));
+              ctx.moveTo(x, y);
+              ctx.quadraticCurveTo(x1, y1, x2, y2);
+            }
+            ctx.stroke();
+            break;
+          case 'nebula':
+            ctx.beginPath();
+            for (let i = 0; i < 12; i++) {
+              const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
+              const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
+              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            break;
+          case 'chaos':
+            ctx.beginPath();
+            const points = Math.floor(Math.random() * 8) + 5;
+            for (let i = 0; i < points; i++) {
+              const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
+              const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
+              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            break;
+          case 'flower':
+            ctx.beginPath();
+            for (let i = 0; i < 10; i++) {
+              const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
+              const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
+              ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+            }
+            ctx.stroke();
+            break;
+          case 'yantra':
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
+              ctx.moveTo(x, y);
+              ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+            }
+            ctx.stroke();
+            break;
+          case 'tunnel':
+            ctx.beginPath();
+            for (let i = 0; i < params.segments; i++) {
+              const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
+              const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
+              const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
+              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            break;
+          case 'hypercube':
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+              const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
+              const mod = Math.cos(level + timeFactor) * audioFactor;
+              const dist = r * (0.6 + mod * 0.6);
+              ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+            }
+            ctx.closePath();
+            ctx.stroke();
+            break;
         }
 
         drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
@@ -508,7 +624,7 @@
         drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
       }
 
-      // Add particle effects
+      // Particle Effects
       ctx.fillStyle = params.secondaryColor;
       for (let i = 0; i < 50; i++) {
         const angle = Math.random() * Math.PI * 2;
@@ -593,6 +709,8 @@
       params.lineColor = randomColor();
       params.secondaryColor = randomColor();
       generateMandala();
+      initAudio();
+      updateVRMandala();
     }
 
     function randomColor() {
@@ -634,7 +752,7 @@
     // Initialization
     function init() {
       document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
-      document.getElementById('random').addEventListener('click', () => { randomizeMandala(); initAudio(); updateVRMandala(); });
+      document.getElementById('random').addEventListener('click', randomizeMandala);
       document.getElementById('download').addEventListener('click', downloadMandala);
       document.getElementById('animate').addEventListener('click', toggleAnimation);
       document.getElementById('journey').addEventListener('click', startGuidedMeditation);
@@ -655,7 +773,8 @@
       });
 
       initVR();
-      initBreathDetection();
+      // Uncomment to enable breath detection (requires mic permission)
+      // initBreathDetection();
       generateMandala();
     }
 
