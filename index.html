@@ -227,7 +227,7 @@
     let voiceAmplitude = 0;
     let droneAmplitude = 0;
     let rotationSpeed = 0; // Drone-driven
-    let timeFactor = 0; // For animation sync
+    let timeFactor = 0;
 
     const params = {
       segments: 3, // Voice-driven
@@ -236,7 +236,7 @@
       initialRadius: 200,
       lineColor: '#ff00ff',
       lineWidth: 3,
-      baseFreq: 110, // Drone frequency
+      baseFreq: 110,
       waveform: 'sine',
       secondaryColor: '#00ffff',
       modulation: 1,
@@ -355,7 +355,7 @@
     function getAmplitude(buf) {
       let sum = 0;
       for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.5); // Normalize to 0-1
+      return Math.min(1, sum / buf.length / 0.5);
     }
 
     let pitchHistory = [];
@@ -364,9 +364,11 @@
       if (pitchHistory.length > 20) pitchHistory.shift();
       const stability = voicePitchStability();
 
-      if (voiceAmplitude > 0.2 && stability > 0.8) { // Voice active
-        params.segments = Math.min(100, params.segments + 1); // Faster, higher cap
-      } else { // Voice silent
+      console.log(`Voice - Amplitude: ${voiceAmplitude}, Pitch: ${voicePitch}, Stability: ${stability}`);
+
+      if (voiceAmplitude > 0.2 && stability > 0.8) {
+        params.segments = Math.min(50, params.segments + 1);
+      } else {
         params.segments = Math.max(3, params.segments - 0.5);
       }
     }
@@ -375,7 +377,7 @@
       if (pitchHistory.length < 2) return 0;
       const avg = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
       const variance = pitchHistory.reduce((a, b) => a + Math.abs(b - avg), 0) / pitchHistory.length;
-      return Math.min(1, 1 - variance / 200); // 0-1 stability
+      return Math.min(1, 1 - variance / 200);
     }
 
     function updateSoundMeter() {
@@ -394,7 +396,9 @@
         vUv = uv;
         vPosition = position;
         vec3 pos = position;
-        pos.z += sin(time + pos.x) * audioFactor * 0.2; // Subtle voice-driven pulse
+        pos.z += sin(time + pos.x) * audioFactor * 0.5; // Voice-driven pulse
+        pos.x += cos(time + pos.z) * audioFactor * 0.2;
+        pos.y += sin(time + pos.z) * audioFactor * 0.2;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
       }
     `;
@@ -429,7 +433,7 @@
       mandalaGroup = new THREE.Group();
       updateVRMandala();
       scene.add(mandalaGroup);
-      camera.position.z = 15; // Closer view for detail
+      camera.position.z = 20;
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         try {
@@ -481,14 +485,9 @@
 
       function generateRecursiveShape(x, y, r, level) {
         if (level > params.levels) return;
-        const geometry = new THREE.PlaneGeometry(r * 2, r * 2, 1, 1);
-        const mesh = new THREE.Mesh(geometry, material.clone());
-        mesh.position.set(x, y, -level * 0.5); // Stack levels in Z
-        mesh.scale.set(1 + voiceAmplitude, 1 + voiceAmplitude, 1); // Voice-driven scale
-
-        const vertices = [];
+        const points = [];
         for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2;
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
           let dist = r;
           switch (params.patternType) {
             case 'cymatic':
@@ -517,13 +516,31 @@
               dist = r * (0.6 + Math.cos(level) * audioFactor * 0.6);
               break;
           }
-          vertices.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, -level * 0.5));
+          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, Math.sin(angle + level) * r * 0.2 * audioFactor));
         }
 
-        mandalaGroup.add(mesh);
+        const curve = new THREE.CatmullRomCurve3(points, true);
+        const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + voiceAmplitude), 8, true);
+        const tube = new THREE.Mesh(tubeGeometry, material.clone());
+        tube.scale.setScalar(1 + voiceAmplitude); // Voice-driven scale
+        mandalaGroup.add(tube);
+
+        // Add glowing ring for mandala detail
+        const ringGeometry = new THREE.BufferGeometry();
+        const ringVertices = points.map(p => new THREE.Vector3(p.x, p.y, p.z * 0.5));
+        ringGeometry.setFromPoints(ringVertices);
+        const ring = new THREE.LineLoop(ringGeometry, new THREE.LineBasicMaterial({
+          color: params.secondaryColor,
+          transparent: true,
+          opacity: 0.8 + audioFactor * 0.2,
+          blending: THREE.AdditiveBlending
+        }));
+        mandalaGroup.add(ring);
+
         for (let i = 0; i < params.segments; i++) {
-          const nextX = x + Math.cos((i / params.segments) * Math.PI * 2) * r * audioFactor;
-          const nextY = y + Math.sin((i / params.segments) * Math.PI * 2) * r * audioFactor;
+          const angle = (i / params.segments) * Math.PI * 2;
+          const nextX = x + Math.cos(angle) * r * audioFactor;
+          const nextY = y + Math.sin(angle) * r * audioFactor;
           generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
         }
       }
@@ -533,13 +550,14 @@
 
     function animateVR(time) {
       const audioFactor = voiceAmplitude + droneAmplitude;
+      console.log(`VR - Segments: ${params.segments}, Voice Amplitude: ${voiceAmplitude}`);
       updateVRMandala();
       mandalaGroup.children.forEach(obj => {
         if (obj.material.uniforms) {
           obj.material.uniforms.time.value = timeFactor;
           obj.material.uniforms.audioFactor.value = audioFactor;
         }
-        obj.rotation.z += rotationSpeed * audioFactor; // Drone-driven
+        obj.rotation.z += rotationSpeed; // Drone-driven
       });
       mandalaGroup.rotation.z += rotationSpeed;
       renderer.render(scene, camera);
