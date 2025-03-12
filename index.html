@@ -176,6 +176,31 @@
       padding: 5px;
       border-radius: 5px;
     }
+
+    #soundMeter {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background: #333;
+      border: 2px solid #00ffff;
+      border-radius: 5px;
+    }
+
+    #soundBar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff00ff, #00ffff);
+      transition: width 0.1s;
+    }
+
+    #soundInfo {
+      position: fixed;
+      bottom: 50px;
+      left: 20px;
+      color: #00ffff;
+      text-shadow: 0 0 10px #ff00ff;
+    }
   </style>
 </head>
 <body>
@@ -215,6 +240,9 @@
     <button onclick="applyPreset('zen')">Zen Enso</button>
   </div>
 
+  <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
+  <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz</div>
+
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
@@ -229,13 +257,13 @@
     let audioContext, oscillators = [], lfo, analyser, voiceAnalyser;
     let scene, camera, renderer, spiralGroup;
     let intention = '';
-    let voicePitch = 200; // Default pitch in Hz
+    let voicePitch = 0; // Default pitch in Hz
     let voiceAmplitude = 0; // Default amplitude (0-1)
-    let rotationSpeed = 0.005; // VR rotation speed
-    let twistFactor = 0; // VR twist effect
+    let rotationSpeed = 0; // VR rotation speed (starts at 0)
+    let twistFactor = 0; // VR twist effect (starts at 0)
 
     const params = {
-      segments: 12,
+      segments: 3, // Start minimal
       levels: 4,
       scaleFactor: 0.7,
       initialRadius: 200,
@@ -322,7 +350,10 @@
             voiceAmplitude = getAmplitude(dataArray);
 
             if (pitch !== -1) voicePitch = pitch;
+            else voicePitch = 0;
+
             updateVoiceParams();
+            updateSoundMeter();
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -377,21 +408,28 @@
       if (pitchHistory.length > 20) pitchHistory.shift();
       const stability = voicePitchStability();
 
-      if (voiceAmplitude > 0.1 && stability > 0.8) { // Holding a note
-        params.segments = Math.min(50, params.segments + 0.1); // Increase segments
-        rotationSpeed = Math.min(0.05, rotationSpeed + 0.0005); // Increase rotation
-        twistFactor = Math.min(1, twistFactor + 0.01); // Increase twist
-      } else { // No singing
-        params.segments = Math.max(3, params.segments - 0.05); // Decrease segments
-        rotationSpeed = Math.max(0.005, rotationSpeed - 0.0002); // Slow rotation
-        twistFactor = Math.max(0, twistFactor - 0.005); // Reduce twist
+      if (voiceAmplitude > 0.2 && stability > 0.8) { // Singing detected
+        params.segments = Math.min(50, params.segments + 0.2); // Increase segments
+        rotationSpeed = Math.min(0.05, rotationSpeed + 0.001); // Ramp up rotation
+        twistFactor = Math.min(1, twistFactor + 0.02); // Ramp up twist
+      } else { // Silence
+        params.segments = Math.max(3, params.segments - 0.1); // Decrease segments
+        rotationSpeed = Math.max(0, rotationSpeed - 0.002); // Stop rotation
+        twistFactor = Math.max(0, twistFactor - 0.01); // Collapse twist
       }
     }
 
     function voicePitchStability() {
+      if (pitchHistory.length < 2) return 0;
       const avg = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
       const variance = pitchHistory.reduce((a, b) => a + Math.abs(b - avg), 0) / pitchHistory.length;
       return Math.min(1, 1 - variance / 200); // 0-1 stability
+    }
+
+    function updateSoundMeter() {
+      const amplitudePercent = Math.round(voiceAmplitude * 100);
+      document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
+      document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
     }
 
     // VR Shaders
@@ -754,7 +792,7 @@
 
     // Preset Modal
     function showPresetModal() {
-      document.getElementById('presetModal').classList.add('active');
+      document.getElementById('Magical presetModal').classList.add('active');
     }
 
     function applyPreset(preset) {
@@ -762,28 +800,28 @@
       switch (preset) {
         case 'mandala':
           Object.assign(params, {
-            segments: 16, levels: 5, scaleFactor: 0.8, initialRadius: 250,
+            segments: 3, levels: 5, scaleFactor: 0.8, initialRadius: 250,
             lineColor: '#ff4500', secondaryColor: '#ffd700', patternType: 'cymatic',
             baseFreq: 110, waveform: 'sine', modulation: 0.5
           });
           break;
         case 'yantra':
           Object.assign(params, {
-            segments: 6, levels: 3, scaleFactor: 0.6, initialRadius: 200,
+            segments: 3, levels: 3, scaleFactor: 0.6, initialRadius: 200,
             lineColor: '#8a2be2', secondaryColor: '#ff00ff', patternType: 'yantra',
             baseFreq: 136.1, waveform: 'triangle', modulation: 1
           });
           break;
         case 'sufi':
           Object.assign(params, {
-            segments: 12, levels: 4, scaleFactor: 0.7, initialRadius: 300,
+            segments: 3, levels: 4, scaleFactor: 0.7, initialRadius: 300,
             lineColor: '#00ced1', secondaryColor: '#228b22', patternType: 'vortex',
             baseFreq: 174, waveform: 'sawtooth', modulation: 1.5
           });
           break;
         case 'zen':
           Object.assign(params, {
-            segments: 1, levels: 1, scaleFactor: 0.9, initialRadius: 150,
+            segments: 3, levels: 1, scaleFactor: 0.9, initialRadius: 150,
             lineColor: '#000000', secondaryColor: '#ffffff', patternType: 'flower',
             baseFreq: 0, waveform: 'sine', modulation: 0
           });
@@ -875,6 +913,7 @@
 
       initVR();
       generateMandala();
+      initVoiceControl(); // Start voice control immediately for sound meter
     }
 
     window.onload = init;
