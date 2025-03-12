@@ -142,6 +142,7 @@
       lineColor: '#ff00ff',
       lineWidth: 2,
       baseFreq: 110,
+      audibleFreq: 110, // Separate audible frequency
       waveform: 'sine'
     };
 
@@ -193,7 +194,7 @@
         droneOscillator = audioContext.createOscillator();
         droneGain = audioContext.createGain();
         droneOscillator.type = params.waveform;
-        droneOscillator.frequency.value = params.baseFreq;
+        droneOscillator.frequency.value = params.audibleFreq; // Use audible harmonic
         droneGain.gain.value = 0.1;
         droneAmplitude = 0.1;
         droneOscillator.connect(droneGain).connect(audioContext.destination);
@@ -219,7 +220,7 @@
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.7;
+          voiceAnalyser.smoothingTimeConstant = 0.8; // Smoother response
           source.connect(voiceAnalyser);
 
           const bufferLength = voiceAnalyser.fftSize;
@@ -233,12 +234,11 @@
             if (pitch !== -1) voicePitch = pitch;
             else voicePitch = 0;
 
-            chaosFactor = Math.min(1, voiceAmplitude * 3);
+            chaosFactor = Math.min(0.5, voiceAmplitude * 1.5); // Cap chaos at 0.5
             updateVoiceParams();
-            timeFactor += voiceAmplitude * 0.05;
+            timeFactor += voiceAmplitude * 0.02; // Slower evolution
             params.lineColor = hslToHex(voicePitch % 360, 1, 0.5);
             updateSoundMeter();
-            if (droneOscillator || voiceAmplitude > 0.05) animate();
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -283,7 +283,7 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.max(3, Math.min(30, Math.round(voicePitch * 0.1)));
+      params.segments = Math.round(3 + (voicePitch / 200) * 9); // 3 to 12 segments
     }
 
     function updateSoundMeter() {
@@ -292,7 +292,7 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
     }
 
-    // VR Initialization (Immersive Only)
+    // VR Initialization
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
@@ -363,7 +363,7 @@
       });
     }
 
-    // Generate VR Mandala (Fractal Cymatics)
+    // Generate VR Mandala
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -378,7 +378,7 @@
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2;
-          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle); // Cymatic oscillation
+          const freqFactor = Math.sin(timeFactor * params.baseFreq * 0.01 + angle);
           const dist = r * (1 + freqFactor * chaosFactor * 0.5);
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0));
         }
@@ -386,7 +386,6 @@
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
-        // Fractal recursion
         if (level < params.levels) {
           for (let i = 0; i < params.segments; i++) {
             const angle = (i / params.segments) * Math.PI * 2;
@@ -405,12 +404,12 @@
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += 0.01; // Slow evolution
-      updateVRMandala();
+      timeFactor += 0.01;
+      if (voiceAnalyser) updateVRMandala(); // Ensure voice updates VR
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala Drawing (Fractal Cymatics)
+    // 2D Mandala Drawing
     function generateMandala() {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
@@ -448,38 +447,43 @@
       document.getElementById('settingsModal').classList.remove('active');
       switch (setting) {
         case 'healing':
-          params.baseFreq = 6;   // Theta
+          params.baseFreq = 6;    // Theta
+          params.audibleFreq = 48; // 8x harmonic (6 * 8)
           params.segments = 6;
           params.levels = 4;
-          params.lineColor = '#00ccff'; // Soothing blue
+          params.lineColor = '#00ccff';
           break;
         case 'sleep':
-          params.baseFreq = 2;   // Delta
+          params.baseFreq = 2;    // Delta
+          params.audibleFreq = 32; // 16x harmonic (2 * 16)
           params.segments = 4;
           params.levels = 3;
-          params.lineColor = '#330066'; // Deep purple
+          params.lineColor = '#330066';
           break;
         case 'relax':
-          params.baseFreq = 10;  // Alpha
+          params.baseFreq = 10;   // Alpha
+          params.audibleFreq = 40; // 4x harmonic (10 * 4)
           params.segments = 5;
           params.levels = 4;
-          params.lineColor = '#66ff66'; // Calm green
+          params.lineColor = '#66ff66';
           break;
         case 'enlighten':
           params.baseFreq = 7.83; // Schumann
+          params.audibleFreq = 62.64; // 8x harmonic (7.83 * 8)
           params.segments = 7;
           params.levels = 5;
-          params.lineColor = '#ffcc00'; // Golden yellow
+          params.lineColor = '#ffcc00';
           break;
         case 'activate':
-          params.baseFreq = 20;  // Beta
+          params.baseFreq = 20;   // Beta
+          params.audibleFreq = 80; // 4x harmonic (20 * 4)
           params.segments = 8;
           params.levels = 3;
-          params.lineColor = '#ff0066'; // Energetic red
+          params.lineColor = '#ff0066';
           break;
       }
       if (droneOscillator) {
-        droneOscillator.frequency.value = params.baseFreq;
+        droneOscillator.frequency.value = params.audibleFreq;
       }
       generateMandala();
     }
