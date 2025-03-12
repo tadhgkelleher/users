@@ -4,56 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cosmic Weaver: Voice of the Void</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Orbitron', 'Arial', sans-serif; /* A bit more futuristic */
+      font-family: 'Arial', sans-serif;
       text-align: center;
       background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c);
       color: #e0e0ff;
       margin: 0;
       padding: 0;
-      overflow: hidden; /* Hide scrollbars, we're controlling the universe */
-      min-height: 100vh;
-      position: relative; /* For starfield */
-      animation: nebulaFlow 60s infinite alternate; /* Slow down nebula */
-    }
-
-    /* Starfield - absolute positioned particles */
-    #starfield {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1; /* Behind everything */
-      pointer-events: none; /* Don't interfere with clicks */
-    }
-
-    #starfield canvas {
-      width: 100%;
-      height: 100%;
+      min-height: 100vh; /* Allow scrolling */
+      animation: nebulaFlow 30s infinite alternate;
     }
 
     @keyframes nebulaFlow {
       0% { background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c); }
-      33% { background: radial-gradient(circle, #c770f0, #f070c7, #a53794); }
+      33% { background: radial-gradient(circle, #ff00ff, #00ffff, #9b59b6); }
       66% { background: radial-gradient(circle, #ff4500, #1a3b5c, #ff6ec7); }
       100% { background: radial-gradient(circle, #2a2a5c, #9b59b6, #0a0a1f); }
     }
 
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 5rem; /* Bigger, bolder */
+      font-size: 4rem;
       color: #00ffff;
       text-shadow: 0 0 30px #ff6ec7, 0 0 60px #9b59b6, 0 0 90px #ff4500;
-      animation: mantraGlow 4s infinite alternate, wobble 3s ease-in-out infinite; /* Subtle wobble */
+      animation: mantraGlow 3s infinite alternate;
       margin: 20px 0;
-    }
-
-    @keyframes wobble {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
     }
 
     @keyframes mantraGlow {
@@ -67,10 +44,10 @@
       background: radial-gradient(circle, rgba(10, 10, 31, 0.9), rgba(26, 26, 59, 0.4));
       box-shadow: 0 0 100px rgba(255, 0, 255, 0.9), inset 0 0 50px rgba(0, 255, 255, 0.5);
       max-width: 90vw;
-      max-height: 75vh; /* Less height for button bar*/
+      max-height: 90vh;
       display: block;
       margin: 20px auto;
-      position: relative;
+      position: relative; /* Keep it in flow */
       transition: transform 0.5s ease, box-shadow 0.5s ease;
     }
 
@@ -128,21 +105,6 @@
       box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
     }
 
-    .slider-container {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-    .slider-label {
-        flex: 0 0 120px;
-        text-align: left;
-    }
-
-    input[type="range"] {
-        flex: 1;
-    }
-
     button {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
       padding: 12px 24px;
@@ -154,12 +116,6 @@
       cursor: pointer;
       transition: all 0.4s;
       box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
-      animation: pulseButton 2s infinite alternate; /* Subtle pulse animation */
-    }
-
-    @keyframes pulseButton {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.05); }
     }
 
     button:hover {
@@ -189,11 +145,6 @@
       margin: 10px;
       padding: 5px;
       border-radius: 5px;
-      transition: all 0.2s; /* Hover effect */
-    }
-
-    .intention-modal input:hover, .preset-modal button:hover {
-      background-color: rgba(0, 255, 255, 0.2);
     }
 
     #soundMeter {
@@ -220,128 +171,20 @@
       color: #00ffff;
       text-shadow: 0 0 10px #ff00ff;
     }
-
-    .controls {
-      display: flex;
-      justify-content: space-around;
-      padding: 15px;
-      background: rgba(10, 10, 40, 0.7); /* Translucent bar */
-      border-radius: 10px;
-      margin-top: 15px;
-
-    }
-
-    /* Add the pulsating button */
-    .pulse-button {
-        background-color: #25D366;
-        border-radius: 60px;
-        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
-        cursor: pointer;
-        animation: pulse 1.25s infinite cubic-bezier(0.66, 0, 0, 1);
-        padding: 15px 30px;
-        color: white;
-        font-size: 18px;
-        border: none;
-        font-weight: bold;
-    }
-
-    @keyframes pulse {
-        0% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
-        }
-
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
-        }
-
-        100% {
-            transform: scale(0.95);
-            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
-        }
-    }
-
   </style>
 </head>
 <body>
-  <div id="starfield">
-    <canvas></canvas>
-  </div>
-
   <h1>Cosmic Weaver: Voice of the Void</h1>
 
   <div class="tab-container">
-    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴ Form</span>
-    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶ Frequency</span>
-    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹ Void</span>
+    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
+    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
+    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
   </div>
 
-  <div id="formTab" class="tab-content active">
-      <div class="control-panel">
-          <div class="slider-container">
-              <label class="slider-label" for="segmentsSlider">Segments:</label>
-              <input type="range" id="segmentsSlider" min="3" max="30" value="3" oninput="updateParams('segments', this.value)">
-          </div>
-          <div class="slider-container">
-              <label class="slider-label" for="levelsSlider">Levels:</label>
-              <input type="range" id="levelsSlider" min="1" max="6" value="4" oninput="updateParams('levels', this.value)">
-          </div>
-          <div class="slider-container">
-              <label class="slider-label" for="scaleFactorSlider">Scale Factor:</label>
-              <input type="range" id="scaleFactorSlider" min="0.1" max="0.99" step="0.01" value="0.7" oninput="updateParams('scaleFactor', this.value)">
-          </div>
-          <div class="slider-container">
-              <label class="slider-label" for="radiusSlider">Initial Radius:</label>
-              <input type="range" id="radiusSlider" min="50" max="300" value="200" oninput="updateParams('initialRadius', this.value)">
-          </div>
-          <div class="slider-container">
-              <label class="slider-label" for="lineWidthSlider">Line Width:</label>
-              <input type="range" id="lineWidthSlider" min="1" max="10" value="3" oninput="updateParams('lineWidth', this.value)">
-          </div>
-
-          <label for="patternType">Pattern Type:</label>
-          <select id="patternType" onchange="updateParams('patternType', this.value)">
-              <option value="cymatic">Cymatic</option>
-              <option value="vortex">Vortex</option>
-              <option value="nebula">Nebula</option>
-              <option value="chaos">Chaos</option>
-              <option value="flower">Flower</option>
-              <option value="yantra">Yantra</option>
-              <option value="tunnel">Tunnel</option>
-              <option value="hypercube">Hypercube</option>
-              <option value="fractal">Fractal</option> <!-- NEW -->
-          </select>
-
-      </div>
-  </div>
-  <div id="freqTab" class="tab-content">
-      <div class="control-panel">
-          <div class="slider-container">
-              <label class="slider-label" for="baseFreqSlider">Base Frequency:</label>
-              <input type="range" id="baseFreqSlider" min="50" max="500" value="110" oninput="updateParams('baseFreq', this.value)">
-          </div>
-          <label for="waveform">Waveform:</label>
-          <select id="waveform" onchange="updateParams('waveform', this.value)">
-              <option value="sine">Sine</option>
-              <option value="square">Square</option>
-              <option value="sawtooth">Sawtooth</option>
-              <option value="triangle">Triangle</option>
-          </select>
-          <div class="slider-container">
-              <label class="slider-label" for="modulationSlider">Modulation:</label>
-              <input type="range" id="modulationSlider" min="0" max="2" step="0.1" value="1" oninput="updateParams('modulation', this.value)">
-          </div>
-      </div>
-  </div>
-  <div id="voidTab" class="tab-content">
-      <div class="control-panel">
-          <label for="lineColor">Line Color:</label>
-          <input type="color" id="lineColor" value="#ff00ff" oninput="updateParams('lineColor', this.value)">
-          <label for="secondaryColor">Secondary Color:</label>
-          <input type="color" id="secondaryColor" value="#00ffff" oninput="updateParams('secondaryColor', this.value)">
-      </div>
-  </div>
+  <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
+  <div id="freqTab" class="tab-content"><div class="control-panel"></div></div>
+  <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
 
   <div class="controls">
     <button id="generate">Weave Cosmos</button>
@@ -363,7 +206,6 @@
     <button onclick="applyPreset('yantra')">Hindu Yantra</button>
     <button onclick="applyPreset('sufi')">Sufi Spiral</button>
     <button onclick="applyPreset('zen')">Zen Enso</button>
-     <button onclick="applyPreset('kali')">Kali's Dance</button>  <!-- NEW -->
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
@@ -380,17 +222,13 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator, droneGain, voiceAnalyser;
-    let scene, camera, renderer; // Removed mandalaGroup
-    let vrTexture, vrMaterial, vrPlane;
+    let scene, camera, renderer, mandalaGroup;
     let intention = '';
     let voicePitch = 0;
     let voiceAmplitude = 0;
     let droneAmplitude = 0;
     let rotationSpeed = 0; // Drone-driven
     let timeFactor = 0;
-
-    const VR_PLANE_WIDTH = 16; // Adjusted based on VR viewing size
-    const VR_PLANE_HEIGHT = 9; // Adjusted based on VR viewing size
 
     const params = {
       segments: 3, // Voice-driven
@@ -405,45 +243,6 @@
       modulation: 1,
       patternType: 'cymatic'
     };
-
-    //Starfield Initialization
-      const starfieldCanvas = document.querySelector('#starfield canvas');
-      const starfieldCtx = starfieldCanvas.getContext('2d');
-      let stars = [];
-
-      function initStarfield() {
-          starfieldCanvas.width = window.innerWidth;
-          starfieldCanvas.height = window.innerHeight;
-          stars = [];
-          for (let i = 0; i < 200; i++) {
-              stars.push({
-                  x: Math.random() * starfieldCanvas.width,
-                  y: Math.random() * starfieldCanvas.height,
-                  size: Math.random() * 3,
-                  opacity: Math.random()
-              });
-          }
-          drawStarfield();
-      }
-
-      function drawStarfield() {
-          starfieldCtx.clearRect(0, 0, starfieldCanvas.width, starfieldCanvas.height);
-          stars.forEach(star => {
-              starfieldCtx.beginPath();
-              starfieldCtx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-              starfieldCtx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
-              starfieldCtx.fill();
-          });
-      }
-
-      function animateStarfield() {
-          stars.forEach(star => {
-              star.x -= 0.1; // Subtle movement
-              if (star.x < 0) star.x = starfieldCanvas.width;
-          });
-          drawStarfield();
-          requestAnimationFrame(animateStarfield);
-      }
 
     // Audio Initialization
     function initAudio() {
@@ -566,23 +365,14 @@
       if (pitchHistory.length > 20) pitchHistory.shift();
       const stability = voicePitchStability();
 
-      //console.log(`Voice - Amplitude: ${voiceAmplitude}, Pitch: ${voicePitch}, Stability: ${stability}, Segments: ${params.segments}`);
+      console.log(`Voice - Amplitude: ${voiceAmplitude}, Pitch: ${voicePitch}, Stability: ${stability}, Segments: ${params.segments}`);
 
       if (voiceAmplitude > 0.1 && stability > 0.8) { // Lowered threshold
-          params.segments = Math.min(30, params.segments + 0.5); // Gradual increase
+        params.segments = Math.min(30, params.segments + 1);
       } else {
-          params.segments = Math.max(3, params.segments - 0.3); // Gradual decrease
+        params.segments = Math.max(3, params.segments - 0.5);
       }
-
-      // Smooth initial radius
-      params.initialRadius = lerp(params.initialRadius, 200 + voiceAmplitude * 100, 0.1);
-
     }
-
-    function lerp(start, end, amt) {
-        return (1 - amt) * start + amt * end;
-    }
-
 
     function voicePitchStability() {
       if (pitchHistory.length < 2) return 0;
@@ -597,39 +387,54 @@
       document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
     }
 
+    // VR Shaders
+    const vertexShader = `
+      varying vec2 vUv;
+      varying vec3 vPosition;
+      uniform float time;
+      uniform float audioFactor;
+      void main() {
+        vUv = uv;
+        vPosition = position;
+        vec3 pos = position;
+        pos.z += sin(time + pos.x) * audioFactor * 0.5;
+        pos.x += cos(time + pos.z) * audioFactor * 0.2;
+        pos.y += sin(time + pos.z) * audioFactor * 0.2;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `;
 
-    // Simplified VR Initialization
+    const fragmentShader = `
+      varying vec2 vUv;
+      varying vec3 vPosition;
+      uniform float time;
+      uniform float audioFactor;
+      uniform vec3 color1;
+      uniform vec3 color2;
+      void main() {
+        float gradient = mix(0.0, 1.0, abs(sin(vPosition.z * 0.1 + time)));
+        vec3 color = mix(color1, color2, gradient);
+        float glow = 1.0 + sin(time + vPosition.z * 0.5) * audioFactor * 2.0;
+        gl_FragColor = vec4(color * glow, 0.8 + audioFactor * 0.4);
+      }
+    `;
+
+    // VR Initialization
     function initVR() {
       if (!window.THREE) {
         console.error('Three.js not loaded');
         document.getElementById('enterVR').textContent = 'VR Unavailable';
         return;
       }
-
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
-
-      // Create VR Texture from Canvas
-      vrTexture = new THREE.CanvasTexture(mandalaCanvas);
-
-      // Create VR Material
-      vrMaterial = new THREE.MeshBasicMaterial({ map: vrTexture, side: THREE.DoubleSide, transparent: true });
-
-      // Create VR Plane (the screen for the mandala)
-      const geometry = new THREE.PlaneGeometry(VR_PLANE_WIDTH, VR_PLANE_HEIGHT);
-      vrPlane = new THREE.Mesh(geometry, vrMaterial);
-      scene.add(vrPlane);
-
-      // Position Plane in front of User
-      vrPlane.position.set(0, 2, -5); // Adjust position as needed
-
-      //Basic Environment. Change the color or texture.
-      scene.background = new THREE.Color(0x111122);
-
-      camera.position.z = 0;
+      mandalaGroup = new THREE.Group();
+      updateVRMandala();
+      scene.add(mandalaGroup);
+      camera.position.z = 10; // Adjusted for better FOV
 
       document.getElementById('enterVR').addEventListener('click', async () => {
         try {
@@ -659,38 +464,104 @@
       });
     }
 
-    // Simplified VR Update (No 3D mandala generation)
     function updateVRMandala() {
-      // Update VR Texture from the 2D Canvas
-      vrTexture.needsUpdate = true;
-    }
+      if (!mandalaGroup) return;
+      mandalaGroup.clear();
 
+      const radius = params.initialRadius * 0.05; // Increased scale for VR
+      const audioFactor = voiceAmplitude + droneAmplitude;
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: {
+          time: { value: timeFactor },
+          audioFactor: { value: audioFactor },
+          color1: { value: new THREE.Color(params.lineColor) },
+          color2: { value: new THREE.Color(params.secondaryColor) }
+        },
+        side: THREE.DoubleSide,
+        transparent: true,
+        blending: THREE.AdditiveBlending
+      });
 
-      // Fractal Drawing Function
-      function drawFractal(x, y, len, angle, depth) {
-          if (depth === 0) return;
+      function generateRecursiveShape(x, y, r, level) {
+        if (level > params.levels) return;
+        const points = [];
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
+          let dist = r;
+          switch (params.patternType) {
+            case 'cymatic':
+              const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
+              dist = r * (0.6 + mod * 0.9);
+              break;
+            case 'vortex':
+              dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor);
+              break;
+            case 'nebula':
+              dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor);
+              break;
+            case 'chaos':
+              dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor);
+              break;
+            case 'flower':
+              dist = r * audioFactor * (0.6 + 0.4);
+              break;
+            case 'yantra':
+              dist = r * audioFactor;
+              break;
+            case 'tunnel':
+              dist = r * (1 - level / params.levels) * (1 + 0.3);
+              break;
+            case 'hypercube':
+              dist = r * (0.6 + Math.cos(level) * audioFactor * 0.6);
+              break;
+          }
+          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, Math.sin(angle + level) * r * 0.2 * audioFactor));
+        }
 
-          const x1 = x + len * Math.cos(angle);
-          const y1 = y + len * Math.sin(angle);
+        const curve = new THREE.CatmullRomCurve3(points, true);
+        const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + voiceAmplitude), 8, true);
+        const tube = new THREE.Mesh(tubeGeometry, material.clone());
+        tube.scale.setScalar(1 + voiceAmplitude);
+        mandalaGroup.add(tube);
 
-          const gradient = ctx.createLinearGradient(x, y, x1, y1);
-          gradient.addColorStop(0, params.lineColor);
-          gradient.addColorStop(1, params.secondaryColor);
+        const ringGeometry = new THREE.BufferGeometry();
+        const ringVertices = points.map(p => new THREE.Vector3(p.x, p.y, p.z * 0.5));
+        ringGeometry.setFromPoints(ringVertices);
+        const ring = new THREE.LineLoop(ringGeometry, new THREE.LineBasicMaterial({
+          color: params.secondaryColor,
+          transparent: true,
+          opacity: 0.8 + audioFactor * 0.2,
+          blending: THREE.AdditiveBlending
+        }));
+        mandalaGroup.add(ring);
 
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x1, y1);
-          ctx.strokeStyle = gradient;
-          ctx.lineWidth = params.lineWidth * (1 - depth / params.levels);
-          ctx.stroke();
-
-          const splitAngle = 0.5; // Angle for branching
-          const newLen = len * 0.7;   // Length reduction for branches
-
-          drawFractal(x1, y1, newLen, angle + splitAngle, depth - 1);
-          drawFractal(x1, y1, newLen, angle - splitAngle, depth - 1);
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2;
+          const nextX = x + Math.cos(angle) * r * audioFactor;
+          const nextY = y + Math.sin(angle) * r * audioFactor;
+          generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
+        }
       }
 
+      generateRecursiveShape(0, 0, radius, 1);
+    }
+
+    function animateVR(time) {
+      const audioFactor = voiceAmplitude + droneAmplitude;
+      console.log(`VR - Segments: ${params.segments}, Voice Amplitude: ${voiceAmplitude}`);
+      updateVRMandala();
+      mandalaGroup.children.forEach(obj => {
+        if (obj.material.uniforms) {
+          obj.material.uniforms.time.value = timeFactor;
+          obj.material.uniforms.audioFactor.value = audioFactor;
+        }
+        obj.rotation.z += rotationSpeed;
+      });
+      mandalaGroup.rotation.z += rotationSpeed;
+      renderer.render(scene, camera);
+    }
 
     // 2D Mandala Generation
     function generateMandala(timeFactor) {
@@ -738,7 +609,7 @@
             break;
           case 'nebula':
             ctx.beginPath();
-            for (let i = 0< 12; i++) {
+            for (let i = 0; i < 12; i++) {
               const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
               const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
               ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
@@ -797,9 +668,6 @@
             ctx.closePath();
             ctx.stroke();
             break;
-          case 'fractal':
-            drawFractal(x, y, r, timeFactor, params.levels); //Use the fractal function to make the pattern.
-            break;
         }
 
         drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
@@ -857,7 +725,8 @@
     }
 
     // Preset Modal
-    function showPresetModal() {      document.getElementById('presetModal').classList.add('active');
+    function showPresetModal() {
+      document.getElementById('presetModal').classList.add('active');
     }
 
     function applyPreset(preset) {
@@ -891,30 +760,11 @@
             baseFreq: 0, waveform: 'sine', modulation: 0
           });
           break;
-         case 'kali':  // Added Preset.
-           Object.assign(params, {
-             segments: 8, levels: 5, scaleFactor: 0.65, initialRadius: 280,
-             lineColor: '#ff0000', secondaryColor: '#000000', patternType: 'chaos',
-             baseFreq: 440, waveform: 'square', modulation: 1.2
-           });
-           break;
       }
       if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
       generateMandala(0);
       updateVRMandala();
     }
-
-      //Parameter updating from the tab controls
-      function updateParams(param, value) {
-          if (param === 'scaleFactor') {
-              params[param] = parseFloat(value);
-          } else if (param === 'segments' || param === 'levels' || param === 'initialRadius' || param === 'lineWidth' || param === 'baseFreq') {
-              params[param] = parseInt(value);
-          } else {
-              params[param] = value; // Color and waveform are strings
-          }
-      }
-
 
     // Utility Functions
     function downloadMandala() {
@@ -924,22 +774,14 @@
       link.click();
     }
 
-      function animate() {
-          generateMandala(timeFactor);
-          timeFactor += 0.01; // Continue the time factor.
-
-          if (voiceAmplitude > 0.1 || droneOscillator) {
-              animationId = requestAnimationFrame(animate);
-          } else {
-              cancelAnimationFrame(animationId);
-              generateMandala(0);
-          }
+    function animate() {
+      if (voiceAmplitude > 0.1 || droneOscillator) {
+        generateMandala(timeFactor);
+        animationId = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(animationId);
+        generateMandala(0);
       }
-
-    function animateVR(time) {
-      updateVRMandala();
-      timeFactor += 0.01;
-      renderer.render(scene, camera);
     }
 
     function openTab(evt, tabName) {
@@ -960,15 +802,9 @@
       initVoiceControl(); // Start voice early
       initVR();
       generateMandala(0);
-      animate();
-
-      initStarfield();
-      animateStarfield();
     }
 
     window.onload = init;
-    window.addEventListener('resize', initStarfield); // Adjust starfield on resize
-
   </script>
 </body>
 </html>
