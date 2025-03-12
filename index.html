@@ -3,505 +3,610 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fractal Cymatics: Rhythm of the Void</title>
+  <title>Cosmic Weaver: Echoes of the Infinite Abyss</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: 'Orbitron', sans-serif;
       text-align: center;
-      background: linear-gradient(135deg, #1a1a2e, #2a2a4c, #3b3b6d);
-      color: #d0d0ff;
+      background: radial-gradient(circle, #000022, #1a0033, #330066);
+      color: #e6ccff;
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      min-height: 100vh;
       overflow: hidden;
     }
 
     h1 {
-      font-size: 2.5rem;
-      color: #8a4af3;
-      text-shadow: 0 0 5px #8a4af3;
-      margin-bottom: 20px;
+      font-family: 'Cinzel', serif;
+      font-size: 5rem;
+      color: #ff00ff;
+      text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
+      margin: 30px 0;
     }
 
-    #canvasContainer {
-      position: relative;
-      width: 800px;
-      height: 800px;
-      margin: 0 auto;
+    #mandalaCanvas {
+      border: 8px double #ff66cc;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
+      box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
+      max-width: 95vw;
+      max-height: 95vh;
+      margin: 20px auto;
     }
 
-    canvas {
-      position: absolute;
+    #vrCanvas {
+      position: fixed;
       top: 0;
       left: 0;
-      border: 1px solid #4c4c7d;
-      border-radius: 5px;
-      background: #0a0a1f;
-      box-shadow: 0 0 20px rgba(138, 74, 243, 0.3);
+      width: 100%;
+      height: 100%;
+      z-index: 20;
+      display: none;
+      background: rgba(0, 0, 0, 0.9);
     }
 
-    #particleCanvas {
-      z-index: 1;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(138, 74, 243, 0.2);
-      margin-bottom: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    button, select {
-      background: linear-gradient(45deg, #8a4af3, #d06bff);
-      padding: 6px 12px;
-      border: none;
-      border-radius: 5px;
-      color: #fff;
-      font-size: 13px;
+    .glyph-tab {
+      display: inline-block;
+      padding: 15px 25px;
+      background: linear-gradient(135deg, #6600cc, #ff33cc);
+      border-radius: 15px 15px 0 0;
+      color: #e6ccff;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.5s;
     }
 
-    button:hover, select:hover {
-      background: linear-gradient(45deg, #d06bff, #8a4af3);
-      transform: scale(1.05);
-    }
-
-    input[type="range"] {
-      background: #3e3e7d;
-      border-radius: 5px;
-      accent-color: #d06bff;
-    }
-
-    input[type="color"] {
-      width: 30px;
-      height: 20px;
-      border: 1px solid #8a4af3;
-      border-radius: 5px;
-    }
-
-    label {
-      color: #d0d0ff;
-      font-size: 12px;
-    }
-
-    .tab-container {
-      margin-bottom: 15px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .tab {
-      background: #3e3e7d;
-      padding: 6px 12px;
-      border-radius: 5px 5px 0 0;
-      color: #d0d0ff;
-      cursor: pointer;
-    }
-
-    .tab.active {
-      background: #8a4af3;
-      color: #fff;
+    .glyph-tab:hover, .glyph-tab.active {
+      background: linear-gradient(135deg, #00ffff, #ff00ff);
+      color: #000022;
+      transform: translateY(-5px);
     }
 
     .tab-content {
       display: none;
-      background: rgba(20, 20, 40, 0.8);
-      padding: 15px;
-      border-radius: 0 0 8px 8px;
+      background: rgba(0, 0, 34, 0.98);
+      padding: 20px;
+      border-radius: 0 0 20px 20px;
+      border: 4px solid #ff33cc;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
     .tab-content.active {
       display: block;
     }
 
-    @media (max-width: 768px) {
-      #canvasContainer {
-        width: 100%;
-        height: auto;
-      }
-      canvas {
-        width: 100%;
-        height: auto;
-      }
+    button {
+      background: linear-gradient(45deg, #ff00ff, #00ffff);
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      color: #000022;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: linear-gradient(45deg, #00ff99, #ff6600);
+      transform: scale(1.1);
+    }
+
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 34, 0.98);
+      padding: 20px;
+      border: 3px double #00ffff;
+      border-radius: 15px;
+      z-index: 100;
+      display: none;
+    }
+
+    .modal.active {
+      display: block;
+    }
+
+    .modal input, .modal button {
+      margin: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 2px solid #ff33cc;
+      background: #000022;
+      color: #e6ccff;
+    }
+
+    #soundMeter {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background: #330066;
+      border: 2px solid #00ffff;
+      border-radius: 5px;
+    }
+
+    #soundBar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff00ff, #00ffff);
+      transition: width 0.2s;
+    }
+
+    #soundInfo {
+      position: fixed;
+      bottom: 50px;
+      left: 20px;
+      color: #00ffff;
+      font-size: 1rem;
+    }
+
+    #narrative {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #ffcc00;
+      text-shadow: 0 0 20px #00ffff;
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 1s;
+    }
+
+    #narrative.active {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <h1>Fractal Cymatics: Rhythm of the Void</h1>
+  <h1>Cosmic Weaver: Echoes of the Infinite Abyss</h1>
 
   <div class="tab-container">
-    <button class="tab active" onclick="openTab(event, 'formTab')">Form</button>
-    <button class="tab" onclick="openTab(event, 'rhythmTab')">Rhythm</button>
-    <button class="tab" onclick="openTab(event, 'voidTab')">Void</button>
+    <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
+    <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
+    <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
   </div>
 
-  <div id="formTab" class="tab-content active">
-    <div class="controls">
-      <div>
-        <label for="segments">Segments</label>
-        <input type="range" id="segments" value="12" min="6" max="36" oninput="updateValue('segments')">
-        <span id="segments-value">12</span>
-      </div>
-      <div>
-        <label for="levels">Levels</label>
-        <input type="range" id="levels" value="4" min="2" max="8" oninput="updateValue('levels')">
-        <span id="levels-value">4</span>
-      </div>
-      <div>
-        <label for="scaleFactor">Scale</label>
-        <input type="range" id="scaleFactor" value="0.6" min="0.4" max="0.8" step="0.01" oninput="updateValue('scaleFactor')">
-        <span id="scaleFactor-value">0.6</span>
-      </div>
-      <div>
-        <label for="baseRadius">Base Radius</label>
-        <input type="range" id="baseRadius" value="150" min="50" max="300" oninput="updateValue('baseRadius')">
-        <span id="baseRadius-value">150</span>
-      </div>
-      <div>
-        <label for="lineColor">Color</label>
-        <input type="color" id="lineColor" value="#8a4af3">
-      </div>
-    </div>
-  </div>
-
-  <div id="rhythmTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="scale">Scale</label>
-        <select id="scale" onchange="updateValue('scale')">
-          <option value="pentatonic">Pentatonic</option>
-          <option value="minor">Natural Minor</option>
-          <option value="major">Major</option>
-        </select>
-      </div>
-      <div>
-        <label for="rootNote">Root Note</label>
-        <select id="rootNote" onchange="updateValue('rootNote')">
-          <option value="C">C</option>
-          <option value="D">D</option>
-          <option value="E">E</option>
-          <option value="F">F</option>
-          <option value="G">G</option>
-          <option value="A">A</option>
-          <option value="B">B</option>
-        </select>
-      </div>
-      <div>
-        <label for="bpm">BPM</label>
-        <input type="range" id="bpm" value="100" min="60" max="180" step="5" oninput="updateValue('bpm')">
-        <span id="bpm-value">100</span>
-      </div>
-      <div>
-        <label for="droneVolume">Drone Volume</label>
-        <input type="range" id="droneVolume" value="0.15" min="0" max="0.3" step="0.01" oninput="updateValue('droneVolume')">
-        <span id="droneVolume-value">0.15</span>
-      </div>
-    </div>
-  </div>
-
-  <div id="voidTab" class="tab-content">
-    <div class="controls">
-      <div>
-        <label for="particleDensity">Particles</label>
-        <input type="range" id="particleDensity" value="50" min="0" max="200" oninput="updateValue('particleDensity')">
-        <span id="particleDensity-value">50</span>
-      </div>
-      <div>
-        <label for="rotationSpeed">Rotation</label>
-        <input type="range" id="rotationSpeed" value="0.5" min="0" max="2" step="0.1" oninput="updateValue('rotationSpeed')">
-        <span id="rotationSpeed-value">0.5</span>
-      </div>
-    </div>
-  </div>
+  <div id="formTab" class="tab-content active"><div class="control-panel"></div></div>
+  <div id="freqTab" class="tab-content"><div class="control-panel"></div></div>
+  <div id="voidTab" class="tab-content"><div class="control-panel"></div></div>
 
   <div class="controls">
-    <button id="generate">Weave Rhythm</button>
-    <button id="random">Void Pulse</button>
-    <button id="animate">Resonate</button>
-    <button id="download">Capture</button>
+    <button id="generate">Generate Mandala</button>
+    <button id="presets">Load Presets</button>
+    <button id="drone">Toggle Drone</button>
+    <button id="journey">Start Meditation</button>
+    <button id="download">Download Image</button>
+    <button id="enterVR">Enter VR Mode</button>
   </div>
 
-  <div id="canvasContainer">
-    <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-    <canvas id="particleCanvas" width="800" height="800"></canvas>
+  <div id="intentionModal" class="modal">
+    <label for="intentionInput">Set Intention:</label>
+    <input type="text" id="intentionInput" placeholder="e.g., Peace, Chaos">
+    <button onclick="startWithIntention()">Apply</button>
   </div>
 
+  <div id="presetModal" class="modal">
+    <button onclick="applyPreset('mandala')">Mandala</button>
+    <button onclick="applyPreset('yantra')">Yantra</button>
+    <button onclick="applyPreset('sufi')">Sufi</button>
+    <button onclick="applyPreset('zen')">Zen</button>
+  </div>
+
+  <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
+  <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz | Chaos: 0</div>
+  <div id="narrative"></div>
+
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="vrCanvas"></canvas>
+
+  <script src="./three.min.js"></script>
   <script>
-    const canvas = document.getElementById('mandalaCanvas');
-    const ctx = canvas.getContext('2d');
-    const particleCanvas = document.getElementById('particleCanvas');
-    const particleCtx = particleCanvas.getContext('2d');
-
+    const mandalaCanvas = document.getElementById('mandalaCanvas');
+    const ctx = mandalaCanvas.getContext('2d');
+    const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
-    let isAnimating = false;
-    let particles = [];
-    let audioContext = null;
-    let droneOsc = null;
-    let melodyOsc = null;
-    let droneGain = null;
-    let melodyGain = null;
-    let rotationAngle = 0;
-    let beatCounter = 0;
+    let audioContext, droneOscillator, droneGain, voiceAnalyser;
+    let scene, camera, renderer, mandalaGroup;
+    let intention = '';
+    let voicePitch = 0, voiceAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
+    let rotationSpeed = 0, timeFactor = 0, narrativePhase = 0;
+    let vrPositionZ = 0; // For voice-driven VR navigation
 
-    const scales = {
-      pentatonic: [0, 3, 5, 7, 10],
-      minor: [0, 2, 3, 5, 7, 8, 10],
-      major: [0, 2, 4, 5, 7, 9, 11]
+    const params = {
+      segments: 3,
+      levels: 4,
+      scaleFactor: 0.65,
+      initialRadius: 200,
+      lineColor: '#ff00ff',
+      lineWidth: 2,
+      baseFreq: 110,
+      waveform: 'sine',
+      secondaryColor: '#00ffff',
+      modulation: 1.5,
+      patternType: 'hyperchaos'
     };
 
-    const rootFrequencies = {
-      'C': 261.63, 'D': 293.66, 'E': 329.63, 'F': 349.23, 'G': 392.00, 'A': 440.00, 'B': 493.88
-    };
-
-    const rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0];
-
+    // Audio Initialization
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioContext.state === 'suspended') audioContext.resume();
       }
-      updateAudio();
+      if (audioContext.state === 'suspended') audioContext.resume();
     }
 
-    function updateAudio() {
-      if (droneOsc) droneOsc.stop();
-      if (melodyOsc) melodyOsc.stop();
-      if (droneGain) droneGain.disconnect();
-      if (melodyGain) melodyGain.disconnect();
+    function toggleDrone() {
+      initAudio();
+      if (droneOscillator) {
+        droneOscillator.stop();
+        droneOscillator = null;
+        droneGain = null;
+        droneAmplitude = 0;
+        document.getElementById('drone').textContent = 'Toggle Drone';
+      } else {
+        droneOscillator = audioContext.createOscillator();
+        droneGain = audioContext.createGain();
+        droneOscillator.type = params.waveform;
+        droneOscillator.frequency.value = params.baseFreq;
+        droneGain.gain.value = 0.1;
+        droneAmplitude = 0.1;
+        droneOscillator.connect(droneGain).connect(audioContext.destination);
+        droneOscillator.start();
+        document.getElementById('drone').textContent = 'Stop Drone';
+        updateDroneParams();
+      }
+    }
 
-      const rootNote = document.getElementById('rootNote').value;
-      const scaleType = document.getElementById('scale').value;
-      const bpm = parseInt(document.getElementById('bpm').value);
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
-      const rootFreq = rootFrequencies[rootNote];
-      const scale = scales[scaleType];
+    function updateDroneParams() {
+      if (droneOscillator) {
+        rotationSpeed = Math.min(0.05, droneAmplitude * chaosFactor * 0.5);
+        timeFactor += droneAmplitude * 0.01;
+        requestAnimationFrame(updateDroneParams);
+      } else {
+        rotationSpeed = 0;
+        timeFactor = 0;
+      }
+    }
 
-      droneOsc = audioContext.createOscillator();
-      droneGain = audioContext.createGain();
-      droneOsc.type = 'sine';
-      droneOsc.frequency.value = rootFreq / 2;
-      droneGain.gain.value = droneVolume;
-      droneOsc.connect(droneGain);
-      droneGain.connect(audioContext.destination);
-      droneOsc.start();
+    function initVoiceControl() {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          initAudio();
+          const source = audioContext.createMediaStreamSource(stream);
+          voiceAnalyser = audioContext.createAnalyser();
+          voiceAnalyser.fftSize = 2048;
+          voiceAnalyser.smoothingTimeConstant = 0.7;
+          source.connect(voiceAnalyser);
 
-      melodyOsc = audioContext.createOscillator();
-      melodyGain = audioContext.createGain();
-      melodyOsc.type = 'triangle';
-      melodyGain.gain.value = 0;
-      melodyOsc.connect(melodyGain);
-      melodyGain.connect(audioContext.destination);
-      melodyOsc.start();
+          const bufferLength = voiceAnalyser.fftSize;
+          const dataArray = new Float32Array(bufferLength);
 
-      const beatInterval = 60000 / bpm / 2;
-      let beatIndex = 0;
-      clearInterval(window.rhythmInterval);
-      window.rhythmInterval = setInterval(() => {
-        if (rhythmPattern[beatIndex % rhythmPattern.length] === 1) {
-          const note = scale[Math.floor(Math.random() * scale.length)];
-          const freq = rootFreq * Math.pow(2, note / 12);
-          melodyOsc.frequency.setValueAtTime(freq, audioContext.currentTime);
-          melodyGain.gain.setValueAtTime(0.3, audioContext.currentTime);
-          melodyGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+          function detectPitch() {
+            voiceAnalyser.getFloatTimeDomainData(dataArray);
+            const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+            voiceAmplitude = getAmplitude(dataArray);
+
+            if (pitch !== -1) voicePitch = pitch;
+            else voicePitch = 0;
+
+            chaosFactor = Math.min(1, voiceAmplitude * 1.5);
+            vrPositionZ = voicePitch * 0.01; // Voice-driven VR depth
+            updateVoiceParams();
+            updateSoundMeter();
+            if (droneOscillator || voiceAmplitude > 0.05) animate();
+            requestAnimationFrame(detectPitch);
+          }
+          detectPitch();
+        })
+        .catch(e => console.error('Voice control failed:', e));
+    }
+
+    function autoCorrelate(buf, sampleRate) {
+      let SIZE = buf.length;
+      let rms = 0;
+      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / SIZE);
+      if (rms < 0.01) return -1;
+
+      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+
+      buf = buf.slice(r1, r2);
+      SIZE = buf.length;
+
+      let c = new Array(SIZE).fill(0);
+      for (let i = 0; i < SIZE; i++)
+        for (let j = 0; j < SIZE - i; j++)
+          c[i] = c[i] + buf[j] * buf[j + i];
+
+      let d = 0;
+      while (c[d] > c[d + 1]) d++;
+      let maxval = -1, maxpos = -1;
+      for (let i = d; i < SIZE; i++) {
+        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+      }
+      let T0 = maxpos;
+
+      return sampleRate / T0;
+    }
+
+    function getAmplitude(buf) {
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
+      return Math.min(1, sum / buf.length / 0.3);
+    }
+
+    function updateVoiceParams() {
+      params.segments = Math.max(3, Math.min(20, params.segments + chaosFactor));
+      params.modulation = 1 + chaosFactor;
+    }
+
+    function updateSoundMeter() {
+      const amplitudePercent = Math.round(voiceAmplitude * 100);
+      document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
+      document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
+    }
+
+    // VR Shaders
+    const vertexShader = `
+      varying vec2 vUv;
+      uniform float time;
+      uniform float audioFactor;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        pos.z += sin(time + pos.x) * audioFactor * 0.5;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      varying vec2 vUv;
+      uniform float time;
+      uniform float audioFactor;
+      void main() {
+        float glow = 1.0 + sin(time + vUv.x) * audioFactor;
+        gl_FragColor = vec4(sin(time), cos(time), 1.0, 0.8) * glow;
+      }
+    `;
+
+    function initVR() {
+      if (!window.THREE) {
+        console.error('Three.js failed to load - ensure three.min.js is in the correct directory');
+        document.getElementById('enterVR').textContent = 'VR Unavailable';
+        return;
+      }
+
+      console.log('Initializing VR...');
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000); // Adjusted FOV
+      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
+      renderer.xr.enabled = true;
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      mandalaGroup = new THREE.Group();
+      scene.add(mandalaGroup);
+
+      const material = new THREE.ShaderMaterial({
+        vertexShader,
+        fragmentShader,
+        uniforms: { time: { value: 0 }, audioFactor: { value: 0 } },
+        side: THREE.DoubleSide,
+        transparent: true
+      });
+      const geometry = new THREE.TorusGeometry(2, 0.5, 16, 32); // Smaller torus
+      const torus = new THREE.Mesh(geometry, material);
+      mandalaGroup.add(torus);
+      mandalaGroup.position.z = -5; // Move away from camera
+      mandalaGroup.scale.set(0.5, 0.5, 0.5); // Scale down for better VR fit
+      camera.position.z = 0; // Camera at origin, objects positioned relative to it
+
+      const enterVRButton = document.getElementById('enterVR');
+      enterVRButton.addEventListener('click', async () => {
+        console.log('Attempting to enter VR...');
+        if (!navigator.xr) {
+          console.error('WebXR not supported');
+          enterVRButton.textContent = 'VR Not Supported';
+          return;
         }
-        beatIndex++;
-        beatCounter++;
-      }, beatInterval);
-    }
 
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 3 + 1;
-        this.speedX = Math.random() * 1 - 0.5;
-        this.speedY = Math.random() * 1 - 0.5;
-        this.life = Math.random() * 50 + 50;
-      }
+        try {
+          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+          console.log('VR session started');
+          renderer.xr.setSession(session);
+          renderer.setAnimationLoop(animateVR);
+          vrCanvas.style.display = 'block';
+          enterVRButton.textContent = 'Exit VR Mode';
 
-      update(audioFactor) {
-        this.x += this.speedX * audioFactor;
-        this.y += this.speedY * audioFactor;
-        this.life -= 1;
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
+          session.addEventListener('end', () => {
+            console.log('VR session ended');
+            vrCanvas.style.display = 'none';
+            renderer.setAnimationLoop(null);
+            enterVRButton.textContent = 'Enter VR Mode';
+          });
 
-      draw() {
-        const alpha = this.life / 100;
-        particleCtx.fillStyle = `rgba(208, 107, 255, ${alpha})`;
-        particleCtx.beginPath();
-        particleCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        particleCtx.fill();
-      }
-    }
-
-    function initParticles() {
-      particles = [];
-      const density = parseInt(document.getElementById('particleDensity').value);
-      for (let i = 0; i < density; i++) {
-        particles.push(new Particle());
-      }
-    }
-
-    function animateParticles(audioFactor) {
-      particleCtx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p, i) => {
-        p.update(audioFactor);
-        p.draw();
-        if (p.life <= 0) particles.splice(i, 1);
+          if (!voiceAnalyser) initVoiceControl();
+        } catch (err) {
+          console.error('VR Failed:', err);
+          enterVRButton.textContent = 'VR Failed: ' + err.message;
+        }
       });
-      const targetDensity = parseInt(document.getElementById('particleDensity').value);
-      while (particles.length < targetDensity) {
-        particles.push(new Particle());
-      }
-    }
 
-    function init() {
-      document.getElementById('generate').addEventListener('click', () => {
-        initAudio();
-        generateMandala();
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
-      document.getElementById('random').addEventListener('click', () => {
-        initAudio();
-        randomizeMandala();
+    }
+
+    function animateVR(time) {
+      const audioFactor = voiceAmplitude + droneAmplitude;
+      mandalaGroup.children.forEach(obj => {
+        if (obj.material.uniforms) {
+          obj.material.uniforms.time.value = timeFactor;
+          obj.material.uniforms.audioFactor.value = audioFactor;
+        }
+        obj.rotation.z += rotationSpeed;
       });
-      document.getElementById('download').addEventListener('click', downloadMandala);
-      document.getElementById('animate').addEventListener('click', toggleAnimation);
-      updateValueDisplays();
-      initParticles();
-      generateMandala();
+      mandalaGroup.position.z = -5 + vrPositionZ; // Voice-driven depth
+      renderer.render(scene, camera);
     }
 
-    function updateValueDisplays() {
-      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
-      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
-      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
-      document.getElementById('baseRadius-value').textContent = document.getElementById('baseRadius').value;
-      document.getElementById('bpm-value').textContent = document.getElementById('bpm').value;
-      document.getElementById('droneVolume-value').textContent = document.getElementById('droneVolume').value;
-      document.getElementById('particleDensity-value').textContent = document.getElementById('particleDensity').value;
-      document.getElementById('rotationSpeed-value').textContent = document.getElementById('rotationSpeed').value;
-    }
+    function generateMandala(timeFactor) {
+      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+      const centerX = mandalaCanvas.width / 2;
+      const centerY = mandalaCanvas.height / 2;
+      const audioFactor = voiceAmplitude + droneAmplitude;
 
-    function updateValue(id) {
-      updateValueDisplays();
-      if (!isAnimating) generateMandala();
-      if (id === 'particleDensity') initParticles();
-      if (audioContext && ['scale', 'rootNote', 'bpm', 'droneVolume'].includes(id)) updateAudio();
-    }
-
-    function generateMandala() {
-      const segments = parseInt(document.getElementById('segments').value);
-      const levels = parseInt(document.getElementById('levels').value);
-      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
-      const baseRadius = parseInt(document.getElementById('baseRadius').value);
-      const lineColor = document.getElementById('lineColor').value;
-      const droneVolume = parseFloat(document.getElementById('droneVolume').value);
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotationAngle);
-      ctx.translate(-centerX, -centerY);
-
-      function drawMandala(x, y, radius, level) {
-        if (level > levels) return;
-
+      function drawRecursiveShape(x, y, r, level) {
+        if (level > params.levels) return;
         ctx.beginPath();
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = 2 - (level - 1) * 0.3;
-        const audioFactor = 1 + droneVolume * 2 + Math.sin(beatCounter * 0.05) * 0.3;
-
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * Math.PI * 2;
-          const outerX = x + Math.cos(angle) * radius * audioFactor;
-          const outerY = y + Math.sin(angle) * radius * audioFactor;
-          const innerAngle = angle + Math.PI / segments;
-          const innerX = x + Math.cos(innerAngle) * (radius * 0.5) * audioFactor;
-          const innerY = y + Math.sin(innerAngle) * (radius * 0.5) * audioFactor;
-
-          ctx.moveTo(x, y);
-          ctx.lineTo(outerX, outerY);
-          ctx.lineTo(innerX, innerY);
-          ctx.lineTo(x, y);
+        ctx.strokeStyle = params.lineColor;
+        ctx.lineWidth = params.lineWidth;
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
+          const dist = r * (0.5 + Math.sin(angle * level + timeFactor) * chaosFactor);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
+        ctx.closePath();
         ctx.stroke();
-
-        drawMandala(x, y, radius * scaleFactor, level + 1);
+        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
       }
 
-      drawMandala(centerX, centerY, baseRadius, 1);
-      ctx.restore();
+      for (let i = 0; i < params.segments; i++) {
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
+        const x = centerX + params.initialRadius * Math.cos(angle);
+        const y = centerY + params.initialRadius * Math.sin(angle);
+        drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
+      }
     }
 
-    function randomizeMandala() {
-      document.getElementById('segments').value = Math.floor(Math.random() * 30) + 6;
-      document.getElementById('levels').value = Math.floor(Math.random() * 6) + 2;
-      document.getElementById('scaleFactor').value = (Math.random() * 0.4 + 0.4).toFixed(2);
-      document.getElementById('baseRadius').value = Math.floor(Math.random() * 250) + 50;
-      document.getElementById('bpm').value = Math.floor(Math.random() * 120) + 60;
-      document.getElementById('droneVolume').value = (Math.random() * 0.2 + 0.1).toFixed(2);
-      document.getElementById('particleDensity').value = Math.floor(Math.random() * 150) + 50;
-      document.getElementById('rotationSpeed').value = (Math.random() * 1.5 + 0.5).toFixed(1);
-      document.getElementById('scale').value = ['pentatonic', 'minor', 'major'][Math.floor(Math.random() * 3)];
-      document.getElementById('rootNote').value = ['C', 'D', 'E', 'F', 'G', 'A', 'B'][Math.floor(Math.random() * 7)];
-      updateValueDisplays();
-      initParticles();
-      generateMandala();
+    const narrativeLines = [
+      "The void whispers...",
+      "Cosmos bends...",
+      "Chaos weaves...",
+      "Abyss sings...",
+      "Temple rises..."
+    ];
+
+    function updateNarrative() {
+      const narrativeElement = document.getElementById('narrative');
+      if (voiceAmplitude > 0.1 || droneAmplitude > 0) {
+        narrativeElement.textContent = narrativeLines[narrativePhase % narrativeLines.length];
+        narrativeElement.classList.add('active');
+        setTimeout(() => narrativeElement.classList.remove('active'), 3000);
+        narrativePhase++;
+      }
+    }
+
+    function startGuidedMeditation() {
+      const phases = [
+        { duration: 10000, pattern: 'hyperchaos', freq: 90, color: '#ff0066', narrative: "Awaken chaos..." },
+        { duration: 10000, pattern: 'fractalvoid', freq: 333, color: '#00ccff', narrative: "Dive into abyss..." },
+        { duration: 10000, pattern: 'astralweb', freq: 666, color: '#ffcc00', narrative: "Weave eternity..." }
+      ];
+      let phaseIndex = 0;
+
+      function nextPhase() {
+        if (phaseIndex >= phases.length) return;
+        const phase = phases[phaseIndex];
+        params.patternType = phase.pattern;
+        params.baseFreq = phase.freq;
+        params.lineColor = phase.color;
+        if (droneOscillator) droneOscillator.frequency.value = phase.freq;
+        document.getElementById('narrative').textContent = phase.narrative;
+        document.getElementById('narrative').classList.add('active');
+        setTimeout(() => document.getElementById('narrative').classList.remove('active'), 5000);
+        generateMandala(0);
+        setTimeout(nextPhase, phase.duration);
+        phaseIndex++;
+      }
+      nextPhase();
+    }
+
+    function showIntentionModal() {
+      document.getElementById('intentionModal').classList.add('active');
+    }
+
+    function startWithIntention() {
+      intention = document.getElementById('intentionInput').value || 'Infinite Chaos';
+      document.getElementById('intentionModal').classList.remove('active');
+      generateMandala(0);
+      updateNarrative();
+    }
+
+    function showPresetModal() {
+      document.getElementById('presetModal').classList.add('active');
+    }
+
+    function applyPreset(preset) {
+      document.getElementById('presetModal').classList.remove('active');
+      switch (preset) {
+        case 'mandala':
+          Object.assign(params, { segments: 5, levels: 4, lineColor: '#ff0066', baseFreq: 90 });
+          break;
+        case 'yantra':
+          Object.assign(params, { segments: 4, levels: 3, lineColor: '#00ccff', baseFreq: 136.1 });
+          break;
+        case 'sufi':
+          Object.assign(params, { segments: 6, levels: 4, lineColor: '#ffcc00', baseFreq: 174 });
+          break;
+        case 'zen':
+          Object.assign(params, { segments: 3, levels: 2, lineColor: '#000022', baseFreq: 0 });
+          break;
+      }
+      if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
+      generateMandala(0);
     }
 
     function downloadMandala() {
       const link = document.createElement('a');
-      link.download = 'cymatic-rhythm.png';
-      link.href = canvas.toDataURL('image/png');
+      link.download = 'cosmic-weave.png';
+      link.href = mandalaCanvas.toDataURL('image/png');
       link.click();
     }
 
-    function toggleAnimation() {
-      if (isAnimating) {
-        cancelAnimationFrame(animationId);
-        document.getElementById('animate').textContent = 'Resonate';
-        isAnimating = false;
-      } else {
-        initAudio();
-        document.getElementById('animate').textContent = 'Pause';
-        isAnimating = true;
-        animate();
-      }
-    }
-
     function animate() {
-      const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
-      const audioFactor = 1 + Math.sin(beatCounter * 0.05) * 0.5;
-      rotationAngle += rotationSpeed * 0.005;
-
-      generateMandala();
-      animateParticles(audioFactor);
-
-      if (isAnimating) animationId = requestAnimationFrame(animate);
+      if (animationId) cancelAnimationFrame(animationId);
+      generateMandala(timeFactor);
+      updateNarrative();
+      if (droneOscillator || voiceAmplitude > 0.05) {
+        animationId = requestAnimationFrame(animate);
+      }
     }
 
     function openTab(evt, tabName) {
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.glyph-tab').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabName).classList.add('active');
       evt.currentTarget.classList.add('active');
     }
 
+    function init() {
+      console.log('Initializing Cosmic Weaver...');
+      document.getElementById('generate').addEventListener('click', () => { showIntentionModal(); });
+      document.getElementById('presets').addEventListener('click', showPresetModal);
+      document.getElementById('drone').addEventListener('click', toggleDrone);
+      document.getElementById('journey').addEventListener('click', startGuidedMeditation);
+      document.getElementById('download').addEventListener('click', downloadMandala);
+
+      initVoiceControl();
+      initVR();
+      generateMandala(0);
+    }
+
     window.onload = () => {
-      init();
+      if (typeof THREE === 'undefined') {
+        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
+        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load.</p>';
+      } else {
+        console.log('Three.js loaded, version:', THREE.REVISION);
+        init();
+      }
     };
   </script>
 </body>
