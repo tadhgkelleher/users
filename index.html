@@ -1,478 +1,798 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR House Tour with Three.js</title>
-    <script src="/three.min.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-        }
-        canvas {
-            width: 100%;
-            height: 100vh;
-        }
-        .instructions {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 20px;
-            z-index: 10;
-        }
-        #vrButton {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            font-size: 18px;
-            background-color: #00ff00;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            z-index: 10;
-        }
-        #vrButton:disabled {
-            background-color: #666;
-            cursor: not-allowed;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fractal Mandala Generator</title>
+  <style>
+    body {
+      font-family: 'Montserrat', Arial, sans-serif;
+      text-align: center;
+      background-color: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.5s;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #f0746c;
+      text-shadow: 0 0 10px rgba(240, 116, 108, 0.3);
+      font-size: 2.5rem;
+    }
+
+    canvas {
+      border: 2px solid #555;
+      margin: 20px auto;
+      display: block;
+      background-color: #222;
+      box-shadow: 3px 3px 20px rgba(0, 0, 0, 0.6);
+      border-radius: 10px;
+      transition: box-shadow 0.3s;
+    }
+    
+    canvas:hover {
+      box-shadow: 0 0 25px rgba(158, 202, 237, 0.4);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .control-panel {
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    button, select {
+      padding: 8px 15px;
+      font-size: 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #619061;
+      color: #fff;
+      transition: all 0.3s;
+    }
+
+    button:hover, select:hover {
+      background-color: #517a51;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+
+    input[type="number"], input[type="range"] {
+      padding: 8px;
+      font-size: 15px;
+      border: none;
+      border-radius: 4px;
+      background-color: #333;
+      color: #fff;
+      width: 65px;
+    }
+
+    input[type="color"] {
+      width: 40px;
+      height: 25px;
+      padding: 3px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      cursor: pointer;
+      border: 2px solid #444;
+      border-radius: 4px;
+    }
+
+    input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    
+    input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 3px;
+    }
+    
+    .parameter_input {
+      padding: 5px;
+      margin: 10px;
+      position: relative;
+    }
+
+    label {
+      color: #9ecaed;
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .color-palette {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #555;
+      transition: transform 0.2s, border 0.2s;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+      border: 2px solid #fff;
+    }
+
+    .button-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .tooltip {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #333;
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 10;
+    }
+
+    .parameter_input:hover .tooltip {
+      opacity: 1;
+    }
+
+    .tab-container {
+      margin-bottom: 15px;
+    }
+
+    .tab {
+      padding: 8px 15px;
+      margin: 0 5px;
+      background-color: #333;
+      border: none;
+      border-radius: 4px 4px 0 0;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background-color: #619061;
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 15px;
+      background-color: #1e1e1e;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .animation-controls {
+      margin: 15px 0;
+    }
+
+    /* Additional keyframes for animations */
+    @keyframes pulse {
+      0% { opacity: 0.7; }
+      50% { opacity: 1; }
+      100% { opacity: 0.7; }
+    }
+
+    .pulsate {
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    /* Theming */
+    .theme-option {
+      display: inline-block;
+      width: 25px;
+      height: 25px;
+      margin: 0 5px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid #555;
+    }
+
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .gallery-item {
+      width: 150px;
+      height: 150px;
+      border: 2px solid #555;
+      border-radius: 5px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .gallery-item:hover {
+      transform: scale(1.05);
+    }
+
+    .preset-container {
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .preset-btn {
+      background-color: #2a3a55;
+      padding: 8px 15px;
+      font-size: 14px;
+    }
+    
+    #download {
+      background-color: #4a6da7;
+    }
+    
+    #download:hover {
+      background-color: #3a5d97;
+    }
+
+    #random {
+      background-color: #8f5ba6;
+    }
+    
+    #random:hover {
+      background-color: #7f4b96;
+    }
+
+    #animate {
+      background-color: #a65b5b;
+    }
+    
+    #animate:hover {
+      background-color: #964b4b;
+    }
+
+    /* Make more responsivity, for cleaner display */
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .parameter_input {
+        text-align: left;
+      }
+      
+      canvas {
+        max-width: 100%;
+        height: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="instructions">
-        <p>Instructions for Elderly Users:</p>
-        <p>- Click "Enter VR" to start (Meta Quest).</p>
-        <p>- Use thumbstick to move in VR.</p>
-        <p>- Point and press trigger to select hotspots.</p>
-        <p>- Click and drag (non-VR) to look around.</p>
-        <p>- Click yellow hotspots to enter rooms.</p>
+  <h1>Fractal Mandala Generator</h1>
+
+  <div class="tab-container">
+    <button class="tab active" onclick="openTab(event, 'basicTab')">Basic</button>
+    <button class="tab" onclick="openTab(event, 'advancedTab')">Advanced</button>
+    <button class="tab" onclick="openTab(event, 'themeTab')">Themes</button>
+  </div>
+
+  <div id="basicTab" class="tab-content active">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Number of radial segments</span>
+          <label for="segments">Segments</label>
+          <input type="range" id="segments" value="12" min="3" max="36" oninput="updateValue('segments')">
+          <span id="segments-value">12</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Recursion depth</span>
+          <label for="levels">Levels</label>
+          <input type="range" id="levels" value="4" min="1" max="8" oninput="updateValue('levels')">
+          <span id="levels-value">4</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Size reduction factor</span>
+          <label for="scaleFactor">Scale</label>
+          <input type="range" id="scaleFactor" value="0.5" min="0.1" max="0.9" step="0.05" oninput="updateValue('scaleFactor')">
+          <span id="scaleFactor-value">0.5</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Starting radius</span>
+          <label for="initialRadius">Radius</label>
+          <input type="range" id="initialRadius" value="100" min="10" max="200" oninput="updateValue('initialRadius')">
+          <span id="initialRadius-value">100</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Primary color</span>
+          <label for="lineColor">Color</label>
+          <input type="color" id="lineColor" value="#ffffff">
+        </div>
+      </div>
     </div>
-    <button id="vrButton">Enter VR</button>
+    
+    <div class="preset-container">
+      <button class="preset-btn" onclick="loadPreset('floral')">Floral</button>
+      <button class="preset-btn" onclick="loadPreset('star')">Star</button>
+      <button class="preset-btn" onclick="loadPreset('crystal')">Crystal</button>
+      <button class="preset-btn" onclick="loadPreset('cosmic')">Cosmic</button>
+    </div>
+  </div>
 
-    <script>
-        // Scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        document.body.appendChild(renderer.domElement);
+  <div id="advancedTab" class="tab-content">
+    <div class="control-panel">
+      <div class="controls">
+        <div class="parameter_input">
+          <span class="tooltip">Thickness of lines</span>
+          <label for="lineWidth">Line Width</label>
+          <input type="range" id="lineWidth" value="1" min="0.5" max="5" step="0.5" oninput="updateValue('lineWidth')">
+          <span id="lineWidth-value">1</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Rotation angle of the mandala</span>
+          <label for="rotation">Rotation</label>
+          <input type="range" id="rotation" value="0" min="0" max="360" oninput="updateValue('rotation')">
+          <span id="rotation-value">0°</span>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Style of line endings</span>
+          <label for="lineCap">Line Style</label>
+          <select id="lineCap">
+            <option value="round">Round</option>
+            <option value="butt">Flat</option>
+            <option value="square">Square</option>
+          </select>
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Secondary color for gradient</span>
+          <label for="secondaryColor">2nd Color</label>
+          <input type="color" id="secondaryColor" value="#ff6347">
+        </div>
+        <div class="parameter_input">
+          <span class="tooltip">Pattern variation</span>
+          <label for="patternType">Pattern</label>
+          <select id="patternType">
+            <option value="circles">Circles</option>
+            <option value="triangles">Triangles</option>
+            <option value="squares">Squares</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-        // Enable WebXR
-        renderer.xr.enabled = true;
+    <div class="animation-controls">
+      <button id="animate">Animate</button>
+      <select id="animationType">
+        <option value="rotate">Rotate</option>
+        <option value="pulse">Pulse</option>
+        <option value="evolve">Evolve</option>
+      </select>
+    </div>
+  </div>
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 1);
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 10, 5);
-        scene.add(directionalLight);
+  <div id="themeTab" class="tab-content">
+    <div class="control-panel">
+      <h3>Color Themes</h3>
+      <div class="color-palette">
+        <div class="color-option" style="background: linear-gradient(45deg, #ff6347, #ff8c69);" onclick="setColorTheme('#ff6347', '#ff8c69')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #4682b4, #87ceeb);" onclick="setColorTheme('#4682b4', '#87ceeb')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #9932cc, #da70d6);" onclick="setColorTheme('#9932cc', '#da70d6')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #3cb371, #98fb98);" onclick="setColorTheme('#3cb371', '#98fb98')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #ffd700, #ffffe0);" onclick="setColorTheme('#ffd700', '#ffffe0')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #ff4500, #ffa07a);" onclick="setColorTheme('#ff4500', '#ffa07a')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #00ced1, #afeeee);" onclick="setColorTheme('#00ced1', '#afeeee')"></div>
+        <div class="color-option" style="background: linear-gradient(45deg, #9400d3, #ee82ee);" onclick="setColorTheme('#9400d3', '#ee82ee')"></div>
+      </div>
 
-        // Ground plane
-        const groundGeometry = new THREE.PlaneGeometry(30, 30);
-        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x90ee90 });
-        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-        ground.rotation.x = -Math.PI / 2;
-        scene.add(ground);
+      <h3>Background Themes</h3>
+      <div class="theme-option" style="background-color: #121212;" onclick="setTheme('#121212', '#eee')"></div>
+      <div class="theme-option" style="background-color: #1a2639;" onclick="setTheme('#1a2639', '#eee')"></div>
+      <div class="theme-option" style="background-color: #231b1b;" onclick="setTheme('#231b1b', '#eee')"></div>
+      <div class="theme-option" style="background-color: #22333b;" onclick="setTheme('#22333b', '#eee')"></div>
+      <div class="theme-option" style="background-color: #f5f5f5;" onclick="setTheme('#f5f5f5', '#333')"></div>
+    </div>
+  </div>
 
-        // Function to create a room with walls and a door
-        function createRoom(x, y, z, width, height, depth, color, doorSide = 'front') {
-            const group = new THREE.Group();
-            const wallMaterial = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
-            
-            // Floor
-            const floorGeometry = new THREE.PlaneGeometry(width, depth);
-            const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            group.add(floor);
-            
-            // Back wall
-            const backWallGeometry = new THREE.PlaneGeometry(width, height);
-            const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
-            backWall.position.set(0, height / 2, depth / 2);
-            backWall.rotation.y = Math.PI;
-            group.add(backWall);
-            
-            // Left wall
-            const leftWallGeometry = new THREE.PlaneGeometry(depth, height);
-            const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
-            leftWall.position.set(-width / 2, height / 2, 0);
-            leftWall.rotation.y = Math.PI / 2;
-            group.add(leftWall);
-            
-            // Right wall
-            const rightWallGeometry = new THREE.PlaneGeometry(depth, height);
-            const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
-            rightWall.position.set(width / 2, height / 2, 0);
-            rightWall.rotation.y = -Math.PI / 2;
-            group.add(rightWall);
-            
-            // Front wall with door (fixed approach using separate wall segments)
-            if (doorSide === 'front') {
-                const doorWidth = width * 0.3;
-                const doorHeight = height * 0.7;
-                const doorPositionX = 0;
-                
-                // Top part of front wall
-                const topWallGeometry = new THREE.PlaneGeometry(width, height - doorHeight);
-                const topWall = new THREE.Mesh(topWallGeometry, wallMaterial);
-                topWall.position.set(0, height - (height - doorHeight) / 2, -depth / 2);
-                group.add(topWall);
-                
-                // Left part of front wall
-                const leftDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
-                const leftDoorWall = new THREE.Mesh(leftDoorWallGeometry, wallMaterial);
-                leftDoorWall.position.set(-doorWidth / 2 - (width - doorWidth) / 4, doorHeight / 2, -depth / 2);
-                group.add(leftDoorWall);
-                
-                // Right part of front wall
-                const rightDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
-                const rightDoorWall = new THREE.Mesh(rightDoorWallGeometry, wallMaterial);
-                rightDoorWall.position.set(doorWidth / 2 + (width - doorWidth) / 4, doorHeight / 2, -depth / 2);
-                group.add(rightDoorWall);
-            } else {
-                // No door, just a regular front wall
-                const frontWallGeometry = new THREE.PlaneGeometry(width, height);
-                const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
-                frontWall.position.set(0, height / 2, -depth / 2);
-                group.add(frontWall);
-            }
-            
-            group.position.set(x, y, z);
-            return group;
-        }
+  <div class="button-group">
+    <button id="generate">Generate</button>
+    <button id="random">Random</button>
+    <button id="download">Download</button>
+  </div>
 
-        // Ground Floor Structure
-        const groundFloor = new THREE.Group();
-        scene.add(groundFloor);
+  <canvas id="mandalaCanvas" width="600" height="600"></canvas>
 
-        const livingRoom = createRoom(-3, 0, 0, 4, 3, 3, 0xadd8e6, 'front');
-        groundFloor.add(livingRoom);
+  <script>
+    const canvas = document.getElementById('mandalaCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // For animation
+    let animationId = null;
+    let isAnimating = false;
+    let animationParams = {
+      angle: 0,
+      scale: 1,
+      evolution: 0
+    };
 
-        const kitchen = createRoom(2, 0, 0, 2, 3, 2, 0xf0e68c, 'front');
-        groundFloor.add(kitchen);
+    // Initialize
+    function init() {
+      document.getElementById('generate').addEventListener('click', generateMandala);
+      document.getElementById('random').addEventListener('click', randomizeMandala);
+      document.getElementById('download').addEventListener('click', downloadMandala);
+      document.getElementById('animate').addEventListener('click', toggleAnimation);
+      
+      // Update display values
+      updateValueDisplays();
+      
+      // Generate initial mandala
+      generateMandala();
+    }
 
-        const bedroom1 = createRoom(-3, 0, -4, 2, 3, 2, 0xffb6c1, 'front');
-        groundFloor.add(bedroom1);
+    function updateValueDisplays() {
+      document.getElementById('segments-value').textContent = document.getElementById('segments').value;
+      document.getElementById('levels-value').textContent = document.getElementById('levels').value;
+      document.getElementById('scaleFactor-value').textContent = document.getElementById('scaleFactor').value;
+      document.getElementById('initialRadius-value').textContent = document.getElementById('initialRadius').value;
+      document.getElementById('lineWidth-value').textContent = document.getElementById('lineWidth').value;
+      document.getElementById('rotation-value').textContent = document.getElementById('rotation').value + '°';
+    }
 
-        const bedroom2 = createRoom(0, 0, -4, 2, 3, 2, 0xffb6c1, 'front');
-        groundFloor.add(bedroom2);
+    function updateValue(id) {
+      document.getElementById(id + '-value').textContent = id === 'rotation' 
+        ? document.getElementById(id).value + '°' 
+        : document.getElementById(id).value;
+      
+      if (!isAnimating) {
+        generateMandala();
+      }
+    }
 
-        const bathroom = createRoom(3, 0, -4, 1.5, 3, 1.5, 0x87cefa, 'front');
-        groundFloor.add(bathroom);
+    function generateMandala() {
+      const numSegments = parseInt(document.getElementById('segments').value);
+      const levels = parseInt(document.getElementById('levels').value);
+      const scaleFactor = parseFloat(document.getElementById('scaleFactor').value);
+      const initialRadius = parseInt(document.getElementById('initialRadius').value);
+      const lineColor = document.getElementById('lineColor').value;
+      const secondaryColor = document.getElementById('secondaryColor').value;
+      const lineWidth = parseFloat(document.getElementById('lineWidth').value);
+      const rotation = parseInt(document.getElementById('rotation').value) * Math.PI / 180;
+      const lineCap = document.getElementById('lineCap').value;
+      const patternType = document.getElementById('patternType').value;
 
-        // First Floor Structure
-        const firstFloor = new THREE.Group();
-        scene.add(firstFloor);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        const bedroom3 = createRoom(-2, 3, 0, 2, 3, 2, 0xffb6c1, 'front');
-        firstFloor.add(bedroom3);
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
 
-        const bathroom2 = createRoom(1, 3, 0, 1.5, 3, 1.5, 0x87cefa, 'front');
-        firstFloor.add(bathroom2);
+      // Apply global rotation to canvas
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(rotation);
+      ctx.translate(-centerX, -centerY);
 
-        // Pool Area
-        const poolGeometry = new THREE.BoxGeometry(5, 0.5, 10);
-        const poolMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-        const pool = new THREE.Mesh(poolGeometry, poolMaterial);
-        pool.position.set(0, 0.25, -12);
-        scene.add(pool);
-
-        // Hotspots
-        const hotspotGeometry = new THREE.CircleGeometry(0.2, 32);
-        const hotspotMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xffff00,
-            emissive: 0xffff00,
-            emissiveIntensity: 0.5
-        });
-
-        // Function to create a hotspot
-        function createHotspot(x, y, z, target, enterPos) {
-            const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
-            hotspot.position.set(x, y, z);
-            hotspot.rotation.x = -Math.PI / 2; // Make it face up
-            hotspot.userData = { 
-                target: target, 
-                enterPos: enterPos,
-                isHotspot: true // Flag for easy identification
-            };
-            scene.add(hotspot);
-            return hotspot;
-        }
-
-        // Create all hotspots
-        const livingRoomHotspot = createHotspot(-3, 0.1, -1.5, 'livingRoom', new THREE.Vector3(-3, 1.6, -0.5));
-        const kitchenHotspot = createHotspot(2, 0.1, -1, 'kitchen', new THREE.Vector3(2, 1.6, -0.5));
-        const backHotspot = createHotspot(0, 0.1, -5, 'main', new THREE.Vector3(0, 1.6, 5));
-        backHotspot.visible = false;
-
-        const bedroom1Hotspot = createHotspot(-3, 0.1, -4, 'bedroom1', new THREE.Vector3(-3, 1.6, -3));
-        const bedroom2Hotspot = createHotspot(0, 0.1, -4, 'bedroom2', new THREE.Vector3(0, 1.6, -3));
-        const bathroomHotspot = createHotspot(3, 0.1, -4, 'bathroom', new THREE.Vector3(3, 1.6, -3));
-        const poolHotspot = createHotspot(0, 0.1, -9, 'pool', new THREE.Vector3(0, 1.6, -9));
-
-        // Collection of all hotspots for raycasting
-        const allHotspots = [
-            livingRoomHotspot, kitchenHotspot, backHotspot, 
-            bedroom1Hotspot, bedroom2Hotspot, bathroomHotspot, poolHotspot
-        ];
-
-        // Function to handle hotspot selection
-        function selectHotspot(hotspot) {
-            if (!hotspot || !hotspot.userData.isHotspot) return;
-            
-            const target = hotspot.userData.target;
-            camera.position.copy(hotspot.userData.enterPos);
-            
-            // Toggle hotspot visibility based on location
-            if (target === 'livingRoom' || target === 'kitchen') {
-                livingRoomHotspot.visible = false;
-                kitchenHotspot.visible = false;
-                backHotspot.visible = true;
-                backHotspot.position.set(hotspot.position.x, 0.1, hotspot.position.z + 1);
-            } else if (target === 'main') {
-                livingRoomHotspot.visible = true;
-                kitchenHotspot.visible = true;
-                backHotspot.visible = false;
-            }
-        }
-
-        // Initial camera position
-        camera.position.set(0, 1.6, 5);
-
-        // Raycaster for clicking hotspots (non-VR mode)
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-
-        // Basic mouse controls for looking around (non-VR)
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-
-        function onMouseDown(event) {
-            isDragging = true;
-            previousMousePosition = { x: event.clientX, y: event.clientY };
-        }
-
-        function onMouseMove(event) {
-            if (isDragging && !renderer.xr.isPresenting) {
-                const deltaX = event.clientX - previousMousePosition.x;
-                const deltaY = event.clientY - previousMousePosition.y;
-
-                camera.rotation.y -= deltaX * 0.005;
-                camera.rotation.x -= deltaY * 0.005;
-                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
-
-                previousMousePosition = { x: event.clientX, y: event.clientY };
-            }
-        }
-
-        function onMouseUp(event) {
-            isDragging = false;
-            if (!renderer.xr.isPresenting) {
-                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects(allHotspots);
-
-                if (intersects.length > 0) {
-                    selectHotspot(intersects[0].object);
-                }
-            }
-        }
-
-        window.addEventListener('mousedown', onMouseDown, false);
-        window.addEventListener('mousemove', onMouseMove, false);
-        window.addEventListener('mouseup', onMouseUp, false);
-
-        // VR Button setup
-        const vrButton = document.getElementById('vrButton');
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then((supported) => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
-            });
-
-            vrButton.addEventListener('click', () => {
-                if (!renderer.xr.isPresenting) {
-                    renderer.xr.enabled = true;
-                    navigator.xr.requestSession('immersive-vr', {
-                        optionalFeatures: ['local-floor', 'bounded-floor']
-                    }).then((session) => {
-                        renderer.xr.setSession(session);
-                        vrButton.textContent = 'Exit VR';
-                        
-                        session.addEventListener('end', () => {
-                            vrButton.textContent = 'Enter VR';
-                        });
-                    });
-                } else {
-                    renderer.xr.getSession().end();
-                }
-            });
-        } else {
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR Not Supported';
-        }
-
-        // Controller setup for VR
-        let controller1, controller2;
+      function drawRecursiveShape(x, y, radius, level) {
+        if (level > levels) return;
         
-        function setupVRControllers() {
-            // Controller 1 for interaction
-            controller1 = renderer.xr.getController(0);
-            controller1.addEventListener('selectstart', onSelectStart);
-            controller1.addEventListener('selectend', onSelectEnd);
-            scene.add(controller1);
-            
-            // Controller 2 for movement (second hand)
-            controller2 = renderer.xr.getController(1);
-            scene.add(controller2);
-            
-            // Visualize controllers with simple objects
-            const controllerGeometry = new THREE.CylinderGeometry(0.01, 0.02, 0.08, 16);
-            controllerGeometry.rotateX(-Math.PI / 2);
-            const controllerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            
-            const controllerMesh1 = new THREE.Mesh(controllerGeometry, controllerMaterial);
-            controllerMesh1.position.set(0, 0, -0.05);
-            controller1.add(controllerMesh1);
-            
-            const controllerMesh2 = new THREE.Mesh(controllerGeometry, controllerMaterial);
-            controllerMesh2.position.set(0, 0, -0.05);
-            controller2.add(controllerMesh2);
-            
-            // Add raycaster line for visual feedback
-            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, -5)
-            ]);
-            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-            const line = new THREE.Line(lineGeometry, lineMaterial);
-            controller1.add(line);
+        // Create gradient
+        const gradient = ctx.createLinearGradient(
+          centerX - radius, centerY - radius, 
+          centerX + radius, centerY + radius
+        );
+        gradient.addColorStop(0, lineColor);
+        gradient.addColorStop(1, secondaryColor);
+        
+        ctx.lineWidth = lineWidth * (1 - (level-1) / levels * 0.5); // Slightly thinner lines for deeper levels
+        ctx.lineCap = lineCap;
+        
+        // Choose shape based on pattern type and level
+        let shape = patternType;
+        if (patternType === 'mixed') {
+          const shapes = ['circles', 'triangles', 'squares'];
+          shape = shapes[level % shapes.length];
         }
         
-        setupVRControllers();
-        
-        // VR controller interaction
-        const tempMatrix = new THREE.Matrix4();
-        const vrRaycaster = new THREE.Raycaster();
-        
-        function onSelectStart(event) {
-            const controller = event.target;
-            
-            // Get controller position and direction
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
-            vrRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-            
-            // Check for intersections with hotspots
-            const intersects = vrRaycaster.intersectObjects(allHotspots);
-            
-            if (intersects.length > 0) {
-                selectHotspot(intersects[0].object);
-            }
-        }
-        
-        function onSelectEnd() {
-            // Optional: Add visual feedback when selection ends
+        switch (shape) {
+          case 'triangles':
+            drawTriangle(x, y, radius, gradient);
+            break;
+          case 'squares':
+            drawSquare(x, y, radius, gradient);
+            break;
+          default: // circles
+            drawCircle(x, y, radius, gradient);
         }
 
-        // Movement variables
-        const moveSpeed = 0.05;
-        let moveDirection = new THREE.Vector3();
-        
-        // Animation loop with controller movement
-        function animate() {
-            renderer.setAnimationLoop(() => {
-                if (renderer.xr.isPresenting) {
-                    // Handle VR movement via controllers
-                    if (controller2) {
-                        const gamepad = navigator.getGamepads().find(gp => 
-                            gp && gp.id && gp.id.includes('Oculus Touch') && 
-                            gp.index === controller2.userData.gamepadIndex
-                        );
-                        
-                        if (gamepad && gamepad.axes.length >= 4) {
-                            const thumbstickX = gamepad.axes[2]; // Right thumbstick X-axis (Meta Quest)
-                            const thumbstickY = gamepad.axes[3]; // Right thumbstick Y-axis
-                            
-                            if (Math.abs(thumbstickX) > 0.1 || Math.abs(thumbstickY) > 0.1) {
-                                moveDirection.set(thumbstickX, 0, thumbstickY).normalize();
-                                
-                                // Get camera direction for movement relative to view
-                                const xrCamera = renderer.xr.getCamera(camera);
-                                const cameraDirection = new THREE.Vector3();
-                                xrCamera.getWorldDirection(cameraDirection);
-                                cameraDirection.y = 0; // Keep movement horizontal
-                                cameraDirection.normalize();
-                                
-                                // Calculate movement vector
-                                const moveVector = new THREE.Vector3();
-                                moveVector.addScaledVector(cameraDirection, -thumbstickY * moveSpeed);
-                                moveVector.addScaledVector(
-                                    new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection),
-                                    thumbstickX * moveSpeed
-                                );
-                                
-                                // Apply movement
-                                camera.position.add(moveVector);
-                                camera.position.y = 1.6; // Lock height to eye level
-                            }
-                        }
-                    }
-                    
-                    // Visual feedback for VR interaction
-                    if (controller1) {
-                        tempMatrix.identity().extractRotation(controller1.matrixWorld);
-                        vrRaycaster.ray.origin.setFromMatrixPosition(controller1.matrixWorld);
-                        vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-                        
-                        const intersects = vrRaycaster.intersectObjects(allHotspots);
-                        
-                        // Update controller line color based on intersection
-                        const line = controller1.children.find(child => child instanceof THREE.Line);
-                        if (line) {
-                            line.material.color.set(intersects.length > 0 ? 0x00ff00 : 0xff0000);
-                        }
-                    }
-                }
-                
-                renderer.render(scene, camera);
-            });
+        // Recursive step with smaller radius
+        drawRecursiveShape(x, y, radius * scaleFactor, level + 1);
+      }
+
+      function drawCircle(x, y, radius, gradient) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = gradient;
+        ctx.stroke();
+      }
+
+      function drawTriangle(x, y, radius, gradient) {
+        const sides = 3;
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+          const angle = (i / sides) * 2 * Math.PI;
+          const pointX = x + radius * Math.cos(angle);
+          const pointY = y + radius * Math.sin(angle);
+          
+          if (i === 0) {
+            ctx.moveTo(pointX, pointY);
+          } else {
+            ctx.lineTo(pointX, pointY);
+          }
         }
+        ctx.closePath();
+        ctx.strokeStyle = gradient;
+        ctx.stroke();
+      }
+
+      function drawSquare(x, y, radius, gradient) {
+        const size = radius * 1.8; // Adjust for visual balance
+        ctx.beginPath();
+        ctx.rect(x - size/2, y - size/2, size, size);
+        ctx.strokeStyle = gradient;
+        ctx.stroke();
+      }
+
+      // Draw segments
+      for (let i = 0; i < numSegments; i++) {
+        const angle = (i / numSegments) * 2 * Math.PI;
+        const x = centerX + initialRadius * Math.cos(angle);
+        const y = centerY + initialRadius * Math.sin(angle);
         
+        drawRecursiveShape(x, y, initialRadius * scaleFactor, 1);
+      }
+      
+      ctx.restore();
+    }
+
+    function randomizeMandala() {
+      // Set random values for all parameters
+      document.getElementById('segments').value = Math.floor(Math.random() * 33) + 3; // 3-36
+      document.getElementById('levels').value = Math.floor(Math.random() * 7) + 1; // 1-8
+      document.getElementById('scaleFactor').value = (Math.random() * 0.8 + 0.1).toFixed(2); // 0.1-0.9
+      document.getElementById('initialRadius').value = Math.floor(Math.random() * 190) + 10; // 10-200
+      document.getElementById('lineWidth').value = (Math.random() * 4.5 + 0.5).toFixed(1); // 0.5-5
+      document.getElementById('rotation').value = Math.floor(Math.random() * 360); // 0-360
+      
+      // Random colors
+      document.getElementById('lineColor').value = randomColor();
+      document.getElementById('secondaryColor').value = randomColor();
+      
+      // Random pattern
+      const patterns = ['circles', 'triangles', 'squares', 'mixed'];
+      document.getElementById('patternType').value = patterns[Math.floor(Math.random() * patterns.length)];
+      
+      // Random line cap
+      const caps = ['round', 'butt', 'square'];
+      document.getElementById('lineCap').value = caps[Math.floor(Math.random() * caps.length)];
+      
+      // Update displays and generate
+      updateValueDisplays();
+      generateMandala();
+    }
+
+    function randomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function downloadMandala() {
+      const link = document.createElement('a');
+      link.download = 'fractal-mandala.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    function toggleAnimation() {
+      const animationType = document.getElementById('animationType').value;
+      
+      if (isAnimating) {
+        // Stop animation
+        cancelAnimationFrame(animationId);
+        document.getElementById('animate').textContent = 'Animate';
+        isAnimating = false;
+      } else {
+        // Start animation
+        document.getElementById('animate').textContent = 'Stop';
+        isAnimating = true;
+        animationParams = { angle: 0, scale: 1, evolution: 0 };
+        
+        // Define animation function
+        const animate = () => {
+          switch (animationType) {
+            case 'rotate':
+              animateRotation();
+              break;
+            case 'pulse':
+              animatePulse();
+              break;
+            case 'evolve':
+              animateEvolution();
+              break;
+          }
+          
+          if (isAnimating) {
+            animationId = requestAnimationFrame(animate);
+          }
+        };
+        
+        // Start animation loop
         animate();
+      }
+    }
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+    function animateRotation() {
+      document.getElementById('rotation').value = 
+        (parseInt(document.getElementById('rotation').value) + 1) % 360;
+      document.getElementById('rotation-value').textContent = 
+        document.getElementById('rotation').value + '°';
+      generateMandala();
+    }
 
-        // Store gamepad index when controller connects
-        function handleControllerConnected(event, controllerIndex) {
-            event.target.userData.gamepadIndex = event.data.gamepad.index;
-        }
-        
-        if (controller1) {
-            controller1.addEventListener('connected', (event) => handleControllerConnected(event, 0));
-        }
-        
-        if (controller2) {
-            controller2.addEventListener('connected', (event) => handleControllerConnected(event, 1));
-        }
-    </script>
+    function animatePulse() {
+      animationParams.scale = 0.95 + Math.sin(animationParams.angle) * 0.05;
+      animationParams.angle += 0.05;
+      
+      const currentRadius = parseInt(document.getElementById('initialRadius').value);
+      const baseRadius = 100;
+      const newRadius = Math.floor(baseRadius * animationParams.scale);
+      
+      document.getElementById('initialRadius').value = newRadius;
+      document.getElementById('initialRadius-value').textContent = newRadius;
+      
+      generateMandala();
+    }
+
+    function animateEvolution() {
+      animationParams.evolution += 0.01;
+      
+      // Slowly change scale factor
+      const scaleFactor = 0.3 + 0.4 * Math.sin(animationParams.evolution * 0.5);
+      document.getElementById('scaleFactor').value = scaleFactor.toFixed(2);
+      document.getElementById('scaleFactor-value').textContent = scaleFactor.toFixed(2);
+      
+      // Slightly change segments periodically
+      if (Math.floor(animationParams.evolution * 10) % 20 === 0) {
+        const segments = parseInt(document.getElementById('segments').value);
+        document.getElementById('segments').value = 
+          ((segments + 1) > 36) ? 3 : segments + 1;
+        document.getElementById('segments-value').textContent = 
+          document.getElementById('segments').value;
+      }
+      
+      generateMandala();
+    }
+
+    function loadPreset(type) {
+      switch(type) {
+        case 'floral':
+          document.getElementById('segments').value = 8;
+          document.getElementById('levels').value = 5;
+          document.getElementById('scaleFactor').value = 0.7;
+          document.getElementById('initialRadius').value = 130;
+          document.getElementById('lineWidth').value = 1.5;
+          document.getElementById('rotation').value = 25;
+          document.getElementById('lineColor').value = '#ff7eb9';
+          document.getElementById('secondaryColor').value = '#7afcff';
+          document.getElementById('patternType').value = 'circles';
+          document.getElementById('lineCap').value = 'round';
+          break;
+        case 'star':
+          document.getElementById('segments').value = 12;
+          document.getElementById('levels').value = 3;
+          document.getElementById('scaleFactor').value = 0.55;
+          document.getElementById('initialRadius').value = 150;
+          document.getElementById('lineWidth').value = 2;
+          document.getElementById('rotation').value = 15;
+          document.getElementById('lineColor').value = '#ffd700';
+          document.getElementById('secondaryColor').value = '#ff4500';
+          document.getElementById('patternType').value = 'triangles';
+          document.getElementById('lineCap').value = 'butt';
+          break;
+        case 'crystal':
+          document.getElementById('segments').value = 6;
+          document.getElementById('levels').value = 7;
+          document.getElementById('scaleFactor').value = 0.6;
+          document.getElementById('initialRadius').value = 120;
+          document.getElementById('lineWidth').value = 1;
+          document.getElementById('rotation').value = 30;
+          document.getElementById('lineColor').value = '#00ffff';
+          document.getElementById('secondaryColor').value = '#4169e1';
+          document.getElementById('patternType').value = 'squares';
+          document.getElementById('lineCap').value = 'square';
+          break;
+        case 'cosmic':
+          document.getElementById('segments').value = 24;
+          document.getElementById('levels').value = 4;
+          document.getElementById('scaleFactor').value = 0.4;
+          document.getElementById('initialRadius').value = 140;
+          document.getElementById('lineWidth').value = 1.5;
+          document.getElementById('rotation').value = 0;
+          document.getElementById('lineColor').value = '#9400d3';
+          document.getElementById('secondaryColor').value = '#ff1493';
+          document.getElementById('patternType').value = 'mixed';
+          document.getElementById('lineCap').value = 'round';
+          break;
+      }
+      
+      updateValueDisplays();
+      generateMandala();
+    }
+
+    function setColorTheme(primary, secondary) {
+      document.getElementById('lineColor').value = primary;
+      document.getElementById('secondaryColor').value = secondary;
+      generateMandala();
+    }
+
+    function setTheme(bg, text) {
+      document.body.style.backgroundColor = bg;
+      document.body.style.color = text;
+      generateMandala();
+    }
+
+    function openTab(evt, tabName) {
+      const tabcontent = document.getElementsByClassName("tab-content");
+      for (let i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+      }
+      
+      const tablinks = document.getElementsByClassName("tab");
+      for (let i = 0; i < tablinks.length; i++) {
+        tablinks[i].classList.remove("active");
+      }
+      
+      document.getElementById(tabName).classList.add("active");
+      evt.currentTarget.classList.add("active");
+    }
+
+    // Initialize on load
+    window.onload = init;
+  </script>
 </body>
 </html>
