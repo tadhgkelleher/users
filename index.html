@@ -3,121 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architectural Plan Representation</title>
+    <title>VR House Tour for Elderly</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script> <!-- For animations -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
-        .container {
+        a-scene {
+            height: 100vh;
+        }
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 20px;
+            z-index: 10;
+        }
+        .loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #333;
+            color: white;
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
             justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            z-index: 20;
         }
-        .floor-plan, .elevation {
-            border: 2px solid #000;
-            background-color: #fff;
-            padding: 10px;
-            position: relative;
-        }
-        .floor-plan {
-            width: 1050px; /* 10.5m x 100px/m */
-            height: 1000px; /* 10m x 100px/m */
-        }
-        .first-floor {
-            width: 1000px; /* 10m x 100px/m */
-            height: 570px; /* 5.7m x 100px/m */
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(255, 255, 255, 0.7);
-        }
-        .room {
-            position: absolute;
-            border: 2px solid #ff0000;
-            background-color: #ddd;
-        }
-        /* Ground Floor Rooms (Approximate Positions) */
-        .living-room { top: 50px; left: 50px; width: 400px; height: 300px; }
-        .kitchen { top: 50px; left: 500px; width: 200px; height: 200px; }
-        .bedroom1 { top: 400px; left: 50px; width: 200px; height: 200px; }
-        .bedroom2 { top: 400px; left: 300px; width: 200px; height: 200px; }
-        .bathroom { top: 400px; left: 550px; width: 150px; height: 150px; }
-        /* First Floor Rooms (Approximate Positions) */
-        .bedroom3 { top: 10px; left: 10px; width: 200px; height: 200px; }
-        .bathroom2 { top: 10px; left: 250px; width: 150px; height: 150px; }
-        .pool {
-            position: absolute;
-            top: 1000px; /* Below ground floor */
-            left: 0;
-            width: 500px; /* 5m x 100px/m */
-            height: 1000px; /* 10m x 100px/m */
-            background-color: #00ffff;
-            border: 2px solid #0000ff;
-        }
-        .elevation {
-            width: 1050px;
-            height: 600px; /* 6m x 100px/m */
-        }
-        .wall {
-            position: absolute;
-            background-color: #ccc;
-            border: 1px solid #000;
-        }
-        .roof {
-            position: absolute;
-            background-color: #666;
-            top: 0;
-            width: 1050px;
-            height: 200px;
-            clip-path: polygon(0 100%, 50% 0, 100% 100%);
-        }
-        .window { 
-            position: absolute; 
-            background-color: #87ceeb; 
-            border: 1px solid #000; 
-        }
-        .door { 
-            position: absolute; 
-            background-color: #8b4513; 
-            border: 1px solid #000; 
-        }
-        /* Elevation Example (South West) */
-        .elevation .wall { width: 1050px; height: 400px; }
-        .elevation .roof { top: 400px; }
-        .elevation .window { top: 100px; left: 200px; width: 100px; height: 100px; }
-        .elevation .door { top: 200px; left: 400px; width: 80px; height: 150px; }
     </style>
 </head>
 <body>
-    <h1>Architectural Plan Representation</h1>
-    <div class="container">
-        <!-- Ground Floor Plan -->
-        <div class="floor-plan">
-            <div class="room living-room">Living Room</div>
-            <div class="room kitchen">Kitchen</div>
-            <div class="room bedroom1">Bedroom 1</div>
-            <div class="room bedroom2">Bedroom 2</div>
-            <div class="room bathroom">Bathroom</div>
-            <div class="first-floor">
-                <div class="room bedroom3">Bedroom 3</div>
-                <div class="room bathroom2">Bathroom 2</div>
-            </div>
-            <div class="pool">Pool</div>
-            <p>Ground Floor Area: 110 m²</p>
-            <p>First Floor Area: 57 m²</p>
-        </div>
+    <div class="loading-screen" id="loading">Loading your VR House Tour...</div>
 
-        <!-- Elevation View (South West) -->
-        <div class="elevation">
-            <div class="wall"></div>
-            <div class="roof"></div>
-            <div class="window"></div>
-            <div class="door"></div>
-            <p>South West Elevation (Height: 6m)</p>
-        </div>
+    <div class="instructions">
+        <p>Instructions for Elderly Users:</p>
+        <p>- Use your VR headset or mouse to look around.</p>
+        <p>- Click or gaze at yellow hotspots to visit rooms.</p>
+        <p>- Sit back, relax, and enjoy the tour!</p>
     </div>
+
+    <a-scene id="main-scene" loading-screen="dotsColor: white; backgroundColor: #333">
+        <!-- Assets for textures and sounds -->
+        <a-assets>
+            <img id="wood" src="https://cdn.aframe.io/textures/wood.jpg">
+            <img id="tiles" src="https://cdn.aframe.io/textures/tiles.jpg">
+            <img id="sky" src="https://cdn.aframe.io/360-image-samples/sky.jpg">
+            <audio id="click-sound" src="https://cdn.aframe.io/sounds/click.mp3"></audio>
+            <audio id="welcome-voice" src="https://cdn.aframe.io/sounds/welcome.mp3" preload="auto"></audio>
+        </a-assets>
+
+        <!-- Sky and Ground -->
+        <a-sky src="#sky" animation="property: rotation; to: 0 360 0; dur: 30000; loop: true"></a-sky>
+        <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" material="src: #tiles; repeat: 10 10" shadow></a-plane>
+
+        <!-- Lighting -->
+        <a-entity light="type: ambient; intensity: 0.6"></a-entity>
+        <a-entity light="type: directional; intensity: 0.8" position="5 10 5" shadow></a-entity>
+
+        <!-- Ground Floor Structure (10.5m x 10m) -->
+        <a-box position="0 1.5 -5" width="10.5" height="3" depth="10" material="src: #wood; color: #deb887" shadow>
+            <!-- Living Room -->
+            <a-box position="-3 1.5 0" width="4" height="3" depth="3" material="color: #add8e6" shadow>
+                <a-text value="Living Room" color="black" position="0 1.6 0" align="center" width="3" scale="1.2 1.2 1.2"></a-text>
+                <a-entity geometry="primitive: box" position="0 0.5 -1" scale="0.5 0.5 0.5" material="color: #8b4513" shadow></a-entity> <!-- Sofa -->
+                <a-cylinder position="0 0 -1.5" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#living-room-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            </a-box>
+            <!-- Kitchen -->
+            <a-box position="2 1.5 0" width="2" height="3" depth="2" material="color: #f0e68c" shadow>
+                <a-text value="Kitchen" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
+                <a-cylinder position="0 0 -1" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#kitchen-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            </a-box>
+            <!-- Bedroom 1 -->
+            <a-box position="-3 1.5 -4" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
+                <a-text value="Bedroom 1" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
+            </a-box>
+            <!-- Bedroom 2 -->
+            <a-box position="0 1.5 -4" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
+                <a-text value="Bedroom 2" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
+            </a-box>
+            <!-- Bathroom -->
+            <a-box position="3 1.5 -4" width="1.5" height="3" depth="1.5" material="color: #87cefa" shadow>
+                <a-text value="Bathroom" color="black" position="0 1.6 0" align="center" width="1.5" scale="1.2 1.2 1.2"></a-text>
+            </a-box>
+        </a-box>
+
+        <!-- First Floor Structure (10m x 5.7m) -->
+        <a-box position="0 4.5 -2.85" width="10" height="3" depth="5.7" material="src: #wood; color: #d3d3d3" shadow>
+            <!-- Bedroom 3 -->
+            <a-box position="-2 1.5 0" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
+                <a-text value="Bedroom 3" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
+            </a-box>
+            <!-- Bathroom 2 -->
+            <a-box position="1 1.5 0" width="1.5" height="3" depth="1.5" material="color: #87cefa" shadow>
+                <a-text value="Bathroom 2" color="black" position="0 1.6 0" align="center" width="1.5" scale="1.2 1.2 1.2"></a-text>
+            </a-box>
+        </a-box>
+
+        <!-- Pool Area (5m x 10m) -->
+        <a-box position="0 0.5 -12" width="5" height="0.5" depth="10" material="color: #00ffff; opacity: 0.8" shadow>
+            <a-text value="Pool" color="black" position="0 0.6 0" align="center" width="5" scale="1.2 1.2 1.2"></a-text>
+        </a-box>
+
+        <!-- Detail Views -->
+        <a-entity id="living-room-detail" visible="false">
+            <a-sky material="color: #add8e6"></a-sky>
+            <a-plane position="0 0 -5" rotation="-90 0 0" width="10" height="10" material="color: #add8e6"></a-plane>
+            <a-text value="Welcome to the Living Room!\nRelax and enjoy the cozy space." color="black" position="0 2 -5" align="center" width="5" scale="1.5 1.5 1.5"></a-text>
+            <a-entity geometry="primitive: box" position="0 0.5 -4" scale="1 0.5 1" material="color: #8b4513" shadow></a-entity> <!-- Sofa -->
+            <a-cylinder position="0 0 -6" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+        </a-entity>
+
+        <a-entity id="kitchen-detail" visible="false">
+            <a-sky material="color: #f0e68c"></a-sky>
+            <a-plane position="0 0 -5" rotation="-90 0 0" width="10" height="10" material="color: #f0e68c"></a-plane>
+            <a-text value="Welcome to the Kitchen!\nA cozy place to cook and eat." color="black" position="0 2 -5" align="center" width="5" scale="1.5 1.5 1.5"></a-text>
+            <a-entity geometry="primitive: box" position="0 0.5 -4" scale="0.8 0.8 0.8" material="color: #a52a2a" shadow></a-entity> <!-- Table -->
+            <a-cylinder position="0 0 -6" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+        </a-entity>
+
+        <!-- Camera and Controls -->
+        <a-camera position="0 1.6 5" wasd-controls="enabled: false" look-controls>
+            <a-cursor color="red" fuse="true" fuse-timeout="1000" animation="property: scale; to: 0.5 0.5 0.5; dur: 500; loop: true; dir: alternate"></a-cursor>
+        </a-camera>
+
+        <!-- JavaScript for Hotspot Navigation and Enhancements -->
+        <script>
+            AFRAME.registerComponent('hotspot', {
+                schema: { target: { type: 'string' } },
+                init: function () {
+                    const el = this.el;
+                    el.addEventListener('click', () => {
+                        const target = document.querySelector(this.data.target);
+                        if (target) {
+                            document.querySelectorAll('a-entity').forEach(entity => entity.setAttribute('visible', false));
+                            target.setAttribute('visible', true);
+                            if (this.data.target === '#main-scene') {
+                                document.querySelector('a-scene').setAttribute('visible', true);
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Remove loading screen when scene is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                const scene = document.querySelector('a-scene');
+                scene.addEventListener('loaded', () => {
+                    document.getElementById('loading').style.display = 'none';
+                    // Play welcome voice (replace with actual audio file URL)
+                    const welcomeSound = document.getElementById('welcome-voice');
+                    if (welcomeSound) welcomeSound.play();
+                });
+            });
+        </script>
+    </a-scene>
 </body>
 </html>
