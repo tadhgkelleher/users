@@ -252,32 +252,38 @@
           voiceAnalyser.smoothingTimeConstant = 0.9;
           source.connect(voiceAnalyser);
 
-          const bufferLength = voiceAnalyser.fftSize;
-          const dataArray = new Float32Array(bufferLength);
+          // Dummy node to keep context alive
+          const dummyOsc = audioContext.createOscillator();
+          dummyOsc.frequency.value = 0;
+          dummyOsc.connect(audioContext.destination);
+          dummyOsc.start();
 
-          function detectPitch() {
-            voiceAnalyser.getFloatTimeDomainData(dataArray);
-            const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-            const rawAmplitude = getAmplitude(dataArray);
-
-            if (pitch !== -1) voicePitch = pitch;
-            else voicePitch = 0;
-
-            smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-            chaosFactor = Math.min(1, smoothedAmplitude * 2);
-            updateVoiceParams();
-            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
-            updateSoundMeter();
-            console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`);
-            requestAnimationFrame(detectPitch);
-          }
-          detectPitch();
+          console.log('Voice initialized successfully');
           voiceInitialized = true;
         })
         .catch(e => {
           console.error('Voice control failed:', e);
           setTimeout(initVoiceControl, 1000);
         });
+    }
+
+    function updateVoice() {
+      if (!voiceInitialized || !voiceAnalyser) return;
+      const bufferLength = voiceAnalyser.fftSize;
+      const dataArray = new Float32Array(bufferLength);
+      voiceAnalyser.getFloatTimeDomainData(dataArray);
+      const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+      const rawAmplitude = getAmplitude(dataArray);
+
+      if (pitch !== -1) voicePitch = pitch;
+      else voicePitch = 0;
+
+      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
+      chaosFactor = Math.min(1, smoothedAmplitude * 2);
+      params.segments = Math.round(6 + (voicePitch / 200) * 18);
+      params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
+      updateSoundMeter();
+      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`);
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -316,10 +322,6 @@
       return Math.min(1, sum / buf.length / 0.3);
     }
 
-    function updateVoiceParams() {
-      params.segments = Math.round(6 + (voicePitch / 200) * 18); // 6 to 24
-    }
-
     function updateSoundMeter() {
       const amplitudePercent = Math.round(smoothedAmplitude * 100);
       document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
@@ -347,7 +349,7 @@
       const meterGeometry = new THREE.BoxGeometry(2, 0.2, 0.2);
       const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
       voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
-      voiceMeter.position.set(0, -5, -5);
+      voiceMeter.position.set(0, -6, -5); // Lower in view
       mandalaGroup.add(voiceMeter);
 
       updateVRMandala();
@@ -447,12 +449,8 @@
       mandalaGroup.rotation.z = totalRotation;
 
       // Update Voice Meter
-      const meterGeometry = new THREE.BoxGeometry(2 * smoothedAmplitude, 0.2, 0.2);
-      const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
-      voiceMeter.geometry.dispose();
-      voiceMeter.geometry = meterGeometry;
-      voiceMeter.material = meterMaterial;
-      voiceMeter.position.set(0, -5, -5);
+      voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2); // Scale width
+      voiceMeter.position.set(0, -6, -5);
       mandalaGroup.add(voiceMeter);
 
       console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
@@ -462,7 +460,7 @@
     function animateVR(time) {
       totalRotation += rotationSpeed;
       timeFactor += chaosFactor * 0.005 + 0.001;
-      updateVoiceParams();
+      updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
     }
@@ -566,7 +564,7 @@
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
       timeFactor += chaosFactor * 0.005 + 0.001;
-      updateVoiceParams();
+      updateVoice();
       generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
@@ -577,11 +575,18 @@
 
     function init() {
       console.log('Initializing Cosmic Weaver...');
-      document.getElementById('settings').addEventListener('click', showSettingsModal);
-      document.getElementById('drone').addEventListener('click', toggleDrone);
+      document.getElementById('settings').addEventListener('click', () => {
+        initAudio(); // Resume audio on interaction
+        showSettingsModal();
+      });
+      document.getElementById('drone').addEventListener('click', () => {
+        initAudio(); // Resume audio on interaction
+        toggleDrone();
+      });
+      document.getElementById('enterVR').addEventListener('click', initAudio); // Resume audio on VR entry
       initVoiceControl();
       initVR();
-      animate(); // Start 2D animation
+      animate();
     }
 
     window.onload = () => {
