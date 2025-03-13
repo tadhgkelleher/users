@@ -3,56 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Weaver: Echoes of the Infinite Abyss</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
+  <title>Techno Buddha: Pulse of the Infinite Void</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
-    /* Resetting default styles for consistency */
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%; /* Crucial for full-height layout */
-    }
-
     body {
       font-family: 'Orbitron', sans-serif;
       text-align: center;
-      background: radial-gradient(circle, #000022, #1a0033, #330066);
-      color: #e6ccff;
+      background: radial-gradient(circle, #0a0015, #1a0033, #4d0099);
+      color: #ffd700;
+      margin: 0;
+      padding: 0;
       min-height: 100vh;
-      overflow: hidden; /* Prevents scrollbars */
+      overflow: hidden;
+      position: relative;
     }
-
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 3rem; /* Adjusted for responsiveness */
-      color: #ff00ff;
-      text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
-      margin: 10px 0; /* Reduced margin */
-      padding: 10px; /*Added padding*/
+      font-size: 5rem;
+      color: #ffcc00;
+      text-shadow: 0 0 20px #00ffcc, 0 0 50px #ff00ff, 0 0 100px #ffd700;
+      margin: 30px 0;
+      animation: pulseGlow 2s infinite alternate;
     }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 5px; /* Reduced margin */
-      flex-wrap: wrap;
-      padding: 5px; /*Added padding*/
+    @keyframes pulseGlow {
+      0% { text-shadow: 0 0 20px #00ffcc, 0 0 50px #ff00ff; }
+      100% { text-shadow: 0 0 40px #ffd700, 0 0 80px #ff00ff; }
     }
-
     #mandalaCanvas {
-      border: 8px double #ff66cc;
+      border: 10px double #ffd700;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
-      box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
-      width: 90vw;  /*Adjusted to a fixed with for proper scaling */
-      height: 50vh; /* Adjusted height to leave space for controls */
-      max-width: 800px; /*Maximum width for larger screens*/
-      max-height: 800px; /*Maximum height for larger screens*/
-      margin: 5px auto;
+      background: radial-gradient(circle, rgba(10, 0, 21, 0.9), rgba(77, 0, 153, 0.2));
+      box-shadow: 0 0 150px rgba(255, 215, 0, 0.7), inset 0 0 50px #00ffcc;
+      width: 100%;
+      height: 100%;
+      max-width: 900px;
+      max-height: 900px;
+      margin: 20px auto;
       display: block;
     }
-
     #vrCanvas {
       position: fixed;
       top: 0;
@@ -61,131 +49,109 @@
       height: 100%;
       z-index: 20;
       display: none;
-      background: rgba(0, 0, 0, 0.9);
     }
-
     button {
-      background: linear-gradient(45deg, #ff00ff, #00ffff);
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      color: #000022;
-      font-size: 12px;
+      background: linear-gradient(135deg, #ff00ff, #00ffcc, #ffd700);
+      padding: 12px 24px;
+      border: 2px solid #ffd700;
+      border-radius: 15px;
+      color: #0a0015;
+      font-family: 'Sawarabi Mincho', serif;
+      font-size: 18px;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.3s;
-      margin: 3px; /* Reduced margins even further */
+      transition: all 0.4s;
+      margin: 8px;
     }
-
     button:hover {
-      background: linear-gradient(45deg, #00ff99, #ff6600);
-      transform: scale(1.03); /* Reduced scaling on hover */
+      background: linear-gradient(135deg, #ffd700, #ff6600, #00ff99);
+      transform: scale(1.15) rotate(2deg);
+      box-shadow: 0 0 20px #ffd700;
     }
-
     .modal {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: rgba(0, 0, 34, 0.98);
-      padding: 15px;
-      border: 3px double #00ffff;
-      border-radius: 10px; /* Reduced border radius */
+      background: rgba(10, 0, 21, 0.95);
+      padding: 30px;
+      border: 4px double #ffd700;
+      border-radius: 20px;
       z-index: 100;
       display: none;
+      box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
     }
-
     .modal.active {
       display: block;
     }
-
-    .modal button {
-      margin: 3px;
-    }
-
     #soundMeter {
       position: fixed;
-      bottom: 15px; /* Reduced distance from bottom */
-      left: 15px; /* Reduced distance from left */
-      width: 150px; /* Adjusted width */
-      height: 15px; /* Adjusted height */
-      background: #330066;
-      border: 2px solid #00ffff;
-      border-radius: 4px; /* Adjusted border radius */
+      bottom: 20px;
+      left: 20px;
+      width: 250px;
+      height: 25px;
+      background: #1a0033;
+      border: 3px solid #00ffcc;
+      border-radius: 8px;
     }
-
     #soundBar {
       height: 100%;
-      background: linear-gradient(90deg, #ff00ff, #00ffff);
-      transition: width 0.2s;
+      background: linear-gradient(90deg, #ff00ff, #ffd700, #00ffcc);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 15px #ffd700;
     }
-
     #soundInfo {
       position: fixed;
-      bottom: 35px; /* Adjusted distance from bottom */
-      left: 15px; /* Adjusted distance from left */
-      color: #00ffff;
-      font-size: 0.8rem;
+      bottom: 55px;
+      left: 20px;
+      color: #00ffcc;
+      font-family: 'Sawarabi Mincho', serif;
+      font-size: 1.2rem;
+      text-shadow: 0 0 10px #ffd700;
     }
-
-    /* Media Query for smaller screens (e.g., phones) */
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 2rem;
-        margin: 5px 0;
-        padding: 5px;
-      }
-
-      .controls {
-        margin-bottom: 3px;
-        padding: 3px;
-      }
-
-      button {
-        font-size: 10px;
-        padding: 4px 8px;
-        margin: 2px;
-      }
-
-      #mandalaCanvas {
-         width: 95vw; /* Take up more of the screen on smaller devices */
-         height: 40vh; /*Reduce height for smaller screens */
-      }
-
-      #soundInfo {
-        font-size: 0.7rem;
-      }
-
-      #soundMeter {
-          width: 100px;
-          height: 10px;
-          bottom: 10px;
-          left: 10px;
-      }
+    .buddha-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 300px;
+      opacity: 0.3;
+      background: url('https://i.imgur.com/8nXzL5T.png') no-repeat center;
+      background-size: contain;
+      pointer-events: none;
+      animation: buddhaPulse 6s infinite;
+    }
+    @keyframes buddhaPulse {
+      0% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.05); }
+      100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
     }
   </style>
 </head>
 <body>
-  <h1>Cosmic Weaver: Echoes of the Infinite Abyss</h1>
+  <h1>Techno Buddha: Pulse of the Infinite Void</h1>
 
   <div class="controls">
-    <button id="settings">Choose Setting</button>
-    <button id="drone">Toggle Drone</button>
-    <button id="enterVR">Enter VR Mode</button>
+    <button id="settings">Choose Mantra</button>
+    <button id="drone">Invoke Techno Chant</button>
+    <button id="startVoice">Awaken Voice</button>
+    <button id="enterVR">Enter Nirvana VR</button>
   </div>
 
   <div id="settingsModal" class="modal">
-    <button onclick="applySetting('healing')">Healing (Theta, 6 Hz)</button>
-    <button onclick="applySetting('sleep')">Sleep (Delta, 2 Hz)</button>
-    <button onclick="applySetting('relax')">Relax (Alpha, 10 Hz)</button>
-    <button onclick="applySetting('enlighten')">Enlighten (Schumann, 7.83 Hz)</button>
-    <button onclick="applySetting('activate')">Activate (Beta, 20 Hz)</button>
+    <button onclick="applySetting('healing')">Healing Mantra (Theta, 6 Hz)</button>
+    <button onclick="applySetting('sleep')">Sleep Sutra (Delta, 2 Hz)</button>
+    <button onclick="applySetting('relax')">Zen Pulse (Alpha, 10 Hz)</button>
+    <button onclick="applySetting('enlighten')">Buddha’s Resonance (Schumann, 7.83 Hz)</button>
+    <button onclick="applySetting('activate')">Kundalini Beat (Beta, 20 Hz)</button>
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
-  <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz | Chaos: 0</div>
+  <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Enlightenment: 0</div>
 
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="mandalaCanvas" width="900" height="900"></canvas>
+  <div class="buddha-overlay"></div>
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
@@ -195,35 +161,34 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter;
-    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
+    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
+    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
     let voiceInitialized = false;
     let lastFrameTime = performance.now();
 
     const params = {
-      segments: 6,
-      levels: 4,
-      scaleFactor: 0.65,
-      initialRadius: 200,
-      lineColor: '#ff00ff',
-      lineWidth: 2,
-      baseFreq: 110,
-      audibleFreq: 110,
-      cymaticFactor: 0.2,
-      waveform: 'sine'
+      segments: 8,
+      levels: 5,
+      scaleFactor: 0.7,
+      initialRadius: 250,
+      lineColor: '#ffd700',
+      lineWidth: 3,
+      baseFreq: 108, // Sacred number in Buddhism
+      audibleFreq: 108,
+      cymaticFactor: 0.25,
+      waveform: 'sine',
+      lotusPetals: 12
     };
 
     // HSL to Hex Color Conversion
     function hslToHex(h, s, l) {
       h /= 360;
       let r, g, b;
-      if (s === 0) {
-        r = g = b = l;
-      } else {
+      if (s === 0) { r = g = b = l; }
+      else {
         const hue2rgb = (p, q, t) => {
-          if (t < 0) t += 1;
-          if (t > 1) t -= 1;
+          if (t < 0) t += 1; if (t > 1) t -= 1;
           if (t < 1/6) return p + (q - p) * 6 * t;
           if (t < 1/2) return q;
           if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
@@ -242,7 +207,7 @@
       return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
     }
 
-    // Audio Initialization
+    // Audio Initialization with Techno Chant
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -263,7 +228,7 @@
         lfo = null;
         droneGain = null;
         droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Toggle Drone';
+        document.getElementById('drone').textContent = 'Invoke Techno Chant';
       } else {
         droneOscillator1 = audioContext.createOscillator();
         droneOscillator2 = audioContext.createOscillator();
@@ -271,17 +236,17 @@
         droneGain = audioContext.createGain();
         lfo = audioContext.createOscillator();
 
-        droneOscillator1.type = params.waveform;
-        droneOscillator2.type = params.waveform;
-        droneOscillator3.type = params.waveform;
+        droneOscillator1.type = 'sawtooth'; // Gritty techno vibe
+        droneOscillator2.type = 'sine'; // Smooth undertone
+        droneOscillator3.type = 'triangle'; // Chant-like resonance
         lfo.type = 'sine';
 
         droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 2;
-        droneOscillator3.frequency.value = params.audibleFreq * 1.498307;
-        lfo.frequency.value = 0.1;
-        droneGain.gain.value = 0.05;
-        droneAmplitude = 0.05;
+        droneOscillator2.frequency.value = params.audibleFreq * 1.618; // Golden ratio harmony
+        droneOscillator3.frequency.value = params.audibleFreq * 2.718; // Euler's number for chaos
+        lfo.frequency.value = 0.2;
+        droneGain.gain.value = 0.07;
+        droneAmplitude = 0.07;
 
         lfo.connect(droneGain.gain);
         droneOscillator1.connect(droneGain);
@@ -292,14 +257,14 @@
         droneOscillator2.start();
         droneOscillator3.start();
         lfo.start();
-        document.getElementById('drone').textContent = 'Stop Drone';
+        document.getElementById('drone').textContent = 'Silence Chant';
         updateDroneParams();
       }
     }
 
     function updateDroneParams() {
       if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.1;
+        rotationSpeed = droneAmplitude * 0.15 + enlightenmentFactor * 0.05;
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -314,21 +279,20 @@
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.9;
+          voiceAnalyser.smoothingTimeConstant = 0.85;
           source.connect(voiceAnalyser);
 
-          // Dummy node to keep context alive
           const dummyOsc = audioContext.createOscillator();
           dummyOsc.frequency.value = 0;
           dummyOsc.connect(audioContext.destination);
           dummyOsc.start();
 
-          console.log('Voice initialized successfully');
+          console.log('Voice of the Buddha awakened');
           voiceInitialized = true;
         })
         .catch(e => {
-          console.error('Voice control failed:', e);
-          setTimeout(initVoiceControl, 1000);
+          console.error('Voice awakening failed:', e);
+          document.getElementById('startVoice').textContent = 'Voice Failed - Retry';
         });
     }
 
@@ -343,12 +307,12 @@
       if (pitch !== -1) voicePitch = pitch;
       else voicePitch = 0;
 
-      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-      chaosFactor = Math.min(1, smoothedAmplitude * 2);
-      params.segments = Math.round(6 + (voicePitch / 200) * 18);
-      params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
+      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.9);
+      enlightenmentFactor = Math.min(1, smoothedAmplitude * 2.5);
+      params.segments = Math.round(8 + (voicePitch / 150) * 16);
+      params.lineColor = hslToHex((voicePitch + timeFactor * 10) % 360, 1, 0.5 + enlightenmentFactor * 0.4);
       updateSoundMeter();
-      //console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`); //Reduced Logging
+      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, enlightenment=${enlightenmentFactor.toFixed(3)}`);
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -384,37 +348,49 @@
     function getAmplitude(buf) {
       let sum = 0;
       for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.3);
+      return Math.min(1, sum / buf.length / 0.25);
     }
 
     function updateSoundMeter() {
-      const amplitudePercent = Math.round(smoothedAmplitude * 100);
-      document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
-      document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
+      const energyPercent = Math.round(smoothedAmplitude * 100);
+      document.getElementById('soundBar').style.width = `${energyPercent}%`;
+      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Enlightenment: ${Math.round(enlightenmentFactor * 100)}`;
     }
 
-    // VR Initialization
+    // VR Initialization - Cyber Temple
     function initVR() {
       if (!window.THREE) {
-        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
-        document.getElementById('enterVR').textContent = 'VR Unavailable';
+        console.error('Three.js not loaded');
+        document.getElementById('enterVR').textContent = 'Nirvana Unavailable';
         return;
       }
 
-      console.log('Initializing VR...');
+      console.log('Entering the Cyber Temple...');
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
+      lotusGroup = new THREE.Group();
       scene.add(mandalaGroup);
+      scene.add(lotusGroup);
 
-      // Voice Meter in VR
-      const meterGeometry = new THREE.BoxGeometry(2, 0.2, 0.2);
-      const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+      // Cosmic Void Background
+      const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
+      const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
+      backgroundSphere = new THREE.Mesh(voidGeometry, voidMaterial);
+      scene.add(backgroundSphere);
+      const stars = new THREE.Points(
+        new THREE.SphereGeometry(600, 64, 64).vertices.map(v => new THREE.Vector3(v.x, v.y, v.z)),
+        new THREE.PointsMaterial({ color: 0xffd700, size: 1.5 })
+      );
+      scene.add(stars);
+
+      const meterGeometry = new THREE.BoxGeometry(3, 0.3, 0.3);
+      const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
       voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
-      voiceMeter.position.set(0, -6, -5); // Lower in view
+      voiceMeter.position.set(0, -8, -6);
       mandalaGroup.add(voiceMeter);
 
       updateVRMandala();
@@ -425,43 +401,39 @@
 
       enterVRButton.addEventListener('click', async () => {
         if (isVRActive) {
-          console.log('Exiting VR mode...');
           vrCanvas.style.display = 'none';
           renderer.setAnimationLoop(null);
-          enterVRButton.textContent = 'Enter VR Mode';
+          enterVRButton.textContent = 'Enter Nirvana VR';
           isVRActive = false;
           timeFactor = 0;
           return;
         }
 
-        console.log('Attempting to enter VR...');
         if (!navigator.xr) {
           console.error('WebXR not supported');
-          enterVRButton.textContent = 'VR Not Supported';
+          enterVRButton.textContent = 'Nirvana Not Supported';
           return;
         }
 
         try {
           const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          console.log('VR session started successfully');
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
-          enterVRButton.textContent = 'Exit VR Mode';
+          enterVRButton.textContent = 'Exit Nirvana';
           isVRActive = true;
 
           if (!voiceInitialized) initVoiceControl();
 
           session.addEventListener('end', () => {
-            console.log('VR session ended');
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
-            enterVRButton.textContent = 'Enter VR Mode';
+            enterVRButton.textContent = 'Enter Nirvana VR';
             isVRActive = false;
           });
         } catch (err) {
-          console.error('VR session failed:', err);
-          enterVRButton.textContent = 'VR Failed: ' + err.message;
+          console.error('Nirvana failed:', err);
+          enterVRButton.textContent = 'Nirvana Failed: ' + err.message;
         }
       });
 
@@ -472,81 +444,111 @@
       });
     }
 
-    // Generate VR Mandala
+    // Generate VR Mandala with Lotus Petals
+    let cachedGeometries = [];
     function updateVRMandala() {
       mandalaGroup.clear();
+      lotusGroup.clear();
+
       const lineMaterial = new THREE.LineBasicMaterial({
         color: new THREE.Color(params.lineColor),
-        linewidth: 2,
+        linewidth: 3,
         transparent: true,
-        opacity: Math.max(0.1, 1 - (timeFactor * 0.1))
+        opacity: Math.max(0.2, 1 - (timeFactor * 0.05))
       });
 
       function generateCymaticShape(x, y, r, level) {
-        if (level > params.levels) return;
+        if (level > Math.min(params.levels, 4)) return;
         const points = [];
         for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
-          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
-          const z = -level * (1 + timeFactor + chaosFactor * 2);
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
+          const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
+          const z = -level * (1 + timeFactor * 0.5 + enlightenmentFactor);
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        cachedGeometries[level] = geometry;
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
         const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
         if (level < currentMaxLevels) {
           for (let i = 0; i < params.segments / 2; i++) {
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
+            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
           }
         }
       }
 
-      generateCymaticShape(0, 0, 10, 1);
-      mandalaGroup.position.z = -5;
-      mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
+      // Lotus Petals
+      const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+      for (let i = 0; i < params.lotusPetals; i++) {
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
+        const petalGeometry = new THREE.PlaneGeometry(2, 5);
+        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+        petal.position.set(Math.cos(angle) * 8, Math.sin(angle) * 8, -2);
+        petal.rotation.z = angle;
+        petal.scale.y = 1 + Math.sin(timeFactor + i) * 0.2;
+        lotusGroup.add(petal);
+      }
+
+      generateCymaticShape(0, 0, 12, 1);
+      mandalaGroup.position.z = -6;
+      mandalaGroup.scale.setScalar(1 + enlightenmentFactor * 1.5);
       mandalaGroup.rotation.z = totalRotation;
+      lotusGroup.position.z = -5;
+      lotusGroup.rotation.z = -totalRotation * 0.5;
 
-      // Update Voice Meter
-      voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2); // Scale width
-      voiceMeter.position.set(0, -6, -5);
+      voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
+      voiceMeter.position.set(0, -8, -6);
       mandalaGroup.add(voiceMeter);
-
-      //Reduced Logging
-      //console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
-      lastFrameTime = performance.now();
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += chaosFactor * 0.005 + 0.001;
+      timeFactor += enlightenmentFactor * 0.01 + 0.002;
       updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
     }
 
-    // 2D Mandala Drawing
+    // 2D Mandala Drawing with Lotus
     function generateMandala() {
       ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
       const centerX = mandalaCanvas.width / 2;
       const centerY = mandalaCanvas.height / 2;
 
+      // Draw Lotus Petals
+      ctx.fillStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(timeFactor) * 0.2})`;
+      for (let i = 0; i < params.lotusPetals; i++) {
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle - 0.2) * 100, centerY + Math.sin(angle - 0.2) * 150,
+          centerX + Math.cos(angle) * 200 * (1 + enlightenmentFactor * 0.2), centerY + Math.sin(angle) * 200 * (1 + enlightenmentFactor * 0.2)
+        );
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle + 0.2) * 100, centerY + Math.sin(angle + 0.2) * 150,
+          centerX, centerY
+        );
+        ctx.fill();
+      }
+
       function drawCymaticShape(x, y, r, level) {
-        if (level > params.levels) return;
+        if (level > Math.min(params.levels, 4)) return;
         ctx.beginPath();
         ctx.strokeStyle = params.lineColor;
         ctx.lineWidth = params.lineWidth;
         for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
-          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
+          const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
@@ -555,10 +557,10 @@
         const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
         if (level < currentMaxLevels) {
           for (let i = 0; i < params.segments / 2; i++) {
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
+            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
           }
         }
       }
@@ -566,59 +568,64 @@
       drawCymaticShape(centerX, centerY, params.initialRadius, 1);
     }
 
-    // Brainwave Settings
+    // Mantra Settings
     function applySetting(setting) {
       document.getElementById('settingsModal').classList.remove('active');
       switch (setting) {
         case 'healing':
           params.baseFreq = 6;
-          params.audibleFreq = 48;
-          params.segments = 6;
-          params.levels = 4;
-          params.cymaticFactor = 0.2;
-          params.lineColor = '#00ccff';
+          params.audibleFreq = 54; // Harmonic of 108
+          params.segments = 8;
+          params.levels = 5;
+          params.cymaticFactor = 0.25;
+          params.lineColor = '#00ffcc';
+          params.lotusPetals = 12;
           break;
         case 'sleep':
           params.baseFreq = 2;
-          params.audibleFreq = 32;
+          params.audibleFreq = 36;
           params.segments = 6;
-          params.levels = 3;
-          params.cymaticFactor = 0.25;
-          params.lineColor = '#330066';
+          params.levels = 4;
+          params.cymaticFactor = 0.3;
+          params.lineColor = '#1a0033';
+          params.lotusPetals = 8;
           break;
         case 'relax':
           params.baseFreq = 10;
           params.audibleFreq = 40;
-          params.segments = 6;
+          params.segments = 10;
           params.levels = 4;
-          params.cymaticFactor = 0.15;
+          params.cymaticFactor = 0.2;
           params.lineColor = '#66ff66';
+          params.lotusPetals = 10;
           break;
         case 'enlighten':
           params.baseFreq = 7.83;
-          params.audibleFreq = 62.64;
-          params.segments = 6;
-          params.levels = 5;
-          params.cymaticFactor = 0.22;
-          params.lineColor = '#ffcc00';
+          params.audibleFreq = 108; // Sacred Buddhist frequency
+          params.segments = 8;
+          params.levels = 6;
+          params.cymaticFactor = 0.28;
+          params.lineColor = '#ffd700';
+          params.lotusPetals = 16;
           break;
         case 'activate':
           params.baseFreq = 20;
-          params.audibleFreq = 80;
-          params.segments = 6;
+          params.audibleFreq = 72;
+          params.segments = 12;
           params.levels = 3;
-          params.cymaticFactor = 0.1;
+          params.cymaticFactor = 0.15;
           params.lineColor = '#ff0066';
+          params.lotusPetals = 14;
           break;
       }
       if (droneOscillator1) {
         droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 2;
-        droneOscillator3.frequency.value = params.audibleFreq * 1.498307;
+        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
+        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
       }
       timeFactor = 0;
       smoothedAmplitude = 0;
-      chaosFactor = 0;
+      enlightenmentFactor = 0;
       generateMandala();
     }
 
@@ -629,39 +636,40 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
-      timeFactor += chaosFactor * 0.005 + 0.001;
+      timeFactor += enlightenmentFactor * 0.01 + 0.002;
       updateVoice();
       generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
       }
-      //Reduced Logging
-      //console.log(`2D: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
-      lastFrameTime = performance.now();
     }
 
     function init() {
-      console.log('Initializing Cosmic Weaver...');
+      console.log('Awakening Techno Buddha...');
       document.getElementById('settings').addEventListener('click', () => {
-        initAudio(); // Resume audio on interaction
+        initAudio();
         showSettingsModal();
       });
       document.getElementById('drone').addEventListener('click', () => {
-        initAudio(); // Resume audio on interaction
+        initAudio();
         toggleDrone();
       });
-      document.getElementById('enterVR').addEventListener('click', initAudio); // Resume audio on VR entry
-      initVoiceControl();
+      document.getElementById('startVoice').addEventListener('click', () => {
+        initAudio();
+        initVoiceControl();
+        document.getElementById('startVoice').textContent = 'Voice Awakened';
+      });
+      document.getElementById('enterVR').addEventListener('click', initAudio);
       initVR();
       animate();
     }
 
     window.onload = () => {
       if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
-        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load.</p>';
+        console.error('Three.js not loaded');
+        document.body.innerHTML += '<p style="color: #ff0066;">Error: Cosmic Matrix failed to initialize.</p>';
       } else {
-        console.log('Three.js loaded, version:', THREE.REVISION);
+        console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
         init();
       }
     };
