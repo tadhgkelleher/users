@@ -117,7 +117,8 @@
       width: 300px;
       height: 300px;
       opacity: 0.3;
-      background: url('https://i.imgur.com/8nXzL5T.png') no-repeat center;
+      /*  Replaced Imgur with a placeholder for now  */
+      background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%23ffd700"%3EBUDDHA%3C/text%3E%3C/svg%3E') no-repeat center;
       background-size: contain;
       pointer-events: none;
       animation: buddhaPulse 6s infinite;
@@ -154,8 +155,8 @@
   <div class="buddha-overlay"></div>
   <canvas id="vrCanvas"></canvas>
 
-  <script src="./three.min.js"></script>
-  <script src="./three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <!-- <script src="./three.min.js"></script>  Removed local copies of three.js -->
 <script>
   const mandalaCanvas = document.getElementById('mandalaCanvas');
   const ctx = mandalaCanvas.getContext('2d');
@@ -678,14 +679,15 @@
   }
 
   window.onload = () => {
-    if (typeof THREE === 'undefined') {
-      console.error('Three.js not loaded');
-      document.body.innerHTML += '<p style="color: #ff0066;">Error: Cosmic Matrix failed to initialize.</p>';
-    } else {
-      console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
-      init();
-    }
-  };
+    if (typeof THREE === 'undefined'){
+console.error('Three.js not loaded');
+document.body.innerHTML += '<p style="color: #ff0066;">Error: Cosmic Matrix failed to initialize.</p>';
+} else {
+console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
+init();
+}
+};
 </script>
+
 </body>
 </html>
