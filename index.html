@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Mandelbrot Abyss</title>
+  <title>Techno Buddha: Mandelbrot Serenity</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     body {
@@ -19,25 +19,25 @@
     }
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 4.5rem;
+      font-size: 4rem;
       color: #ffcc00;
-      text-shadow: 0 0 15px #00ffcc, 0 0 30px #ff00ff, 0 0 60px #ffd700;
-      margin: 25px 0;
-      animation: pulseGlow 2.5s infinite alternate;
+      text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff, 0 0 40px #ffd700;
+      margin: 20px 0;
+      animation: pulseGlow 3s infinite alternate;
     }
     @keyframes pulseGlow {
-      0% { text-shadow: 0 0 15px #00ffcc, 0 0 30px #ff00ff; }
-      100% { text-shadow: 0 0 30px #ffd700, 0 0 60px #ff00ff; }
+      0% { text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff; }
+      100% { text-shadow: 0 0 20px #ffd700, 0 0 40px #ff00ff; }
     }
     #mandalaCanvas {
-      border: 8px double #ffd700;
+      border: 6px double #ffd700;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(10, 0, 21, 0.95), rgba(50, 0, 100, 0.3));
-      box-shadow: 0 0 120px rgba(255, 215, 0, 0.8), inset 0 0 40px #00ffcc;
+      background: radial-gradient(circle, rgba(10, 0, 21, 0.95), rgba(50, 0, 100, 0.2));
+      box-shadow: 0 0 100px rgba(255, 215, 0, 0.7), inset 0 0 30px #00ffcc;
       width: 100%;
       height: 100%;
-      max-width: 900px;
-      max-height: 900px;
+      max-width: 800px;
+      max-height: 800px;
       margin: 20px auto;
       display: block;
     }
@@ -52,22 +52,22 @@
     }
     button {
       background: linear-gradient(135deg, #ff00ff, #00ffcc, #ffd700);
-      padding: 12px 24px;
+      padding: 10px 20px;
       border: 2px solid #ffd700;
-      border-radius: 15px;
+      border-radius: 12px;
       color: #0a0015;
       font-family: 'Sawarabi Mincho', serif;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s ease;
-      margin: 8px;
-      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      margin: 6px;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
     }
     button:hover {
-      background: linear-gradient(135deg, #ffd700, #ff6600, #00ffcc);
-      transform: scale(1.1) rotate(3deg);
-      box-shadow: 0 0 25px #ffd700;
+      background: linear-gradient(135deg, #ffd700, #00ffcc, #ff00ff);
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #ffd700;
     }
     .modal {
       position: fixed;
@@ -75,46 +75,46 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(10, 0, 21, 0.98);
-      padding: 30px;
-      border: 4px double #ffd700;
-      border-radius: 20px;
+      padding: 25px;
+      border: 3px double #ffd700;
+      border-radius: 15px;
       z-index: 100;
       display: none;
-      box-shadow: 0 0 60px rgba(255, 215, 0, 0.6);
+      box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
     }
     .modal.active {
       display: block;
     }
     #soundMeter {
       position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 250px;
-      height: 25px;
+      bottom: 15px;
+      left: 15px;
+      width: 200px;
+      height: 20px;
       background: #1a0033;
-      border: 3px solid #00ffcc;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0, 255, 204, 0.5);
+      border: 2px solid #00ffcc;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
     }
     #soundBar {
       height: 100%;
       background: linear-gradient(90deg, #ff00ff, #ffd700, #00ffcc);
       transition: width 0.3s ease;
-      box-shadow: 0 0 15px #ffd700;
+      box-shadow: 0 0 10px #ffd700;
     }
     #soundInfo {
       position: fixed;
-      bottom: 55px;
-      left: 20px;
+      bottom: 40px;
+      left: 15px;
       color: #00ffcc;
       font-family: 'Sawarabi Mincho', serif;
-      font-size: 1.2rem;
-      text-shadow: 0 0 10px #ffd700;
+      font-size: 1rem;
+      text-shadow: 0 0 8px #ffd700;
     }
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: Mandelbrot Abyss</h1>
+  <h1>Techno Buddha: Mandelbrot Serenity</h1>
 
   <div class="controls">
     <button id="settings">Choose Mantra</button>
@@ -134,7 +134,7 @@
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
   <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Enlightenment: 0</div>
 
-  <canvas id="mandalaCanvas" width="900" height="900"></canvas>
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
@@ -144,11 +144,11 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, outerMandalaGroup;
+    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
     let voiceInitialized = false;
-    let gestureZoom = 1, gestureX = 0, gestureY = 0;
+    let manualZoom = 1;
 
     const params = {
       maxIterations: 100,
@@ -158,8 +158,7 @@
       baseFreq: 108,
       audibleFreq: 108,
       waveform: 'sine',
-      outerSegments: 16,
-      outerRadius: 350
+      lotusPetals: 12
     };
 
     // HSL to RGB
@@ -243,7 +242,7 @@
 
     function updateDroneParams() {
       if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.15 + enlightenmentFactor * 0.05;
+        rotationSpeed = droneAmplitude * 0.1 + enlightenmentFactor * 0.03;
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -258,7 +257,7 @@
           const source = audioContext.createMediaStreamSource(stream);
           voiceAnalyser = audioContext.createAnalyser();
           voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.85;
+          voiceAnalyser.smoothingTimeConstant = 0.9;
           source.connect(voiceAnalyser);
 
           const dummyOsc = audioContext.createOscillator();
@@ -286,11 +285,9 @@
       if (pitch !== -1) voicePitch = pitch;
       else voicePitch = 0;
 
-      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.9);
-      enlightenmentFactor = Math.min(1, smoothedAmplitude * 2.5);
-      params.zoom = Math.max(1, gestureZoom * (1 + enlightenmentFactor * 20 + timeFactor * 0.2));
-      params.centerX += gestureX * 0.001 / params.zoom;
-      params.centerY += gestureY * 0.001 / params.zoom;
+      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
+      enlightenmentFactor = Math.min(1, smoothedAmplitude * 2);
+      params.zoom = manualZoom * (1 + enlightenmentFactor * 10 + timeFactor * 0.1);
       updateSoundMeter();
       console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, zoom=${params.zoom.toFixed(2)}`);
     }
@@ -337,27 +334,10 @@
       document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Enlightenment: ${Math.round(enlightenmentFactor * 100)}`;
     }
 
-    // Gesture Control (WebXR Hand Tracking)
-    function initGestureControl() {
-      if (!navigator.xr) return;
-      console.log('Gesture control initialized (WebXR hand tracking)');
-    }
-
-    // Basic Vision Control (Mouse as Proxy for Webcam)
-    let isDragging = false;
-    mandalaCanvas.addEventListener('mousedown', () => isDragging = true);
-    mandalaCanvas.addEventListener('mouseup', () => isDragging = false);
-    mandalaCanvas.addEventListener('mousemove', (e) => {
-      if (isDragging) {
-        gestureX = e.movementX;
-        gestureY = e.movementY;
-      } else {
-        gestureX = gestureY = 0;
-      }
-    });
+    // Mouse Scroll for Zoom
     mandalaCanvas.addEventListener('wheel', (e) => {
-      gestureZoom *= (1 - e.deltaY * 0.001);
-      gestureZoom = Math.max(1, gestureZoom);
+      manualZoom *= (1 - e.deltaY * 0.001);
+      manualZoom = Math.max(1, manualZoom);
       e.preventDefault();
     });
 
@@ -369,16 +349,16 @@
         return;
       }
 
-      console.log('Entering the Mandelbrot Abyss...');
+      console.log('Entering Mandelbrot Serenity...');
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
-      outerMandalaGroup = new THREE.Group();
+      lotusGroup = new THREE.Group();
       scene.add(mandalaGroup);
-      scene.add(outerMandalaGroup);
+      scene.add(lotusGroup);
 
       const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
       const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
@@ -430,7 +410,7 @@
         }
 
         try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor', 'hand-tracking'] });
+          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
           renderer.xr.setSession(session);
           renderer.setAnimationLoop(animateVR);
           vrCanvas.style.display = 'block';
@@ -438,7 +418,6 @@
           isVRActive = true;
 
           if (!voiceInitialized) initVoiceControl();
-          initGestureControl();
 
           session.addEventListener('end', () => {
             vrCanvas.style.display = 'none';
@@ -472,7 +451,7 @@
       return maxIterations;
     }
 
-    // 2D Mandelbrot Drawing with Twisted External Mandala
+    // 2D Mandelbrot Drawing
     function generateMandala() {
       const width = mandalaCanvas.width;
       const height = mandalaCanvas.height;
@@ -483,7 +462,6 @@
       const cx = params.centerX;
       const cy = params.centerY;
 
-      // Mandelbrot Core
       for (let px = 0; px < width; px++) {
         for (let py = 0; py < height; py++) {
           const x = (px - centerX) / (width * 0.25) / zoom + cx;
@@ -496,9 +474,9 @@
             imageData.data[index + 2] = 0;
             imageData.data[index + 3] = 255;
           } else {
-            const hue = (iter * 5 + voicePitch * 0.1 + timeFactor * 5) % 360;
+            const hue = (iter * 3 + timeFactor * 2) % 360;
             const sat = 1;
-            const light = 0.5 + enlightenmentFactor * 0.4;
+            const light = 0.5 + enlightenmentFactor * 0.3;
             const color = hslToRgb(hue, sat, light);
             imageData.data[index] = color[0];
             imageData.data[index + 1] = color[1];
@@ -509,49 +487,39 @@
       }
       ctx.putImageData(imageData, 0, 0);
 
-      // Buddha Silhouette
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.4 + Math.sin(timeFactor * 0.5) * 0.2})`;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY - 60, 60 + enlightenmentFactor * 20, 0, Math.PI * 2); // Head
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(centerX - 100, centerY + 60);
-      ctx.quadraticCurveTo(centerX, centerY + 180, centerX + 100, centerY + 60); // Robe
-      ctx.fill();
-
-      // Twisted External Mandala
-      ctx.strokeStyle = `rgba(0, 255, 204, ${0.8 + Math.sin(timeFactor) * 0.2})`;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      for (let i = 0; i < params.outerSegments; i++) {
-        const angle = (i / params.outerSegments) * Math.PI * 2 + totalRotation;
-        const twist = Math.sin(timeFactor + i * 0.5) * 50 * enlightenmentFactor;
-        const radius = params.outerRadius + twist;
-        const x = centerX + Math.cos(angle) * radius;
-        const y = centerY + Math.sin(angle) * radius;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-
-      // Sub-Fractal Highlights
-      ctx.fillStyle = '#ff00ff';
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2 + timeFactor * 0.3;
-        const r = params.outerRadius * (0.8 + Math.sin(timeFactor + i) * 0.1);
+      // Lotus Petals
+      ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(timeFactor * 0.3) * 0.2})`;
+      for (let i = 0; i < params.lotusPetals; i++) {
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation * 0.5;
         ctx.beginPath();
-        ctx.arc(centerX + Math.cos(angle) * r, centerY + Math.sin(angle) * r, 10 + enlightenmentFactor * 5, 0, Math.PI * 2);
+        ctx.moveTo(centerX, centerY);
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle - 0.2) * 80, centerY + Math.sin(angle - 0.2) * 120,
+          centerX + Math.cos(angle) * 160 * (1 + enlightenmentFactor * 0.1), centerY + Math.sin(angle) * 160 * (1 + enlightenmentFactor * 0.1)
+        );
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle + 0.2) * 80, centerY + Math.sin(angle + 0.2) * 120,
+          centerX, centerY
+        );
         ctx.fill();
       }
+
+      // Buddha Silhouette
+      ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(timeFactor * 0.4) * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - 50, 50 + enlightenmentFactor * 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(centerX - 70, centerY + 50);
+      ctx.quadraticCurveTo(centerX, centerY + 120, centerX + 70, centerY + 50);
+      ctx.fill();
     }
 
-    // VR Mandelbrot with Twisted External Mandala
+    // VR Mandelbrot
     function updateVRMandala() {
       mandalaGroup.clear();
-      outerMandalaGroup.clear();
+      lotusGroup.clear();
 
-      // Mandelbrot Plane
       const geometry = new THREE.PlaneGeometry(10, 10, 128, 128);
       const material = new THREE.ShaderMaterial({
         uniforms: {
@@ -559,7 +527,6 @@
           zoom: { value: params.zoom },
           center: { value: new THREE.Vector2(params.centerX, params.centerY) },
           maxIterations: { value: params.maxIterations },
-          voicePitch: { value: voicePitch },
           enlightenment: { value: enlightenmentFactor }
         },
         vertexShader: `
@@ -574,7 +541,6 @@
           uniform float zoom;
           uniform vec2 center;
           uniform int maxIterations;
-          uniform float voicePitch;
           uniform float enlightenment;
           varying vec2 vUv;
 
@@ -594,8 +560,8 @@
             if (iter == maxIterations) {
               gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
             } else {
-              float hue = mod(float(iter) * 5.0 + voicePitch * 0.1 + time * 5.0, 360.0) / 360.0;
-              vec3 color = hsl2rgb(hue, 1.0, 0.5 + enlightenment * 0.4);
+              float hue = mod(float(iter) * 3.0 + time * 2.0, 360.0) / 360.0;
+              vec3 color = hsl2rgb(hue, 1.0, 0.5 + enlightenment * 0.3);
               gl_FragColor = vec4(color, 1.0);
             }
           }
@@ -604,25 +570,22 @@
       const mandelbrotPlane = new THREE.Mesh(geometry, material);
       mandalaGroup.add(mandelbrotPlane);
 
-      // Twisted External Mandala in VR
-      const outerMaterial = new THREE.LineBasicMaterial({ color: 0x00ffcc, linewidth: 4, transparent: true, opacity: 0.8 });
-      const outerPoints = [];
-      for (let i = 0; i < params.outerSegments; i++) {
-        const angle = (i / params.outerSegments) * Math.PI * 2 + totalRotation;
-        const twist = Math.sin(timeFactor + i * 0.5) * 2 * enlightenmentFactor;
-        const radius = 12 + twist;
-        outerPoints.push(new THREE.Vector3(Math.cos(angle) * radius, Math.sin(angle) * radius, -2));
+      const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.5 + Math.sin(timeFactor * 0.3) * 0.2 });
+      for (let i = 0; i < params.lotusPetals; i++) {
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation * 0.5;
+        const petalGeometry = new THREE.PlaneGeometry(2, 4);
+        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+        petal.position.set(Math.cos(angle) * 6, Math.sin(angle) * 6, -2);
+        petal.rotation.z = angle;
+        petal.scale.y = 1 + enlightenmentFactor * 0.2;
+        lotusGroup.add(petal);
       }
-      outerPoints.push(outerPoints[0]); // Close the loop
-      const outerGeometry = new THREE.BufferGeometry().setFromPoints(outerPoints);
-      const outerMandala = new THREE.Line(outerGeometry, outerMaterial);
-      outerMandalaGroup.add(outerMandala);
 
       mandalaGroup.position.z = -6;
-      mandalaGroup.scale.setScalar(1 + enlightenmentFactor * 1.5);
-      mandalaGroup.rotation.z = totalRotation * 0.5;
-      outerMandalaGroup.position.z = -5;
-      outerMandalaGroup.rotation.z = -totalRotation;
+      mandalaGroup.scale.setScalar(1 + enlightenmentFactor * 0.5);
+      mandalaGroup.rotation.z = totalRotation * 0.2;
+      lotusGroup.position.z = -5;
+      lotusGroup.rotation.z = -totalRotation * 0.3;
 
       voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
       voiceMeter.position.set(0, -8, -6);
@@ -631,7 +594,7 @@
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += enlightenmentFactor * 0.01 + 0.002;
+      timeFactor += enlightenmentFactor * 0.005 + 0.001;
       updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
@@ -648,7 +611,7 @@
           params.zoom = 1;
           params.centerX = -0.7;
           params.centerY = 0;
-          params.outerSegments = 16;
+          params.lotusPetals = 12;
           break;
         case 'sleep':
           params.baseFreq = 2;
@@ -657,7 +620,7 @@
           params.zoom = 0.5;
           params.centerX = -1.0;
           params.centerY = 0.3;
-          params.outerSegments = 12;
+          params.lotusPetals = 8;
           break;
         case 'relax':
           params.baseFreq = 10;
@@ -666,7 +629,7 @@
           params.zoom = 1.5;
           params.centerX = -0.5;
           params.centerY = 0;
-          params.outerSegments = 14;
+          params.lotusPetals = 10;
           break;
         case 'enlighten':
           params.baseFreq = 7.83;
@@ -675,7 +638,7 @@
           params.zoom = 2;
           params.centerX = -0.7;
           params.centerY = 0.1;
-          params.outerSegments = 20;
+          params.lotusPetals = 16;
           break;
         case 'activate':
           params.baseFreq = 20;
@@ -684,7 +647,7 @@
           params.zoom = 3;
           params.centerX = -0.8;
           params.centerY = 0.2;
-          params.outerSegments = 18;
+          params.lotusPetals = 14;
           break;
       }
       if (droneOscillator1) {
@@ -695,8 +658,7 @@
       timeFactor = 0;
       smoothedAmplitude = 0;
       enlightenmentFactor = 0;
-      gestureZoom = 1;
-      gestureX = gestureY = 0;
+      manualZoom = 1;
       generateMandala();
     }
 
@@ -707,7 +669,7 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
-      timeFactor += enlightenmentFactor * 0.01 + 0.002;
+      timeFactor += enlightenmentFactor * 0.005 + 0.001;
       updateVoice();
       generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
@@ -716,7 +678,7 @@
     }
 
     function init() {
-      console.log('Awakening Techno Buddha in the Mandelbrot Abyss...');
+      console.log('Awakening Techno Buddha in Mandelbrot Serenity...');
       document.getElementById('settings').addEventListener('click', () => {
         initAudio();
         showSettingsModal();
@@ -738,7 +700,7 @@
     window.onload = () => {
       if (typeof THREE === 'undefined') {
         console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandelbrot Abyss failed to initialize.</p>';
+        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandelbrot Serenity failed to initialize.</p>';
       } else {
         console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
         init();
