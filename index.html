@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: VR Mandala Evolution</title>
+  <title>Techno Buddha: VR Mandala</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body {
@@ -15,10 +15,11 @@
       padding: 0;
       min-height: 100vh;
       overflow: hidden;
+      touch-action: none; /* Prevent mobile scroll interference */
     }
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 3rem;
+      font-size: clamp(2rem, 5vw, 3rem);
       color: #ffcc00;
       text-shadow: 0 0 10px #00ffcc;
       margin: 20px 0;
@@ -28,10 +29,11 @@
       border-radius: 50%;
       background: rgba(10, 0, 21, 0.9);
       box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-      width: 800px;
-      height: 800px;
+      width: clamp(300px, 90vw, 800px);
+      height: clamp(300px, 90vw, 800px);
       margin: 20px auto;
       display: block;
+      touch-action: pinch-zoom; /* Allow pinch but not page scroll */
     }
     #vrCanvas {
       position: fixed;
@@ -48,7 +50,7 @@
       border: 2px solid #ffd700;
       border-radius: 8px;
       color: #0a0015;
-      font-size: 14px;
+      font-size: clamp(12px, 3vw, 14px);
       font-weight: bold;
       cursor: pointer;
       margin: 5px;
@@ -57,11 +59,26 @@
       background: linear-gradient(135deg, #00ffcc, #ff00ff);
       box-shadow: 0 0 10px #ffd700;
     }
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(10, 0, 21, 0.95);
+      padding: 20px;
+      border: 2px solid #ffd700;
+      border-radius: 10px;
+      z-index: 100;
+      display: none;
+    }
+    .modal.active {
+      display: block;
+    }
     #soundMeter {
       position: fixed;
       bottom: 10px;
       left: 10px;
-      width: 150px;
+      width: clamp(100px, 20vw, 150px);
       height: 15px;
       background: #1a0033;
       border: 2px solid #00ffcc;
@@ -77,24 +94,33 @@
       bottom: 30px;
       left: 10px;
       color: #00ffcc;
-      font-size: 0.9rem;
+      font-size: clamp(0.7rem, 2vw, 0.9rem);
       text-shadow: 0 0 5px #ffd700;
     }
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: VR Mandala Evolution</h1>
+  <h1>Techno Buddha: VR Mandala</h1>
 
   <div class="controls">
+    <button id="settings">Mantras</button>
     <button id="drone">Invoke Drone</button>
     <button id="startVoice">Awaken Voice</button>
     <button id="enterVR">Enter VR</button>
   </div>
 
+  <div id="settingsModal" class="modal">
+    <button onclick="applySetting('healing')">Healing (6 Hz)</button>
+    <button onclick="applySetting('sleep')">Sleep (2 Hz)</button>
+    <button onclick="applySetting('relax')">Relax (10 Hz)</button>
+    <button onclick="applySetting('enlighten')">Enlighten (7.83 Hz)</button>
+    <button onclick="applySetting('activate')">Activate (20 Hz)</button>
+  </div>
+
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
   <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Tempo: 0 BPM</div>
 
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+  <canvas id="mandalaCanvas"></canvas>
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
@@ -102,10 +128,13 @@
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
     const vrCanvas = document.getElementById('vrCanvas');
+    mandalaCanvas.width = Math.min(window.innerWidth * 0.9, 800);
+    mandalaCanvas.height = mandalaCanvas.width;
+
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
     let scene, camera, renderer, mandalaGroup;
-    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0;
+    let voicePitch = 0, smoothedAmplitude = 0, droneAmplitude = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
     let voiceInitialized = false;
     let segments = 12, levels = 4;
@@ -163,9 +192,9 @@
         droneOscillator3.frequency.value = params.audibleFreq * 2.718;
         lfo.frequency.value = 0.2;
         kickOscillator.frequency.value = 60;
-        droneGain.gain.value = 0.07;
+        droneGain.gain.value = 0.2; // Louder drone
         kickGain.gain.value = 0;
-        droneAmplitude = 0.07;
+        droneAmplitude = 0.2;
 
         lfo.connect(droneGain.gain);
         droneOscillator1.connect(droneGain);
@@ -191,7 +220,7 @@
         const kickInterval = 60 / params.kickTempo;
         kickTime += 1 / 60;
         if (kickTime >= kickInterval) {
-          kickGain.gain.setValueAtTime(0.5 * (1 + smoothedAmplitude), audioContext.currentTime);
+          kickGain.gain.setValueAtTime(0.8 * (1 + smoothedAmplitude), audioContext.currentTime); // Louder kick
           kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
           kickTime = 0;
         }
@@ -213,14 +242,17 @@
           source.connect(voiceAnalyser);
           voiceInitialized = true;
           document.getElementById('startVoice').textContent = 'Voice Awakened';
+          console.log('Voice initialized');
         })
-        .catch(e => console.error('Voice failed:', e));
+        .catch(e => {
+          console.error('Voice failed:', e);
+          document.getElementById('startVoice').textContent = 'Voice Failed';
+        });
     }
 
     function updateVoice() {
       if (!voiceInitialized || !voiceAnalyser) return;
-      const bufferLength = voiceAnalyser.fftSize;
-      const dataArray = new Float32Array(bufferLength);
+      const dataArray = new Float32Array(voiceAnalyser.fftSize);
       voiceAnalyser.getFloatTimeDomainData(dataArray);
       const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
       const rawAmplitude = getAmplitude(dataArray);
@@ -236,28 +268,25 @@
     }
 
     function autoCorrelate(buf, sampleRate) {
-      let SIZE = buf.length;
       let rms = 0;
-      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / SIZE);
+      for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+      rms = Math.sqrt(rms / buf.length);
       if (rms < 0.01) return -1;
 
-      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+      let r1 = 0, r2 = buf.length - 1, thres = 0.2;
+      for (let i = 0; i < buf.length / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      for (let i = 1; i < buf.length / 2; i++) if (Math.abs(buf[buf.length - i]) < thres) { r2 = buf.length - i; break; }
 
       buf = buf.slice(r1, r2);
-      SIZE = buf.length;
-
-      let c = new Array(SIZE).fill(0);
-      for (let i = 0; i < SIZE; i++)
-        for (let j = 0; j < SIZE - i; j++)
-          c[i] = c[i] + buf[j] * buf[j + i];
+      let c = new Array(buf.length).fill(0);
+      for (let i = 0; i < buf.length; i++)
+        for (let j = 0; j < buf.length - i; j++)
+          c[i] += buf[j] * buf[j + i];
 
       let d = 0;
       while (c[d] > c[d + 1]) d++;
       let maxval = -1, maxpos = -1;
-      for (let i = d; i < SIZE; i++) {
+      for (let i = d; i < buf.length; i++) {
         if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
       }
       return sampleRate / maxpos;
@@ -274,6 +303,26 @@
       document.getElementById('soundBar').style.width = `${energyPercent}%`;
       document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
     }
+
+    // Scrolling Controls
+    let lastY = 0;
+    mandalaCanvas.addEventListener('wheel', (e) => {
+      segments += Math.round(e.deltaY * -0.1);
+      segments = Math.max(6, Math.min(36, segments));
+      e.preventDefault();
+    });
+
+    mandalaCanvas.addEventListener('touchstart', (e) => {
+      lastY = e.touches[0].clientY;
+    });
+
+    mandalaCanvas.addEventListener('touchmove', (e) => {
+      const deltaY = lastY - e.touches[0].clientY;
+      segments += Math.round(deltaY * 0.1);
+      segments = Math.max(6, Math.min(36, segments));
+      lastY = e.touches[0].clientY;
+      e.preventDefault();
+    });
 
     // 2D Mandala
     function generateMandala() {
@@ -350,7 +399,7 @@
       scene.add(new THREE.Points(starGeometry, starMaterial));
 
       updateVRMandala();
-      camera.position.z = 10;
+      camera.position.z = 20; // Further back
 
       let isVRActive = false;
       document.getElementById('enterVR').addEventListener('click', async () => {
@@ -370,6 +419,8 @@
           document.getElementById('enterVR').textContent = 'Exit VR';
           isVRActive = true;
 
+          if (!voiceInitialized) initVoiceControl();
+
           session.addEventListener('end', () => {
             vrCanvas.style.display = 'none';
             renderer.setAnimationLoop(null);
@@ -378,6 +429,7 @@
           });
         } catch (e) {
           console.error('VR failed:', e);
+          document.getElementById('enterVR').textContent = 'VR Failed';
         }
       });
 
@@ -385,6 +437,8 @@
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        mandalaCanvas.width = Math.min(window.innerWidth * 0.9, 800);
+        mandalaCanvas.height = mandalaCanvas.width;
       });
     }
 
@@ -402,7 +456,7 @@
           const y = radius * Math.sin(angle);
           positions.push(x, y, 0);
         }
-        positions.push(positions[0], positions[1], 0); // Close the loop
+        positions.push(positions[0], positions[1], 0); // Close loop
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
         const material = new THREE.LineBasicMaterial({ color: new THREE.Color().setHSL(level / levels, 1, 0.5) });
         const line = new THREE.Line(geometry, material);
@@ -413,7 +467,7 @@
 
       for (let i = 0; i < segments; i++) {
         const angle = (i / segments) * 2 * Math.PI;
-        const x = params.initialRadius * Math.cos(angle) / 20; // Scale down for VR
+        const x = params.initialRadius * Math.cos(angle) / 20;
         const y = params.initialRadius * Math.sin(angle) / 20;
         const group = new THREE.Group();
         group.position.set(x, y, 0);
@@ -422,6 +476,7 @@
       }
 
       mandalaGroup.rotation.z = totalRotation;
+      mandalaGroup.position.z = Math.sin(timeFactor) * 2; // Subtle zoom
     }
 
     function animateVR() {
@@ -432,8 +487,54 @@
       renderer.render(scene, camera);
     }
 
+    // Mantra Settings
+    function applySetting(setting) {
+      document.getElementById('settingsModal').classList.remove('active');
+      switch (setting) {
+        case 'healing':
+          params.baseFreq = 6;
+          params.audibleFreq = 54;
+          params.kickTempo = 54 / 2;
+          break;
+        case 'sleep':
+          params.baseFreq = 2;
+          params.audibleFreq = 36;
+          params.kickTempo = 36 / 2;
+          break;
+        case 'relax':
+          params.baseFreq = 10;
+          params.audibleFreq = 40;
+          params.kickTempo = 40 / 2;
+          break;
+        case 'enlighten':
+          params.baseFreq = 7.83;
+          params.audibleFreq = 108;
+          params.kickTempo = 108 / 2;
+          break;
+        case 'activate':
+          params.baseFreq = 20;
+          params.audibleFreq = 72;
+          params.kickTempo = 72 / 2;
+          break;
+      }
+      if (droneOscillator1) {
+        droneOscillator1.frequency.value = params.audibleFreq;
+        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
+        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
+      }
+      segments = 12;
+      levels = 4;
+      smoothedAmplitude = 0;
+      generateMandala();
+    }
+
+    function showSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
     // Animation Loop
     function animate() {
+      if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
       timeFactor += 0.01;
       updateVoice();
@@ -445,13 +546,12 @@
 
     // Initialization
     function init() {
+      document.getElementById('settings').addEventListener('click', () => {
+        initAudio();
+        showSettingsModal();
+      });
       document.getElementById('drone').addEventListener('click', toggleDrone);
       document.getElementById('startVoice').addEventListener('click', initVoiceControl);
-      mandalaCanvas.addEventListener('wheel', (e) => {
-        segments += Math.round(e.deltaY * -0.1);
-        segments = Math.max(6, Math.min(36, segments));
-        e.preventDefault();
-      });
       initVR();
       animate();
     }
