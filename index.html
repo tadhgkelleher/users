@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Mandala Pulse</title>
+  <title>Techno Buddha: Spirograph Tunnel</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     body {
@@ -114,7 +114,7 @@
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: Mandala Pulse</h1>
+  <h1>Techno Buddha: Spirograph Tunnel</h1>
 
   <div class="controls">
     <button id="settings">Choose Mantra</button>
@@ -144,18 +144,19 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
+    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
     let voiceInitialized = false;
-    let baseScale = 1;
+    let baseSegments = 6, baseLevels = 2;
 
     const params = {
       baseFreq: 108,
       audibleFreq: 108,
       kickTempo: 60, // BPM
-      lotusPetals: 12,
-      layers: 3
+      R: 100, // Outer radius
+      r: 60,  // Inner radius
+      d: 70   // Pen distance
     };
 
     // Audio Initialization
@@ -201,7 +202,7 @@
         droneOscillator2.frequency.value = params.audibleFreq * 1.618;
         droneOscillator3.frequency.value = params.audibleFreq * 2.718;
         lfo.frequency.value = 0.2;
-        kickOscillator.frequency.value = 60; // Low kick
+        kickOscillator.frequency.value = 60;
         droneGain.gain.value = 0.07;
         kickGain.gain.value = 0;
         droneAmplitude = 0.07;
@@ -227,8 +228,8 @@
     function updateDroneParams() {
       if (droneOscillator1) {
         rotationSpeed = droneAmplitude * 0.1 + enlightenmentFactor * 0.03;
-        const kickInterval = 60 / params.kickTempo; // Seconds per beat
-        kickTime += 1 / 60; // Assuming 60 FPS
+        const kickInterval = 60 / params.kickTempo;
+        kickTime += 1 / 60;
         if (kickTime >= kickInterval) {
           kickGain.gain.setValueAtTime(0.5 * (1 + enlightenmentFactor), audioContext.currentTime);
           kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
@@ -274,14 +275,15 @@
       const rawAmplitude = getAmplitude(dataArray);
 
       if (pitch !== -1 && pitch > 20 && pitch < 1000) voicePitch = pitch;
-      else voicePitch = params.audibleFreq; // Fallback to drone freq
+      else voicePitch = params.audibleFreq;
 
       smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
       enlightenmentFactor = Math.min(1, smoothedAmplitude * 2);
-      baseScale = Math.max(1, baseScale + enlightenmentFactor * 0.01);
-      if (droneOscillator1) params.kickTempo = Math.round(voicePitch / 2); // Half freq for tempo
+      baseSegments = Math.floor(6 + enlightenmentFactor * 10); // 6 to 16 segments
+      baseLevels = Math.floor(2 + enlightenmentFactor * 3);   // 2 to 5 levels
+      if (droneOscillator1) params.kickTempo = Math.round(voicePitch / 2);
       updateSoundMeter();
-      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, scale=${baseScale.toFixed(2)}`);
+      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, segments=${baseSegments}, levels=${baseLevels}`);
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -326,10 +328,10 @@
       document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
     }
 
-    // Mouse Scroll for Scale
+    // Mouse Scroll for Zoom
     mandalaCanvas.addEventListener('wheel', (e) => {
-      baseScale += e.deltaY * -0.01;
-      baseScale = Math.max(1, baseScale);
+      baseSegments += Math.round(e.deltaY * -0.1);
+      baseSegments = Math.max(6, Math.min(16, baseSegments));
       e.preventDefault();
     });
 
@@ -341,16 +343,14 @@
         return;
       }
 
-      console.log('Entering Mandala Pulse...');
+      console.log('Entering Spirograph Tunnel...');
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
       renderer.xr.enabled = true;
       renderer.setSize(window.innerWidth, window.innerHeight);
       mandalaGroup = new THREE.Group();
-      lotusGroup = new THREE.Group();
       scene.add(mandalaGroup);
-      scene.add(lotusGroup);
 
       const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
       const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
@@ -430,7 +430,7 @@
       });
     }
 
-    // 2D Mandala Drawing
+    // 2D Spirograph Mandala
     function generateMandala() {
       const width = mandalaCanvas.width;
       const height = mandalaCanvas.height;
@@ -438,94 +438,70 @@
       const centerY = height / 2;
       ctx.clearRect(0, 0, width, height);
 
-      // Concentric Circles
-      for (let layer = 0; layer < params.layers; layer++) {
-        const radius = (50 + layer * 50) * baseScale * (1 + Math.sin(timeFactor + layer) * 0.1);
+      const R = params.R;
+      const r = params.r;
+      const d = params.d;
+      const segments = baseSegments;
+      const levels = baseLevels;
+
+      for (let level = 0; level < levels; level++) {
         ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `hsl(${layer * 60 + timeFactor * 10}, 100%, 50%)`;
-        ctx.lineWidth = 4 + enlightenmentFactor * 2;
+        const scale = 1 + level * 0.3;
+        for (let i = 0; i < segments * 360; i++) {
+          const t = (i / segments + totalRotation) * Math.PI / 180;
+          const x = centerX + (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t) * scale;
+          const y = centerY + (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t) * scale;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `hsl(${level * 60 + timeFactor * 10}, 100%, 50%)`;
+        ctx.lineWidth = 2 + enlightenmentFactor * 2;
         ctx.stroke();
       }
-
-      // Lotus Petals
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(timeFactor * 0.3) * 0.2})`;
-      for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation;
-        const scale = baseScale * (1 + enlightenmentFactor * 0.2);
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle - 0.2) * 80 * scale, centerY + Math.sin(angle - 0.2) * 120 * scale,
-          centerX + Math.cos(angle) * 160 * scale, centerY + Math.sin(angle) * 160 * scale
-        );
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle + 0.2) * 80 * scale, centerY + Math.sin(angle + 0.2) * 120 * scale,
-          centerX, centerY
-        );
-        ctx.fill();
-      }
-
-      // Inner Patterns
-      for (let i = 0; i < params.lotusPetals * 2; i++) {
-        const angle = (i / (params.lotusPetals * 2)) * Math.PI * 2 + totalRotation * 0.5;
-        const radius = 30 * baseScale * (1 + enlightenmentFactor * 0.1);
-        ctx.beginPath();
-        ctx.arc(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius, 10, 0, Math.PI * 2);
-        ctx.fillStyle = `hsl(${i * 30 + timeFactor * 15}, 100%, 50%)`;
-        ctx.fill();
-      }
-
-      // Buddha Silhouette
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(timeFactor * 0.4) * 0.1})`;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY - 50, 50, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(centerX - 70, centerY + 50);
-      ctx.quadraticCurveTo(centerX, centerY + 120, centerX + 70, centerY + 50);
-      ctx.fill();
     }
 
-    // VR Mandala
+    // VR Spirograph Tunnel
     function updateVRMandala() {
       mandalaGroup.clear();
-      lotusGroup.clear();
 
-      const circleMaterial = new THREE.LineBasicMaterial({ color: 0x00ffcc, linewidth: 2 });
-      for (let layer = 0; layer < params.layers; layer++) {
-        const radius = (2 + layer * 2) * baseScale * (1 + Math.sin(timeFactor + layer) * 0.1);
-        const circleGeometry = new THREE.CircleGeometry(radius, 64);
-        const circle = new THREE.LineLoop(circleGeometry, circleMaterial);
-        circle.rotation.z = totalRotation * (layer + 1) * 0.1;
-        mandalaGroup.add(circle);
+      const R = params.R / 20; // Scale down for 3D
+      const r = params.r / 20;
+      const d = params.d / 20;
+      const segments = baseSegments;
+      const levels = baseLevels;
+
+      for (let level = 0; level < levels; level++) {
+        const geometry = new THREE.BufferGeometry();
+        const positions = [];
+        const scale = 1 + level * 0.3;
+        const zOffset = -level * 5 - timeFactor * 2; // Tunnel effect
+
+        for (let i = 0; i < segments * 360; i++) {
+          const t = (i / segments + totalRotation) * Math.PI / 180;
+          const x = (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t) * scale;
+          const y = (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t) * scale;
+          const z = zOffset + (i / (segments * 360)) * 20; // Stretch along Z
+          positions.push(x, y, z);
+        }
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        const material = new THREE.LineBasicMaterial({ color: new THREE.Color(`hsl(${level * 60 + timeFactor * 10}, 100%, 50%)`), linewidth: 2 });
+        const line = new THREE.Line(geometry, material);
+        mandalaGroup.add(line);
       }
-
-      const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.5 + Math.sin(timeFactor * 0.3) * 0.2 });
-      for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation;
-        const scale = baseScale * (1 + enlightenmentFactor * 0.2);
-        const petalGeometry = new THREE.PlaneGeometry(2 * scale, 4 * scale);
-        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
-        petal.position.set(Math.cos(angle) * 6 * scale, Math.sin(angle) * 6 * scale, -2);
-        petal.rotation.z = angle;
-        lotusGroup.add(petal);
-      }
-
-      mandalaGroup.position.z = -6;
-      mandalaGroup.scale.setScalar(1);
-      mandalaGroup.rotation.z = totalRotation * 0.2;
-      lotusGroup.position.z = -5;
-      lotusGroup.rotation.z = -totalRotation * 0.3;
 
       voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
       voiceMeter.position.set(0, -8, -6);
       mandalaGroup.add(voiceMeter);
+
+      mandalaGroup.position.z = -10;
+      mandalaGroup.rotation.z = totalRotation * 0.2;
     }
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += 0.01;
+      timeFactor += 0.02 + enlightenmentFactor * 0.01; // Faster tunnel with voice
       updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
@@ -538,37 +514,42 @@
         case 'healing':
           params.baseFreq = 6;
           params.audibleFreq = 54;
-          params.kickTempo = 54 / 2; // Half freq
-          params.lotusPetals = 12;
-          params.layers = 3;
+          params.kickTempo = 54 / 2;
+          params.R = 100;
+          params.r = 60;
+          params.d = 70;
           break;
         case 'sleep':
           params.baseFreq = 2;
           params.audibleFreq = 36;
           params.kickTempo = 36 / 2;
-          params.lotusPetals = 8;
-          params.layers = 2;
+          params.R = 80;
+          params.r = 50;
+          params.d = 60;
           break;
         case 'relax':
           params.baseFreq = 10;
           params.audibleFreq = 40;
           params.kickTempo = 40 / 2;
-          params.lotusPetals = 10;
-          params.layers = 3;
+          params.R = 90;
+          params.r = 55;
+          params.d = 65;
           break;
         case 'enlighten':
           params.baseFreq = 7.83;
           params.audibleFreq = 108;
           params.kickTempo = 108 / 2;
-          params.lotusPetals = 16;
-          params.layers = 4;
+          params.R = 120;
+          params.r = 70;
+          params.d = 80;
           break;
         case 'activate':
           params.baseFreq = 20;
           params.audibleFreq = 72;
           params.kickTempo = 72 / 2;
-          params.lotusPetals = 14;
-          params.layers = 3;
+          params.R = 110;
+          params.r = 65;
+          params.d = 75;
           break;
       }
       if (droneOscillator1) {
@@ -579,7 +560,8 @@
       timeFactor = 0;
       smoothedAmplitude = 0;
       enlightenmentFactor = 0;
-      baseScale = 1;
+      baseSegments = 6;
+      baseLevels = 2;
       generateMandala();
     }
 
@@ -599,7 +581,7 @@
     }
 
     function init() {
-      console.log('Awakening Techno Buddha in Mandala Pulse...');
+      console.log('Awakening Techno Buddha in Spirograph Tunnel...');
       document.getElementById('settings').addEventListener('click', () => {
         initAudio();
         showSettingsModal();
@@ -621,7 +603,7 @@
     window.onload = () => {
       if (typeof THREE === 'undefined') {
         console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandala Pulse failed to initialize.</p>';
+        document.body.innerHTML += '<p style="color: #ff0066;">Error: Spirograph Tunnel failed to initialize.</p>';
       } else {
         console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
         init();
