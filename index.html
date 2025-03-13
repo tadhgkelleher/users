@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Mandelbrot Boundary</title>
+  <title>Techno Buddha: Mandala Pulse</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     body {
@@ -36,8 +36,8 @@
       box-shadow: 0 0 100px rgba(255, 215, 0, 0.7), inset 0 0 30px #00ffcc;
       width: 100%;
       height: 100%;
-      max-width: 1200px;
-      max-height: 1200px;
+      max-width: 800px;
+      max-height: 800px;
       margin: 20px auto;
       display: block;
     }
@@ -114,7 +114,7 @@
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: Mandelbrot Boundary</h1>
+  <h1>Techno Buddha: Mandala Pulse</h1>
 
   <div class="controls">
     <button id="settings">Choose Mantra</button>
@@ -132,9 +132,9 @@
   </div>
 
   <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
-  <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Zoom: 1x</div>
+  <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Tempo: 0 BPM</div>
 
-  <canvas id="mandalaCanvas" width="1200" height="1200"></canvas>
+  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
@@ -143,47 +143,20 @@
     const ctx = mandalaCanvas.getContext('2d');
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
-    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
+    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
     let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
-    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
+    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
     let voiceInitialized = false;
-    let baseZoom = 1;
+    let baseScale = 1;
 
     const params = {
-      maxIterations: 500,
-      zoom: 1,
-      centerX: -0.75, // Starting near seahorse valley
-      centerY: 0.1,
       baseFreq: 108,
       audibleFreq: 108,
-      waveform: 'sine',
-      lotusPetals: 12
+      kickTempo: 60, // BPM
+      lotusPetals: 12,
+      layers: 3
     };
-
-    // HSL to RGB
-    function hslToRgb(h, s, l) {
-      h /= 360;
-      let r, g, b;
-      if (s === 0) {
-        r = g = b = l;
-      } else {
-        const hue2rgb = (p, q, t) => {
-          if (t < 0) t += 1;
-          if (t > 1) t -= 1;
-          if (t < 1/6) return p + (q - p) * 6 * t;
-          if (t < 1/2) return q;
-          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-          return p;
-        };
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-      }
-      return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-    }
 
     // Audio Initialization
     function initAudio() {
@@ -200,11 +173,13 @@
         droneOscillator2.stop();
         droneOscillator3.stop();
         lfo.stop();
+        kickOscillator.stop();
         droneOscillator1 = null;
         droneOscillator2 = null;
         droneOscillator3 = null;
         lfo = null;
-        droneGain = null;
+        kickOscillator = null;
+        kickGain = null;
         droneAmplitude = 0;
         document.getElementById('drone').textContent = 'Invoke Techno Chant';
       } else {
@@ -213,17 +188,22 @@
         droneOscillator3 = audioContext.createOscillator();
         droneGain = audioContext.createGain();
         lfo = audioContext.createOscillator();
+        kickOscillator = audioContext.createOscillator();
+        kickGain = audioContext.createGain();
 
         droneOscillator1.type = 'sawtooth';
         droneOscillator2.type = 'sine';
         droneOscillator3.type = 'triangle';
         lfo.type = 'sine';
+        kickOscillator.type = 'sine';
 
         droneOscillator1.frequency.value = params.audibleFreq;
         droneOscillator2.frequency.value = params.audibleFreq * 1.618;
         droneOscillator3.frequency.value = params.audibleFreq * 2.718;
         lfo.frequency.value = 0.2;
+        kickOscillator.frequency.value = 60; // Low kick
         droneGain.gain.value = 0.07;
+        kickGain.gain.value = 0;
         droneAmplitude = 0.07;
 
         lfo.connect(droneGain.gain);
@@ -231,10 +211,14 @@
         droneOscillator2.connect(droneGain);
         droneOscillator3.connect(droneGain);
         droneGain.connect(audioContext.destination);
+        kickOscillator.connect(kickGain);
+        kickGain.connect(audioContext.destination);
+
         droneOscillator1.start();
         droneOscillator2.start();
         droneOscillator3.start();
         lfo.start();
+        kickOscillator.start();
         document.getElementById('drone').textContent = 'Silence Chant';
         updateDroneParams();
       }
@@ -243,6 +227,13 @@
     function updateDroneParams() {
       if (droneOscillator1) {
         rotationSpeed = droneAmplitude * 0.1 + enlightenmentFactor * 0.03;
+        const kickInterval = 60 / params.kickTempo; // Seconds per beat
+        kickTime += 1 / 60; // Assuming 60 FPS
+        if (kickTime >= kickInterval) {
+          kickGain.gain.setValueAtTime(0.5 * (1 + enlightenmentFactor), audioContext.currentTime);
+          kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+          kickTime = 0;
+        }
         requestAnimationFrame(updateDroneParams);
       } else {
         rotationSpeed = 0;
@@ -282,15 +273,15 @@
       const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
       const rawAmplitude = getAmplitude(dataArray);
 
-      if (pitch !== -1) voicePitch = pitch;
-      else voicePitch = 0;
+      if (pitch !== -1 && pitch > 20 && pitch < 1000) voicePitch = pitch;
+      else voicePitch = params.audibleFreq; // Fallback to drone freq
 
       smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
       enlightenmentFactor = Math.min(1, smoothedAmplitude * 2);
-      baseZoom += enlightenmentFactor * 0.5; // Linear growth
-      params.zoom = Math.min(10000, baseZoom + timeFactor * 10); // Cap at 10,000x
+      baseScale = Math.max(1, baseScale + enlightenmentFactor * 0.01);
+      if (droneOscillator1) params.kickTempo = Math.round(voicePitch / 2); // Half freq for tempo
       updateSoundMeter();
-      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, zoom=${params.zoom.toFixed(2)}`);
+      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, scale=${baseScale.toFixed(2)}`);
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -332,13 +323,13 @@
     function updateSoundMeter() {
       const energyPercent = Math.round(smoothedAmplitude * 100);
       document.getElementById('soundBar').style.width = `${energyPercent}%`;
-      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Zoom: ${params.zoom.toFixed(1)}x`;
+      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
     }
 
-    // Mouse Scroll for Zoom
+    // Mouse Scroll for Scale
     mandalaCanvas.addEventListener('wheel', (e) => {
-      baseZoom += e.deltaY * -0.5; // Reverse scroll direction
-      baseZoom = Math.max(1, baseZoom);
+      baseScale += e.deltaY * -0.01;
+      baseScale = Math.max(1, baseScale);
       e.preventDefault();
     });
 
@@ -350,7 +341,7 @@
         return;
       }
 
-      console.log('Entering Mandelbrot Boundary...');
+      console.log('Entering Mandala Pulse...');
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
@@ -439,69 +430,49 @@
       });
     }
 
-    // Mandelbrot Set Calculation
-    function mandelbrot(x, y, maxIterations) {
-      let real = x;
-      let imag = y;
-      for (let i = 0; i < maxIterations; i++) {
-        const realTemp = real * real - imag * imag + x;
-        imag = 2 * real * imag + y;
-        real = realTemp;
-        if (real * real + imag * imag > 4) return i + 1 - Math.log(Math.log2(real * real + imag * imag));
-      }
-      return maxIterations;
-    }
-
-    // 2D Mandelbrot Drawing
+    // 2D Mandala Drawing
     function generateMandala() {
       const width = mandalaCanvas.width;
       const height = mandalaCanvas.height;
       const centerX = width / 2;
       const centerY = height / 2;
-      const imageData = ctx.createImageData(width, height);
-      const zoom = params.zoom;
-      const cx = params.centerX;
-      const cy = params.centerY;
+      ctx.clearRect(0, 0, width, height);
 
-      for (let px = 0; px < width; px++) {
-        for (let py = 0; py < height; py++) {
-          const x = (px - centerX) / (width * 0.25) / zoom + cx;
-          const y = (py - centerY) / (height * 0.25) / zoom + cy;
-          const iter = mandelbrot(x, y, params.maxIterations);
-          const index = (px + py * width) * 4;
-          if (iter >= params.maxIterations) {
-            imageData.data[index] = 0;
-            imageData.data[index + 1] = 0;
-            imageData.data[index + 2] = 0;
-            imageData.data[index + 3] = 255;
-          } else {
-            const hue = (iter * 5 + timeFactor * 2) % 360;
-            const sat = 1;
-            const light = 0.5 + Math.sin(iter * 0.05) * 0.3;
-            const color = hslToRgb(hue, sat, light);
-            imageData.data[index] = color[0];
-            imageData.data[index + 1] = color[1];
-            imageData.data[index + 2] = color[2];
-            imageData.data[index + 3] = 255;
-          }
-        }
+      // Concentric Circles
+      for (let layer = 0; layer < params.layers; layer++) {
+        const radius = (50 + layer * 50) * baseScale * (1 + Math.sin(timeFactor + layer) * 0.1);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `hsl(${layer * 60 + timeFactor * 10}, 100%, 50%)`;
+        ctx.lineWidth = 4 + enlightenmentFactor * 2;
+        ctx.stroke();
       }
-      ctx.putImageData(imageData, 0, 0);
 
       // Lotus Petals
       ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(timeFactor * 0.3) * 0.2})`;
       for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation * 0.5;
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation;
+        const scale = baseScale * (1 + enlightenmentFactor * 0.2);
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.quadraticCurveTo(
-          centerX + Math.cos(angle - 0.2) * 80, centerY + Math.sin(angle - 0.2) * 120,
-          centerX + Math.cos(angle) * 160, centerY + Math.sin(angle) * 160
+          centerX + Math.cos(angle - 0.2) * 80 * scale, centerY + Math.sin(angle - 0.2) * 120 * scale,
+          centerX + Math.cos(angle) * 160 * scale, centerY + Math.sin(angle) * 160 * scale
         );
         ctx.quadraticCurveTo(
-          centerX + Math.cos(angle + 0.2) * 80, centerY + Math.sin(angle + 0.2) * 120,
+          centerX + Math.cos(angle + 0.2) * 80 * scale, centerY + Math.sin(angle + 0.2) * 120 * scale,
           centerX, centerY
         );
+        ctx.fill();
+      }
+
+      // Inner Patterns
+      for (let i = 0; i < params.lotusPetals * 2; i++) {
+        const angle = (i / (params.lotusPetals * 2)) * Math.PI * 2 + totalRotation * 0.5;
+        const radius = 30 * baseScale * (1 + enlightenmentFactor * 0.1);
+        ctx.beginPath();
+        ctx.arc(centerX + Math.cos(angle) * radius, centerY + Math.sin(angle) * radius, 10, 0, Math.PI * 2);
+        ctx.fillStyle = `hsl(${i * 30 + timeFactor * 15}, 100%, 50%)`;
         ctx.fill();
       }
 
@@ -516,71 +487,28 @@
       ctx.fill();
     }
 
-    // VR Mandelbrot
+    // VR Mandala
     function updateVRMandala() {
       mandalaGroup.clear();
       lotusGroup.clear();
 
-      const geometry = new THREE.PlaneGeometry(10, 10, 256, 256);
-      const material = new THREE.ShaderMaterial({
-        uniforms: {
-          time: { value: timeFactor },
-          zoom: { value: params.zoom },
-          center: { value: new THREE.Vector2(params.centerX, params.centerY) },
-          maxIterations: { value: params.maxIterations }
-        },
-        vertexShader: `
-          varying vec2 vUv;
-          void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `,
-        fragmentShader: `
-          uniform float time;
-          uniform float zoom;
-          uniform vec2 center;
-          uniform int maxIterations;
-          varying vec2 vUv;
-
-          vec3 hsl2rgb(float h, float s, float l) {
-            vec3 rgb = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
-            return l + s * (rgb - 0.5) * (1.0 - abs(2.0 * l - 1.0));
-          }
-
-          void main() {
-            vec2 c = center + (vUv - 0.5) * 4.0 / zoom;
-            vec2 z = vec2(0.0);
-            int iter;
-            float smoothIter;
-            for (iter = 0; iter < maxIterations; iter++) {
-              z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
-              if (length(z) > 2.0) {
-                smoothIter = float(iter) + 1.0 - log(log2(length(z)));
-                break;
-              }
-            }
-            if (iter >= maxIterations) {
-              gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
-            } else {
-              float hue = mod(smoothIter * 5.0 + time * 2.0, 360.0) / 360.0;
-              vec3 color = hsl2rgb(hue, 1.0, 0.5 + sin(smoothIter * 0.05) * 0.3);
-              gl_FragColor = vec4(color, 1.0);
-            }
-          }
-        `
-      });
-      const mandelbrotPlane = new THREE.Mesh(geometry, material);
-      mandalaGroup.add(mandelbrotPlane);
+      const circleMaterial = new THREE.LineBasicMaterial({ color: 0x00ffcc, linewidth: 2 });
+      for (let layer = 0; layer < params.layers; layer++) {
+        const radius = (2 + layer * 2) * baseScale * (1 + Math.sin(timeFactor + layer) * 0.1);
+        const circleGeometry = new THREE.CircleGeometry(radius, 64);
+        const circle = new THREE.LineLoop(circleGeometry, circleMaterial);
+        circle.rotation.z = totalRotation * (layer + 1) * 0.1;
+        mandalaGroup.add(circle);
+      }
 
       const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.5 + Math.sin(timeFactor * 0.3) * 0.2 });
       for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation * 0.5;
-        const petalGeometry = new THREE.PlaneGeometry(2, 4);
+        const angle = (i / params.lotusPetals) * Math.PI * 2 + totalRotation;
+        const scale = baseScale * (1 + enlightenmentFactor * 0.2);
+        const petalGeometry = new THREE.PlaneGeometry(2 * scale, 4 * scale);
         const petal = new THREE.Mesh(petalGeometry, petalMaterial);
-        petal.position.set(Math.cos(angle) * 6, Math.sin(angle) * 6, -2);
+        petal.position.set(Math.cos(angle) * 6 * scale, Math.sin(angle) * 6 * scale, -2);
         petal.rotation.z = angle;
-        petal.scale.y = 1;
         lotusGroup.add(petal);
       }
 
@@ -597,60 +525,50 @@
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += droneAmplitude * 0.01;
+      timeFactor += 0.01;
       updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
     }
 
-    // Mantra Settings (Boundary Regions)
+    // Mantra Settings
     function applySetting(setting) {
       document.getElementById('settingsModal').classList.remove('active');
       switch (setting) {
         case 'healing':
           params.baseFreq = 6;
           params.audibleFreq = 54;
-          params.maxIterations = 500;
-          params.zoom = 1;
-          params.centerX = -0.75; // Seahorse valley
-          params.centerY = 0.1;
+          params.kickTempo = 54 / 2; // Half freq
           params.lotusPetals = 12;
+          params.layers = 3;
           break;
         case 'sleep':
           params.baseFreq = 2;
           params.audibleFreq = 36;
-          params.maxIterations = 400;
-          params.zoom = 1;
-          params.centerX = -1.4; // Elephant valley
-          params.centerY = 0.02;
+          params.kickTempo = 36 / 2;
           params.lotusPetals = 8;
+          params.layers = 2;
           break;
         case 'relax':
           params.baseFreq = 10;
           params.audibleFreq = 40;
-          params.maxIterations = 600;
-          params.zoom = 1;
-          params.centerX = -0.16; // Spiral region
-          params.centerY = 0.65;
+          params.kickTempo = 40 / 2;
           params.lotusPetals = 10;
+          params.layers = 3;
           break;
         case 'enlighten':
           params.baseFreq = 7.83;
           params.audibleFreq = 108;
-          params.maxIterations = 1000;
-          params.zoom = 1;
-          params.centerX = -0.75; // Seahorse valley (high detail)
-          params.centerY = 0.1;
+          params.kickTempo = 108 / 2;
           params.lotusPetals = 16;
+          params.layers = 4;
           break;
         case 'activate':
           params.baseFreq = 20;
           params.audibleFreq = 72;
-          params.maxIterations = 450;
-          params.zoom = 1;
-          params.centerX = 0.28; // Mini-Mandelbrot
-          params.centerY = -0.01;
+          params.kickTempo = 72 / 2;
           params.lotusPetals = 14;
+          params.layers = 3;
           break;
       }
       if (droneOscillator1) {
@@ -661,8 +579,7 @@
       timeFactor = 0;
       smoothedAmplitude = 0;
       enlightenmentFactor = 0;
-      baseZoom = 1;
-      params.zoom = 1;
+      baseScale = 1;
       generateMandala();
     }
 
@@ -673,7 +590,7 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
-      timeFactor += droneAmplitude * 0.01;
+      timeFactor += 0.01;
       updateVoice();
       generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
@@ -682,7 +599,7 @@
     }
 
     function init() {
-      console.log('Awakening Techno Buddha in Mandelbrot Boundary...');
+      console.log('Awakening Techno Buddha in Mandala Pulse...');
       document.getElementById('settings').addEventListener('click', () => {
         initAudio();
         showSettingsModal();
@@ -704,7 +621,7 @@
     window.onload = () => {
       if (typeof THREE === 'undefined') {
         console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandelbrot Boundary failed to initialize.</p>';
+        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandala Pulse failed to initialize.</p>';
       } else {
         console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
         init();
