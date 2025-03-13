@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VR House Tour for Elderly</title>
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script> <!-- For animations -->
+    <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
+    <!-- Optional: Speech Recognition (Annyang) -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script> -->
     <style>
         body {
             margin: 0;
@@ -42,6 +44,11 @@
             font-size: 24px;
             z-index: 20;
         }
+
+        /* Customizable Cursor Styles */
+        #cursor {
+            color: red; /* Default color */
+        }
     </style>
 </head>
 <body>
@@ -52,19 +59,23 @@
         <p>- Use your VR headset or mouse to look around.</p>
         <p>- Click or gaze at yellow hotspots to visit rooms.</p>
         <p>- Sit back, relax, and enjoy the tour!</p>
+        <!-- Optional: Speech Recognition Prompt -->
+        <!-- <p id="speech-prompt">Click here to start voice commands!</p> -->
     </div>
 
-    <a-scene id="main-scene" loading-screen="dotsColor: white; backgroundColor: #333">
-        <!-- Assets for textures and sounds -->
+    <a-scene id="main-scene" loading-screen="dotsColor: white; backgroundColor: #333" stats>
         <a-assets>
+            <!-- Placeholder Assets (Replace with higher quality ones) -->
             <img id="wood" src="https://cdn.aframe.io/textures/wood.jpg">
             <img id="tiles" src="https://cdn.aframe.io/textures/tiles.jpg">
             <img id="sky" src="https://cdn.aframe.io/360-image-samples/sky.jpg">
             <audio id="click-sound" src="https://cdn.aframe.io/sounds/click.mp3"></audio>
             <audio id="welcome-voice" src="https://cdn.aframe.io/sounds/welcome.mp3" preload="auto"></audio>
+            <audio id="living-room-ambience" src="living-room-ambience.mp3" preload="auto"></audio>
+            <audio id="kitchen-ambience" src="kitchen-ambience.mp3" preload="auto"></audio>
         </a-assets>
 
-        <!-- Sky and Ground -->
+        <!-- Basic Scene Elements -->
         <a-sky src="#sky" animation="property: rotation; to: 0 360 0; dur: 30000; loop: true"></a-sky>
         <a-plane position="0 0 0" rotation="-90 0 0" width="30" height="30" material="src: #tiles; repeat: 10 10" shadow></a-plane>
 
@@ -78,21 +89,27 @@
             <a-box position="-3 1.5 0" width="4" height="3" depth="3" material="color: #add8e6" shadow>
                 <a-text value="Living Room" color="black" position="0 1.6 0" align="center" width="3" scale="1.2 1.2 1.2"></a-text>
                 <a-entity geometry="primitive: box" position="0 0.5 -1" scale="0.5 0.5 0.5" material="color: #8b4513" shadow></a-entity> <!-- Sofa -->
-                <a-cylinder position="0 0 -1.5" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#living-room-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+                <a-cylinder position="0 0 -1.5" radius="0.3" height="0.1" color="yellow" class="hotspot" data-target="#living-room-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+                <!-- Optional: Directional Arrow -->
+                <a-entity geometry="primitive: cone; height: 0.5; radiusBottom: 0.2; radiusTop: 0" position="0 -1 -1.5" rotation="-90 0 0" material="color: green"></a-entity>
             </a-box>
+
             <!-- Kitchen -->
             <a-box position="2 1.5 0" width="2" height="3" depth="2" material="color: #f0e68c" shadow>
                 <a-text value="Kitchen" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
-                <a-cylinder position="0 0 -1" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#kitchen-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+                <a-cylinder position="0 0 -1" radius="0.3" height="0.1" color="yellow" class="hotspot" data-target="#kitchen-detail" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
             </a-box>
+
             <!-- Bedroom 1 -->
             <a-box position="-3 1.5 -4" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
                 <a-text value="Bedroom 1" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
             </a-box>
+
             <!-- Bedroom 2 -->
             <a-box position="0 1.5 -4" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
                 <a-text value="Bedroom 2" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
             </a-box>
+
             <!-- Bathroom -->
             <a-box position="3 1.5 -4" width="1.5" height="3" depth="1.5" material="color: #87cefa" shadow>
                 <a-text value="Bathroom" color="black" position="0 1.6 0" align="center" width="1.5" scale="1.2 1.2 1.2"></a-text>
@@ -105,6 +122,7 @@
             <a-box position="-2 1.5 0" width="2" height="3" depth="2" material="color: #ffb6c1" shadow>
                 <a-text value="Bedroom 3" color="black" position="0 1.6 0" align="center" width="2" scale="1.2 1.2 1.2"></a-text>
             </a-box>
+
             <!-- Bathroom 2 -->
             <a-box position="1 1.5 0" width="1.5" height="3" depth="1.5" material="color: #87cefa" shadow>
                 <a-text value="Bathroom 2" color="black" position="0 1.6 0" align="center" width="1.5" scale="1.2 1.2 1.2"></a-text>
@@ -122,7 +140,8 @@
             <a-plane position="0 0 -5" rotation="-90 0 0" width="10" height="10" material="color: #add8e6"></a-plane>
             <a-text value="Welcome to the Living Room!\nRelax and enjoy the cozy space." color="black" position="0 2 -5" align="center" width="5" scale="1.5 1.5 1.5"></a-text>
             <a-entity geometry="primitive: box" position="0 0.5 -4" scale="1 0.5 1" material="color: #8b4513" shadow></a-entity> <!-- Sofa -->
-            <a-cylinder position="0 0 -6" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            <a-cylinder position="0 0 -6" radius="0.3" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            <a-entity sound="src: #living-room-ambience; autoplay: true; loop: true"></a-entity> <!-- Room ambience -->
         </a-entity>
 
         <a-entity id="kitchen-detail" visible="false">
@@ -130,15 +149,16 @@
             <a-plane position="0 0 -5" rotation="-90 0 0" width="10" height="10" material="color: #f0e68c"></a-plane>
             <a-text value="Welcome to the Kitchen!\nA cozy place to cook and eat." color="black" position="0 2 -5" align="center" width="5" scale="1.5 1.5 1.5"></a-text>
             <a-entity geometry="primitive: box" position="0 0.5 -4" scale="0.8 0.8 0.8" material="color: #a52a2a" shadow></a-entity> <!-- Table -->
-            <a-cylinder position="0 0 -6" radius="0.2" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            <a-cylinder position="0 0 -6" radius="0.3" height="0.1" color="yellow" class="hotspot" data-target="#main-scene" sound="src: #click-sound; on: click" animation="property: scale; to: 1.2 1.2 1.2; dur: 500; loop: true; dir: alternate"></a-cylinder>
+            <a-entity sound="src: #kitchen-ambience; autoplay: true; loop: true"></a-entity> <!-- Room ambience -->
         </a-entity>
 
         <!-- Camera and Controls -->
         <a-camera position="0 1.6 5" wasd-controls="enabled: false" look-controls>
-            <a-cursor color="red" fuse="true" fuse-timeout="1000" animation="property: scale; to: 0.5 0.5 0.5; dur: 500; loop: true; dir: alternate"></a-cursor>
+            <a-cursor id="cursor" color="red" fuse="true" fuse-timeout="1000" animation="property: scale; to: 0.5 0.5 0.5; dur: 500; loop: true; dir: alternate"></a-cursor>
         </a-camera>
 
-        <!-- JavaScript for Hotspot Navigation and Enhancements -->
+        <!-- Hotspot Navigation and Enhancements -->
         <script>
             AFRAME.registerComponent('hotspot', {
                 schema: { target: { type: 'string' } },
@@ -147,8 +167,21 @@
                     el.addEventListener('click', () => {
                         const target = document.querySelector(this.data.target);
                         if (target) {
+                            // Pause all room ambiances before switching
+                            document.querySelectorAll('[sound]').forEach(entity => {
+                                if (entity.components.sound) {
+                                    entity.components.sound.pauseSound();
+                                }
+                            });
+
                             document.querySelectorAll('a-entity').forEach(entity => entity.setAttribute('visible', false));
                             target.setAttribute('visible', true);
+
+                            // Play room ambience, if available
+                            if (target.components.sound) {
+                                target.components.sound.playSound();
+                            }
+
                             if (this.data.target === '#main-scene') {
                                 document.querySelector('a-scene').setAttribute('visible', true);
                             }
@@ -157,17 +190,65 @@
                 }
             });
 
-            // Remove loading screen when scene is loaded
+            // Handle Loading Screen and Welcome Audio
             document.addEventListener('DOMContentLoaded', () => {
                 const scene = document.querySelector('a-scene');
                 scene.addEventListener('loaded', () => {
                     document.getElementById('loading').style.display = 'none';
-                    // Play welcome voice (replace with actual audio file URL)
                     const welcomeSound = document.getElementById('welcome-voice');
                     if (welcomeSound) welcomeSound.play();
                 });
             });
+
+            // Example to Customize Cursor Color (e.g., button click) -  Add button in HTML if needed
+            // document.getElementById('cursor-color-button').addEventListener('click', () => {
+            //     document.getElementById('cursor').setAttribute('color', 'blue');
+            // });
         </script>
+
+        <!-- Optional: Speech Recognition Script (Requires annyang.min.js) -->
+        <!--
+        <script>
+            if (annyang) {
+                const commands = {
+                    'go to living room': function() { navigateTo('#living-room-detail'); },
+                    'go to kitchen': function() { navigateTo('#kitchen-detail'); },
+                    'return home': function() { navigateTo('#main-scene'); }
+                };
+                annyang.addCommands(commands);
+
+                annyang.addCallback('start', function() {
+                    console.log('Voice recognition started');
+                });
+
+                annyang.addCallback('end', function() {
+                    console.log('Voice recognition stopped');
+                });
+
+                annyang.addCallback('error', function(error) {
+                   console.log('There was an error in voice recognition: ', error);
+                });
+
+                document.getElementById('speech-prompt').addEventListener('click', function() {
+                    annyang.start();
+                });
+            } else {
+                alert("annyang is not defined. Make sure you've included the library.");
+            }
+
+            function navigateTo(targetSelector) {
+                const target = document.querySelector(targetSelector);
+                if (target) {
+                    document.querySelectorAll('a-entity').forEach(entity => entity.setAttribute('visible', false));
+                    target.setAttribute('visible', true);
+                    if (targetSelector === '#main-scene') {
+                        document.querySelector('a-scene').setAttribute('visible', true);
+                    }
+                }
+            }
+        </script>
+        -->
+
     </a-scene>
 </body>
 </html>
