@@ -144,7 +144,7 @@
       lineWidth: 2,
       baseFreq: 110,
       audibleFreq: 110,
-      cymaticFactor: 0.1,
+      cymaticFactor: 0.2, // Increased for more distortion
       waveform: 'sine'
     };
 
@@ -263,11 +263,11 @@
             else voicePitch = 0;
 
             smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-            chaosFactor = Math.min(0.5, smoothedAmplitude);
+            chaosFactor = Math.min(1, smoothedAmplitude * 2); // Stronger chaos
             updateVoiceParams();
             params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
             updateSoundMeter();
-            console.log(`Voice active: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}`);
+            console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`);
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
@@ -275,7 +275,7 @@
         })
         .catch(e => {
           console.error('Voice control failed:', e);
-          setTimeout(initVoiceControl, 1000); // Retry after 1s
+          setTimeout(initVoiceControl, 1000); // Retry
         });
     }
 
@@ -316,7 +316,7 @@
     }
 
     function updateVoiceParams() {
-      params.segments = Math.round(6 + (voicePitch / 300) * 6); // 6 to 12
+      params.segments = Math.round(6 + (voicePitch / 200) * 18); // 6 to 24
     }
 
     function updateSoundMeter() {
@@ -395,14 +395,14 @@
       });
     }
 
-    // Generate VR Mandala (Tunnel Effect)
+    // Generate VR Mandala (Fractal Tunnel)
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
         color: new THREE.Color(params.lineColor),
         linewidth: 2,
         transparent: true,
-        opacity: 0.8 + chaosFactor * 0.2
+        opacity: Math.max(0.1, 1 - (timeFactor * 0.1)) // Fade with depth
       });
 
       function generateCymaticShape(x, y, r, level) {
@@ -410,36 +410,38 @@
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const cymaticWave = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor * chaosFactor;
-          const dist = r * (1 + cymaticWave);
-          const z = -level * (1 + timeFactor + chaosFactor); // Tunnel depth
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5; // Multi-frequency
+          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1); // Chaos jitter
+          const z = -Math.pow(level, 1.5) * (1 + timeFactor + chaosFactor * 2); // Exponential depth
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
+        // Nested sub-mandalas
         const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
         if (level < currentMaxLevels) {
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
-            generateCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
+          for (let i = 0; i < params.segments / 2; i++) { // Fewer sub-shapes for performance
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
+            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
           }
         }
       }
 
       generateCymaticShape(0, 0, 10, 1);
-      mandalaGroup.position.z = -5; // Base depth
-      mandalaGroup.scale.setScalar(1 + chaosFactor * 1.5);
+      mandalaGroup.position.z = -5;
+      mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
       mandalaGroup.rotation.z = totalRotation;
 
       console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}`);
     }
 
     function animateVR(time) {
-      if (!voiceInitialized) initVoiceControl(); // Force voice init on VR start
+      if (!voiceInitialized) initVoiceControl();
       totalRotation += rotationSpeed;
       timeFactor += chaosFactor * 0.005 + 0.001;
       updateVoiceParams();
@@ -460,19 +462,20 @@
         ctx.lineWidth = params.lineWidth;
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const cymaticWave = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor * chaosFactor;
-          const dist = r * (1 + cymaticWave);
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
+          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
           ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
         }
         ctx.closePath();
         ctx.stroke();
 
         if (level < params.levels) {
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor;
-            drawCymaticShape(nextX, nextY, r * params.scaleFactor, level + 1);
+          for (let i = 0; i < params.segments / 2; i++) {
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
+            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
           }
         }
       }
@@ -489,7 +492,7 @@
           params.audibleFreq = 48;
           params.segments = 6;
           params.levels = 4;
-          params.cymaticFactor = 0.1;
+          params.cymaticFactor = 0.2;
           params.lineColor = '#00ccff';
           break;
         case 'sleep':
@@ -497,7 +500,7 @@
           params.audibleFreq = 32;
           params.segments = 6;
           params.levels = 3;
-          params.cymaticFactor = 0.15;
+          params.cymaticFactor = 0.25;
           params.lineColor = '#330066';
           break;
         case 'relax':
@@ -505,7 +508,7 @@
           params.audibleFreq = 40;
           params.segments = 6;
           params.levels = 4;
-          params.cymaticFactor = 0.08;
+          params.cymaticFactor = 0.15;
           params.lineColor = '#66ff66';
           break;
         case 'enlighten':
@@ -513,7 +516,7 @@
           params.audibleFreq = 62.64;
           params.segments = 6;
           params.levels = 5;
-          params.cymaticFactor = 0.12;
+          params.cymaticFactor = 0.22;
           params.lineColor = '#ffcc00';
           break;
         case 'activate':
@@ -521,7 +524,7 @@
           params.audibleFreq = 80;
           params.segments = 6;
           params.levels = 3;
-          params.cymaticFactor = 0.05;
+          params.cymaticFactor = 0.1;
           params.lineColor = '#ff0066';
           break;
       }
