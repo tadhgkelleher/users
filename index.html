@@ -133,6 +133,7 @@
     let scene, camera, renderer, mandalaGroup;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
+    let voiceInitialized = false;
 
     const params = {
       segments: 6,
@@ -240,6 +241,7 @@
     }
 
     function initVoiceControl() {
+      if (voiceInitialized) return;
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
           initAudio();
@@ -265,11 +267,16 @@
             updateVoiceParams();
             params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
             updateSoundMeter();
+            console.log(`Voice active: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}`);
             requestAnimationFrame(detectPitch);
           }
           detectPitch();
+          voiceInitialized = true;
         })
-        .catch(e => console.error('Voice control failed:', e));
+        .catch(e => {
+          console.error('Voice control failed:', e);
+          setTimeout(initVoiceControl, 1000); // Retry after 1s
+        });
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -375,8 +382,6 @@
             enterVRButton.textContent = 'Enter VR Mode';
             isVRActive = false;
           });
-
-          if (!voiceAnalyser) initVoiceControl();
         } catch (err) {
           console.error('VR session failed:', err);
           enterVRButton.textContent = 'VR Failed: ' + err.message;
@@ -390,7 +395,7 @@
       });
     }
 
-    // Generate VR Mandala
+    // Generate VR Mandala (Tunnel Effect)
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -407,7 +412,7 @@
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
           const cymaticWave = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor * chaosFactor;
           const dist = r * (1 + cymaticWave);
-          const z = Math.sin(angle + timeFactor) * (level * 0.5) * chaosFactor;
+          const z = -level * (1 + timeFactor + chaosFactor); // Tunnel depth
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -426,19 +431,18 @@
       }
 
       generateCymaticShape(0, 0, 10, 1);
-      mandalaGroup.position.z = -10 + chaosFactor * 2;
+      mandalaGroup.position.z = -5; // Base depth
       mandalaGroup.scale.setScalar(1 + chaosFactor * 1.5);
       mandalaGroup.rotation.z = totalRotation;
-      mandalaGroup.rotation.y = totalRotation * 0.5;
 
-      // Debug logs
       console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}`);
     }
 
     function animateVR(time) {
+      if (!voiceInitialized) initVoiceControl(); // Force voice init on VR start
       totalRotation += rotationSpeed;
-      timeFactor += chaosFactor * 0.005 + 0.001; // Grow with voice and time
-      updateVoiceParams(); // Sync voice params every frame
+      timeFactor += chaosFactor * 0.005 + 0.001;
+      updateVoiceParams();
       updateVRMandala();
       renderer.render(scene, camera);
     }
