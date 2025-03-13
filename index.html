@@ -14,27 +14,36 @@
       margin: 0;
       padding: 0;
       min-height: 100vh;
-      overflow: hidden;
+      overflow: hidden; /* Prevents scrollbars */
     }
+
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 5rem;
+      font-size: 3.5rem; /* Adjusted for better responsiveness */
       color: #ff00ff;
       text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
-      margin: 30px 0;
+      margin: 20px 0; /* Reduced margin */
     }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center; /* Vertically center items */
+      margin-bottom: 10px; /* Added margin */
+      flex-wrap: wrap; /* Allows buttons to wrap on smaller screens */
+    }
+
     #mandalaCanvas {
       border: 8px double #ff66cc;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
       box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
-      width: 100%;
-      height: 100%;
-      max-width: 800px;
-      max-height: 800px;
-      margin: 20px auto;
-      display: block;
+      max-width: 95vw;
+      max-height: 60vh; /* Adjusted to prevent it from taking up too much screen */
+      margin: 10px auto; /* Reduced margin */
+      display: block; /* Ensures proper centering */
     }
+
     #vrCanvas {
       position: fixed;
       top: 0;
@@ -43,23 +52,27 @@
       height: 100%;
       z-index: 20;
       display: none;
+      background: rgba(0, 0, 0, 0.9);
     }
+
     button {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
-      padding: 10px 20px;
+      padding: 8px 16px; /* Slightly smaller padding */
       border: none;
-      border-radius: 10px;
+      border-radius: 8px; /* Slightly smaller border radius */
       color: #000022;
-      font-size: 16px;
+      font-size: 14px; /* Smaller font size for better responsiveness */
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s;
       margin: 5px;
     }
+
     button:hover {
       background: linear-gradient(45deg, #00ff99, #ff6600);
-      transform: scale(1.1);
+      transform: scale(1.05); /* Reduced scaling on hover */
     }
+
     .modal {
       position: fixed;
       top: 50%;
@@ -72,12 +85,15 @@
       z-index: 100;
       display: none;
     }
+
     .modal.active {
       display: block;
     }
+
     .modal button {
       margin: 5px;
     }
+
     #soundMeter {
       position: fixed;
       bottom: 20px;
@@ -88,17 +104,35 @@
       border: 2px solid #00ffff;
       border-radius: 5px;
     }
+
     #soundBar {
       height: 100%;
       background: linear-gradient(90deg, #ff00ff, #00ffff);
       transition: width 0.2s;
     }
+
     #soundInfo {
       position: fixed;
       bottom: 50px;
       left: 20px;
       color: #00ffff;
-      font-size: 1rem;
+      font-size: 0.9rem; /* Slightly smaller font size */
+    }
+
+    /* Media Query for responsiveness */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem; /* Further reduced font size for very small screens */
+      }
+
+      button {
+        font-size: 12px; /* Even smaller button font size */
+        padding: 6px 12px; /* Adjusted padding */
+      }
+
+      #soundInfo {
+        font-size: 0.8rem; /* Reduced sound info font size */
+      }
     }
   </style>
 </head>
@@ -108,7 +142,6 @@
   <div class="controls">
     <button id="settings">Choose Setting</button>
     <button id="drone">Toggle Drone</button>
-    <button id="startVoice">Start Voice</button>
     <button id="enterVR">Enter VR Mode</button>
   </div>
 
@@ -133,7 +166,7 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere;
+    let scene, camera, renderer, mandalaGroup, voiceMeter;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
     let voiceInitialized = false;
@@ -255,6 +288,7 @@
           voiceAnalyser.smoothingTimeConstant = 0.9;
           source.connect(voiceAnalyser);
 
+          // Dummy node to keep context alive
           const dummyOsc = audioContext.createOscillator();
           dummyOsc.frequency.value = 0;
           dummyOsc.connect(audioContext.destination);
@@ -265,7 +299,7 @@
         })
         .catch(e => {
           console.error('Voice control failed:', e);
-          document.getElementById('startVoice').textContent = 'Voice Failed - Retry';
+          setTimeout(initVoiceControl, 1000);
         });
     }
 
@@ -285,7 +319,7 @@
       params.segments = Math.round(6 + (voicePitch / 200) * 18);
       params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
       updateSoundMeter();
-      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`);
+      //console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`); //Reduced Logging
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -347,21 +381,11 @@
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      // Starry Background
-      const starGeometry = new THREE.SphereGeometry(500, 32, 32);
-      const starMaterial = new THREE.MeshBasicMaterial({ color: 0x000022, side: THREE.BackSide });
-      backgroundSphere = new THREE.Mesh(starGeometry, starMaterial);
-      scene.add(backgroundSphere);
-      const stars = new THREE.Points(
-        new THREE.SphereGeometry(500, 32, 32).vertices.map(v => new THREE.Vector3(v.x, v.y, v.z)),
-        new THREE.PointsMaterial({ color: 0xffffff, size: 1 })
-      );
-      scene.add(stars);
-
+      // Voice Meter in VR
       const meterGeometry = new THREE.BoxGeometry(2, 0.2, 0.2);
       const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
       voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
-      voiceMeter.position.set(0, -6, -5);
+      voiceMeter.position.set(0, -6, -5); // Lower in view
       mandalaGroup.add(voiceMeter);
 
       updateVRMandala();
@@ -419,8 +443,7 @@
       });
     }
 
-    // Generate VR Mandala (Optimized)
-    let cachedGeometries = [];
+    // Generate VR Mandala
     function updateVRMandala() {
       mandalaGroup.clear();
       const lineMaterial = new THREE.LineBasicMaterial({
@@ -431,7 +454,7 @@
       });
 
       function generateCymaticShape(x, y, r, level) {
-        if (level > Math.min(params.levels, 3)) return; // Cap recursion
+        if (level > params.levels) return;
         const points = [];
         for (let i = 0; i < params.segments; i++) {
           const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
@@ -442,7 +465,6 @@
           points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        cachedGeometries[level] = geometry;
         const line = new THREE.LineLoop(geometry, lineMaterial.clone());
         mandalaGroup.add(line);
 
@@ -462,11 +484,13 @@
       mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
       mandalaGroup.rotation.z = totalRotation;
 
-      voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2);
+      // Update Voice Meter
+      voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2); // Scale width
       voiceMeter.position.set(0, -6, -5);
       mandalaGroup.add(voiceMeter);
 
-      console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
+      //Reduced Logging
+      //console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
       lastFrameTime = performance.now();
     }
 
@@ -485,7 +509,7 @@
       const centerY = mandalaCanvas.height / 2;
 
       function drawCymaticShape(x, y, r, level) {
-        if (level > Math.min(params.levels, 3)) return; // Cap recursion
+        if (level > params.levels) return;
         ctx.beginPath();
         ctx.strokeStyle = params.lineColor;
         ctx.lineWidth = params.lineWidth;
@@ -582,26 +606,23 @@
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
       }
-      console.log(`2D: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}, CanvasVisible=${mandalaCanvas.offsetWidth > 0}`);
+      //Reduced Logging
+      //console.log(`2D: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
       lastFrameTime = performance.now();
     }
 
     function init() {
       console.log('Initializing Cosmic Weaver...');
       document.getElementById('settings').addEventListener('click', () => {
-        initAudio();
+        initAudio(); // Resume audio on interaction
         showSettingsModal();
       });
       document.getElementById('drone').addEventListener('click', () => {
-        initAudio();
+        initAudio(); // Resume audio on interaction
         toggleDrone();
       });
-      document.getElementById('startVoice').addEventListener('click', () => {
-        initAudio();
-        initVoiceControl();
-        document.getElementById('startVoice').textContent = 'Voice Active';
-      });
-      document.getElementById('enterVR').addEventListener('click', initAudio);
+      document.getElementById('enterVR').addEventListener('click', initAudio); // Resume audio on VR entry
+      initVoiceControl();
       initVR();
       animate();
     }
