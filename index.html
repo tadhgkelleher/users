@@ -6,35 +6,53 @@
   <title>Cosmic Weaver: Echoes of the Infinite Abyss</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
   <style>
+    /* Resetting default styles for consistency */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%; /* Crucial for full-height layout */
+    }
+
     body {
       font-family: 'Orbitron', sans-serif;
       text-align: center;
       background: radial-gradient(circle, #000022, #1a0033, #330066);
       color: #e6ccff;
-      margin: 0;
-      padding: 0;
       min-height: 100vh;
-      overflow: hidden;
+      overflow: hidden; /* Prevents scrollbars */
     }
+
     h1 {
       font-family: 'Cinzel', serif;
-      font-size: 3rem;
+      font-size: 3rem; /* Adjusted for responsiveness */
       color: #ff00ff;
       text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
-      margin: 20px 0;
+      margin: 10px 0; /* Reduced margin */
+      padding: 10px; /*Added padding*/
     }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 5px; /* Reduced margin */
+      flex-wrap: wrap;
+      padding: 5px; /*Added padding*/
+    }
+
     #mandalaCanvas {
       border: 8px double #ff66cc;
       border-radius: 50%;
       background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
       box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
-      width: 90vw;
-      height: 90vh;
-      max-width: 800px;
-      max-height: 800px;
-      margin: 10px auto;
+      width: 90vw;  /*Adjusted to a fixed with for proper scaling */
+      height: 50vh; /* Adjusted height to leave space for controls */
+      max-width: 800px; /*Maximum width for larger screens*/
+      max-height: 800px; /*Maximum height for larger screens*/
+      margin: 5px auto;
       display: block;
     }
+
     #vrCanvas {
       position: fixed;
       top: 0;
@@ -43,59 +61,107 @@
       height: 100%;
       z-index: 20;
       display: none;
+      background: rgba(0, 0, 0, 0.9);
     }
+
     button {
       background: linear-gradient(45deg, #ff00ff, #00ffff);
-      padding: 10px 20px;
+      padding: 6px 12px;
       border: none;
-      border-radius: 10px;
+      border-radius: 6px;
       color: #000022;
-      font-size: 16px;
+      font-size: 12px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s;
-      margin: 5px;
+      margin: 3px; /* Reduced margins even further */
     }
+
     button:hover {
       background: linear-gradient(45deg, #00ff99, #ff6600);
-      transform: scale(1.1);
+      transform: scale(1.03); /* Reduced scaling on hover */
     }
+
     .modal {
       position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 34, 0.98);
-      padding: 20px;
+      padding: 15px;
       border: 3px double #00ffff;
-      border-radius: 15px;
+      border-radius: 10px; /* Reduced border radius */
       z-index: 100;
       display: none;
     }
+
     .modal.active {
       display: block;
     }
+
+    .modal button {
+      margin: 3px;
+    }
+
     #soundMeter {
       position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 200px;
-      height: 20px;
+      bottom: 15px; /* Reduced distance from bottom */
+      left: 15px; /* Reduced distance from left */
+      width: 150px; /* Adjusted width */
+      height: 15px; /* Adjusted height */
       background: #330066;
       border: 2px solid #00ffff;
-      border-radius: 5px;
+      border-radius: 4px; /* Adjusted border radius */
     }
+
     #soundBar {
       height: 100%;
       background: linear-gradient(90deg, #ff00ff, #00ffff);
       transition: width 0.2s;
     }
+
     #soundInfo {
       position: fixed;
-      bottom: 50px;
-      left: 20px;
+      bottom: 35px; /* Adjusted distance from bottom */
+      left: 15px; /* Adjusted distance from left */
       color: #00ffff;
-      font-size: 1rem;
+      font-size: 0.8rem;
+    }
+
+    /* Media Query for smaller screens (e.g., phones) */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2rem;
+        margin: 5px 0;
+        padding: 5px;
+      }
+
+      .controls {
+        margin-bottom: 3px;
+        padding: 3px;
+      }
+
+      button {
+        font-size: 10px;
+        padding: 4px 8px;
+        margin: 2px;
+      }
+
+      #mandalaCanvas {
+         width: 95vw; /* Take up more of the screen on smaller devices */
+         height: 40vh; /*Reduce height for smaller screens */
+      }
+
+      #soundInfo {
+        font-size: 0.7rem;
+      }
+
+      #soundMeter {
+          width: 100px;
+          height: 10px;
+          bottom: 10px;
+          left: 10px;
+      }
     }
   </style>
 </head>
@@ -129,12 +195,11 @@
     const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere;
+    let scene, camera, renderer, mandalaGroup, voiceMeter;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
     let voiceInitialized = false;
     let lastFrameTime = performance.now();
-    let isVRActive = false;
 
     const params = {
       segments: 6,
@@ -252,6 +317,7 @@
           voiceAnalyser.smoothingTimeConstant = 0.9;
           source.connect(voiceAnalyser);
 
+          // Dummy node to keep context alive
           const dummyOsc = audioContext.createOscillator();
           dummyOsc.frequency.value = 0;
           dummyOsc.connect(audioContext.destination);
@@ -282,6 +348,7 @@
       params.segments = Math.round(6 + (voicePitch / 200) * 18);
       params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
       updateSoundMeter();
+      //console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`); //Reduced Logging
     }
 
     function autoCorrelate(buf, sampleRate) {
@@ -329,7 +396,7 @@
     // VR Initialization
     function initVR() {
       if (!window.THREE) {
-        console.error('Three.js not loaded');
+        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
         document.getElementById('enterVR').textContent = 'VR Unavailable';
         return;
       }
@@ -343,103 +410,160 @@
       mandalaGroup = new THREE.Group();
       scene.add(mandalaGroup);
 
-      const starGeometry = new THREE.SphereGeometry(500, 32, 32);
-      const starMaterial = new THREE.MeshBasicMaterial({ color: 0x000022, side: THREE.BackSide });
-      backgroundSphere = new THREE.Mesh(starGeometry, starMaterial);
-      scene.add(backgroundSphere);
-      const stars = new THREE.Points(
-        new THREE.SphereGeometry(500, 32, 32).vertices.map(v => new THREE.Vector3(v.x, v.y, v.z)),
-        new THREE.PointsMaterial({ color: 0xffffff, size: 1 })
-      );
-      scene.add(stars);
-
+      // Voice Meter in VR
       const meterGeometry = new THREE.BoxGeometry(2, 0.2, 0.2);
       const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
       voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
+      voiceMeter.position.set(0, -6, -5); // Lower in view
+      mandalaGroup.add(voiceMeter);
+
+      updateVRMandala();
+      camera.position.z = 0;
+
+      const enterVRButton = document.getElementById('enterVR');
+      let isVRActive = false;
+
+      enterVRButton.addEventListener('click', async () => {
+        if (isVRActive) {
+          console.log('Exiting VR mode...');
+          vrCanvas.style.display = 'none';
+          renderer.setAnimationLoop(null);
+          enterVRButton.textContent = 'Enter VR Mode';
+          isVRActive = false;
+          timeFactor = 0;
+          return;
+        }
+
+        console.log('Attempting to enter VR...');
+        if (!navigator.xr) {
+          console.error('WebXR not supported');
+          enterVRButton.textContent = 'VR Not Supported';
+          return;
+        }
+
+        try {
+          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+          console.log('VR session started successfully');
+          renderer.xr.setSession(session);
+          renderer.setAnimationLoop(animateVR);
+          vrCanvas.style.display = 'block';
+          enterVRButton.textContent = 'Exit VR Mode';
+          isVRActive = true;
+
+          if (!voiceInitialized) initVoiceControl();
+
+          session.addEventListener('end', () => {
+            console.log('VR session ended');
+            vrCanvas.style.display = 'none';
+            renderer.setAnimationLoop(null);
+            enterVRButton.textContent = 'Enter VR Mode';
+            isVRActive = false;
+          });
+        } catch (err) {
+          console.error('VR session failed:', err);
+          enterVRButton.textContent = 'VR Failed: ' + err.message;
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    // Generate VR Mandala
+    function updateVRMandala() {
+      mandalaGroup.clear();
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: new THREE.Color(params.lineColor),
+        linewidth: 2,
+        transparent: true,
+        opacity: Math.max(0.1, 1 - (timeFactor * 0.1))
+      });
+
+      function generateCymaticShape(x, y, r, level) {
+        if (level > params.levels) return;
+        const points = [];
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
+          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
+          const z = -level * (1 + timeFactor + chaosFactor * 2);
+          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
+        }
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const line = new THREE.LineLoop(geometry, lineMaterial.clone());
+        mandalaGroup.add(line);
+
+        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
+        if (level < currentMaxLevels) {
+          for (let i = 0; i < params.segments / 2; i++) {
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
+            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
+          }
+        }
+      }
+
+      generateCymaticShape(0, 0, 10, 1);
+      mandalaGroup.position.z = -5;
+      mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
+      mandalaGroup.rotation.z = totalRotation;
+
+      // Update Voice Meter
+      voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2); // Scale width
       voiceMeter.position.set(0, -6, -5);
       mandalaGroup.add(voiceMeter);
 
-      camera.position.z = 0;
+      //Reduced Logging
+      //console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
+      lastFrameTime = performance.now();
     }
 
-    // Generate Mandala (2D or VR)
-    function generateMandala(isVR = false) {
-      if (isVR) {
-        mandalaGroup.clear();
-        const lineMaterial = new THREE.LineBasicMaterial({
-          color: new THREE.Color(params.lineColor),
-          linewidth: 2,
-          transparent: true,
-          opacity: Math.max(0.1, 1 - (timeFactor * 0.1))
-        });
+    function animateVR(time) {
+      totalRotation += rotationSpeed;
+      timeFactor += chaosFactor * 0.005 + 0.001;
+      updateVoice();
+      updateVRMandala();
+      renderer.render(scene, camera);
+    }
 
-        function generateCymaticShape(x, y, r, level) {
-          if (level > params.levels) return;
-          const points = [];
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-            const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-            const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
-            const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
-            const z = -level * (1 + timeFactor + chaosFactor * 2);
-            points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
-          }
-          const geometry = new THREE.BufferGeometry().setFromPoints(points);
-          const line = new THREE.LineLoop(geometry, lineMaterial.clone());
-          mandalaGroup.add(line);
+    // 2D Mandala Drawing
+    function generateMandala() {
+      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+      const centerX = mandalaCanvas.width / 2;
+      const centerY = mandalaCanvas.height / 2;
 
-          const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
-          if (level < currentMaxLevels) {
-            for (let i = 0; i < params.segments / 2; i++) {
-              const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-              const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-              const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-              generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
-            }
+      function drawCymaticShape(x, y, r, level) {
+        if (level > params.levels) return;
+        ctx.beginPath();
+        ctx.strokeStyle = params.lineColor;
+        ctx.lineWidth = params.lineWidth;
+        for (let i = 0; i < params.segments; i++) {
+          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
+          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
+          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
+          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
+          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        }
+        ctx.closePath();
+        ctx.stroke();
+
+        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
+        if (level < currentMaxLevels) {
+          for (let i = 0; i < params.segments / 2; i++) {
+            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
+            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
+            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
+            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
           }
         }
-
-        generateCymaticShape(0, 0, 10, 1);
-        mandalaGroup.position.z = -5;
-        mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
-        mandalaGroup.rotation.z = totalRotation;
-
-        voiceMeter.scale.x = Math.max(0.1, smoothedAmplitude * 2);
-        voiceMeter.position.set(0, -6, -5);
-        mandalaGroup.add(voiceMeter);
-      } else {
-        ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-        const centerX = mandalaCanvas.width / 2;
-        const centerY = mandalaCanvas.height / 2;
-
-        function drawCymaticShape(x, y, r, level) {
-          if (level > params.levels) return;
-          ctx.beginPath();
-          ctx.strokeStyle = params.lineColor;
-          ctx.lineWidth = params.lineWidth;
-          for (let i = 0; i < params.segments; i++) {
-            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-            const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-            const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
-            const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
-            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-          }
-          ctx.closePath();
-          ctx.stroke();
-
-          const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
-          if (level < currentMaxLevels) {
-            for (let i = 0; i < params.segments / 2; i++) {
-              const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-              const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-              const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-              drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
-            }
-          }
-        }
-
-        drawCymaticShape(centerX, centerY, params.initialRadius, 1);
       }
+
+      drawCymaticShape(centerX, centerY, params.initialRadius, 1);
     }
 
     // Brainwave Settings
@@ -495,7 +619,7 @@
       timeFactor = 0;
       smoothedAmplitude = 0;
       chaosFactor = 0;
-      generateMandala(isVRActive);
+      generateMandala();
     }
 
     function showSettingsModal() {
@@ -506,76 +630,35 @@
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
       timeFactor += chaosFactor * 0.005 + 0.001;
-      if (!voiceInitialized) initVoiceControl();
       updateVoice();
-      generateMandala(isVRActive);
-      if (isVRActive) {
-        renderer.render(scene, camera);
-      }
+      generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
         animationId = requestAnimationFrame(animate);
       }
-      console.log(`Mode=${isVRActive ? 'VR' : '2D'}, timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}, CanvasVisible=${mandalaCanvas.offsetWidth > 0}`);
+      //Reduced Logging
+      //console.log(`2D: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}, FPS=${Math.round(1000 / (performance.now() - lastFrameTime))}`);
       lastFrameTime = performance.now();
     }
 
     function init() {
       console.log('Initializing Cosmic Weaver...');
       document.getElementById('settings').addEventListener('click', () => {
-        initAudio();
+        initAudio(); // Resume audio on interaction
         showSettingsModal();
       });
       document.getElementById('drone').addEventListener('click', () => {
-        initAudio();
+        initAudio(); // Resume audio on interaction
         toggleDrone();
       });
-      document.getElementById('enterVR').addEventListener('click', async () => {
-        initAudio();
-        if (isVRActive) {
-          vrCanvas.style.display = 'none';
-          renderer.setAnimationLoop(null);
-          document.getElementById('enterVR').textContent = 'Enter VR Mode';
-          isVRActive = false;
-          timeFactor = 0;
-          animate();
-          return;
-        }
-
-        if (!scene) initVR();
-        if (!navigator.xr) {
-          console.error('WebXR not supported');
-          document.getElementById('enterVR').textContent = 'VR Not Supported';
-          return;
-        }
-
-        try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          renderer.xr.setSession(session);
-          vrCanvas.style.display = 'block';
-          document.getElementById('enterVR').textContent = 'Exit VR Mode';
-          isVRActive = true;
-          animate();
-
-          session.addEventListener('end', () => {
-            vrCanvas.style.display = 'none';
-            renderer.setAnimationLoop(null);
-            document.getElementById('enterVR').textContent = 'Enter VR Mode';
-            isVRActive = false;
-            animate();
-          });
-        } catch (err) {
-          console.error('VR session failed:', err);
-          document.getElementById('enterVR').textContent = 'VR Failed';
-        }
-      });
-
-      console.log(`Canvas initialized: width=${mandalaCanvas.offsetWidth}, height=${mandalaCanvas.offsetHeight}`);
+      document.getElementById('enterVR').addEventListener('click', initAudio); // Resume audio on VR entry
+      initVoiceControl();
+      initVR();
       animate();
     }
 
     window.onload = () => {
       if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded');
+        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
         document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load.</p>';
       } else {
         console.log('Three.js loaded, version:', THREE.REVISION);
