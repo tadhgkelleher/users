@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VR House Tour with Three.js</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.min.js"></script>
+    <script src="/three.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -88,52 +88,53 @@
         function createRoom(x, y, z, width, height, depth, color, doorSide = 'front') {
             const group = new THREE.Group();
             const wallMaterial = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
-
+            
             // Floor
             const floorGeometry = new THREE.PlaneGeometry(width, depth);
             const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
             const floor = new THREE.Mesh(floorGeometry, floorMaterial);
             floor.rotation.x = -Math.PI / 2;
             group.add(floor);
-
+            
             // Back wall
             const backWallGeometry = new THREE.PlaneGeometry(width, height);
             const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
             backWall.position.set(0, height / 2, depth / 2);
             backWall.rotation.y = Math.PI;
             group.add(backWall);
-
+            
             // Left wall
             const leftWallGeometry = new THREE.PlaneGeometry(depth, height);
             const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
             leftWall.position.set(-width / 2, height / 2, 0);
             leftWall.rotation.y = Math.PI / 2;
             group.add(leftWall);
-
+            
             // Right wall
             const rightWallGeometry = new THREE.PlaneGeometry(depth, height);
             const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
             rightWall.position.set(width / 2, height / 2, 0);
             rightWall.rotation.y = -Math.PI / 2;
             group.add(rightWall);
-
+            
             // Front wall with door (fixed approach using separate wall segments)
             if (doorSide === 'front') {
                 const doorWidth = width * 0.3;
                 const doorHeight = height * 0.7;
-
+                const doorPositionX = 0;
+                
                 // Top part of front wall
                 const topWallGeometry = new THREE.PlaneGeometry(width, height - doorHeight);
                 const topWall = new THREE.Mesh(topWallGeometry, wallMaterial);
                 topWall.position.set(0, height - (height - doorHeight) / 2, -depth / 2);
                 group.add(topWall);
-
+                
                 // Left part of front wall
                 const leftDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
                 const leftDoorWall = new THREE.Mesh(leftDoorWallGeometry, wallMaterial);
                 leftDoorWall.position.set(-doorWidth / 2 - (width - doorWidth) / 4, doorHeight / 2, -depth / 2);
                 group.add(leftDoorWall);
-
+                
                 // Right part of front wall
                 const rightDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
                 const rightDoorWall = new THREE.Mesh(rightDoorWallGeometry, wallMaterial);
@@ -146,7 +147,7 @@
                 frontWall.position.set(0, height / 2, -depth / 2);
                 group.add(frontWall);
             }
-
+            
             group.position.set(x, y, z);
             return group;
         }
@@ -189,7 +190,7 @@
 
         // Hotspots
         const hotspotGeometry = new THREE.CircleGeometry(0.2, 32);
-        const hotspotMaterial = new THREE.MeshStandardMaterial({
+        const hotspotMaterial = new THREE.MeshStandardMaterial({ 
             color: 0xffff00,
             emissive: 0xffff00,
             emissiveIntensity: 0.5
@@ -200,8 +201,8 @@
             const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
             hotspot.position.set(x, y, z);
             hotspot.rotation.x = -Math.PI / 2; // Make it face up
-            hotspot.userData = {
-                target: target,
+            hotspot.userData = { 
+                target: target, 
                 enterPos: enterPos,
                 isHotspot: true // Flag for easy identification
             };
@@ -222,17 +223,17 @@
 
         // Collection of all hotspots for raycasting
         const allHotspots = [
-            livingRoomHotspot, kitchenHotspot, backHotspot,
+            livingRoomHotspot, kitchenHotspot, backHotspot, 
             bedroom1Hotspot, bedroom2Hotspot, bathroomHotspot, poolHotspot
         ];
 
         // Function to handle hotspot selection
         function selectHotspot(hotspot) {
             if (!hotspot || !hotspot.userData.isHotspot) return;
-
+            
             const target = hotspot.userData.target;
             camera.position.copy(hotspot.userData.enterPos);
-
+            
             // Toggle hotspot visibility based on location
             if (target === 'livingRoom' || target === 'kitchen') {
                 livingRoomHotspot.visible = false;
@@ -310,7 +311,7 @@
                     }).then((session) => {
                         renderer.xr.setSession(session);
                         vrButton.textContent = 'Exit VR';
-
+                        
                         session.addEventListener('end', () => {
                             vrButton.textContent = 'Enter VR';
                         });
@@ -326,31 +327,31 @@
 
         // Controller setup for VR
         let controller1, controller2;
-
+        
         function setupVRControllers() {
             // Controller 1 for interaction
             controller1 = renderer.xr.getController(0);
             controller1.addEventListener('selectstart', onSelectStart);
             controller1.addEventListener('selectend', onSelectEnd);
             scene.add(controller1);
-
+            
             // Controller 2 for movement (second hand)
             controller2 = renderer.xr.getController(1);
             scene.add(controller2);
-
+            
             // Visualize controllers with simple objects
             const controllerGeometry = new THREE.CylinderGeometry(0.01, 0.02, 0.08, 16);
             controllerGeometry.rotateX(-Math.PI / 2);
             const controllerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-
+            
             const controllerMesh1 = new THREE.Mesh(controllerGeometry, controllerMaterial);
             controllerMesh1.position.set(0, 0, -0.05);
             controller1.add(controllerMesh1);
-
+            
             const controllerMesh2 = new THREE.Mesh(controllerGeometry, controllerMaterial);
             controllerMesh2.position.set(0, 0, -0.05);
             controller2.add(controllerMesh2);
-
+            
             // Add raycaster line for visual feedback
             const lineGeometry = new THREE.BufferGeometry().setFromPoints([
                 new THREE.Vector3(0, 0, 0),
@@ -360,87 +361,85 @@
             const line = new THREE.Line(lineGeometry, lineMaterial);
             controller1.add(line);
         }
-
+        
         setupVRControllers();
-
+        
         // VR controller interaction
         const tempMatrix = new THREE.Matrix4();
         const vrRaycaster = new THREE.Raycaster();
-
+        
         function onSelectStart(event) {
             const controller = event.target;
-
+            
             // Get controller position and direction
             tempMatrix.identity().extractRotation(controller.matrixWorld);
             vrRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
             vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
+            
             // Check for intersections with hotspots
             const intersects = vrRaycaster.intersectObjects(allHotspots);
-
+            
             if (intersects.length > 0) {
                 selectHotspot(intersects[0].object);
             }
         }
-
+        
         function onSelectEnd() {
             // Optional: Add visual feedback when selection ends
         }
 
         // Movement variables
-        const moveSpeed = 0.1;  // Increased moveSpeed
+        const moveSpeed = 0.05;
         let moveDirection = new THREE.Vector3();
-
+        
         // Animation loop with controller movement
         function animate() {
             renderer.setAnimationLoop(() => {
                 if (renderer.xr.isPresenting) {
                     // Handle VR movement via controllers
                     if (controller2) {
-                        const gamepad = navigator.getGamepads().find(gp =>
-                            gp && gp.index === controller2.userData.gamepadIndex
+                        const gamepad = navigator.getGamepads().find(gp => 
+                            gp && gp.id && gp.id.includes('Oculus Touch') && 
+                            gp.index === controller2.userData.gamepadIndex
                         );
-
-                         if (gamepad) {
-                            // Check for Oculus / Meta Quest by button count (more reliable than gamepad ID)
-                            if (gamepad.buttons.length > 0) { //Basic check for button existence
-                                const thumbstickX = gamepad.axes[2] || 0; // Right thumbstick X-axis (Meta Quest)
-                                const thumbstickY = gamepad.axes[3] || 0; // Right thumbstick Y-axis
-
-                                if (Math.abs(thumbstickX) > 0.1 || Math.abs(thumbstickY) > 0.1) {
-                                    moveDirection.set(thumbstickX, 0, thumbstickY).normalize();
-
-                                    // Get camera direction for movement relative to view
-                                    const xrCamera = renderer.xr.getCamera(camera);
-                                    const cameraDirection = new THREE.Vector3();
-                                    xrCamera.getWorldDirection(cameraDirection);
-                                    cameraDirection.y = 0; // Keep movement horizontal
-                                    cameraDirection.normalize();
-
-                                    // Calculate movement vector
-                                    const moveVector = new THREE.Vector3();
-                                    moveVector.addScaledVector(cameraDirection, -thumbstickY * moveSpeed);
-                                    moveVector.addScaledVector(
-                                        new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection),
-                                        thumbstickX * moveSpeed
-                                    );
-
-                                    // Apply movement
-                                    camera.position.add(moveVector);
-                                    //camera.position.y = 1.6; // No lock height. Allow natural movement
-                                }
+                        
+                        if (gamepad && gamepad.axes.length >= 4) {
+                            const thumbstickX = gamepad.axes[2]; // Right thumbstick X-axis (Meta Quest)
+                            const thumbstickY = gamepad.axes[3]; // Right thumbstick Y-axis
+                            
+                            if (Math.abs(thumbstickX) > 0.1 || Math.abs(thumbstickY) > 0.1) {
+                                moveDirection.set(thumbstickX, 0, thumbstickY).normalize();
+                                
+                                // Get camera direction for movement relative to view
+                                const xrCamera = renderer.xr.getCamera(camera);
+                                const cameraDirection = new THREE.Vector3();
+                                xrCamera.getWorldDirection(cameraDirection);
+                                cameraDirection.y = 0; // Keep movement horizontal
+                                cameraDirection.normalize();
+                                
+                                // Calculate movement vector
+                                const moveVector = new THREE.Vector3();
+                                moveVector.addScaledVector(cameraDirection, -thumbstickY * moveSpeed);
+                                moveVector.addScaledVector(
+                                    new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection),
+                                    thumbstickX * moveSpeed
+                                );
+                                
+                                // Apply movement
+                                camera.position.add(moveVector);
+                                camera.position.y = 1.6; // Lock height to eye level
                             }
                         }
                     }
-
+                    
                     // Visual feedback for VR interaction
                     if (controller1) {
                         tempMatrix.identity().extractRotation(controller1.matrixWorld);
                         vrRaycaster.ray.origin.setFromMatrixPosition(controller1.matrixWorld);
                         vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
+                        
                         const intersects = vrRaycaster.intersectObjects(allHotspots);
-
+                        
                         // Update controller line color based on intersection
                         const line = controller1.children.find(child => child instanceof THREE.Line);
                         if (line) {
@@ -448,11 +447,11 @@
                         }
                     }
                 }
-
+                
                 renderer.render(scene, camera);
             });
         }
-
+        
         animate();
 
         // Handle window resize
@@ -466,14 +465,15 @@
         function handleControllerConnected(event, controllerIndex) {
             event.target.userData.gamepadIndex = event.data.gamepad.index;
         }
-
+        
         if (controller1) {
             controller1.addEventListener('connected', (event) => handleControllerConnected(event, 0));
         }
-
+        
         if (controller2) {
             controller2.addEventListener('connected', (event) => handleControllerConnected(event, 1));
         }
     </script>
 </body>
 </html>
+
