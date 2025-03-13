@@ -1,480 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Spirograph Mandala</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-      background: radial-gradient(circle, #0a0015, #1a0033, #2d0066);
-      color: #ffd700;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
-    h1 {
-      font-family: 'Cinzel', serif;
-      font-size: 4rem;
-      color: #ffcc00;
-      text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff, 0 0 40px #ffd700;
-      margin: 20px 0;
-      animation: pulseGlow 3s infinite alternate;
-    }
-    @keyframes pulseGlow {
-      0% { text-shadow: 0 0 10px #00ffcc, 0 0 20px #ff00ff; }
-      100% { text-shadow: 0 0 20px #ffd700, 0 0 40px #ff00ff; }
-    }
-    #mandalaCanvas {
-      border: 6px double #ffd700;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(10, 0, 21, 0.95), rgba(50, 0, 100, 0.2));
-      box-shadow: 0 0 100px rgba(255, 215, 0, 0.7), inset 0 0 30px #00ffcc;
-      width: 100%;
-      height: 100%;
-      max-width: 800px;
-      max-height: 800px;
-      margin: 20px auto;
-      display: block;
-    }
-    button {
-      background: linear-gradient(135deg, #ff00ff, #00ffcc, #ffd700);
-      padding: 10px 20px;
-      border: 2px solid #ffd700;
-      border-radius: 12px;
-      color: #0a0015;
-      font-family: 'Sawarabi Mincho', serif;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin: 6px;
-      box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-    }
-    button:hover {
-      background: linear-gradient(135deg, #ffd700, #00ffcc, #ff00ff);
-      transform: scale(1.05);
-      box-shadow: 0 0 20px #ffd700;
-    }
-    .modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(10, 0, 21, 0.98);
-      padding: 25px;
-      border: 3px double #ffd700;
-      border-radius: 15px;
-      z-index: 100;
-      display: none;
-      box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-    }
-    .modal.active {
-      display: block;
-    }
-    #soundMeter {
-      position: fixed;
-      bottom: 15px;
-      left: 15px;
-      width: 200px;
-      height: 20px;
-      background: #1a0033;
-      border: 2px solid #00ffcc;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
-    }
-    #soundBar {
-      height: 100%;
-      background: linear-gradient(90deg, #ff00ff, #ffd700, #00ffcc);
-      transition: width 0.3s ease;
-      box-shadow: 0 0 10px #ffd700;
-    }
-    #soundInfo {
-      position: fixed;
-      bottom: 40px;
-      left: 15px;
-      color: #00ffcc;
-      font-family: 'Sawarabi Mincho', serif;
-      font-size: 1rem;
-      text-shadow: 0 0 8px #ffd700;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architectural Plan Representation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .floor-plan, .elevation {
+            border: 2px solid #000;
+            background-color: #fff;
+            padding: 10px;
+            position: relative;
+        }
+        .floor-plan {
+            width: 1050px; /* 10.5m x 100px/m */
+            height: 1000px; /* 10m x 100px/m */
+        }
+        .first-floor {
+            width: 1000px; /* 10m x 100px/m */
+            height: 570px; /* 5.7m x 100px/m */
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+        }
+        .room {
+            position: absolute;
+            border: 2px solid #ff0000;
+            background-color: #ddd;
+        }
+        /* Ground Floor Rooms (Approximate Positions) */
+        .living-room { top: 50px; left: 50px; width: 400px; height: 300px; }
+        .kitchen { top: 50px; left: 500px; width: 200px; height: 200px; }
+        .bedroom1 { top: 400px; left: 50px; width: 200px; height: 200px; }
+        .bedroom2 { top: 400px; left: 300px; width: 200px; height: 200px; }
+        .bathroom { top: 400px; left: 550px; width: 150px; height: 150px; }
+        /* First Floor Rooms (Approximate Positions) */
+        .bedroom3 { top: 10px; left: 10px; width: 200px; height: 200px; }
+        .bathroom2 { top: 10px; left: 250px; width: 150px; height: 150px; }
+        .pool {
+            position: absolute;
+            top: 1000px; /* Below ground floor */
+            left: 0;
+            width: 500px; /* 5m x 100px/m */
+            height: 1000px; /* 10m x 100px/m */
+            background-color: #00ffff;
+            border: 2px solid #0000ff;
+        }
+        .elevation {
+            width: 1050px;
+            height: 600px; /* 6m x 100px/m */
+        }
+        .wall {
+            position: absolute;
+            background-color: #ccc;
+            border: 1px solid #000;
+        }
+        .roof {
+            position: absolute;
+            background-color: #666;
+            top: 0;
+            width: 1050px;
+            height: 200px;
+            clip-path: polygon(0 100%, 50% 0, 100% 100%);
+        }
+        .window { 
+            position: absolute; 
+            background-color: #87ceeb; 
+            border: 1px solid #000; 
+        }
+        .door { 
+            position: absolute; 
+            background-color: #8b4513; 
+            border: 1px solid #000; 
+        }
+        /* Elevation Example (South West) */
+        .elevation .wall { width: 1050px; height: 400px; }
+        .elevation .roof { top: 400px; }
+        .elevation .window { top: 100px; left: 200px; width: 100px; height: 100px; }
+        .elevation .door { top: 200px; left: 400px; width: 80px; height: 150px; }
+    </style>
 </head>
 <body>
-  <h1>Techno Buddha: Spirograph Mandala</h1>
+    <h1>Architectural Plan Representation</h1>
+    <div class="container">
+        <!-- Ground Floor Plan -->
+        <div class="floor-plan">
+            <div class="room living-room">Living Room</div>
+            <div class="room kitchen">Kitchen</div>
+            <div class="room bedroom1">Bedroom 1</div>
+            <div class="room bedroom2">Bedroom 2</div>
+            <div class="room bathroom">Bathroom</div>
+            <div class="first-floor">
+                <div class="room bedroom3">Bedroom 3</div>
+                <div class="room bathroom2">Bathroom 2</div>
+            </div>
+            <div class="pool">Pool</div>
+            <p>Ground Floor Area: 110 m²</p>
+            <p>First Floor Area: 57 m²</p>
+        </div>
 
-  <div class="controls">
-    <button id="settings">Choose Mantra</button>
-    <button id="drone">Invoke Techno Chant</button>
-    <button id="startVoice">Awaken Voice</button>
-  </div>
-
-  <div id="settingsModal" class="modal">
-    <button onclick="applySetting('healing')">Healing Mantra (Theta, 6 Hz)</button>
-    <button onclick="applySetting('sleep')">Sleep Sutra (Delta, 2 Hz)</button>
-    <button onclick="applySetting('relax')">Zen Pulse (Alpha, 10 Hz)</button>
-    <button onclick="applySetting('enlighten')">Buddha’s Resonance (Schumann, 7.83 Hz)</button>
-    <button onclick="applySetting('activate')">Kundalini Beat (Beta, 20 Hz)</button>
-  </div>
-
-  <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
-  <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Tempo: 0 BPM</div>
-
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-
-  <script>
-    const mandalaCanvas = document.getElementById('mandalaCanvas');
-    const ctx = mandalaCanvas.getContext('2d');
-    let animationId = null;
-    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
-    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
-    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
-    let voiceInitialized = false;
-    let baseSegments = 6, baseLevels = 2;
-
-    const params = {
-      baseFreq: 108,
-      audibleFreq: 108,
-      kickTempo: 60, // BPM
-      R: 100, // Outer radius
-      r: 60,  // Inner radius
-      d: 70   // Pen distance
-    };
-
-    // Audio Initialization
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') audioContext.resume();
-    }
-
-    function toggleDrone() {
-      initAudio();
-      if (droneOscillator1) {
-        droneOscillator1.stop();
-        droneOscillator2.stop();
-        droneOscillator3.stop();
-        lfo.stop();
-        kickOscillator.stop();
-        droneOscillator1 = null;
-        droneOscillator2 = null;
-        droneOscillator3 = null;
-        lfo = null;
-        kickOscillator = null;
-        kickGain = null;
-        droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Invoke Techno Chant';
-      } else {
-        droneOscillator1 = audioContext.createOscillator();
-        droneOscillator2 = audioContext.createOscillator();
-        droneOscillator3 = audioContext.createOscillator();
-        droneGain = audioContext.createGain();
-        lfo = audioContext.createOscillator();
-        kickOscillator = audioContext.createOscillator();
-        kickGain = audioContext.createGain();
-
-        droneOscillator1.type = 'sawtooth';
-        droneOscillator2.type = 'sine';
-        droneOscillator3.type = 'triangle';
-        lfo.type = 'sine';
-        kickOscillator.type = 'sine';
-
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
-        lfo.frequency.value = 0.2;
-        kickOscillator.frequency.value = 60;
-        droneGain.gain.value = 0.07;
-        kickGain.gain.value = 0;
-        droneAmplitude = 0.07;
-
-        lfo.connect(droneGain.gain);
-        droneOscillator1.connect(droneGain);
-        droneOscillator2.connect(droneGain);
-        droneOscillator3.connect(droneGain);
-        droneGain.connect(audioContext.destination);
-        kickOscillator.connect(kickGain);
-        kickGain.connect(audioContext.destination);
-
-        droneOscillator1.start();
-        droneOscillator2.start();
-        droneOscillator3.start();
-        lfo.start();
-        kickOscillator.start();
-        document.getElementById('drone').textContent = 'Silence Chant';
-        updateDroneParams();
-      }
-    }
-
-    function updateDroneParams() {
-      if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.1 + enlightenmentFactor * 0.03;
-        const kickInterval = 60 / params.kickTempo;
-        kickTime += 1 / 60;
-        if (kickTime >= kickInterval) {
-          kickGain.gain.setValueAtTime(0.5 * (1 + enlightenmentFactor), audioContext.currentTime);
-          kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-          kickTime = 0;
-        }
-        requestAnimationFrame(updateDroneParams);
-      } else {
-        rotationSpeed = 0;
-      }
-    }
-
-    function initVoiceControl() {
-      if (voiceInitialized) return;
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          initAudio();
-          const source = audioContext.createMediaStreamSource(stream);
-          voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.9;
-          source.connect(voiceAnalyser);
-
-          const dummyOsc = audioContext.createOscillator();
-          dummyOsc.frequency.value = 0;
-          dummyOsc.connect(audioContext.destination);
-          dummyOsc.start();
-
-          console.log('Voice of the Buddha awakened');
-          voiceInitialized = true;
-        })
-        .catch(e => {
-          console.error('Voice awakening failed:', e);
-          document.getElementById('startVoice').textContent = 'Voice Failed - Retry';
-        });
-    }
-
-    function updateVoice() {
-      if (!voiceInitialized || !voiceAnalyser) return;
-      const bufferLength = voiceAnalyser.fftSize;
-      const dataArray = new Float32Array(bufferLength);
-      voiceAnalyser.getFloatTimeDomainData(dataArray);
-      const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-      const rawAmplitude = getAmplitude(dataArray);
-
-      if (pitch !== -1 && pitch > 20 && pitch < 1000) voicePitch = pitch;
-      else voicePitch = params.audibleFreq;
-
-      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-      enlightenmentFactor = Math.min(1, smoothedAmplitude * 2);
-      baseSegments = Math.floor(6 + enlightenmentFactor * 10); // 6 to 16 segments
-      baseLevels = Math.floor(2 + enlightenmentFactor * 3);   // 2 to 5 levels
-      if (droneOscillator1) params.kickTempo = Math.round(voicePitch / 2);
-      updateSoundMeter();
-      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, segments=${baseSegments}, levels=${baseLevels}`);
-    }
-
-    function autoCorrelate(buf, sampleRate) {
-      let SIZE = buf.length;
-      let rms = 0;
-      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / SIZE);
-      if (rms < 0.01) return -1;
-
-      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-
-      buf = buf.slice(r1, r2);
-      SIZE = buf.length;
-
-      let c = new Array(SIZE).fill(0);
-      for (let i = 0; i < SIZE; i++)
-        for (let j = 0; j < SIZE - i; j++)
-          c[i] = c[i] + buf[j] * buf[j + i];
-
-      let d = 0;
-      while (c[d] > c[d + 1]) d++;
-      let maxval = -1, maxpos = -1;
-      for (let i = d; i < SIZE; i++) {
-        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-      }
-      let T0 = maxpos;
-
-      return sampleRate / T0;
-    }
-
-    function getAmplitude(buf) {
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.25);
-    }
-
-    function updateSoundMeter() {
-      const energyPercent = Math.round(smoothedAmplitude * 100);
-      document.getElementById('soundBar').style.width = `${energyPercent}%`;
-      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
-    }
-
-    // Mouse Scroll for Segments
-    mandalaCanvas.addEventListener('wheel', (e) => {
-      baseSegments += Math.round(e.deltaY * -0.1);
-      baseSegments = Math.max(6, Math.min(16, baseSegments));
-      e.preventDefault();
-    });
-
-    // 2D Spirograph Mandala
-    function generateMandala() {
-      const width = mandalaCanvas.width;
-      const height = mandalaCanvas.height;
-      const centerX = width / 2;
-      const centerY = height / 2;
-      ctx.clearRect(0, 0, width, height);
-
-      const R = params.R * (1 + Math.sin(timeFactor * 0.2) * 0.1);
-      const r = params.r;
-      const d = params.d;
-      const segments = baseSegments;
-      const levels = baseLevels;
-
-      // Spirograph Layers
-      for (let level = 0; level < levels; level++) {
-        ctx.beginPath();
-        const scale = 1 - level * 0.2; // Inner layers smaller
-        for (let i = 0; i < segments * 360; i++) {
-          const t = (i / segments + totalRotation) * Math.PI / 180;
-          const x = centerX + (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t) * scale;
-          const y = centerY + (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t) * scale;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = `hsl(${level * 60 + timeFactor * 10}, 100%, 50%)`;
-        ctx.lineWidth = 2 + enlightenmentFactor * 2;
-        ctx.stroke();
-      }
-
-      // Lotus Petals (optional framing)
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(timeFactor * 0.3) * 0.2})`;
-      for (let i = 0; i < 12; i++) {
-        const angle = (i / 12) * Math.PI * 2 + totalRotation * 0.5;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle - 0.2) * 80, centerY + Math.sin(angle - 0.2) * 120,
-          centerX + Math.cos(angle) * 160, centerY + Math.sin(angle) * 160
-        );
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle + 0.2) * 80, centerY + Math.sin(angle + 0.2) * 120,
-          centerX, centerY
-        );
-        ctx.fill();
-      }
-
-      // Buddha Silhouette
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(timeFactor * 0.4) * 0.1})`;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY - 50, 50, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(centerX - 70, centerY + 50);
-      ctx.quadraticCurveTo(centerX, centerY + 120, centerX + 70, centerY + 50);
-      ctx.fill();
-    }
-
-    // Mantra Settings
-    function applySetting(setting) {
-      document.getElementById('settingsModal').classList.remove('active');
-      switch (setting) {
-        case 'healing':
-          params.baseFreq = 6;
-          params.audibleFreq = 54;
-          params.kickTempo = 54 / 2;
-          params.R = 100;
-          params.r = 60;
-          params.d = 70;
-          break;
-        case 'sleep':
-          params.baseFreq = 2;
-          params.audibleFreq = 36;
-          params.kickTempo = 36 / 2;
-          params.R = 80;
-          params.r = 50;
-          params.d = 60;
-          break;
-        case 'relax':
-          params.baseFreq = 10;
-          params.audibleFreq = 40;
-          params.kickTempo = 40 / 2;
-          params.R = 90;
-          params.r = 55;
-          params.d = 65;
-          break;
-        case 'enlighten':
-          params.baseFreq = 7.83;
-          params.audibleFreq = 108;
-          params.kickTempo = 108 / 2;
-          params.R = 120;
-          params.r = 70;
-          params.d = 80;
-          break;
-        case 'activate':
-          params.baseFreq = 20;
-          params.audibleFreq = 72;
-          params.kickTempo = 72 / 2;
-          params.R = 110;
-          params.r = 65;
-          params.d = 75;
-          break;
-      }
-      if (droneOscillator1) {
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
-      }
-      timeFactor = 0;
-      smoothedAmplitude = 0;
-      enlightenmentFactor = 0;
-      baseSegments = 6;
-      baseLevels = 2;
-      generateMandala();
-    }
-
-    function showSettingsModal() {
-      document.getElementById('settingsModal').classList.add('active');
-    }
-
-    function animate() {
-      if (animationId) cancelAnimationFrame(animationId);
-      totalRotation += rotationSpeed;
-      timeFactor += 0.01;
-      updateVoice();
-      generateMandala();
-      if (droneOscillator1 || smoothedAmplitude > 0.05) {
-        animationId = requestAnimationFrame(animate);
-      }
-    }
-
-    function init() {
-      console.log('Awakening Techno Buddha in Spirograph Mandala...');
-      document.getElementById('settings').addEventListener('click', () => {
-        initAudio();
-        showSettingsModal();
-      });
-      document.getElementById('drone').addEventListener('click', () => {
-        initAudio();
-        toggleDrone();
-      });
-      document.getElementById('startVoice').addEventListener('click', () => {
-        initAudio();
-        initVoiceControl();
-        document.getElementById('startVoice').textContent = 'Voice Awakened';
-      });
-      animate();
-    }
-
-    window.onload = () => {
-      console.log('Techno Buddha activated');
-      init();
-    };
-  </script>
+        <!-- Elevation View (South West) -->
+        <div class="elevation">
+            <div class="wall"></div>
+            <div class="roof"></div>
+            <div class="window"></div>
+            <div class="door"></div>
+            <p>South West Elevation (Height: 6m)</p>
+        </div>
+    </div>
 </body>
 </html>
