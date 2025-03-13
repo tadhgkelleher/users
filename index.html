@@ -3,573 +3,1220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cosmic Weaver: Echoes of the Infinite Abyss</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
+  <title>Cosmic Voyager: Journey Through Dimensional Harmonics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Orbitron:wght@400;700&family=Quicksand:wght@300&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-glow: #ff00ff;
+      --secondary-glow: #00ffff;
+      --tertiary-glow: #ffcc00;
+      --bg-deep: #000022;
+      --bg-medium: #1a0033;
+      --bg-light: #330066;
+      --text-primary: #e6ccff;
+      --text-accent: #ffcc00;
+    }
+    
     body {
-      font-family: 'Orbitron', sans-serif;
+      font-family: 'Quicksand', sans-serif;
       text-align: center;
-      background: radial-gradient(circle, #000022, #1a0033, #330066);
-      color: #e6ccff;
+      background: radial-gradient(ellipse at center, var(--bg-deep) 0%, var(--bg-medium) 50%, var(--bg-light) 100%);
+      color: var(--text-primary);
       margin: 0;
       padding: 0;
       min-height: 100vh;
+      overflow-x: hidden;
+      perspective: 1000px;
+    }
+
+    .cosmic-container {
+      position: relative;
+      min-height: 100vh;
       overflow: hidden;
     }
+
     h1 {
-      font-family: 'Cinzel', serif;
-      font-size: 5rem;
-      color: #ff00ff;
-      text-shadow: 0 0 50px #00ffff, 0 0 100px #ff66cc;
-      margin: 30px 0;
+      font-family: 'Cinzel Decorative', serif;
+      font-size: 3.5rem;
+      background: linear-gradient(120deg, var(--primary-glow), var(--secondary-glow) 50%, var(--tertiary-glow));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+      margin: 20px 0;
+      letter-spacing: 2px;
+      animation: titlePulse 8s infinite alternate;
     }
-    #mandalaCanvas {
-      border: 8px double #ff66cc;
+
+    @keyframes titlePulse {
+      0% { filter: drop-shadow(0 0 5px var(--primary-glow)); }
+      50% { filter: drop-shadow(0 0 15px var(--secondary-glow)); }
+      100% { filter: drop-shadow(0 0 10px var(--tertiary-glow)); }
+    }
+
+    #multiCanvas {
+      position: relative;
+      border: 4px solid;
+      border-image: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow)) 1;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(0, 0, 34, 0.95), rgba(51, 0, 102, 0.3));
-      box-shadow: 0 0 200px rgba(255, 0, 255, 0.5);
-      max-width: 95vw;
-      max-height: 95vh;
-      margin: 20px auto;
+      background: radial-gradient(circle, rgba(0, 0, 34, 0.8), rgba(51, 0, 102, 0.2));
+      box-shadow: 
+        0 0 50px rgba(255, 0, 255, 0.3),
+        0 0 100px rgba(0, 255, 255, 0.2);
+      max-width: 80vmin;
+      max-height: 80vmin;
+      margin: 0 auto;
+      transition: all 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
     }
-    #vrCanvas {
+
+    #multiCanvas:hover {
+      transform: rotate(5deg) scale(1.02);
+    }
+
+    #backgroundCanvas {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 20;
-      display: none;
-      background: rgba(0, 0, 0, 0.9);
+      z-index: -1;
+      opacity: 0.6;
     }
-    button {
-      background: linear-gradient(45deg, #ff00ff, #00ffff);
+
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px auto;
+      max-width: 1000px;
+    }
+
+    .dimension-nav {
+      display: flex;
+      justify-content: center;
+      margin: 15px 0;
+    }
+
+    .dimension-tab {
+      display: inline-block;
       padding: 10px 20px;
+      background: linear-gradient(135deg, var(--bg-light), rgba(102, 0, 204, 0.7));
+      border-radius: 15px 15px 0 0;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.5s;
+      margin: 0 5px;
+      font-family: 'Orbitron', sans-serif;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .dimension-tab::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--secondary-glow), var(--primary-glow));
+      opacity: 0;
+      z-index: -1;
+      transition: opacity 0.5s;
+    }
+
+    .dimension-tab:hover::before, .dimension-tab.active::before {
+      opacity: 0.8;
+    }
+
+    .dimension-tab:hover, .dimension-tab.active {
+      color: var(--bg-deep);
+      transform: translateY(-5px);
+    }
+
+    .dimension-content {
+      display: none;
+      background: rgba(0, 0, 34, 0.95);
+      padding: 20px;
+      border-radius: 0 0 20px 20px;
+      border: 2px solid var(--primary-glow);
+      max-width: 800px;
+      margin: 0 auto 20px;
+      animation: contentFadeIn 0.5s ease-out;
+    }
+
+    @keyframes contentFadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .dimension-content.active {
+      display: block;
+    }
+
+    .cosmic-button {
+      background: linear-gradient(45deg, var(--primary-glow), var(--secondary-glow));
+      padding: 12px 24px;
       border: none;
-      border-radius: 10px;
-      color: #000022;
-      font-size: 16px;
+      border-radius: 30px;
+      color: var(--bg-deep);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s;
-      margin: 5px;
+      margin: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
     }
-    button:hover {
-      background: linear-gradient(45deg, #00ff99, #ff6600);
-      transform: scale(1.1);
+
+    .cosmic-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, var(--tertiary-glow), var(--secondary-glow));
+      transition: left 0.3s ease;
+      z-index: -1;
     }
-    .modal {
+
+    .cosmic-button:hover::before {
+      left: 0;
+    }
+
+    .cosmic-button:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 0, 255, 0.4);
+    }
+
+    .cosmic-modal {
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, -50%) scale(0.9);
       background: rgba(0, 0, 34, 0.98);
-      padding: 20px;
-      border: 3px double #00ffff;
-      border-radius: 15px;
+      padding: 30px;
+      border: 2px solid var(--secondary-glow);
+      border-radius: 20px;
       z-index: 100;
-      display: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+      min-width: 300px;
+      max-width: 90vw;
+      box-shadow: 0 0 30px var(--primary-glow);
     }
-    .modal.active {
+
+    .cosmic-modal.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--tertiary-glow);
+      transition: color 0.3s;
+    }
+
+    .modal-close:hover {
+      color: var(--primary-glow);
+    }
+
+    .cosmic-input {
+      background: rgba(0, 0, 34, 0.8);
+      border: 1px solid var(--secondary-glow);
+      border-radius: 30px;
+      padding: 12px 20px;
+      margin: 10px 0;
+      color: var(--text-primary);
+      font-family: 'Quicksand', sans-serif;
+      width: 100%;
+      transition: all 0.3s;
+    }
+
+    .cosmic-input:focus {
+      outline: none;
+      box-shadow: 0 0 15px var(--primary-glow);
+      border-color: var(--primary-glow);
+    }
+
+    .cosmic-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(90deg, var(--bg-medium), var(--bg-light));
+      border-radius: 5px;
+      margin: 15px 0;
+    }
+
+    .cosmic-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary-glow);
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 0 5px var(--primary-glow);
+    }
+
+    .cosmic-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .param-control {
+      margin: 15px 0;
+      text-align: left;
+    }
+
+    .param-label {
       display: block;
+      margin-bottom: 5px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      color: var(--tertiary-glow);
     }
-    .modal button {
-      margin: 5px;
+
+    .param-value {
+      display: inline-block;
+      min-width: 40px;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
     }
-    #soundMeter {
+
+    .harmonics-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .harmonic-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: 'Orbitron', sans-serif;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+
+    .harmonic-circle:hover {
+      transform: scale(1.1);
+    }
+
+    .harmonic-1 {
+      background: radial-gradient(circle, #ff0066 10%, transparent 70%);
+    }
+
+    .harmonic-2 {
+      background: radial-gradient(circle, #00ccff 10%, transparent 70%);
+    }
+
+    .harmonic-3 {
+      background: radial-gradient(circle, #ffcc00 10%, transparent 70%);
+    }
+
+    .harmonic-4 {
+      background: radial-gradient(circle, #00ff99 10%, transparent 70%);
+    }
+
+    .harmonic-5 {
+      background: radial-gradient(circle, #cc33ff 10%, transparent 70%);
+    }
+
+    .frequency-display {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.2rem;
+      color: var(--tertiary-glow);
+      margin: 20px 0;
+      transition: all 0.5s;
+    }
+
+    .frequency-display.active {
+      color: var(--primary-glow);
+      text-shadow: 0 0 10px var(--secondary-glow);
+    }
+
+    .state-indicator {
       position: fixed;
       bottom: 20px;
       left: 20px;
       width: 200px;
-      height: 20px;
-      background: #330066;
-      border: 2px solid #00ffff;
-      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      z-index: 10;
     }
-    #soundBar {
+
+    .meter-container {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+
+    .meter-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      color: var(--secondary-glow);
+      margin-bottom: 2px;
+      text-align: left;
+    }
+
+    .meter-bar {
+      height: 6px;
+      background: rgba(51, 0, 102, 0.5);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .meter-fill {
       height: 100%;
-      background: linear-gradient(90deg, #ff00ff, #00ffff);
-      transition: width 0.2s;
+      width: 0%;
+      transition: width 0.3s;
     }
-    #soundInfo {
+
+    .resonance-fill {
+      background: linear-gradient(90deg, #ff0066, #ff00ff);
+    }
+
+    .chaos-fill {
+      background: linear-gradient(90deg, #00ccff, #00ffff);
+    }
+
+    .attunement-fill {
+      background: linear-gradient(90deg, #ffcc00, #ffff00);
+    }
+
+    .narrative-display {
       position: fixed;
-      bottom: 50px;
-      left: 20px;
-      color: #00ffff;
-      font-size: 1rem;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: var(--text-accent);
+      text-shadow: 0 0 10px var(--secondary-glow);
+      font-family: 'Quicksand', sans-serif;
+      font-size: 1.2rem;
+      opacity: 0;
+      transition: opacity 1s, transform 1s;
+      z-index: 10;
+      pointer-events: none;
+      width: 80%;
+      max-width: 800px;
+    }
+
+    .narrative-display.active {
+      opacity: 1;
+      transform: translateX(-50%) translateY(5px);
+    }
+
+    .star-field {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      background-color: white;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: twinkle var(--twinkle-duration) infinite alternate;
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.2; }
+      100% { opacity: 0.8; }
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+
+    .preset-card {
+      background: rgba(51, 0, 102, 0.3);
+      border: 1px solid var(--bg-light);
+      border-radius: 10px;
+      padding: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .preset-card:hover {
+      background: rgba(102, 0, 204, 0.3);
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(255, 0, 255, 0.3);
+    }
+
+    .preset-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .preset-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+    }
+
+    .journey-timeline {
+      position: relative;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px 0;
+    }
+
+    .timeline-point {
+      position: relative;
+      padding-left: 30px;
+      margin-bottom: 20px;
+      text-align: left;
+      opacity: 0.7;
+      transition: all 0.3s;
+    }
+
+    .timeline-point::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 7px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--bg-light);
+      border: 2px solid var(--tertiary-glow);
+      transition: all 0.3s;
+    }
+
+    .timeline-point::after {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 25px;
+      width: 2px;
+      height: calc(100% + 5px);
+      background: var(--bg-light);
+    }
+
+    .timeline-point:last-child::after {
+      display: none;
+    }
+
+    .timeline-point.active {
+      opacity: 1;
+    }
+
+    .timeline-point.active::before {
+      background: var(--primary-glow);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    .timeline-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: var(--tertiary-glow);
+      margin-bottom: 5px;
+    }
+
+    .timeline-desc {
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      .dimension-tab {
+        padding: 8px 15px;
+        font-size: 12px;
+      }
+      
+      .cosmic-button {
+        padding: 10px 18px;
+        font-size: 12px;
+      }
+      
+      .state-indicator {
+        width: 150px;
+      }
+    }
+
+    /* Accessibility */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
   </style>
 </head>
 <body>
-  <h1>Cosmic Weaver: Echoes of the Infinite Abyss</h1>
+  <div class="cosmic-container">
+    <h1>Cosmic Voyager: Journey Through Dimensional Harmonics</h1>
 
-  <div class="controls">
-    <button id="settings">Choose Setting</button>
-    <button id="drone">Toggle Drone</button>
-    <button id="enterVR">Enter VR Mode</button>
+    <div class="dimension-nav">
+      <div class="dimension-tab active" onclick="switchDimension(event, 'harmonicDimension')">✧ Harmonics</div>
+      <div class="dimension-tab" onclick="switchDimension(event, 'patternDimension')">✦ Patterns</div>
+      <div class="dimension-tab" onclick="switchDimension(event, 'journeyDimension')">✫ Journey</div>
+    </div>
+
+    <div id="harmonicDimension" class="dimension-content active">
+      <div class="harmonics-container">
+        <div class="harmonic-circle harmonic-1" onclick="activateHarmonic(432)">432 Hz</div>
+        <div class="harmonic-circle harmonic-2" onclick="activateHarmonic(528)">528 Hz</div>
+        <div class="harmonic-circle harmonic-3" onclick="activateHarmonic(639)">639 Hz</div>
+        <div class="harmonic-circle harmonic-4" onclick="activateHarmonic(741)">741 Hz</div>
+        <div class="harmonic-circle harmonic-5" onclick="activateHarmonic(852)">852 Hz</div>
+      </div>
+      <div class="frequency-display" id="frequencyDisplay">Frequency: 0 Hz</div>
+      <div class="control-panel">
+        <div class="param-control">
+          <label class="param-label" for="resonanceSlider">Resonance Intensity</label>
+          <input type="range" min="0" max="100" value="50" class="cosmic-slider" id="resonanceSlider" oninput="updateResonance(this.value)">
+          <span class="param-value" id="resonanceValue">50%</span>
+        </div>
+        <div class="param-control">
+          <label class="param-label" for="waveformSelect">Harmonic Waveform</label>
+          <select id="waveformSelect" class="cosmic-input" onchange="updateWaveform(this.value)">
+            <option value="sine">Sine Wave (Pure)</option>
+            <option value="triangle">Triangle Wave (Balanced)</option>
+            <option value="square">Square Wave (Grounding)</option>
+            <option value="sawtooth">Sawtooth Wave (Energizing)</option>
+          </select>
+        </div>
+      </div>
+      <button class="cosmic-button" onclick="toggleResonance()">Activate Resonance</button>
+    </div>
+
+    <div id="patternDimension" class="dimension-content">
+      <div class="control-panel">
+        <div class="param-control">
+          <label class="param-label" for="symmetrySlider">Symmetry Points</label>
+          <input type="range" min="3" max="12" value="6" class="cosmic-slider" id="symmetrySlider" oninput="updateSymmetry(this.value)">
+          <span class="param-value" id="symmetryValue">6</span>
+        </div>
+        <div class="param-control">
+          <label class="param-label" for="complexitySlider">Pattern Complexity</label>
+          <input type="range" min="1" max="8" value="4" class="cosmic-slider" id="complexitySlider" oninput="updateComplexity(this.value)">
+          <span class="param-value" id="complexityValue">4</span>
+        </div>
+        <div class="param-control">
+          <label class="param-label" for="colorThemeSelect">Energy Spectrum</label>
+          <select id="colorThemeSelect" class="cosmic-input" onchange="updateColorTheme(this.value)">
+            <option value="cosmic">Cosmic Void (Purple/Blue)</option>
+            <option value="solar">Solar Flare (Red/Yellow)</option>
+            <option value="nature">Nature's Pulse (Green/Cyan)</option>
+            <option value="astral">Astral Projection (Rainbow)</option>
+            <option value="monochrome">Void Walker (Monochrome)</option>
+          </select>
+        </div>
+      </div>
+      <button class="cosmic-button" onclick="generatePattern()">Manifest Pattern</button>
+      <button class="cosmic-button" onclick="showPresetModal()">Pattern Presets</button>
+    </div>
+
+    <div id="journeyDimension" class="dimension-content">
+      <p>Set your intention and embark on a guided cosmic journey</p>
+      <div class="journey-timeline">
+        <div class="timeline-point" data-phase="1">
+          <div class="timeline-title">Void Dissolution</div>
+          <div class="timeline-desc">Release attachments, enter the cosmic void</div>
+        </div>
+        <div class="timeline-point" data-phase="2">
+          <div class="timeline-title">Quantum Resonance</div>
+          <div class="timeline-desc">Attune to universal frequencies, align energies</div>
+        </div>
+        <div class="timeline-point" data-phase="3">
+          <div class="timeline-title">Fractal Expansion</div>
+          <div class="timeline-desc">Witness the infinite patterns of existence</div>
+        </div>
+        <div class="timeline-point" data-phase="4">
+          <div class="timeline-title">Cosmic Integration</div>
+          <div class="timeline-desc">Merge with the universal consciousness</div>
+        </div>
+        <div class="timeline-point" data-phase="5">
+          <div class="timeline-title">Harmonic Return</div>
+          <div class="timeline-desc">Bring cosmic wisdom back to present awareness</div>
+        </div>
+      </div>
+      <button class="cosmic-button" onclick="showIntentionModal()">Begin Journey</button>
+    </div>
+
+    <canvas id="multiCanvas" width="800" height="800"></canvas>
+
+    <div class="state-indicator">
+      <div class="meter-container">
+        <div class="meter-label">Resonance</div>
+        <div class="meter-bar">
+          <div class="meter-fill resonance-fill" id="resonanceMeter"></div>
+        </div>
+      </div>
+      <div class="meter-container">
+        <div class="meter-label">Chaos Factor</div>
+        <div class="meter-bar">
+          <div class="meter-fill chaos-fill" id="chaosMeter"></div>
+        </div>
+      </div>
+      <div class="meter-container">
+        <div class="meter-label">Attunement</div>
+        <div class="meter-bar">
+          <div class="meter-fill attunement-fill" id="attunementMeter"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="narrative-display" id="narrativeDisplay"></div>
+    <canvas id="backgroundCanvas"></canvas>
+    <div class="star-field" id="starField"></div>
   </div>
 
-  <div id="settingsModal" class="modal">
-    <button onclick="applySetting('healing')">Healing (Theta, 6 Hz)</button>
-    <button onclick="applySetting('sleep')">Sleep (Delta, 2 Hz)</button>
-    <button onclick="applySetting('relax')">Relax (Alpha, 10 Hz)</button>
-    <button onclick="applySetting('enlighten')">Enlighten (Schumann, 7.83 Hz)</button>
-    <button onclick="applySetting('activate')">Activate (Beta, 20 Hz)</button>
+  <div class="cosmic-modal" id="intentionModal">
+    <span class="modal-close" onclick="closeModal('intentionModal')">×</span>
+    <h2>Set Your Cosmic Intention</h2>
+    <p>Focus your energy and set an intention for this journey</p>
+    <input type="text" id="intentionInput" class="cosmic-input" placeholder="e.g., Inner Peace, Creativity, Cosmic Wisdom">
+    <div class="param-control">
+      <label class="param-label" for="journeyDurationSlider">Journey Duration (minutes)</label>
+      <input type="range" min="3" max="30" value="10" class="cosmic-slider" id="journeyDurationSlider" oninput="updateJourneyDuration(this.value)">
+      <span class="param-value" id="journeyDurationValue">10</span>
+    </div>
+    <button class="cosmic-button" onclick="beginJourney()">Initiate Journey</button>
   </div>
 
-  <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
-  <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz | Chaos: 0</div>
+  <div class="cosmic-modal" id="presetModal">
+    <span class="modal-close" onclick="closeModal('presetModal')">×</span>
+    <h2>Pattern Presets</h2>
+    <div class="preset-grid">
+      <div class="preset-card" onclick="applyPreset('mandala')">
+        <div class="preset-icon">✿</div>
+        <div class="preset-name">Sacred Mandala</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('yantra')">
+        <div class="preset-icon">⬢</div>
+        <div class="preset-name">Quantum Yantra</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('flower')">
+        <div class="preset-icon">❀</div>
+        <div class="preset-name">Life Flower</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('vortex')">
+        <div class="preset-icon">↺</div>
+        <div class="preset-name">Cosmic Vortex</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('metatron')">
+        <div class="preset-icon">⬡</div>
+        <div class="preset-name">Metatron's Cube</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('torus')">
+        <div class="preset-icon">⊗</div>
+        <div class="preset-name">Energy Torus</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('dna')">
+        <div class="preset-icon">⟁</div>
+        <div class="preset-name">Cosmic DNA</div>
+      </div>
+      <div class="preset-card" onclick="applyPreset('void')">
+        <div class="preset-icon">◎</div>
+        <div class="preset-name">Void Gateway</div>
+      </div>
+    </div>
+  </div>
 
-  <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-  <canvas id="vrCanvas"></canvas>
-
-  <script src="./three.min.js"></script>
   <script>
-    const mandalaCanvas = document.getElementById('mandalaCanvas');
-    const ctx = mandalaCanvas.getContext('2d');
-    const vrCanvas = document.getElementById('vrCanvas');
-    let animationId = null;
-    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup;
-    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, chaosFactor = 0;
-    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
-    let voiceInitialized = false;
-
-    const params = {
-      segments: 6,
-      levels: 4,
-      scaleFactor: 0.65,
-      initialRadius: 200,
-      lineColor: '#ff00ff',
-      lineWidth: 2,
-      baseFreq: 110,
-      audibleFreq: 110,
-      cymaticFactor: 0.2, // Increased for more distortion
-      waveform: 'sine'
+    // Configuration and state
+    const config = {
+      symmetry: 6,
+      complexity: 4,
+      colorTheme: 'cosmic',
+      resonanceIntensity: 50,
+      waveform: 'sine',
+      baseFrequency: 432,
+      journeyDuration: 10,
+      activePreset: null,
+      isResonating: false
     };
 
-    // HSL to Hex Color Conversion
-    function hslToHex(h, s, l) {
-      h /= 360;
-      let r, g, b;
-      if (s === 0) {
-        r = g = b = l;
-      } else {
-        const hue2rgb = (p, q, t) => {
-          if (t < 0) t += 1;
-          if (t > 1) t -= 1;
-          if (t < 1/6) return p + (q - p) * 6 * t;
-          if (t < 1/2) return q;
-          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-          return p;
-        };
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-      }
-      const toHex = x => {
-        const hex = Math.round(x * 255).toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-      };
-      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-    }
+    const state = {
+      resonanceLevel: 0,
+      chaosFactor: 0,
+      attunementLevel: 0,
+      currentPhase: 0,
+      intention: '',
+      timestep: 0,
+      journeyActive: false,
+      activeJourneyPhase: 0
+    };
 
-    // Audio Initialization
+    // Canvas and contexts
+    const multiCanvas = document.getElementById('multiCanvas');
+    const ctx = multiCanvas.getContext('2d');
+    const bgCanvas = document.getElementById('backgroundCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+
+    // Audio system
+    let audioContext = null;
+    let masterGain = null;
+    let oscillators = [];
+    let analyser = null;
+    let dataArray = null;
+
+    // Initialize the audio system
     function initAudio() {
       if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioContext.createGain();
+        masterGain.gain.value = 0;
+        masterGain.connect(audioContext.destination);
+        
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        masterGain.connect(analyser);
       }
-      if (audioContext.state === 'suspended') audioContext.resume();
+      
+      if (audioContext.state === 'suspended') {
+        audioContext.resume();
+      }
     }
 
-    function toggleDrone() {
-      initAudio();
-      if (droneOscillator1) {
-        droneOscillator1.stop();
-        droneOscillator2.stop();
-        droneOscillator3.stop();
-        lfo.stop();
-        droneOscillator1 = null;
-        droneOscillator2 = null;
-        droneOscillator3 = null;
-        lfo = null;
-        droneGain = null;
-        droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Toggle Drone';
+    // Create a resonator at the specified frequency
+    function createResonator(frequency) {
+      const oscillator = audioContext.createOscillator();
+      oscillator.type = config.waveform;
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+      const gainNode = audioContext.createGain();
+      gainNode.gain.value = 0;  // Initially silent
+      oscillator.connect(gainNode);
+      gainNode.connect(masterGain);
+
+      oscillator.start();
+      oscillators.push({ oscillator, gainNode, frequency });
+    }
+
+    // Remove a resonator by frequency
+    function removeResonator(frequency) {
+      const resonatorIndex = oscillators.findIndex(osc => osc.frequency === frequency);
+      if (resonatorIndex > -1) {
+        const resonator = oscillators[resonatorIndex];
+        resonator.oscillator.stop();
+        resonator.oscillator.disconnect();
+        resonator.gainNode.disconnect();
+        oscillators.splice(resonatorIndex, 1);
+      }
+    }
+
+    // Activate harmonic frequency
+    function activateHarmonic(frequency) {
+      initAudio(); // Make sure audio is initialized
+
+      if (oscillators.find(osc => osc.frequency === frequency)) {
+        console.log("Deactivating frequency: " + frequency);
+        removeResonator(frequency);
       } else {
-        droneOscillator1 = audioContext.createOscillator();
-        droneOscillator2 = audioContext.createOscillator();
-        droneOscillator3 = audioContext.createOscillator();
-        droneGain = audioContext.createGain();
-        lfo = audioContext.createOscillator();
-
-        droneOscillator1.type = params.waveform;
-        droneOscillator2.type = params.waveform;
-        droneOscillator3.type = params.waveform;
-        lfo.type = 'sine';
-
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 2;
-        droneOscillator3.frequency.value = params.audibleFreq * 1.498307;
-        lfo.frequency.value = 0.1;
-        droneGain.gain.value = 0.05;
-        droneAmplitude = 0.05;
-
-        lfo.connect(droneGain.gain);
-        droneOscillator1.connect(droneGain);
-        droneOscillator2.connect(droneGain);
-        droneOscillator3.connect(droneGain);
-        droneGain.connect(audioContext.destination);
-        droneOscillator1.start();
-        droneOscillator2.start();
-        droneOscillator3.start();
-        lfo.start();
-        document.getElementById('drone').textContent = 'Stop Drone';
-        updateDroneParams();
-      }
-    }
-
-    function updateDroneParams() {
-      if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.1;
-        requestAnimationFrame(updateDroneParams);
-      } else {
-        rotationSpeed = 0;
-      }
-    }
-
-    function initVoiceControl() {
-      if (voiceInitialized) return;
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          initAudio();
-          const source = audioContext.createMediaStreamSource(stream);
-          voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.9;
-          source.connect(voiceAnalyser);
-
-          const bufferLength = voiceAnalyser.fftSize;
-          const dataArray = new Float32Array(bufferLength);
-
-          function detectPitch() {
-            voiceAnalyser.getFloatTimeDomainData(dataArray);
-            const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-            const rawAmplitude = getAmplitude(dataArray);
-
-            if (pitch !== -1) voicePitch = pitch;
-            else voicePitch = 0;
-
-            smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-            chaosFactor = Math.min(1, smoothedAmplitude * 2); // Stronger chaos
-            updateVoiceParams();
-            params.lineColor = hslToHex(voicePitch % 360, 1, 0.5 + chaosFactor * 0.5);
-            updateSoundMeter();
-            console.log(`Voice: pitch=${voicePitch.toFixed(1)}, amplitude=${smoothedAmplitude.toFixed(3)}, chaos=${chaosFactor.toFixed(3)}`);
-            requestAnimationFrame(detectPitch);
-          }
-          detectPitch();
-          voiceInitialized = true;
-        })
-        .catch(e => {
-          console.error('Voice control failed:', e);
-          setTimeout(initVoiceControl, 1000); // Retry
-        });
-    }
-
-    function autoCorrelate(buf, sampleRate) {
-      let SIZE = buf.length;
-      let rms = 0;
-      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / SIZE);
-      if (rms < 0.01) return -1;
-
-      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-
-      buf = buf.slice(r1, r2);
-      SIZE = buf.length;
-
-      let c = new Array(SIZE).fill(0);
-      for (let i = 0; i < SIZE; i++)
-        for (let j = 0; j < SIZE - i; j++)
-          c[i] = c[i] + buf[j] * buf[j + i];
-
-      let d = 0;
-      while (c[d] > c[d + 1]) d++;
-      let maxval = -1, maxpos = -1;
-      for (let i = d; i < SIZE; i++) {
-        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-      }
-      let T0 = maxpos;
-
-      return sampleRate / T0;
-    }
-
-    function getAmplitude(buf) {
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.3);
-    }
-
-    function updateVoiceParams() {
-      params.segments = Math.round(6 + (voicePitch / 200) * 18); // 6 to 24
-    }
-
-    function updateSoundMeter() {
-      const amplitudePercent = Math.round(smoothedAmplitude * 100);
-      document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
-      document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz | Chaos: ${Math.round(chaosFactor * 100)}`;
-    }
-
-    // VR Initialization
-    function initVR() {
-      if (!window.THREE) {
-        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
-        document.getElementById('enterVR').textContent = 'VR Unavailable';
-        return;
+        console.log("Activating frequency: " + frequency);
+        createResonator(frequency);
       }
 
-      console.log('Initializing VR...');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-      renderer.xr.enabled = true;
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      mandalaGroup = new THREE.Group();
-      scene.add(mandalaGroup);
+      updateFrequencyDisplay(); // Update the display after activating/deactivating
+    }
 
-      updateVRMandala();
-      camera.position.z = 0;
+    // Update frequency display
+    function updateFrequencyDisplay() {
+      const activeFrequencies = oscillators.map(osc => osc.frequency).join(', ') || '0';
+      document.getElementById('frequencyDisplay').textContent = `Frequency: ${activeFrequencies} Hz`;  // Add/Remove 'active' class from the display based on whether there's an active frequency
+  const frequencyDisplay = document.getElementById('frequencyDisplay');
+  if (activeFrequencies !== '0') {
+    frequencyDisplay.classList.add('active');
+  } else {
+    frequencyDisplay.classList.remove('active');
+  }
+}
 
-      const enterVRButton = document.getElementById('enterVR');
-      let isVRActive = false;
+// Toggle resonance
+function toggleResonance() {
+  initAudio(); // Make sure audio is initialized
 
-      enterVRButton.addEventListener('click', async () => {
-        if (isVRActive) {
-          console.log('Exiting VR mode...');
-          vrCanvas.style.display = 'none';
-          renderer.setAnimationLoop(null);
-          enterVRButton.textContent = 'Enter VR Mode';
-          isVRActive = false;
-          timeFactor = 0;
-          return;
+  config.isResonating = !config.isResonating;
+  const buttonText = config.isResonating ? 'Deactivate Resonance' : 'Activate Resonance';
+  document.querySelector('.cosmic-button').textContent = buttonText;
+
+  updateResonance(config.resonanceIntensity);
+}
+
+// Update resonance intensity
+function updateResonance(intensity) {
+  config.resonanceIntensity = intensity;
+  document.getElementById('resonanceValue').textContent = `${intensity}%`;
+
+  const gainValue = config.isResonating ? intensity / 100 : 0;
+  oscillators.forEach(osc => {
+    osc.gainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
+  });
+
+  state.resonanceLevel = intensity;
+  updateMeters();
+}
+
+// Update waveform
+function updateWaveform(waveform) {
+  config.waveform = waveform;
+  oscillators.forEach(osc => {
+    osc.oscillator.type = waveform;
+  });
+}
+
+// Switch dimension tabs
+function switchDimension(event, dimensionId) {
+  const tabs = document.querySelectorAll('.dimension-tab');
+  tabs.forEach(tab => tab.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const contents = document.querySelectorAll('.dimension-content');
+  contents.forEach(content => content.classList.remove('active'));
+  document.getElementById(dimensionId).classList.add('active');
+}
+
+// Update symmetry points
+function updateSymmetry(symmetry) {
+  config.symmetry = symmetry;
+  document.getElementById('symmetryValue').textContent = symmetry;
+}
+
+// Update pattern complexity
+function updateComplexity(complexity) {
+  config.complexity = complexity;
+  document.getElementById('complexityValue').textContent = complexity;
+}
+
+// Update color theme
+function updateColorTheme(theme) {
+  config.colorTheme = theme;
+}
+
+// Generate pattern (placeholder function)
+function generatePattern() {
+  console.log('Generating pattern with:', config);
+  // Placeholder pattern generation logic (replace with actual drawing code)
+  ctx.clearRect(0, 0, multiCanvas.width, multiCanvas.height);
+  ctx.font = '30px Orbitron';
+  ctx.fillStyle = 'white';
+  ctx.fillText('Pattern Generated', 250, 400);
+
+  // Increase Chaos Factor
+  state.chaosFactor = Math.min(100, state.chaosFactor + 10); // Increase by 10, max 100
+  updateMeters();
+}
+
+// Show preset modal
+function showPresetModal() {
+  showModal('presetModal');
+}
+
+// Apply preset (placeholder function)
+function applyPreset(presetName) {
+  console.log('Applying preset:', presetName);
+  config.activePreset = presetName;
+  closeModal('presetModal');
+  // Placeholder preset application logic (replace with actual configuration)
+  alert(`Applying preset: ${presetName}! (This is a placeholder)`);
+}
+
+// Show intention modal
+function showIntentionModal() {
+  showModal('intentionModal');
+}
+
+// Update journey duration
+function updateJourneyDuration(duration) {
+  config.journeyDuration = duration;
+  document.getElementById('journeyDurationValue').textContent = duration;
+}
+
+// Begin journey
+function beginJourney() {
+  initAudio(); // Ensure AudioContext is initialized
+  state.intention = document.getElementById('intentionInput').value;
+  console.log('Beginning journey with intention:', state.intention, 'Duration:', config.journeyDuration);
+  closeModal('intentionModal');
+
+  state.journeyActive = true;
+  state.activeJourneyPhase = 1; // Start at phase 1
+
+  // Reset meters
+  state.attunementLevel = 0;
+  state.chaosFactor = 0;
+  state.resonanceLevel = 0;
+  updateMeters();
+
+  // Activate the first timeline point
+  activateTimelinePoint(1);
+
+  // Start the journey simulation (with animation frame for visual feedback)
+  animateJourney();
+}
+
+// Animate the journey (main animation loop)
+function animateJourney() {
+  if (!state.journeyActive) return;
+
+  // Simulate the journey progression based on time.
+  state.timestep++;
+
+  // Example parameter changes for demonstration. Adjust based on phase and intention.
+  if (state.timestep % 100 === 0) { // Every X frames simulate action
+      if (state.activeJourneyPhase === 1) { // Void Dissolution: Lower Chaos, Increase Attunement
+          state.chaosFactor = Math.max(0, state.chaosFactor - 5); // Reduce Chaos
+          state.attunementLevel = Math.min(100, state.attunementLevel + 3); // Increase Attunement
+      } else if (state.activeJourneyPhase === 2) { // Quantum Resonance: Increase Attunement and Resonance
+          state.attunementLevel = Math.min(100, state.attunementLevel + 5);
+          state.resonanceLevel = Math.min(100, state.resonanceLevel + 7);
+      } else if (state.activeJourneyPhase === 3) { // Fractal Expansion: Balanced Chaos/Attunement
+          state.chaosFactor = Math.min(100, state.chaosFactor + 2); // Slight Chaos
+          state.attunementLevel = Math.min(100, state.attunementLevel + 4);
+      } else if (state.activeJourneyPhase === 4) { // Cosmic Integration: Lower Chaos, Max Attunement
+          state.chaosFactor = Math.max(0, state.chaosFactor - 7);
+          state.attunementLevel = 100;
+          state.resonanceLevel = 100;
+      } else if (state.activeJourneyPhase === 5) { // Harmonic Return: Reset Resonance, Focus Attunement
+          state.resonanceLevel = Math.max(0, state.resonanceLevel - 5);
+          state.attunementLevel = Math.min(100, state.attunementLevel + 2);
+      }
+
+      updateMeters();
+  }
+
+  // Check for phase transition
+  const phaseDuration = (config.journeyDuration * 60) / 5; // Approx seconds per phase
+  const phaseStepThreshold = phaseDuration * 60 /5 ; // Frames
+  if (state.timestep > (state.activeJourneyPhase * phaseStepThreshold) && state.activeJourneyPhase < 5) {
+      state.activeJourneyPhase++;
+      activateTimelinePoint(state.activeJourneyPhase);
+  }
+
+  //Journey completion.
+  if (state.timestep > config.journeyDuration * 60) {
+    endJourney();
+  }
+
+  // Update Visualizations (Canvas, etc.)
+  drawCosmicBackground();
+  drawCosmicPattern();
+
+  requestAnimationFrame(animateJourney); // Request next animation frame
+}
+
+// Activate Timeline Point
+function activateTimelinePoint(phase) {
+  const timelinePoints = document.querySelectorAll('.timeline-point');
+  timelinePoints.forEach(point => point.classList.remove('active'));
+
+  const activePoint = document.querySelector(`.timeline-point[data-phase="${phase}"]`);
+  if (activePoint) {
+    activePoint.classList.add('active');
+    displayJourneyNarrative(phase);
+  }
+}
+
+// Display journey narrative text
+function displayJourneyNarrative(phase) {
+    const narrativeText = getNarrativeForPhase(phase, state.intention); // Get specific text
+    const narrativeDisplay = document.getElementById('narrativeDisplay');
+    narrativeDisplay.textContent = narrativeText;
+
+    narrativeDisplay.classList.remove('active');
+    setTimeout(() => {
+      narrativeDisplay.classList.add('active'); // Trigger Fade-In.
+    }, 50);
+}
+
+// Get narrative for journey phase
+function getNarrativeForPhase(phase, intention) {
+    switch (phase) {
+        case 1:
+            return `Initiating Void Dissolution... Releasing all attachments. Set your intention: "${intention}".`;
+        case 2:
+            return `Entering Quantum Resonance... Attuning to universal frequencies for "${intention}". Aligning energies...`;
+        case 3:
+            return `Fractal Expansion underway... Witnessing infinite patterns of existence. Manifesting possibilities...`;
+        case 4:
+            return `Achieving Cosmic Integration... Merging with universal consciousness. Experiencing wholeness...`;
+        case 5:
+            return `Harmonic Return commencing... Bringing cosmic wisdom back to present awareness. Grounding your intention...`;
+        default:
+            return "Journeying through the cosmos...";
+    }
+}
+
+// End journey
+function endJourney() {
+    state.journeyActive = false;
+
+    //Reset animation
+    state.timestep = 0;
+
+    //Deactivate TL points
+    const timelinePoints = document.querySelectorAll('.timeline-point');
+    timelinePoints.forEach(point => point.classList.remove('active'));
+
+    displayJourneyNarrative(0); // Blank narrative on journey end
+
+    alert("Cosmic Journey Complete! Return to the present with newfound wisdom.");
+}
+
+// Update meters
+function updateMeters() {
+  document.getElementById('resonanceMeter').style.width = `${state.resonanceLevel}%`;
+  document.getElementById('chaosMeter').style.width = `${state.chaosFactor}%`;
+  document.getElementById('attunementMeter').style.width = `${state.attunementLevel}%`;
+}
+
+// Show modal
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.add('active');
+}
+
+// Close modal
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('active');
+}
+
+ // Draw cosmic background
+function drawCosmicBackground() {
+  bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+
+  const numStars = 200;
+  const starField = document.getElementById('starField');
+  starField.innerHTML = ''; // Clear existing stars
+  for (let i = 0; i < numStars; i++) {
+    const x = Math.random() * bgCanvas.width;
+    const y = Math.random() * bgCanvas.height;
+    const radius = Math.random() * 2;
+    const opacity = Math.random() * 0.8;
+    const twinkleDuration = Math.random() * 5 + 3; // Random duration between 3 and 8 seconds
+
+    const star = document.createElement('div');
+    star.classList.add('star');
+    star.style.left = `${x}px`;
+    star.style.top = `${y}px`;
+    star.style.width = `${radius * 2}px`;
+    star.style.height = `${radius * 2}px`;
+    star.style.opacity = opacity;
+    star.style.setProperty('--twinkle-duration', `${twinkleDuration}s`);
+
+    starField.appendChild(star);
+  }
+}
+
+// Draw cosmic pattern on canvas
+function drawCosmicPattern() {
+    ctx.clearRect(0, 0, multiCanvas.width, multiCanvas.height);
+    const centerX = multiCanvas.width / 2;
+    const centerY = multiCanvas.height / 2;
+    const radius = Math.min(centerX, centerY) * 0.8;
+    const numPoints = config.symmetry;
+    const complexity = config.complexity;
+    const angleIncrement = (Math.PI * 2) / numPoints;
+
+    ctx.beginPath();
+    for (let i = 0; i < numPoints; i++) {
+        const angle = i * angleIncrement;
+        const x = centerX + radius * Math.cos(angle) + complexity * Math.sin(angle * complexity);
+        const y = centerY + radius * Math.sin(angle) - complexity * Math.cos(angle * complexity);
+
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
         }
+    }
+    ctx.closePath();
 
-        console.log('Attempting to enter VR...');
-        if (!navigator.xr) {
-          console.error('WebXR not supported');
-          enterVRButton.textContent = 'VR Not Supported';
-          return;
-        }
-
-        try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          console.log('VR session started successfully');
-          renderer.xr.setSession(session);
-          renderer.setAnimationLoop(animateVR);
-          vrCanvas.style.display = 'block';
-          enterVRButton.textContent = 'Exit VR Mode';
-          isVRActive = true;
-
-          session.addEventListener('end', () => {
-            console.log('VR session ended');
-            vrCanvas.style.display = 'none';
-            renderer.setAnimationLoop(null);
-            enterVRButton.textContent = 'Enter VR Mode';
-            isVRActive = false;
-          });
-        } catch (err) {
-          console.error('VR session failed:', err);
-          enterVRButton.textContent = 'VR Failed: ' + err.message;
-        }
-      });
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
+    // Color Theme Application
+    let color1, color2;
+    switch (config.colorTheme) {
+        case 'cosmic':
+            color1 = 'rgba(102, 0, 204, 0.7)';
+            color2 = 'rgba(0, 51, 102, 0.7)';
+            break;
+        case 'solar':
+            color1 = 'rgba(255, 153, 0, 0.7)';
+            color2 = 'rgba(255, 255, 0, 0.7)';
+            break;
+        case 'nature':
+            color1 = 'rgba(0, 153, 51, 0.7)';
+            color2 = 'rgba(0, 204, 204, 0.7)';
+            break;
+        case 'astral':
+            color1 = `hsla(${state.timestep % 360}, 100%, 50%, 0.7)`; // Rainbow hue
+            color2 = `hsla(${(state.timestep + 180) % 360}, 100%, 50%, 0.7)`;
+            break;
+        case 'monochrome':
+            const grayscale = Math.floor((state.timestep % 255) * 0.8);
+            color1 = `rgba(${grayscale}, ${grayscale}, ${grayscale}, 0.7)`;
+            color2 = `rgba(${grayscale + 50}, ${grayscale + 50}, ${grayscale + 50}, 0.7)`;
+            break;
+        default:
+            color1 = 'rgba(102, 0, 204, 0.7)';
+            color2 = 'rgba(0, 51, 102, 0.7)';
     }
 
-    // Generate VR Mandala (Fractal Tunnel)
-    function updateVRMandala() {
-      mandalaGroup.clear();
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color: new THREE.Color(params.lineColor),
-        linewidth: 2,
-        transparent: true,
-        opacity: Math.max(0.1, 1 - (timeFactor * 0.1)) // Fade with depth
-      });
+    const gradient = ctx.createLinearGradient(0, 0, multiCanvas.width, multiCanvas.height);
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
 
-      function generateCymaticShape(x, y, r, level) {
-        if (level > params.levels) return;
-        const points = [];
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5; // Multi-frequency
-          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1); // Chaos jitter
-          const z = -Math.pow(level, 1.5) * (1 + timeFactor + chaosFactor * 2); // Exponential depth
-          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
-        }
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.LineLoop(geometry, lineMaterial.clone());
-        mandalaGroup.add(line);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+}
 
-        // Nested sub-mandalas
-        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
-        if (level < currentMaxLevels) {
-          for (let i = 0; i < params.segments / 2; i++) { // Fewer sub-shapes for performance
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
-          }
-        }
-      }
+// Init
+function init() {
+  // Set initial state of the meters.
+  updateMeters();
 
-      generateCymaticShape(0, 0, 10, 1);
-      mandalaGroup.position.z = -5;
-      mandalaGroup.scale.setScalar(1 + chaosFactor * 2);
-      mandalaGroup.rotation.z = totalRotation;
+  //Draw cosmic background
+  drawCosmicBackground();
 
-      console.log(`VR: timeFactor=${timeFactor.toFixed(3)}, segments=${params.segments}, levels=${Math.floor(1 + timeFactor)}`);
-    }
+  // Event Listener for window resize, redraw background
+  window.addEventListener('resize', drawCosmicBackground);
 
-    function animateVR(time) {
-      if (!voiceInitialized) initVoiceControl();
-      totalRotation += rotationSpeed;
-      timeFactor += chaosFactor * 0.005 + 0.001;
-      updateVoiceParams();
-      updateVRMandala();
-      renderer.render(scene, camera);
-    }
+   // Kickoff Journey animation
+  //beginJourney(); This causes animation to begin on load
+}
 
-    // 2D Mandala Drawing
-    function generateMandala() {
-      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-      const centerX = mandalaCanvas.width / 2;
-      const centerY = mandalaCanvas.height / 2;
-
-      function drawCymaticShape(x, y, r, level) {
-        if (level > params.levels) return;
-        ctx.beginPath();
-        ctx.strokeStyle = params.lineColor;
-        ctx.lineWidth = params.lineWidth;
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.1;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.01 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(chaosFactor * angle + timeFactor * 0.05) * params.cymaticFactor * 0.5;
-          const dist = r * (1 + wave1 + wave2 + chaosFactor * Math.random() * 0.1);
-          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-        }
-        ctx.closePath();
-        ctx.stroke();
-
-        if (level < params.levels) {
-          for (let i = 0; i < params.segments / 2; i++) {
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.2;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.8;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.8;
-            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.7, level + 1);
-          }
-        }
-      }
-
-      drawCymaticShape(centerX, centerY, params.initialRadius, 1);
-    }
-
-    // Brainwave Settings
-    function applySetting(setting) {
-      document.getElementById('settingsModal').classList.remove('active');
-      switch (setting) {
-        case 'healing':
-          params.baseFreq = 6;
-          params.audibleFreq = 48;
-          params.segments = 6;
-          params.levels = 4;
-          params.cymaticFactor = 0.2;
-          params.lineColor = '#00ccff';
-          break;
-        case 'sleep':
-          params.baseFreq = 2;
-          params.audibleFreq = 32;
-          params.segments = 6;
-          params.levels = 3;
-          params.cymaticFactor = 0.25;
-          params.lineColor = '#330066';
-          break;
-        case 'relax':
-          params.baseFreq = 10;
-          params.audibleFreq = 40;
-          params.segments = 6;
-          params.levels = 4;
-          params.cymaticFactor = 0.15;
-          params.lineColor = '#66ff66';
-          break;
-        case 'enlighten':
-          params.baseFreq = 7.83;
-          params.audibleFreq = 62.64;
-          params.segments = 6;
-          params.levels = 5;
-          params.cymaticFactor = 0.22;
-          params.lineColor = '#ffcc00';
-          break;
-        case 'activate':
-          params.baseFreq = 20;
-          params.audibleFreq = 80;
-          params.segments = 6;
-          params.levels = 3;
-          params.cymaticFactor = 0.1;
-          params.lineColor = '#ff0066';
-          break;
-      }
-      if (droneOscillator1) {
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 2;
-        droneOscillator3.frequency.value = params.audibleFreq * 1.498307;
-      }
-      timeFactor = 0;
-      smoothedAmplitude = 0;
-      chaosFactor = 0;
-      generateMandala();
-    }
-
-    function showSettingsModal() {
-      document.getElementById('settingsModal').classList.add('active');
-    }
-
-    function animate() {
-      if (animationId) cancelAnimationFrame(animationId);
-      timeFactor += 0.005;
-      generateMandala();
-      if (droneOscillator1 || smoothedAmplitude > 0.05) {
-        animationId = requestAnimationFrame(animate);
-      }
-    }
-
-    function init() {
-      console.log('Initializing Cosmic Weaver...');
-      document.getElementById('settings').addEventListener('click', showSettingsModal);
-      document.getElementById('drone').addEventListener('click', toggleDrone);
-      initVoiceControl();
-      initVR();
-      generateMandala();
-    }
-
-    window.onload = () => {
-      if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded - ensure three.min.js is in the correct directory');
-        document.body.innerHTML += '<p style="color: red;">Error: Three.js failed to load.</p>';
-      } else {
-        console.log('Three.js loaded, version:', THREE.REVISION);
-        init();
-      }
-    };
-  </script>
+init();</script>
 </body>
 </html>
