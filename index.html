@@ -155,524 +155,537 @@
   <canvas id="vrCanvas"></canvas>
 
   <script src="./three.min.js"></script>
-  <script>
-    const mandalaCanvas = document.getElementById('mandalaCanvas');
-    const ctx = mandalaCanvas.getContext('2d');
-    const vrCanvas = document.getElementById('vrCanvas');
-    let animationId = null;
-    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
-    let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
-    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
-    let voiceInitialized = false;
-    let lastFrameTime = performance.now();
+  <script src="./three.min.js"></script>
+<script>
+  const mandalaCanvas = document.getElementById('mandalaCanvas');
+  const ctx = mandalaCanvas.getContext('2d');
+  const vrCanvas = document.getElementById('vrCanvas');
+  let animationId = null;
+  let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, voiceAnalyser;
+  let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere, lotusGroup;
+  let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
+  let rotationSpeed = 0, timeFactor = 0, totalRotation = 0;
+  let voiceInitialized = false;
+  let lastFrameTime = performance.now();
 
-    const params = {
-      segments: 8,
-      levels: 5,
-      scaleFactor: 0.7,
-      initialRadius: 250,
-      lineColor: '#ffd700',
-      lineWidth: 3,
-      baseFreq: 108, // Sacred number in Buddhism
-      audibleFreq: 108,
-      cymaticFactor: 0.25,
-      waveform: 'sine',
-      lotusPetals: 12
-    };
+  const params = {
+    segments: 8,
+    levels: 5,
+    scaleFactor: 0.7,
+    initialRadius: 250,
+    lineColor: '#ffd700',
+    lineWidth: 3,
+    baseFreq: 108,
+    audibleFreq: 108,
+    cymaticFactor: 0.25,
+    waveform: 'sine',
+    lotusPetals: 12
+  };
 
-    // HSL to Hex Color Conversion
-    function hslToHex(h, s, l) {
-      h /= 360;
-      let r, g, b;
-      if (s === 0) { r = g = b = l; }
-      else {
-        const hue2rgb = (p, q, t) => {
-          if (t < 0) t += 1; if (t > 1) t -= 1;
-          if (t < 1/6) return p + (q - p) * 6 * t;
-          if (t < 1/2) return q;
-          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-          return p;
-        };
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-      }
-      const toHex = x => {
-        const hex = Math.round(x * 255).toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
+  // HSL to Hex Color Conversion
+  function hslToHex(h, s, l) {
+    h /= 360;
+    let r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      const hue2rgb = (p, q, t) => {
+        if (t < 0) t += 1; if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
       };
-      return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+    const toHex = x => {
+      const hex = Math.round(x * 255).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  // Audio Initialization
+  function initAudio() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') audioContext.resume();
+  }
+
+  function toggleDrone() {
+    initAudio();
+    if (droneOscillator1) {
+      droneOscillator1.stop();
+      droneOscillator2.stop();
+      droneOscillator3.stop();
+      lfo.stop();
+      droneOscillator1 = null;
+      droneOscillator2 = null;
+      droneOscillator3 = null;
+      lfo = null;
+      droneGain = null;
+      droneAmplitude = 0;
+      document.getElementById('drone').textContent = 'Invoke Techno Chant';
+    } else {
+      droneOscillator1 = audioContext.createOscillator();
+      droneOscillator2 = audioContext.createOscillator();
+      droneOscillator3 = audioContext.createOscillator();
+      droneGain = audioContext.createGain();
+      lfo = audioContext.createOscillator();
+
+      droneOscillator1.type = 'sawtooth';
+      droneOscillator2.type = 'sine';
+      droneOscillator3.type = 'triangle';
+      lfo.type = 'sine';
+
+      droneOscillator1.frequency.value = params.audibleFreq;
+      droneOscillator2.frequency.value = params.audibleFreq * 1.618;
+      droneOscillator3.frequency.value = params.audibleFreq * 2.718;
+      lfo.frequency.value = 0.2;
+      droneGain.gain.value = 0.07;
+      droneAmplitude = 0.07;
+
+      lfo.connect(droneGain.gain);
+      droneOscillator1.connect(droneGain);
+      droneOscillator2.connect(droneGain);
+      droneOscillator3.connect(droneGain);
+      droneGain.connect(audioContext.destination);
+      droneOscillator1.start();
+      droneOscillator2.start();
+      droneOscillator3.start();
+      lfo.start();
+      document.getElementById('drone').textContent = 'Silence Chant';
+      updateDroneParams();
+    }
+  }
+
+  function updateDroneParams() {
+    if (droneOscillator1) {
+      rotationSpeed = droneAmplitude * 0.15 + enlightenmentFactor * 0.05;
+      requestAnimationFrame(updateDroneParams);
+    } else {
+      rotationSpeed = 0;
+    }
+  }
+
+  function initVoiceControl() {
+    if (voiceInitialized) return;
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        initAudio();
+        const source = audioContext.createMediaStreamSource(stream);
+        voiceAnalyser = audioContext.createAnalyser();
+        voiceAnalyser.fftSize = 2048;
+        voiceAnalyser.smoothingTimeConstant = 0.85;
+        source.connect(voiceAnalyser);
+
+        const dummyOsc = audioContext.createOscillator();
+        dummyOsc.frequency.value = 0;
+        dummyOsc.connect(audioContext.destination);
+        dummyOsc.start();
+
+        console.log('Voice of the Buddha awakened');
+        voiceInitialized = true;
+      })
+      .catch(e => {
+        console.error('Voice awakening failed:', e);
+        document.getElementById('startVoice').textContent = 'Voice Failed - Retry';
+      });
+  }
+
+  function updateVoice() {
+    if (!voiceInitialized || !voiceAnalyser) return;
+    const bufferLength = voiceAnalyser.fftSize;
+    const dataArray = new Float32Array(bufferLength);
+    voiceAnalyser.getFloatTimeDomainData(dataArray);
+    const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+    const rawAmplitude = getAmplitude(dataArray);
+
+    if (pitch !== -1) voicePitch = pitch;
+    else voicePitch = 0;
+
+    smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.9);
+    enlightenmentFactor = Math.min(1, smoothedAmplitude * 2.5);
+    params.segments = Math.round(8 + (voicePitch / 150) * 16);
+    params.lineColor = hslToHex((voicePitch + timeFactor * 10) % 360, 1, 0.5 + enlightenmentFactor * 0.4);
+    updateSoundMeter();
+    console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, enlightenment=${enlightenmentFactor.toFixed(3)}`);
+  }
+
+  function autoCorrelate(buf, sampleRate) {
+    let SIZE = buf.length;
+    let rms = 0;
+    for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.01) return -1;
+
+    let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+
+    buf = buf.slice(r1, r2);
+    SIZE = buf.length;
+
+    let c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++)
+      for (let j = 0; j < SIZE - i; j++)
+        c[i] = c[i] + buf[j] * buf[j + i];
+
+    let d = 0;
+    while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) {
+      if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+    }
+    let T0 = maxpos;
+
+    return sampleRate / T0;
+  }
+
+  function getAmplitude(buf) {
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
+    return Math.min(1, sum / buf.length / 0.25);
+  }
+
+  function updateSoundMeter() {
+    const energyPercent = Math.round(smoothedAmplitude * 100);
+    document.getElementById('soundBar').style.width = `${energyPercent}%`;
+    document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Enlightenment: ${Math.round(enlightenmentFactor * 100)}`;
+  }
+
+  // VR Initialization - Cyber Temple
+  function initVR() {
+    if (!window.THREE) {
+      console.error('Three.js not loaded');
+      document.getElementById('enterVR').textContent = 'Nirvana Unavailable';
+      return;
     }
 
-    // Audio Initialization with Techno Chant
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') audioContext.resume();
+    console.log('Entering the Cyber Temple...');
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
+    renderer.xr.enabled = true;
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    mandalaGroup = new THREE.Group();
+    lotusGroup = new THREE.Group();
+    scene.add(mandalaGroup);
+    scene.add(lotusGroup);
+
+    // Cosmic Void Background
+    const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
+    const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
+    backgroundSphere = new THREE.Mesh(voidGeometry, voidMaterial);
+    scene.add(backgroundSphere);
+
+    // Generate starry field using BufferGeometry
+    const starCount = 2000;
+    const starPositions = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      const theta = Math.random() * 2 * Math.PI;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = 600 * Math.cbrt(Math.random()); // Distribute stars in a spherical volume
+      starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);     // x
+      starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta); // y
+      starPositions[i * 3 + 2] = radius * Math.cos(phi);                   // z
     }
+    const starGeometry = new THREE.BufferGeometry();
+    starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+    const starMaterial = new THREE.PointsMaterial({ color: 0xffd700, size: 1.5 });
+    const stars = new THREE.Points(starGeometry, starMaterial);
+    scene.add(stars);
 
-    function toggleDrone() {
-      initAudio();
-      if (droneOscillator1) {
-        droneOscillator1.stop();
-        droneOscillator2.stop();
-        droneOscillator3.stop();
-        lfo.stop();
-        droneOscillator1 = null;
-        droneOscillator2 = null;
-        droneOscillator3 = null;
-        lfo = null;
-        droneGain = null;
-        droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Invoke Techno Chant';
-      } else {
-        droneOscillator1 = audioContext.createOscillator();
-        droneOscillator2 = audioContext.createOscillator();
-        droneOscillator3 = audioContext.createOscillator();
-        droneGain = audioContext.createGain();
-        lfo = audioContext.createOscillator();
+    const meterGeometry = new THREE.BoxGeometry(3, 0.3, 0.3);
+    const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
+    voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
+    voiceMeter.position.set(0, -8, -6);
+    mandalaGroup.add(voiceMeter);
 
-        droneOscillator1.type = 'sawtooth'; // Gritty techno vibe
-        droneOscillator2.type = 'sine'; // Smooth undertone
-        droneOscillator3.type = 'triangle'; // Chant-like resonance
-        lfo.type = 'sine';
+    updateVRMandala();
+    camera.position.z = 0;
 
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618; // Golden ratio harmony
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718; // Euler's number for chaos
-        lfo.frequency.value = 0.2;
-        droneGain.gain.value = 0.07;
-        droneAmplitude = 0.07;
+    const enterVRButton = document.getElementById('enterVR');
+    let isVRActive = false;
 
-        lfo.connect(droneGain.gain);
-        droneOscillator1.connect(droneGain);
-        droneOscillator2.connect(droneGain);
-        droneOscillator3.connect(droneGain);
-        droneGain.connect(audioContext.destination);
-        droneOscillator1.start();
-        droneOscillator2.start();
-        droneOscillator3.start();
-        lfo.start();
-        document.getElementById('drone').textContent = 'Silence Chant';
-        updateDroneParams();
-      }
-    }
-
-    function updateDroneParams() {
-      if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.15 + enlightenmentFactor * 0.05;
-        requestAnimationFrame(updateDroneParams);
-      } else {
-        rotationSpeed = 0;
-      }
-    }
-
-    function initVoiceControl() {
-      if (voiceInitialized) return;
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          initAudio();
-          const source = audioContext.createMediaStreamSource(stream);
-          voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.85;
-          source.connect(voiceAnalyser);
-
-          const dummyOsc = audioContext.createOscillator();
-          dummyOsc.frequency.value = 0;
-          dummyOsc.connect(audioContext.destination);
-          dummyOsc.start();
-
-          console.log('Voice of the Buddha awakened');
-          voiceInitialized = true;
-        })
-        .catch(e => {
-          console.error('Voice awakening failed:', e);
-          document.getElementById('startVoice').textContent = 'Voice Failed - Retry';
-        });
-    }
-
-    function updateVoice() {
-      if (!voiceInitialized || !voiceAnalyser) return;
-      const bufferLength = voiceAnalyser.fftSize;
-      const dataArray = new Float32Array(bufferLength);
-      voiceAnalyser.getFloatTimeDomainData(dataArray);
-      const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-      const rawAmplitude = getAmplitude(dataArray);
-
-      if (pitch !== -1) voicePitch = pitch;
-      else voicePitch = 0;
-
-      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.9);
-      enlightenmentFactor = Math.min(1, smoothedAmplitude * 2.5);
-      params.segments = Math.round(8 + (voicePitch / 150) * 16);
-      params.lineColor = hslToHex((voicePitch + timeFactor * 10) % 360, 1, 0.5 + enlightenmentFactor * 0.4);
-      updateSoundMeter();
-      console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, enlightenment=${enlightenmentFactor.toFixed(3)}`);
-    }
-
-    function autoCorrelate(buf, sampleRate) {
-      let SIZE = buf.length;
-      let rms = 0;
-      for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / SIZE);
-      if (rms < 0.01) return -1;
-
-      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-      for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-
-      buf = buf.slice(r1, r2);
-      SIZE = buf.length;
-
-      let c = new Array(SIZE).fill(0);
-      for (let i = 0; i < SIZE; i++)
-        for (let j = 0; j < SIZE - i; j++)
-          c[i] = c[i] + buf[j] * buf[j + i];
-
-      let d = 0;
-      while (c[d] > c[d + 1]) d++;
-      let maxval = -1, maxpos = -1;
-      for (let i = d; i < SIZE; i++) {
-        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-      }
-      let T0 = maxpos;
-
-      return sampleRate / T0;
-    }
-
-    function getAmplitude(buf) {
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.25);
-    }
-
-    function updateSoundMeter() {
-      const energyPercent = Math.round(smoothedAmplitude * 100);
-      document.getElementById('soundBar').style.width = `${energyPercent}%`;
-      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Enlightenment: ${Math.round(enlightenmentFactor * 100)}`;
-    }
-
-    // VR Initialization - Cyber Temple
-    function initVR() {
-      if (!window.THREE) {
-        console.error('Three.js not loaded');
-        document.getElementById('enterVR').textContent = 'Nirvana Unavailable';
+    enterVRButton.addEventListener('click', async () => {
+      if (isVRActive) {
+        vrCanvas.style.display = 'none';
+        renderer.setAnimationLoop(null);
+        enterVRButton.textContent = 'Enter Nirvana VR';
+        isVRActive = false;
+        timeFactor = 0;
         return;
       }
 
-      console.log('Entering the Cyber Temple...');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-      renderer.xr.enabled = true;
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      mandalaGroup = new THREE.Group();
-      lotusGroup = new THREE.Group();
-      scene.add(mandalaGroup);
-      scene.add(lotusGroup);
+      if (!navigator.xr) {
+        console.error('WebXR not supported');
+        enterVRButton.textContent = 'Nirvana Not Supported';
+        return;
+      }
 
-      // Cosmic Void Background
-      const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
-      const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
-      backgroundSphere = new THREE.Mesh(voidGeometry, voidMaterial);
-      scene.add(backgroundSphere);
-      const stars = new THREE.Points(
-        new THREE.SphereGeometry(600, 64, 64).vertices.map(v => new THREE.Vector3(v.x, v.y, v.z)),
-        new THREE.PointsMaterial({ color: 0xffd700, size: 1.5 })
-      );
-      scene.add(stars);
+      try {
+        const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+        renderer.xr.setSession(session);
+        renderer.setAnimationLoop(animateVR);
+        vrCanvas.style.display = 'block';
+        enterVRButton.textContent = 'Exit Nirvana';
+        isVRActive = true;
 
-      const meterGeometry = new THREE.BoxGeometry(3, 0.3, 0.3);
-      const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
-      voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
-      voiceMeter.position.set(0, -8, -6);
-      mandalaGroup.add(voiceMeter);
+        if (!voiceInitialized) initVoiceControl();
 
-      updateVRMandala();
-      camera.position.z = 0;
-
-      const enterVRButton = document.getElementById('enterVR');
-      let isVRActive = false;
-
-      enterVRButton.addEventListener('click', async () => {
-        if (isVRActive) {
+        session.addEventListener('end', () => {
           vrCanvas.style.display = 'none';
           renderer.setAnimationLoop(null);
           enterVRButton.textContent = 'Enter Nirvana VR';
           isVRActive = false;
-          timeFactor = 0;
-          return;
-        }
+        });
+      } catch (err) {
+        console.error('Nirvana failed:', err);
+        enterVRButton.textContent = 'Nirvana Failed: ' + err.message;
+      }
+    });
 
-        if (!navigator.xr) {
-          console.error('WebXR not supported');
-          enterVRButton.textContent = 'Nirvana Not Supported';
-          return;
-        }
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  }
 
-        try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          renderer.xr.setSession(session);
-          renderer.setAnimationLoop(animateVR);
-          vrCanvas.style.display = 'block';
-          enterVRButton.textContent = 'Exit Nirvana';
-          isVRActive = true;
+  // Generate VR Mandala with Lotus Petals
+  let cachedGeometries = [];
+  function updateVRMandala() {
+    mandalaGroup.clear();
+    lotusGroup.clear();
 
-          if (!voiceInitialized) initVoiceControl();
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: new THREE.Color(params.lineColor),
+      linewidth: 3,
+      transparent: true,
+      opacity: Math.max(0.2, 1 - (timeFactor * 0.05))
+    });
 
-          session.addEventListener('end', () => {
-            vrCanvas.style.display = 'none';
-            renderer.setAnimationLoop(null);
-            enterVRButton.textContent = 'Enter Nirvana VR';
-            isVRActive = false;
-          });
-        } catch (err) {
-          console.error('Nirvana failed:', err);
-          enterVRButton.textContent = 'Nirvana Failed: ' + err.message;
-        }
-      });
+    function generateCymaticShape(x, y, r, level) {
+      if (level > Math.min(params.levels, 4)) return;
+      const points = [];
+      for (let i = 0; i < params.segments; i++) {
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
+        const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
+        const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
+        const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
+        const z = -level * (1 + timeFactor * 0.5 + enlightenmentFactor);
+        points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
+      }
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      cachedGeometries[level] = geometry;
+      const line = new THREE.LineLoop(geometry, lineMaterial.clone());
+      mandalaGroup.add(line);
 
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
-
-    // Generate VR Mandala with Lotus Petals
-    let cachedGeometries = [];
-    function updateVRMandala() {
-      mandalaGroup.clear();
-      lotusGroup.clear();
-
-      const lineMaterial = new THREE.LineBasicMaterial({
-        color: new THREE.Color(params.lineColor),
-        linewidth: 3,
-        transparent: true,
-        opacity: Math.max(0.2, 1 - (timeFactor * 0.05))
-      });
-
-      function generateCymaticShape(x, y, r, level) {
-        if (level > Math.min(params.levels, 4)) return;
-        const points = [];
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
-          const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
-          const z = -level * (1 + timeFactor * 0.5 + enlightenmentFactor);
-          points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, z));
-        }
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        cachedGeometries[level] = geometry;
-        const line = new THREE.LineLoop(geometry, lineMaterial.clone());
-        mandalaGroup.add(line);
-
-        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
-        if (level < currentMaxLevels) {
-          for (let i = 0; i < params.segments / 2; i++) {
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
-            generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
-          }
+      const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
+      if (level < currentMaxLevels) {
+        for (let i = 0; i < params.segments / 2; i++) {
+          const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
+          const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
+          const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
+          generateCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
         }
       }
-
-      // Lotus Petals
-      const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
-      for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
-        const petalGeometry = new THREE.PlaneGeometry(2, 5);
-        const petal = new THREE.Mesh(petalGeometry, petalMaterial);
-        petal.position.set(Math.cos(angle) * 8, Math.sin(angle) * 8, -2);
-        petal.rotation.z = angle;
-        petal.scale.y = 1 + Math.sin(timeFactor + i) * 0.2;
-        lotusGroup.add(petal);
-      }
-
-      generateCymaticShape(0, 0, 12, 1);
-      mandalaGroup.position.z = -6;
-      mandalaGroup.scale.setScalar(1 + enlightenmentFactor * 1.5);
-      mandalaGroup.rotation.z = totalRotation;
-      lotusGroup.position.z = -5;
-      lotusGroup.rotation.z = -totalRotation * 0.5;
-
-      voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
-      voiceMeter.position.set(0, -8, -6);
-      mandalaGroup.add(voiceMeter);
     }
 
-    function animateVR(time) {
-      totalRotation += rotationSpeed;
-      timeFactor += enlightenmentFactor * 0.01 + 0.002;
-      updateVoice();
-      updateVRMandala();
-      renderer.render(scene, camera);
+    // Lotus Petals
+    const petalMaterial = new THREE.MeshBasicMaterial({ color: 0xffd700, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+    for (let i = 0; i < params.lotusPetals; i++) {
+      const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
+      const petalGeometry = new THREE.PlaneGeometry(2, 5);
+      const petal = new THREE.Mesh(petalGeometry, petalMaterial);
+      petal.position.set(Math.cos(angle) * 8, Math.sin(angle) * 8, -2);
+      petal.rotation.z = angle;
+      petal.scale.y = 1 + Math.sin(timeFactor + i) * 0.2;
+      lotusGroup.add(petal);
     }
 
-    // 2D Mandala Drawing with Lotus
-    function generateMandala() {
-      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-      const centerX = mandalaCanvas.width / 2;
-      const centerY = mandalaCanvas.height / 2;
+    generateCymaticShape(0, 0, 12, 1);
+    mandalaGroup.position.z = -6;
+    mandalaGroup.scale.setScalar(1 + enlightenmentFactor * 1.5);
+    mandalaGroup.rotation.z = totalRotation;
+    lotusGroup.position.z = -5;
+    lotusGroup.rotation.z = -totalRotation * 0.5;
 
-      // Draw Lotus Petals
-      ctx.fillStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(timeFactor) * 0.2})`;
-      for (let i = 0; i < params.lotusPetals; i++) {
-        const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle - 0.2) * 100, centerY + Math.sin(angle - 0.2) * 150,
-          centerX + Math.cos(angle) * 200 * (1 + enlightenmentFactor * 0.2), centerY + Math.sin(angle) * 200 * (1 + enlightenmentFactor * 0.2)
-        );
-        ctx.quadraticCurveTo(
-          centerX + Math.cos(angle + 0.2) * 100, centerY + Math.sin(angle + 0.2) * 150,
-          centerX, centerY
-        );
-        ctx.fill();
+    voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
+    voiceMeter.position.set(0, -8, -6);
+    mandalaGroup.add(voiceMeter);
+  }
+
+  function animateVR(time) {
+    totalRotation += rotationSpeed;
+    timeFactor += enlightenmentFactor * 0.01 + 0.002;
+    updateVoice();
+    updateVRMandala();
+    renderer.render(scene, camera);
+  }
+
+  // 2D Mandala Drawing with Lotus
+  function generateMandala() {
+    ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+    const centerX = mandalaCanvas.width / 2;
+    const centerY = mandalaCanvas.height / 2;
+
+    // Draw Lotus Petals
+    ctx.fillStyle = `rgba(255, 215, 0, ${0.6 + Math.sin(timeFactor) * 0.2})`;
+    for (let i = 0; i < params.lotusPetals; i++) {
+      const angle = (i / params.lotusPetals) * Math.PI * 2 + timeFactor * 0.1;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.quadraticCurveTo(
+        centerX + Math.cos(angle - 0.2) * 100, centerY + Math.sin(angle - 0.2) * 150,
+        centerX + Math.cos(angle) * 200 * (1 + enlightenmentFactor * 0.2), centerY + Math.sin(angle) * 200 * (1 + enlightenmentFactor * 0.2)
+      );
+      ctx.quadraticCurveTo(
+        centerX + Math.cos(angle + 0.2) * 100, centerY + Math.sin(angle + 0.2) * 150,
+        centerX, centerY
+      );
+      ctx.fill();
+    }
+
+    function drawCymaticShape(x, y, r, level) {
+      if (level > Math.min(params.levels, 4)) return;
+      ctx.beginPath();
+      ctx.strokeStyle = params.lineColor;
+      ctx.lineWidth = params.lineWidth;
+      for (let i = 0; i < params.segments; i++) {
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
+        const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
+        const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
+        const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
+        ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
       }
+      ctx.closePath();
+      ctx.stroke();
 
-      function drawCymaticShape(x, y, r, level) {
-        if (level > Math.min(params.levels, 4)) return;
-        ctx.beginPath();
-        ctx.strokeStyle = params.lineColor;
-        ctx.lineWidth = params.lineWidth;
-        for (let i = 0; i < params.segments; i++) {
-          const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.15;
-          const wave1 = Math.sin(timeFactor * params.baseFreq * 0.02 + angle * level) * params.cymaticFactor;
-          const wave2 = Math.cos(enlightenmentFactor * angle + timeFactor * 0.1) * params.cymaticFactor * 0.7;
-          const dist = r * (1 + wave1 + wave2 + enlightenmentFactor * Math.random() * 0.15);
-          ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+      const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
+      if (level < currentMaxLevels) {
+        for (let i = 0; i < params.segments / 2; i++) {
+          const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
+          const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
+          const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
+          drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
         }
-        ctx.closePath();
-        ctx.stroke();
-
-        const currentMaxLevels = Math.min(params.levels, Math.floor(1 + timeFactor));
-        if (level < currentMaxLevels) {
-          for (let i = 0; i < params.segments / 2; i++) {
-            const angle = (i / (params.segments / 2)) * Math.PI * 2 + timeFactor * 0.25;
-            const nextX = x + Math.cos(angle) * r * params.scaleFactor * 0.85;
-            const nextY = y + Math.sin(angle) * r * params.scaleFactor * 0.85;
-            drawCymaticShape(nextX, nextY, r * params.scaleFactor * 0.75, level + 1);
-          }
-        }
-      }
-
-      drawCymaticShape(centerX, centerY, params.initialRadius, 1);
-    }
-
-    // Mantra Settings
-    function applySetting(setting) {
-      document.getElementById('settingsModal').classList.remove('active');
-      switch (setting) {
-        case 'healing':
-          params.baseFreq = 6;
-          params.audibleFreq = 54; // Harmonic of 108
-          params.segments = 8;
-          params.levels = 5;
-          params.cymaticFactor = 0.25;
-          params.lineColor = '#00ffcc';
-          params.lotusPetals = 12;
-          break;
-        case 'sleep':
-          params.baseFreq = 2;
-          params.audibleFreq = 36;
-          params.segments = 6;
-          params.levels = 4;
-          params.cymaticFactor = 0.3;
-          params.lineColor = '#1a0033';
-          params.lotusPetals = 8;
-          break;
-        case 'relax':
-          params.baseFreq = 10;
-          params.audibleFreq = 40;
-          params.segments = 10;
-          params.levels = 4;
-          params.cymaticFactor = 0.2;
-          params.lineColor = '#66ff66';
-          params.lotusPetals = 10;
-          break;
-        case 'enlighten':
-          params.baseFreq = 7.83;
-          params.audibleFreq = 108; // Sacred Buddhist frequency
-          params.segments = 8;
-          params.levels = 6;
-          params.cymaticFactor = 0.28;
-          params.lineColor = '#ffd700';
-          params.lotusPetals = 16;
-          break;
-        case 'activate':
-          params.baseFreq = 20;
-          params.audibleFreq = 72;
-          params.segments = 12;
-          params.levels = 3;
-          params.cymaticFactor = 0.15;
-          params.lineColor = '#ff0066';
-          params.lotusPetals = 14;
-          break;
-      }
-      if (droneOscillator1) {
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
-      }
-      timeFactor = 0;
-      smoothedAmplitude = 0;
-      enlightenmentFactor = 0;
-      generateMandala();
-    }
-
-    function showSettingsModal() {
-      document.getElementById('settingsModal').classList.add('active');
-    }
-
-    function animate() {
-      if (animationId) cancelAnimationFrame(animationId);
-      totalRotation += rotationSpeed;
-      timeFactor += enlightenmentFactor * 0.01 + 0.002;
-      updateVoice();
-      generateMandala();
-      if (droneOscillator1 || smoothedAmplitude > 0.05) {
-        animationId = requestAnimationFrame(animate);
       }
     }
 
-    function init() {
-      console.log('Awakening Techno Buddha...');
-      document.getElementById('settings').addEventListener('click', () => {
-        initAudio();
-        showSettingsModal();
-      });
-      document.getElementById('drone').addEventListener('click', () => {
-        initAudio();
-        toggleDrone();
-      });
-      document.getElementById('startVoice').addEventListener('click', () => {
-        initAudio();
-        initVoiceControl();
-        document.getElementById('startVoice').textContent = 'Voice Awakened';
-      });
-      document.getElementById('enterVR').addEventListener('click', initAudio);
-      initVR();
-      animate();
-    }
+    drawCymaticShape(centerX, centerY, params.initialRadius, 1);
+  }
 
-    window.onload = () => {
-      if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Cosmic Matrix failed to initialize.</p>';
-      } else {
-        console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
-        init();
-      }
-    };
-  </script>
+  // Mantra Settings
+  function applySetting(setting) {
+    document.getElementById('settingsModal').classList.remove('active');
+    switch (setting) {
+      case 'healing':
+        params.baseFreq = 6;
+        params.audibleFreq = 54;
+        params.segments = 8;
+        params.levels = 5;
+        params.cymaticFactor = 0.25;
+        params.lineColor = '#00ffcc';
+        params.lotusPetals = 12;
+        break;
+      case 'sleep':
+        params.baseFreq = 2;
+        params.audibleFreq = 36;
+        params.segments = 6;
+        params.levels = 4;
+        params.cymaticFactor = 0.3;
+        params.lineColor = '#1a0033';
+        params.lotusPetals = 8;
+        break;
+      case 'relax':
+        params.baseFreq = 10;
+        params.audibleFreq = 40;
+        params.segments = 10;
+        params.levels = 4;
+        params.cymaticFactor = 0.2;
+        params.lineColor = '#66ff66';
+        params.lotusPetals = 10;
+        break;
+      case 'enlighten':
+        params.baseFreq = 7.83;
+        params.audibleFreq = 108;
+        params.segments = 8;
+        params.levels = 6;
+        params.cymaticFactor = 0.28;
+        params.lineColor = '#ffd700';
+        params.lotusPetals = 16;
+        break;
+      case 'activate':
+        params.baseFreq = 20;
+        params.audibleFreq = 72;
+        params.segments = 12;
+        params.levels = 3;
+        params.cymaticFactor = 0.15;
+        params.lineColor = '#ff0066';
+        params.lotusPetals = 14;
+        break;
+    }
+    if (droneOscillator1) {
+      droneOscillator1.frequency.value = params.audibleFreq;
+      droneOscillator2.frequency.value = params.audibleFreq * 1.618;
+      droneOscillator3.frequency.value = params.audibleFreq * 2.718;
+    }
+    timeFactor = 0;
+    smoothedAmplitude = 0;
+    enlightenmentFactor = 0;
+    generateMandala();
+  }
+
+  function showSettingsModal() {
+    document.getElementById('settingsModal').classList.add('active');
+  }
+
+  function animate() {
+    if (animationId) cancelAnimationFrame(animationId);
+    totalRotation += rotationSpeed;
+    timeFactor += enlightenmentFactor * 0.01 + 0.002;
+    updateVoice();
+    generateMandala();
+    if (droneOscillator1 || smoothedAmplitude > 0.05) {
+      animationId = requestAnimationFrame(animate);
+    }
+  }
+
+  function init() {
+    console.log('Awakening Techno Buddha...');
+    document.getElementById('settings').addEventListener('click', () => {
+      initAudio();
+      showSettingsModal();
+    });
+    document.getElementById('drone').addEventListener('click', () => {
+      initAudio();
+      toggleDrone();
+    });
+    document.getElementById('startVoice').addEventListener('click', () => {
+      initAudio();
+      initVoiceControl();
+      document.getElementById('startVoice').textContent = 'Voice Awakened';
+    });
+    document.getElementById('enterVR').addEventListener('click', initAudio);
+    initVR();
+    animate();
+  }
+
+  window.onload = () => {
+    if (typeof THREE === 'undefined') {
+      console.error('Three.js not loaded');
+      document.body.innerHTML += '<p style="color: #ff0066;">Error: Cosmic Matrix failed to initialize.</p>';
+    } else {
+      console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
+      init();
+    }
+  };
+</script>
 </body>
 </html>
