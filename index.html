@@ -52,6 +52,7 @@
         <p>Instructions for Elderly Users:</p>
         <p>- Click "Enter VR" to start (Meta Quest).</p>
         <p>- Use thumbstick to move in VR.</p>
+        <p>- Point and press trigger to select hotspots.</p>
         <p>- Click and drag (non-VR) to look around.</p>
         <p>- Click yellow hotspots to enter rooms.</p>
     </div>
@@ -61,8 +62,9 @@
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
 
         // Enable WebXR
@@ -77,7 +79,7 @@
 
         // Ground plane
         const groundGeometry = new THREE.PlaneGeometry(30, 30);
-        const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x90ee90 });
+        const groundMaterial = new THREE.MeshStandardMaterial({ color: 0x90ee90 });
         const ground = new THREE.Mesh(groundGeometry, groundMaterial);
         ground.rotation.x = -Math.PI / 2;
         scene.add(ground);
@@ -85,52 +87,67 @@
         // Function to create a room with walls and a door
         function createRoom(x, y, z, width, height, depth, color, doorSide = 'front') {
             const group = new THREE.Group();
-
-            const wallMaterial = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
-            const wallThickness = 0.1;
-
-            const frontWallGeometry = new THREE.PlaneGeometry(width, height);
-            const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
-            frontWall.position.set(0, height / 2, -depth / 2);
-            if (doorSide === 'front') {
-                const doorWidth = width * 0.3;
-                const doorHeight = height * 0.6;
-                const doorShape = new THREE.Shape();
-                doorShape.moveTo(-doorWidth / 2, 0);
-                doorShape.lineTo(-doorWidth / 2, doorHeight);
-                doorShape.lineTo(doorWidth / 2, doorHeight);
-                doorShape.lineTo(doorWidth / 2, 0);
-                const hole = new THREE.Path();
-                hole.fromPoints(doorShape.getPoints());
-                frontWallGeometry.holes = [hole];
-                frontWallGeometry.verticesNeedUpdate = true;
-            }
-            group.add(frontWall);
-
+            const wallMaterial = new THREE.MeshStandardMaterial({ color, side: THREE.DoubleSide });
+            
+            // Floor
+            const floorGeometry = new THREE.PlaneGeometry(width, depth);
+            const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            group.add(floor);
+            
+            // Back wall
             const backWallGeometry = new THREE.PlaneGeometry(width, height);
             const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
             backWall.position.set(0, height / 2, depth / 2);
             backWall.rotation.y = Math.PI;
             group.add(backWall);
-
+            
+            // Left wall
             const leftWallGeometry = new THREE.PlaneGeometry(depth, height);
             const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
             leftWall.position.set(-width / 2, height / 2, 0);
             leftWall.rotation.y = Math.PI / 2;
             group.add(leftWall);
-
+            
+            // Right wall
             const rightWallGeometry = new THREE.PlaneGeometry(depth, height);
             const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
             rightWall.position.set(width / 2, height / 2, 0);
             rightWall.rotation.y = -Math.PI / 2;
             group.add(rightWall);
-
-            const floorGeometry = new THREE.PlaneGeometry(width, depth);
-            const floorMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            group.add(floor);
-
+            
+            // Front wall with door (fixed approach using separate wall segments)
+            if (doorSide === 'front') {
+                const doorWidth = width * 0.3;
+                const doorHeight = height * 0.7;
+                const doorPositionX = 0;
+                
+                // Top part of front wall
+                const topWallGeometry = new THREE.PlaneGeometry(width, height - doorHeight);
+                const topWall = new THREE.Mesh(topWallGeometry, wallMaterial);
+                topWall.position.set(0, height - (height - doorHeight) / 2, -depth / 2);
+                group.add(topWall);
+                
+                // Left part of front wall
+                const leftDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
+                const leftDoorWall = new THREE.Mesh(leftDoorWallGeometry, wallMaterial);
+                leftDoorWall.position.set(-doorWidth / 2 - (width - doorWidth) / 4, doorHeight / 2, -depth / 2);
+                group.add(leftDoorWall);
+                
+                // Right part of front wall
+                const rightDoorWallGeometry = new THREE.PlaneGeometry((width - doorWidth) / 2, doorHeight);
+                const rightDoorWall = new THREE.Mesh(rightDoorWallGeometry, wallMaterial);
+                rightDoorWall.position.set(doorWidth / 2 + (width - doorWidth) / 4, doorHeight / 2, -depth / 2);
+                group.add(rightDoorWall);
+            } else {
+                // No door, just a regular front wall
+                const frontWallGeometry = new THREE.PlaneGeometry(width, height);
+                const frontWall = new THREE.Mesh(frontWallGeometry, wallMaterial);
+                frontWall.position.set(0, height / 2, -depth / 2);
+                group.add(frontWall);
+            }
+            
             group.position.set(x, y, z);
             return group;
         }
@@ -166,33 +183,72 @@
 
         // Pool Area
         const poolGeometry = new THREE.BoxGeometry(5, 0.5, 10);
-        const poolMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+        const poolMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
         const pool = new THREE.Mesh(poolGeometry, poolMaterial);
         pool.position.set(0, 0.25, -12);
         scene.add(pool);
 
         // Hotspots
         const hotspotGeometry = new THREE.CircleGeometry(0.2, 32);
-        const hotspotMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        const hotspotMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xffff00,
+            emissive: 0xffff00,
+            emissiveIntensity: 0.5
+        });
 
-        const livingRoomHotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
-        livingRoomHotspot.position.set(-3, 0.1, -1.5);
-        livingRoomHotspot.userData = { target: 'livingRoom', enterPos: new THREE.Vector3(-3, 1.6, -0.5) };
-        scene.add(livingRoomHotspot);
+        // Function to create a hotspot
+        function createHotspot(x, y, z, target, enterPos) {
+            const hotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
+            hotspot.position.set(x, y, z);
+            hotspot.rotation.x = -Math.PI / 2; // Make it face up
+            hotspot.userData = { 
+                target: target, 
+                enterPos: enterPos,
+                isHotspot: true // Flag for easy identification
+            };
+            scene.add(hotspot);
+            return hotspot;
+        }
 
-        const kitchenHotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
-        kitchenHotspot.position.set(2, 0.1, -1);
-        kitchenHotspot.userData = { target: 'kitchen', enterPos: new THREE.Vector3(2, 1.6, -0.5) };
-        scene.add(kitchenHotspot);
-
-        const backHotspot = new THREE.Mesh(hotspotGeometry, hotspotMaterial);
-        backHotspot.position.set(0, 0.1, -5);
-        backHotspot.userData = { target: 'main', enterPos: new THREE.Vector3(0, 2, 5) };
+        // Create all hotspots
+        const livingRoomHotspot = createHotspot(-3, 0.1, -1.5, 'livingRoom', new THREE.Vector3(-3, 1.6, -0.5));
+        const kitchenHotspot = createHotspot(2, 0.1, -1, 'kitchen', new THREE.Vector3(2, 1.6, -0.5));
+        const backHotspot = createHotspot(0, 0.1, -5, 'main', new THREE.Vector3(0, 1.6, 5));
         backHotspot.visible = false;
-        scene.add(backHotspot);
+
+        const bedroom1Hotspot = createHotspot(-3, 0.1, -4, 'bedroom1', new THREE.Vector3(-3, 1.6, -3));
+        const bedroom2Hotspot = createHotspot(0, 0.1, -4, 'bedroom2', new THREE.Vector3(0, 1.6, -3));
+        const bathroomHotspot = createHotspot(3, 0.1, -4, 'bathroom', new THREE.Vector3(3, 1.6, -3));
+        const poolHotspot = createHotspot(0, 0.1, -9, 'pool', new THREE.Vector3(0, 1.6, -9));
+
+        // Collection of all hotspots for raycasting
+        const allHotspots = [
+            livingRoomHotspot, kitchenHotspot, backHotspot, 
+            bedroom1Hotspot, bedroom2Hotspot, bathroomHotspot, poolHotspot
+        ];
+
+        // Function to handle hotspot selection
+        function selectHotspot(hotspot) {
+            if (!hotspot || !hotspot.userData.isHotspot) return;
+            
+            const target = hotspot.userData.target;
+            camera.position.copy(hotspot.userData.enterPos);
+            
+            // Toggle hotspot visibility based on location
+            if (target === 'livingRoom' || target === 'kitchen') {
+                livingRoomHotspot.visible = false;
+                kitchenHotspot.visible = false;
+                backHotspot.visible = true;
+                backHotspot.position.set(hotspot.position.x, 0.1, hotspot.position.z + 1);
+            } else if (target === 'main') {
+                livingRoomHotspot.visible = true;
+                kitchenHotspot.visible = true;
+                backHotspot.visible = false;
+            }
+        }
 
         // Initial camera position
-        camera.position.set(0, 2, 5);
+        camera.position.set(0, 1.6, 5);
 
         // Raycaster for clicking hotspots (non-VR mode)
         const raycaster = new THREE.Raycaster();
@@ -227,22 +283,10 @@
                 mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObjects([livingRoomHotspot, kitchenHotspot, backHotspot]);
+                const intersects = raycaster.intersectObjects(allHotspots);
 
                 if (intersects.length > 0) {
-                    const hotspot = intersects[0].object;
-                    const target = hotspot.userData.target;
-                    camera.position.copy(hotspot.userData.enterPos);
-                    if (target === 'livingRoom' || target === 'kitchen') {
-                        livingRoomHotspot.visible = false;
-                        kitchenHotspot.visible = false;
-                        backHotspot.visible = true;
-                        backHotspot.position.set(hotspot.position.x, 0.1, hotspot.position.z + 1);
-                    } else if (target === 'main') {
-                        livingRoomHotspot.visible = true;
-                        kitchenHotspot.visible = true;
-                        backHotspot.visible = false;
-                    }
+                    selectHotspot(intersects[0].object);
                 }
             }
         }
@@ -262,13 +306,18 @@
             vrButton.addEventListener('click', () => {
                 if (!renderer.xr.isPresenting) {
                     renderer.xr.enabled = true;
-                    navigator.xr.requestSession('immersive-vr').then((session) => {
+                    navigator.xr.requestSession('immersive-vr', {
+                        optionalFeatures: ['local-floor', 'bounded-floor']
+                    }).then((session) => {
                         renderer.xr.setSession(session);
                         vrButton.textContent = 'Exit VR';
+                        
+                        session.addEventListener('end', () => {
+                            vrButton.textContent = 'Enter VR';
+                        });
                     });
                 } else {
                     renderer.xr.getSession().end();
-                    vrButton.textContent = 'Enter VR';
                 }
             });
         } else {
@@ -276,46 +325,133 @@
             vrButton.textContent = 'VR Not Supported';
         }
 
-        // Controller setup for Meta Quest
-        const controller = renderer.xr.getController(0);
-        scene.add(controller);
+        // Controller setup for VR
+        let controller1, controller2;
+        
+        function setupVRControllers() {
+            // Controller 1 for interaction
+            controller1 = renderer.xr.getController(0);
+            controller1.addEventListener('selectstart', onSelectStart);
+            controller1.addEventListener('selectend', onSelectEnd);
+            scene.add(controller1);
+            
+            // Controller 2 for movement (second hand)
+            controller2 = renderer.xr.getController(1);
+            scene.add(controller2);
+            
+            // Visualize controllers with simple objects
+            const controllerGeometry = new THREE.CylinderGeometry(0.01, 0.02, 0.08, 16);
+            controllerGeometry.rotateX(-Math.PI / 2);
+            const controllerMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            
+            const controllerMesh1 = new THREE.Mesh(controllerGeometry, controllerMaterial);
+            controllerMesh1.position.set(0, 0, -0.05);
+            controller1.add(controllerMesh1);
+            
+            const controllerMesh2 = new THREE.Mesh(controllerGeometry, controllerMaterial);
+            controllerMesh2.position.set(0, 0, -0.05);
+            controller2.add(controllerMesh2);
+            
+            // Add raycaster line for visual feedback
+            const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, -5)
+            ]);
+            const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+            const line = new THREE.Line(lineGeometry, lineMaterial);
+            controller1.add(line);
+        }
+        
+        setupVRControllers();
+        
+        // VR controller interaction
+        const tempMatrix = new THREE.Matrix4();
+        const vrRaycaster = new THREE.Raycaster();
+        
+        function onSelectStart(event) {
+            const controller = event.target;
+            
+            // Get controller position and direction
+            tempMatrix.identity().extractRotation(controller.matrixWorld);
+            vrRaycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+            
+            // Check for intersections with hotspots
+            const intersects = vrRaycaster.intersectObjects(allHotspots);
+            
+            if (intersects.length > 0) {
+                selectHotspot(intersects[0].object);
+            }
+        }
+        
+        function onSelectEnd() {
+            // Optional: Add visual feedback when selection ends
+        }
 
         // Movement variables
         const moveSpeed = 0.05;
         let moveDirection = new THREE.Vector3();
-
-        controller.addEventListener('selectstart', () => {
-            // Optional: Add interaction with hotspots in VR if needed
-        });
-
+        
         // Animation loop with controller movement
         function animate() {
             renderer.setAnimationLoop(() => {
                 if (renderer.xr.isPresenting) {
-                    const xrCamera = renderer.xr.getCamera(camera);
-                    const gamepad = navigator.getGamepads()[controller.userData.gamepadIndex];
-
-                    if (gamepad && gamepad.axes.length >= 2) {
-                        const thumbstickX = gamepad.axes[2]; // Right thumbstick X-axis (Meta Quest)
-                        const thumbstickY = gamepad.axes[3]; // Right thumbstick Y-axis
-
-                        moveDirection.set(thumbstickX, 0, thumbstickY).normalize();
-                        const cameraDirection = new THREE.Vector3();
-                        xrCamera.getWorldDirection(cameraDirection);
-                        cameraDirection.y = 0; // Keep movement horizontal
-                        cameraDirection.normalize();
-
-                        const moveVector = cameraDirection.multiplyScalar(-thumbstickY * moveSpeed)
-                            .add(new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection).multiplyScalar(thumbstickX * moveSpeed));
-
-                        camera.position.add(moveVector);
-                        camera.position.y = 1.6; // Lock height to eye level
+                    // Handle VR movement via controllers
+                    if (controller2) {
+                        const gamepad = navigator.getGamepads().find(gp => 
+                            gp && gp.id && gp.id.includes('Oculus Touch') && 
+                            gp.index === controller2.userData.gamepadIndex
+                        );
+                        
+                        if (gamepad && gamepad.axes.length >= 4) {
+                            const thumbstickX = gamepad.axes[2]; // Right thumbstick X-axis (Meta Quest)
+                            const thumbstickY = gamepad.axes[3]; // Right thumbstick Y-axis
+                            
+                            if (Math.abs(thumbstickX) > 0.1 || Math.abs(thumbstickY) > 0.1) {
+                                moveDirection.set(thumbstickX, 0, thumbstickY).normalize();
+                                
+                                // Get camera direction for movement relative to view
+                                const xrCamera = renderer.xr.getCamera(camera);
+                                const cameraDirection = new THREE.Vector3();
+                                xrCamera.getWorldDirection(cameraDirection);
+                                cameraDirection.y = 0; // Keep movement horizontal
+                                cameraDirection.normalize();
+                                
+                                // Calculate movement vector
+                                const moveVector = new THREE.Vector3();
+                                moveVector.addScaledVector(cameraDirection, -thumbstickY * moveSpeed);
+                                moveVector.addScaledVector(
+                                    new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), cameraDirection),
+                                    thumbstickX * moveSpeed
+                                );
+                                
+                                // Apply movement
+                                camera.position.add(moveVector);
+                                camera.position.y = 1.6; // Lock height to eye level
+                            }
+                        }
+                    }
+                    
+                    // Visual feedback for VR interaction
+                    if (controller1) {
+                        tempMatrix.identity().extractRotation(controller1.matrixWorld);
+                        vrRaycaster.ray.origin.setFromMatrixPosition(controller1.matrixWorld);
+                        vrRaycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+                        
+                        const intersects = vrRaycaster.intersectObjects(allHotspots);
+                        
+                        // Update controller line color based on intersection
+                        const line = controller1.children.find(child => child instanceof THREE.Line);
+                        if (line) {
+                            line.material.color.set(intersects.length > 0 ? 0x00ff00 : 0xff0000);
+                        }
                     }
                 }
-
+                
                 renderer.render(scene, camera);
             });
         }
+        
         animate();
 
         // Handle window resize
@@ -326,9 +462,17 @@
         });
 
         // Store gamepad index when controller connects
-        controller.addEventListener('connected', (event) => {
-            controller.userData.gamepadIndex = event.data.gamepad.index;
-        });
+        function handleControllerConnected(event, controllerIndex) {
+            event.target.userData.gamepadIndex = event.data.gamepad.index;
+        }
+        
+        if (controller1) {
+            controller1.addEventListener('connected', (event) => handleControllerConnected(event, 0));
+        }
+        
+        if (controller2) {
+            controller2.addEventListener('connected', (event) => handleControllerConnected(event, 1));
+        }
     </script>
 </body>
 </html>
