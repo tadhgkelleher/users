@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Spirograph Tunnel</title>
+  <title>Techno Buddha: Spirograph Mandala</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     body {
@@ -40,15 +40,6 @@
       max-height: 800px;
       margin: 20px auto;
       display: block;
-    }
-    #vrCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 20;
-      display: none;
     }
     button {
       background: linear-gradient(135deg, #ff00ff, #00ffcc, #ffd700);
@@ -114,13 +105,12 @@
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: Spirograph Tunnel</h1>
+  <h1>Techno Buddha: Spirograph Mandala</h1>
 
   <div class="controls">
     <button id="settings">Choose Mantra</button>
     <button id="drone">Invoke Techno Chant</button>
     <button id="startVoice">Awaken Voice</button>
-    <button id="enterVR">Enter Nirvana VR</button>
   </div>
 
   <div id="settingsModal" class="modal">
@@ -135,16 +125,12 @@
   <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Tempo: 0 BPM</div>
 
   <canvas id="mandalaCanvas" width="800" height="800"></canvas>
-  <canvas id="vrCanvas"></canvas>
 
-  <script src="./three.min.js"></script>
   <script>
     const mandalaCanvas = document.getElementById('mandalaCanvas');
     const ctx = mandalaCanvas.getContext('2d');
-    const vrCanvas = document.getElementById('vrCanvas');
     let animationId = null;
     let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup, voiceMeter, backgroundSphere;
     let voicePitch = 0, voiceAmplitude = 0, smoothedAmplitude = 0, droneAmplitude = 0, enlightenmentFactor = 0;
     let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
     let voiceInitialized = false;
@@ -328,107 +314,12 @@
       document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
     }
 
-    // Mouse Scroll for Zoom
+    // Mouse Scroll for Segments
     mandalaCanvas.addEventListener('wheel', (e) => {
       baseSegments += Math.round(e.deltaY * -0.1);
       baseSegments = Math.max(6, Math.min(16, baseSegments));
       e.preventDefault();
     });
-
-    // VR Initialization
-    function initVR() {
-      if (!window.THREE) {
-        console.error('Three.js not loaded');
-        document.getElementById('enterVR').textContent = 'Nirvana Unavailable';
-        return;
-      }
-
-      console.log('Entering Spirograph Tunnel...');
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-      renderer.xr.enabled = true;
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      mandalaGroup = new THREE.Group();
-      scene.add(mandalaGroup);
-
-      const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
-      const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
-      backgroundSphere = new THREE.Mesh(voidGeometry, voidMaterial);
-      scene.add(backgroundSphere);
-
-      const starCount = 2000;
-      const starPositions = new Float32Array(starCount * 3);
-      for (let i = 0; i < starCount; i++) {
-        const theta = Math.random() * 2 * Math.PI;
-        const phi = Math.acos(2 * Math.random() - 1);
-        const radius = 600 * Math.cbrt(Math.random());
-        starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-        starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        starPositions[i * 3 + 2] = radius * Math.cos(phi);
-      }
-      const starGeometry = new THREE.BufferGeometry();
-      starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-      const starMaterial = new THREE.PointsMaterial({ color: 0xffd700, size: 1.5 });
-      const stars = new THREE.Points(starGeometry, starMaterial);
-      scene.add(stars);
-
-      const meterGeometry = new THREE.BoxGeometry(3, 0.3, 0.3);
-      const meterMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
-      voiceMeter = new THREE.Mesh(meterGeometry, meterMaterial);
-      voiceMeter.position.set(0, -8, -6);
-      mandalaGroup.add(voiceMeter);
-
-      updateVRMandala();
-      camera.position.z = 0;
-
-      const enterVRButton = document.getElementById('enterVR');
-      let isVRActive = false;
-
-      enterVRButton.addEventListener('click', async () => {
-        if (isVRActive) {
-          vrCanvas.style.display = 'none';
-          renderer.setAnimationLoop(null);
-          enterVRButton.textContent = 'Enter Nirvana VR';
-          isVRActive = false;
-          timeFactor = 0;
-          return;
-        }
-
-        if (!navigator.xr) {
-          console.error('WebXR not supported');
-          enterVRButton.textContent = 'Nirvana Not Supported';
-          return;
-        }
-
-        try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          renderer.xr.setSession(session);
-          renderer.setAnimationLoop(animateVR);
-          vrCanvas.style.display = 'block';
-          enterVRButton.textContent = 'Exit Nirvana';
-          isVRActive = true;
-
-          if (!voiceInitialized) initVoiceControl();
-
-          session.addEventListener('end', () => {
-            vrCanvas.style.display = 'none';
-            renderer.setAnimationLoop(null);
-            enterVRButton.textContent = 'Enter Nirvana VR';
-            isVRActive = false;
-          });
-        } catch (err) {
-          console.error('Nirvana failed:', err);
-          enterVRButton.textContent = 'Nirvana Failed: ' + err.message;
-        }
-      });
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
 
     // 2D Spirograph Mandala
     function generateMandala() {
@@ -438,15 +329,16 @@
       const centerY = height / 2;
       ctx.clearRect(0, 0, width, height);
 
-      const R = params.R;
+      const R = params.R * (1 + Math.sin(timeFactor * 0.2) * 0.1);
       const r = params.r;
       const d = params.d;
       const segments = baseSegments;
       const levels = baseLevels;
 
+      // Spirograph Layers
       for (let level = 0; level < levels; level++) {
         ctx.beginPath();
-        const scale = 1 + level * 0.3;
+        const scale = 1 - level * 0.2; // Inner layers smaller
         for (let i = 0; i < segments * 360; i++) {
           const t = (i / segments + totalRotation) * Math.PI / 180;
           const x = centerX + (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t) * scale;
@@ -459,52 +351,33 @@
         ctx.lineWidth = 2 + enlightenmentFactor * 2;
         ctx.stroke();
       }
-    }
 
-    // VR Spirograph Tunnel
-    function updateVRMandala() {
-      mandalaGroup.clear();
-
-      const R = params.R / 20; // Scale down for 3D
-      const r = params.r / 20;
-      const d = params.d / 20;
-      const segments = baseSegments;
-      const levels = baseLevels;
-
-      for (let level = 0; level < levels; level++) {
-        const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        const scale = 1 + level * 0.3;
-        const zOffset = -level * 5 - timeFactor * 2; // Tunnel effect
-
-        for (let i = 0; i < segments * 360; i++) {
-          const t = (i / segments + totalRotation) * Math.PI / 180;
-          const x = (R - r) * Math.cos(t) + d * Math.cos((R - r) / r * t) * scale;
-          const y = (R - r) * Math.sin(t) - d * Math.sin((R - r) / r * t) * scale;
-          const z = zOffset + (i / (segments * 360)) * 20; // Stretch along Z
-          positions.push(x, y, z);
-        }
-
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        const material = new THREE.LineBasicMaterial({ color: new THREE.Color(`hsl(${level * 60 + timeFactor * 10}, 100%, 50%)`), linewidth: 2 });
-        const line = new THREE.Line(geometry, material);
-        mandalaGroup.add(line);
+      // Lotus Petals (optional framing)
+      ctx.fillStyle = `rgba(255, 215, 0, ${0.5 + Math.sin(timeFactor * 0.3) * 0.2})`;
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2 + totalRotation * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle - 0.2) * 80, centerY + Math.sin(angle - 0.2) * 120,
+          centerX + Math.cos(angle) * 160, centerY + Math.sin(angle) * 160
+        );
+        ctx.quadraticCurveTo(
+          centerX + Math.cos(angle + 0.2) * 80, centerY + Math.sin(angle + 0.2) * 120,
+          centerX, centerY
+        );
+        ctx.fill();
       }
 
-      voiceMeter.scale.x = Math.max(0.2, smoothedAmplitude * 3);
-      voiceMeter.position.set(0, -8, -6);
-      mandalaGroup.add(voiceMeter);
-
-      mandalaGroup.position.z = -10;
-      mandalaGroup.rotation.z = totalRotation * 0.2;
-    }
-
-    function animateVR(time) {
-      totalRotation += rotationSpeed;
-      timeFactor += 0.02 + enlightenmentFactor * 0.01; // Faster tunnel with voice
-      updateVoice();
-      updateVRMandala();
-      renderer.render(scene, camera);
+      // Buddha Silhouette
+      ctx.fillStyle = `rgba(255, 215, 0, ${0.3 + Math.sin(timeFactor * 0.4) * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY - 50, 50, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(centerX - 70, centerY + 50);
+      ctx.quadraticCurveTo(centerX, centerY + 120, centerX + 70, centerY + 50);
+      ctx.fill();
     }
 
     // Mantra Settings
@@ -581,7 +454,7 @@
     }
 
     function init() {
-      console.log('Awakening Techno Buddha in Spirograph Tunnel...');
+      console.log('Awakening Techno Buddha in Spirograph Mandala...');
       document.getElementById('settings').addEventListener('click', () => {
         initAudio();
         showSettingsModal();
@@ -595,19 +468,12 @@
         initVoiceControl();
         document.getElementById('startVoice').textContent = 'Voice Awakened';
       });
-      document.getElementById('enterVR').addEventListener('click', initAudio);
-      initVR();
       animate();
     }
 
     window.onload = () => {
-      if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Spirograph Tunnel failed to initialize.</p>';
-      } else {
-        console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
-        init();
-      }
+      console.log('Techno Buddha activated');
+      init();
     };
   </script>
 </body>
