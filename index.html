@@ -33,7 +33,7 @@
 <body>
     <div class="instructions">
         <p>Instructions for Elderly Users:</p>
-        <p>- Use your mouse to look around.</p>
+        <p>- Click and drag to look around.</p>
         <p>- Click yellow hotspots to visit rooms.</p>
         <p>- Sit back and enjoy!</p>
     </div>
@@ -45,11 +45,6 @@
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
-
-        // Orbit controls for mouse interaction
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableZoom = false; // Disable zoom for simplicity
-        controls.enablePan = false; // Disable panning for elderly users
 
         // Lighting
         const ambientLight = new THREE.AmbientLight(0x404040, 1);
@@ -107,7 +102,32 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
 
-        function onMouseClick(event) {
+        // Basic mouse controls for looking around
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        }
+
+        function onMouseMove(event) {
+            if (isDragging) {
+                const deltaX = event.clientX - previousMousePosition.x;
+                const deltaY = event.clientY - previousMousePosition.y;
+
+                camera.rotation.y -= deltaX * 0.005; // Horizontal rotation
+                camera.rotation.x -= deltaY * 0.005; // Vertical rotation
+                camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x)); // Limit vertical angle
+
+                previousMousePosition = { x: event.clientX, y: event.clientY };
+            }
+        }
+
+        function onMouseUp(event) {
+            isDragging = false;
+
+            // Check for hotspot click
             mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
             mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -118,20 +138,19 @@
                 const target = intersects[0].object.userData.target;
                 if (target === 'livingRoom') {
                     camera.position.set(-3, 2, 0); // Move to living room
-                    controls.target.set(-3, 1.5, 0);
                 } else if (target === 'kitchen') {
                     camera.position.set(2, 2, 0); // Move to kitchen
-                    controls.target.set(2, 1.5, 0);
                 }
             }
         }
 
-        window.addEventListener('click', onMouseClick, false);
+        window.addEventListener('mousedown', onMouseDown, false);
+        window.addEventListener('mousemove', onMouseMove, false);
+        window.addEventListener('mouseup', onMouseUp, false);
 
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
             renderer.render(scene, camera);
         }
         animate();
