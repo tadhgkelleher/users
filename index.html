@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: Mandelbrot Infinity</title>
+  <title>Techno Buddha: Mandelbrot Boundary</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&family=Sawarabi+Mincho&display=swap" rel="stylesheet">
   <style>
     body {
@@ -114,7 +114,7 @@
   </style>
 </head>
 <body>
-  <h1>Techno Buddha: Mandelbrot Infinity</h1>
+  <h1>Techno Buddha: Mandelbrot Boundary</h1>
 
   <div class="controls">
     <button id="settings">Choose Mantra</button>
@@ -153,8 +153,8 @@
     const params = {
       maxIterations: 500,
       zoom: 1,
-      centerX: -0.7,
-      centerY: 0,
+      centerX: -0.75, // Starting near seahorse valley
+      centerY: 0.1,
       baseFreq: 108,
       audibleFreq: 108,
       waveform: 'sine',
@@ -287,8 +287,8 @@
 
       smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
       enlightenmentFactor = Math.min(1, smoothedAmplitude * 2);
-      baseZoom *= (1 + enlightenmentFactor * 0.05); // Exponential growth
-      params.zoom = baseZoom * Math.pow(1.01, timeFactor); // Persistent zoom
+      baseZoom += enlightenmentFactor * 0.5; // Linear growth
+      params.zoom = Math.min(10000, baseZoom + timeFactor * 10); // Cap at 10,000x
       updateSoundMeter();
       console.log(`Voice: pitch=${voicePitch.toFixed(1)}, energy=${smoothedAmplitude.toFixed(3)}, zoom=${params.zoom.toFixed(2)}`);
     }
@@ -337,7 +337,7 @@
 
     // Mouse Scroll for Zoom
     mandalaCanvas.addEventListener('wheel', (e) => {
-      baseZoom *= (1 - e.deltaY * 0.005); // Faster manual zoom
+      baseZoom += e.deltaY * -0.5; // Reverse scroll direction
       baseZoom = Math.max(1, baseZoom);
       e.preventDefault();
     });
@@ -350,7 +350,7 @@
         return;
       }
 
-      console.log('Entering Mandelbrot Infinity...');
+      console.log('Entering Mandelbrot Boundary...');
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
@@ -475,9 +475,9 @@
             imageData.data[index + 2] = 0;
             imageData.data[index + 3] = 255;
           } else {
-            const hue = (iter * 10 + timeFactor * 5) % 360;
+            const hue = (iter * 5 + timeFactor * 2) % 360;
             const sat = 1;
-            const light = 0.5 + Math.sin(iter * 0.1) * 0.3;
+            const light = 0.5 + Math.sin(iter * 0.05) * 0.3;
             const color = hslToRgb(hue, sat, light);
             imageData.data[index] = color[0];
             imageData.data[index + 1] = color[1];
@@ -563,8 +563,8 @@
             if (iter >= maxIterations) {
               gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
             } else {
-              float hue = mod(smoothIter * 10.0 + time * 5.0, 360.0) / 360.0;
-              vec3 color = hsl2rgb(hue, 1.0, 0.5 + sin(smoothIter * 0.1) * 0.3);
+              float hue = mod(smoothIter * 5.0 + time * 2.0, 360.0) / 360.0;
+              vec3 color = hsl2rgb(hue, 1.0, 0.5 + sin(smoothIter * 0.05) * 0.3);
               gl_FragColor = vec4(color, 1.0);
             }
           }
@@ -597,13 +597,13 @@
 
     function animateVR(time) {
       totalRotation += rotationSpeed;
-      timeFactor += droneAmplitude * 0.005 + 0.001;
+      timeFactor += droneAmplitude * 0.01;
       updateVoice();
       updateVRMandala();
       renderer.render(scene, camera);
     }
 
-    // Mantra Settings
+    // Mantra Settings (Boundary Regions)
     function applySetting(setting) {
       document.getElementById('settingsModal').classList.remove('active');
       switch (setting) {
@@ -612,8 +612,8 @@
           params.audibleFreq = 54;
           params.maxIterations = 500;
           params.zoom = 1;
-          params.centerX = -0.7;
-          params.centerY = 0;
+          params.centerX = -0.75; // Seahorse valley
+          params.centerY = 0.1;
           params.lotusPetals = 12;
           break;
         case 'sleep':
@@ -621,8 +621,8 @@
           params.audibleFreq = 36;
           params.maxIterations = 400;
           params.zoom = 1;
-          params.centerX = -1.0;
-          params.centerY = 0.3;
+          params.centerX = -1.4; // Elephant valley
+          params.centerY = 0.02;
           params.lotusPetals = 8;
           break;
         case 'relax':
@@ -630,8 +630,8 @@
           params.audibleFreq = 40;
           params.maxIterations = 600;
           params.zoom = 1;
-          params.centerX = -0.5;
-          params.centerY = 0;
+          params.centerX = -0.16; // Spiral region
+          params.centerY = 0.65;
           params.lotusPetals = 10;
           break;
         case 'enlighten':
@@ -639,7 +639,7 @@
           params.audibleFreq = 108;
           params.maxIterations = 1000;
           params.zoom = 1;
-          params.centerX = -0.7;
+          params.centerX = -0.75; // Seahorse valley (high detail)
           params.centerY = 0.1;
           params.lotusPetals = 16;
           break;
@@ -648,8 +648,8 @@
           params.audibleFreq = 72;
           params.maxIterations = 450;
           params.zoom = 1;
-          params.centerX = -0.8;
-          params.centerY = 0.2;
+          params.centerX = 0.28; // Mini-Mandelbrot
+          params.centerY = -0.01;
           params.lotusPetals = 14;
           break;
       }
@@ -673,7 +673,7 @@
     function animate() {
       if (animationId) cancelAnimationFrame(animationId);
       totalRotation += rotationSpeed;
-      timeFactor += droneAmplitude * 0.005 + 0.001;
+      timeFactor += droneAmplitude * 0.01;
       updateVoice();
       generateMandala();
       if (droneOscillator1 || smoothedAmplitude > 0.05) {
@@ -682,7 +682,7 @@
     }
 
     function init() {
-      console.log('Awakening Techno Buddha in Mandelbrot Infinity...');
+      console.log('Awakening Techno Buddha in Mandelbrot Boundary...');
       document.getElementById('settings').addEventListener('click', () => {
         initAudio();
         showSettingsModal();
@@ -704,7 +704,7 @@
     window.onload = () => {
       if (typeof THREE === 'undefined') {
         console.error('Three.js not loaded');
-        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandelbrot Infinity failed to initialize.</p>';
+        document.body.innerHTML += '<p style="color: #ff0066;">Error: Mandelbrot Boundary failed to initialize.</p>';
       } else {
         console.log('Techno Buddha activated, Three.js version:', THREE.REVISION);
         init();
