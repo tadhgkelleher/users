@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR Bubble Shooter - Limit!</title>
+    <title>VR Bubble Shooter - Aimed!</title>
     <script src="./three.min.js"></script>
     <style>
         body {
@@ -36,7 +36,7 @@
 <body>
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Aim and shoot bubbles to match colors! Powerups spawn randomly.</p>
+        <p id="instructions">Aim with the gun (mouse/VR controller) and shoot!</p>
         <p id="score">Score: 0</p>
         <p id="level">Level: 1</p>
     </div>
@@ -45,12 +45,11 @@
         // --- Constants ---
         const BUBBLE_RADIUS = 0.5;
         const GRID_WIDTH = 10;
-        const GRID_HEIGHT = 15; // Increased grid height
-        const COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff69b4]; // Added Pink
+        const GRID_HEIGHT = 15;
+        const COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff69b4];
         const SHOT_SPEED = 15;
         const ROW_OFFSET = BUBBLE_RADIUS * Math.sqrt(3);
-        const POWERUP_CHANCE = 0.05; // Chance to spawn a power-up
-        const POWERUP_DURATION = 5000; //Power-up duration (milliseconds)
+        const POWERUP_CHANCE = 0.05;
 
         // --- Power-up Types ---
         const POWERUP_TYPES = {
@@ -65,8 +64,7 @@
         let bubbleGrid = [];
         let shootingBubble = null;
         let shotDirection = new THREE.Vector3(0, 0, 0);
-        let activePowerup = null;  // Track active power-up
-        let powerupEndTime = 0;
+        let aimingGun = null; // The gun object for aiming
 
         // --- UI Elements ---
         const scoreElement = document.getElementById('score');
@@ -87,6 +85,20 @@
         directionalLight.position.set(1, 1, 1).normalize();
         scene.add(directionalLight);
 
+        // --- Aiming Gun ---
+        function createAimingGun() {
+            const geometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 12); // Cylinder shape
+            const material = new THREE.MeshBasicMaterial({ color: 0x888888 }); // Gray color
+            const gun = new THREE.Mesh(geometry, material);
+
+            gun.position.set(0, -5, 0);  // Position at the bottom
+            gun.rotation.x = Math.PI / 2; // Rotate to point forward
+
+            return gun;
+        }
+
+        aimingGun = createAimingGun();
+        scene.add(aimingGun);
 
         // --- Bubble Creation and Grid Management ---
         function createBubble(x, y, color, isPowerup = false) {
@@ -111,9 +123,9 @@
         }
 
         function populateGrid() {
-            bubbleGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null)); // Initialize 2D array
+            bubbleGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
 
-            for (let row = 0; row < 5; row++) { //Initial rows only
+            for (let row = 0; row < 5; row++) {
                 for (let col = 0; col < GRID_WIDTH; col++) {
                     const x = col * 2 * BUBBLE_RADIUS + (row % 2) * BUBBLE_RADIUS;
                     const y = row * ROW_OFFSET;
@@ -137,7 +149,7 @@
         // --- Shooting ---
         function createShootingBubble() {
             const isPowerup = Math.random() < POWERUP_CHANCE;
-            const color = isPowerup ? 0xffffff : getRandomColor(); // White for Power-ups
+            const color = isPowerup ? 0xffffff : getRandomColor();
             const bubble = createBubble(0, -5, color, isPowerup);
             return bubble;
         }
@@ -148,9 +160,11 @@
             scene.add(shootingBubble);
         }
 
-        function launchBubble(direction) {
+        function launchBubble() {
             if (shootingBubble) {
-                shotDirection.copy(direction).normalize();
+                shotDirection.set(0,0,-1); //Shoot based on gun direction
+                aimingGun.getWorldDirection(shotDirection);
+                shotDirection.normalize();
                 shootingBubble.userData.isShooting = true;
             }
         }
@@ -219,7 +233,7 @@
         // --- Matching and Power-ups ---
         function checkMatches(startRow, startCol) {
             const startBubble = bubbleGrid[startRow][startCol];
-            if (!startBubble || startBubble.userData.isPowerup) return []; // Don't match Power-ups directly
+            if (!startBubble || startBubble.userData.isPowerup) return [];
 
             const matchedBubbles = [];
             const visited = {};
@@ -230,19 +244,16 @@
                 if (visited[row + ',' + col]) return;
 
                 const bubble = bubbleGrid[row][col];
-                if (!bubble || bubble.userData.isPowerup || bubble.userData.color !== color) return;  // Skip powerups
+                if (!bubble || bubble.userData.isPowerup || bubble.userData.color !== color) return;
 
                 visited[row + ',' + col] = true;
                 matchedBubbles.push(bubble);
-
-                //Check if matching to powerup.
 
                 explore(row + 1, col);
                 explore(row - 1, col);
                 explore(row, col + 1);
                 explore(row, col - 1);
 
-                // Hexagonal
                 if (row % 2 === 0) {
                     explore(row - 1, col - 1);
                     explore(row + 1, col - 1);
@@ -255,32 +266,6 @@
             explore(startRow, startCol);
             return matchedBubbles;
         }
-
-       function triggerPowerup(bubble) {
-            if (!bubble.userData.isPowerup) return;
-
-            const type = Object.values(POWERUP_TYPES)[Math.floor(Math.random() * Object.values(POWERUP_TYPES).length)];  // Random powerup type
-
-            activePowerup = type;
-            powerupEndTime = Date.now() + POWERUP_DURATION;
-
-            console.log("Power-up activated:", type);
-
-            switch (type) {
-                case POWERUP_TYPES.CLEAR_ROW:
-                    clearBottomRow();
-                    break;
-                case POWERUP_TYPES.COLOR_BOMB:
-                    clearByColor(bubble.userData.color);
-                    break;
-                case POWERUP_TYPES.SCORE_BOOST:
-                    increaseScore(500);
-                    break;
-                default:
-                    console.warn("Unknown powerup type:", type);
-            }
-        }
-
 
         function removeMatches(matches) {
             if (matches.length >= 3) {
@@ -298,60 +283,38 @@
             }
         }
 
-
         function increaseScore(amount) {
             score += amount;
             scoreElement.textContent = 'Score: ' + score;
         }
 
+        // --- Desktop Controls ---
+        document.addEventListener('mousedown', function() {
+            launchBubble();
+        });
 
-        function clearBottomRow() {
-            const bottomRow = bubbleGrid[GRID_HEIGHT - 1];
-            if (bottomRow) {
-                bottomRow.forEach(bubble => {
-                    if (bubble) {
-                        scene.remove(bubble);
-                    }
-                });
-                bubbleGrid[GRID_HEIGHT - 1] = Array(GRID_WIDTH).fill(null);  // Clear the row
+        document.addEventListener('mousemove', (event) => {
+            // Calculate mouse position in normalized device coordinates (-1 to +1) for both axes.
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Create a ray from the camera through the mouse position
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            // Define a plane to intersect with (the aiming plane)
+            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);  // Plane is at z=0
+            const intersectPoint = new THREE.Vector3();
+
+            raycaster.ray.intersectPlane(plane, intersectPoint);
+
+            // Now aim the gun at the intersection point
+            if (intersectPoint) {
+                aimingGun.lookAt(intersectPoint);
+                aimingGun.rotation.x += Math.PI / 2; // Adjust for cylinder orientation
             }
-        }
-
-       function clearByColor(color) {
-            for (let row = 0; row < GRID_HEIGHT; row++) {
-                for (let col = 0; col < GRID_WIDTH; col++) {
-                    const bubble = bubbleGrid[row][col];
-                    if (bubble && bubble.userData.color === color) {
-                        scene.remove(bubble);
-                        bubbleGrid[row][col] = null;
-                        increaseScore(20);
-                    }
-                }
-            }
-        }
-
-        function checkAndHandlePowerup(startRow, startCol) {
-             const startBubble = bubbleGrid[startRow][startCol];
-
-             if(startBubble && startBubble.userData.isPowerup) {
-                triggerPowerup(startBubble);
-             }
-
-        }
-
-
-        // --- Level Management ---
-        function checkLevelUp() {
-            // Simple logic: If a certain number of bubbles are cleared, level up
-            const clearedBubbles = bubbleGrid.flat().filter(bubble => bubble === null).length;
-            if (clearedBubbles > level * 20) {
-                level++;
-                levelElement.textContent = 'Level: ' + level;
-                resetGrid(); // Reset grid to increase the difficulty and bubble count
-            }
-        }
-
-
+        });
 
         // --- VR Controller Setup ---
         let controller1, controller2;
@@ -376,20 +339,15 @@
             controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
             scene.add(controllerGrip2);
 
-            const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
-            const line = new THREE.Line(geometry);
-            line.scale.z = 10;
-            controller1.add(line.clone());
-            controller2.add(line.clone());
+           // Attach the aiming gun to the controller (controller1 in this case)
+           controller1.add(aimingGun);
+           aimingGun.position.set(0, -0.2, -0.5); // Adjust position relative to controller
+           aimingGun.rotation.set(0, 0, 0);
         }
 
         function onSelectStart(event) {
-            const controller = event.target;
-            const direction = new THREE.Vector3();
-            controller.getWorldDirection(direction);
-            launchBubble(direction);
+            launchBubble();
         }
-
 
         // --- VR and Non-VR Setup ---
         camera.position.set(0, 0, 0);
@@ -409,11 +367,19 @@
             vrButton.textContent = 'VR not supported';
         }
 
-
         vrButton.addEventListener('click', function() {
             if (renderer.xr.isPresenting) {
                 renderer.xr.getSession().end();
                 vrButton.textContent = 'Enter VR';
+
+              //Detach the gun if exiting VR
+               if (aimingGun.parent) {
+                    aimingGun.parent.remove(aimingGun);
+                    scene.add(aimingGun);
+                    aimingGun.position.set(0, -5, 0);
+                }
+
+
             } else {
                 navigator.xr.requestSession('immersive-vr', {
                     optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
@@ -443,19 +409,13 @@
                     shootingBubble.userData.isShooting = false;
                     const newPos = placeBubble(shootingBubble, collision);
 
-
                     if (newPos) {
-                        //This is where any code that needs to be triggered right after placing a bubble goes.
-                        checkAndHandlePowerup(newPos.row, newPos.col);
                         const matches = checkMatches(newPos.row, newPos.col);
                         removeMatches(matches);
-
                     }
-
 
                     resetShootingBubble();
                     checkLevelUp();
-
 
                 } else if (shootingBubble.position.length() > 50) { // Out of bounds
                     shootingBubble.userData.isShooting = false;
@@ -463,25 +423,20 @@
                 }
             }
 
-
-            //Powerup Timout Check
-            if (activePowerup && Date.now() > powerupEndTime) {
-                activePowerup = null;
-                console.log("Power-up expired");
-            }
             renderer.render(scene, camera);
         }
 
 
         // --- Initialize Game ---
         populateGrid();
+        resetShootingBubble();
         animate();
 
         // --- Event Listeners ---
         window.addEventListener('resize', function() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(window.innerWidth / window.innerHeight);
         });
 
     </script>
