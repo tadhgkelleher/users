@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js Meditation App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@latest/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="./three.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -114,10 +113,10 @@
 
         // Floor for VR orientation
         const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshPhongMaterial({
-            color: 0x3f7f7f,
-            transparent: true,
-            opacity: 0.5
+        const floorMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x3f7f7f, 
+            transparent: true, 
+            opacity: 0.5 
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
@@ -129,12 +128,12 @@
 
         // Audio
         const audio = document.getElementById('ambientSound');
-
+        
         // Function to start audio with user gesture
         function startAudio() {
             audio.play().catch(e => console.log('Audio playback failed:', e));
         }
-
+        
         // Listen for user interaction to start audio
         document.addEventListener('click', startAudio, { once: true });
 
@@ -144,7 +143,7 @@
 
         // Controller Setup
         let controller1, controller2;
-        let controllerModel1, controllerModel2;
+        let controllerGrip1, controllerGrip2;
 
         function setupVRControllers() {
             // Controllers
@@ -159,31 +158,27 @@
             scene.add(controller2);
 
             // Controller models
-            const loader = new THREE.GLTFLoader();
+            const controllerModelFactory = new THREE.XRControllerModelFactory();
 
-            // Load controller models.  Use a placeholder URL if you don't have one.
-            loader.load('https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0.6/dist/profiles/generic-hand/xr-controller.glb', function (gltf) {
-                controllerModel1 = gltf.scene;
-                controller1.add(controllerModel1);  //Add model to controller
+            controllerGrip1 = renderer.xr.getControllerGrip(0);
+            controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
+            scene.add(controllerGrip1);
 
-                //Clone model for other controller.
-                controllerModel2 = gltf.scene.clone();
-                controller2.add(controllerModel2);
-            }, undefined, function (error) {
-                console.error('Error loading controller model:', error);
+            controllerGrip2 = renderer.xr.getControllerGrip(1);
+            controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
+            scene.add(controllerGrip2);
 
-                //Fallback to the Line visualization if model fails to load
-                const geometry = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0, 0),
-                    new THREE.Vector3(0, 0, -1)
-                ]);
+            // Controller visualization
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, -1)
+            ]);
 
-                const line = new THREE.Line(geometry);
-                line.scale.z = 5;
+            const line = new THREE.Line(geometry);
+            line.scale.z = 5;
 
-                controller1.add(line.clone());
-                controller2.add(line.clone());
-            });
+            controller1.add(line.clone());
+            controller2.add(line.clone());
         }
 
         // Controller interaction
@@ -199,29 +194,16 @@
         function createOrbAtController(controller) {
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
             orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-
+            
             // Get controller position in world space
             const position = new THREE.Vector3();
             controller.getWorldPosition(position);
-
-            // Get controller direction in world space
-            const direction = new THREE.Vector3();
-            controller.getWorldDirection(direction);
-
-            // Set spawn distance
-            const spawnDistance = 2; // Adjust this value to control how far in front of the controller the orb spawns
-
-            // Calculate spawn point
-            const spawnPoint = new THREE.Vector3();
-            spawnPoint.copy(position).add(direction.multiplyScalar(spawnDistance));
-
-
-            orb.position.copy(spawnPoint);
+            
+            orb.position.copy(position);
             orb.userData = { time: performance.now() / 1000 };
             orbs.push(orb);
             scene.add(orb);
         }
-
 
         // Check VR Support
         if ('xr' in navigator) {
@@ -245,7 +227,7 @@
         // Enter/Exit VR
         vrButton.addEventListener('click', () => {
             startAudio(); // Try to start audio when VR button is clicked
-
+            
             if (renderer.xr.isPresenting) {
                 renderer.xr.getSession().end();
                 vrButton.textContent = 'Enter VR';
@@ -258,10 +240,10 @@
                     vrButton.textContent = 'Exit VR';
                     statusText.textContent = 'Status: VR Mode';
                     console.log('VR Session Started');
-
+                    
                     // Setup VR controllers when session starts
                     setupVRControllers();
-
+                    
                     session.addEventListener('end', () => {
                         vrButton.textContent = 'Enter VR';
                         statusText.textContent = 'Status: Desktop Mode';
@@ -278,7 +260,7 @@
         document.addEventListener('click', (event) => {
             if (event.target.tagName === 'BUTTON') return;
             if (renderer.xr.isPresenting) return; // Don't spawn orbs on click in VR mode
-
+            
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
             orb.material.color.setHSL(Math.random(), 0.8, 0.5);
             orb.position.set(
@@ -328,3 +310,6 @@
     </script>
 </body>
 </html>
+
+
+
