@@ -268,7 +268,7 @@
     </div>
     <div id="soundInfo">Amplitude: 0% | Pitch: 0 Hz</div>
 
-    <canvas id="mandalaCanvas" width="2048" height="2048"></canvas>
+    <canvas id="mandalaCanvas" width="800" height="800"></canvas>
     <canvas id="vrCanvas"></canvas>
 
     <script src="./three.min.js"></script>
@@ -307,7 +307,7 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
             if (audioContext.state === 'suspended') {
-                audioContext.resume();
+                document.addEventListener('click', () => audioContext.resume(), { once: true });
             }
         }
 
@@ -443,7 +443,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Initialization - 2D Plane with Higher Resolution
+        // VR Initialization - 2D Plane
         function initVR() {
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -461,28 +461,20 @@
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
             renderer.xr.enabled = true;
-            renderer.setPixelRatio(window.devicePixelRatio); // Improve resolution
             renderer.setSize(window.innerWidth, window.innerHeight);
 
             // Create a plane with the mandala canvas as texture
             const texture = new THREE.CanvasTexture(mandalaCanvas);
-            texture.minFilter = THREE.LinearFilter; // Smoother scaling
-            texture.magFilter = THREE.LinearFilter;
-            const aspectRatio = mandalaCanvas.width / mandalaCanvas.height;
-            const geometry = new THREE.PlaneGeometry(8 * aspectRatio, 8); // Adjusted size for VR
+            const geometry = new THREE.PlaneGeometry(10, 10); // Size in VR space
             const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
             mandalaPlane = new THREE.Mesh(geometry, material);
-            mandalaPlane.position.z = -3; // Closer for better framing
+            mandalaPlane.position.z = -5; // Position in front of the camera
             scene.add(mandalaPlane);
 
             camera.position.z = 0;
 
             document.getElementById('enterVR').addEventListener('click', async () => {
-                // Ensure audio and voice are initialized before VR
-                if (!audioContext) initAudio();
                 if (!voiceAnalyser) initVoiceControl();
-                await audioContext.resume(); // Force resume for VR
-
                 try {
                     const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
                     session.addEventListener('end', () => {
@@ -510,11 +502,11 @@
         function animateVR() {
             // Update the texture with the latest mandala canvas
             mandalaPlane.material.map.needsUpdate = true;
-            mandalaPlane.rotation.z += rotationSpeed;
+            mandalaPlane.rotation.z += rotationSpeed; // Keep drone rotation effect
             renderer.render(scene, camera);
         }
 
-        // 2D Mandala Generation
+        // 2D Mandala Generation (Used for both Desktop and VR)
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
             ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
