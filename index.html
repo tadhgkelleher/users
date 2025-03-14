@@ -34,7 +34,7 @@
     <!-- UI -->
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click anywhere to spawn a meditation orb. Breathe with the rhythm of the glowing lights.</p>
+        <p id="instructions">Click anywhere to spawn a meditation orb. In VR, use controllers to spawn orbs.</p>
         <p id="status">Status: Desktop Mode</p>
     </div>
 
@@ -95,16 +95,115 @@
         const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
         const orbs = [];
 
+        // Initial meditation orb in front of the user
+        function createInitialOrbs() {
+            for (let i = 0; i < 3; i++) {
+                const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+                orb.position.set(
+                    (Math.random() - 0.5) * 10,
+                    1.5 + (Math.random() - 0.5) * 2,
+                    -5 - (Math.random() * 5)
+                );
+                orb.userData = { time: performance.now() / 1000 };
+                orbs.push(orb);
+                scene.add(orb);
+            }
+        }
+        createInitialOrbs();
+
+        // Floor for VR orientation
+        const floorGeometry = new THREE.PlaneGeometry(20, 20);
+        const floorMaterial = new THREE.MeshPhongMaterial({ 
+            color: 0x3f7f7f, 
+            transparent: true, 
+            opacity: 0.5 
+        });
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -0.1;
+        scene.add(floor);
+
         // Camera Position
-        camera.position.set(0, 5, 10);
+        camera.position.set(0, 1.6, 5); // Typical VR camera height
 
         // Audio
         const audio = document.getElementById('ambientSound');
-        audio.play().catch(e => console.log('Audio playback failed:', e));
+        
+        // Function to start audio with user gesture
+        function startAudio() {
+            audio.play().catch(e => console.log('Audio playback failed:', e));
+        }
+        
+        // Listen for user interaction to start audio
+        document.addEventListener('click', startAudio, { once: true });
 
         // VR Setup
         const vrButton = document.getElementById('enterVRButton');
         const statusText = document.getElementById('status');
+
+        // Controller Setup
+        let controller1, controller2;
+        let controllerGrip1, controllerGrip2;
+
+        function setupVRControllers() {
+            // Controllers
+            controller1 = renderer.xr.getController(0);
+            controller1.addEventListener('selectstart', onSelectStart);
+            controller1.addEventListener('selectend', onSelectEnd);
+            scene.add(controller1);
+
+            controller2 = renderer.xr.getController(1);
+            controller2.addEventListener('selectstart', onSelectStart);
+            controller2.addEventListener('selectend', onSelectEnd);
+            scene.add(controller2);
+
+            // Controller models
+            const controllerModelFactory = new THREE.XRControllerModelFactory();
+
+            controllerGrip1 = renderer.xr.getControllerGrip(0);
+            controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
+            scene.add(controllerGrip1);
+
+            controllerGrip2 = renderer.xr.getControllerGrip(1);
+            controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
+            scene.add(controllerGrip2);
+
+            // Controller visualization
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new THREE.Vector3(0, 0, 0),
+                new THREE.Vector3(0, 0, -1)
+            ]);
+
+            const line = new THREE.Line(geometry);
+            line.scale.z = 5;
+
+            controller1.add(line.clone());
+            controller2.add(line.clone());
+        }
+
+        // Controller interaction
+        function onSelectStart(event) {
+            const controller = event.target;
+            createOrbAtController(controller);
+        }
+
+        function onSelectEnd(event) {
+            // Handle controller release if needed
+        }
+
+        function createOrbAtController(controller) {
+            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
+            
+            // Get controller position in world space
+            const position = new THREE.Vector3();
+            controller.getWorldPosition(position);
+            
+            orb.position.copy(position);
+            orb.userData = { time: performance.now() / 1000 };
+            orbs.push(orb);
+            scene.add(orb);
+        }
 
         // Check VR Support
         if ('xr' in navigator) {
@@ -127,16 +226,24 @@
 
         // Enter/Exit VR
         vrButton.addEventListener('click', () => {
+            startAudio(); // Try to start audio when VR button is clicked
+            
             if (renderer.xr.isPresenting) {
                 renderer.xr.getSession().end();
                 vrButton.textContent = 'Enter VR';
                 statusText.textContent = 'Status: Desktop Mode';
             } else {
-                navigator.xr.requestSession('immersive-vr').then(session => {
+                navigator.xr.requestSession('immersive-vr', {
+                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+                }).then(session => {
                     renderer.xr.setSession(session);
                     vrButton.textContent = 'Exit VR';
                     statusText.textContent = 'Status: VR Mode';
                     console.log('VR Session Started');
+                    
+                    // Setup VR controllers when session starts
+                    setupVRControllers();
+                    
                     session.addEventListener('end', () => {
                         vrButton.textContent = 'Enter VR';
                         statusText.textContent = 'Status: Desktop Mode';
@@ -149,10 +256,13 @@
             }
         });
 
-        // Spawn Orbs on Click
+        // Spawn Orbs on Click (desktop mode)
         document.addEventListener('click', (event) => {
             if (event.target.tagName === 'BUTTON') return;
+            if (renderer.xr.isPresenting) return; // Don't spawn orbs on click in VR mode
+            
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
             orb.position.set(
                 (Math.random() - 0.5) * 20,
                 (Math.random() - 0.5) * 10 + 5,
@@ -166,10 +276,12 @@
         // Animation Loop
         let time = 0;
         function animate() {
-            requestAnimationFrame(animate);
+            renderer.setAnimationLoop(render);
+        }
 
+        function render() {
             // Rotate Stars
-            stars.rotation.y += 0.001;
+            stars.rotation.y += 0.0003;
 
             // Animate Orbs
             time = performance.now() / 1000;
@@ -177,9 +289,9 @@
                 const elapsed = time - orb.userData.time;
                 const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
                 orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 20);
-                orb.position.y += 0.01;
-                if (elapsed > 20) {
+                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
+                orb.position.y += 0.005;
+                if (elapsed > 30) {
                     scene.remove(orb);
                     orbs.splice(index, 1);
                 }
