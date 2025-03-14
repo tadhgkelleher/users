@@ -7,7 +7,7 @@
     <title>Cosmic Weaver: Voice of the Void</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
     <style>
-        /* (Keep the existing CSS here) */
+        /* (Keep the existing CSS here - from your original code) */
         body {
             font-family: 'Arial', sans-serif;
             text-align: center;
@@ -307,7 +307,7 @@
     <canvas id="mandalaCanvas" width="800" height="800"></canvas>
     <canvas id="vrCanvas"></canvas>
 
-      <script src="./three.min.js"></script>
+    <script src="./three.min.js"></script>
     <script>
         const mandalaCanvas = document.getElementById('mandalaCanvas');
         const ctx = mandalaCanvas.getContext('2d');
@@ -531,8 +531,7 @@
               gl_FragColor = vec4(finalColor, 1.0);
             }
           `;
-        // VR Initialization
-        function initVR() {
+               function initVR() {
             console.log("initVR called");
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -550,32 +549,17 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
 
-            // Create the floor
-            const floorGeometry = new THREE.PlaneGeometry(50, 50);
-            const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x222244,
-                roughness: 0.9
-            }); // A dark, rough floor
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2; // Rotate to be horizontal
-            floor.position.y = -2; // Lower the floor
-            floor.receiveShadow = true; // Allow shadows to be cast onto the floor
-            scene.add(floor);
-
-            // Lighting
-            const ambientLight = new THREE.AmbientLight(0x404040); // Soft white light
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5); // Key light
-            directionalLight.position.set(1, 3, 2); // Positioned above and to the side
-            directionalLight.castShadow = true; // Allow the light to cast shadows
-            scene.add(directionalLight);
+            //  No floor or lighting
 
             mandalaGroup = new THREE.Group();
             updateVRMandala();
-            mandalaGroup.position.y = -1;
+
+            //Position the Mandala further away in VR
+            mandalaGroup.position.z = -10;
             scene.add(mandalaGroup);
-            camera.position.z = 5; // Adjusted for better FOV
+
+            // Move camera back to view the mandala
+            camera.position.z = 0; // Adjusted for better FOV
 
             if (navigator.xr) {
                 document.getElementById('enterVR').addEventListener('click', async () => {
@@ -809,8 +793,7 @@
                             ctx.moveTo(x, y);
                             ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
                         }
-                        ctx.stroke();
-                        break;
+                        ctx.stroke();                        break;
                     case 'tunnel':
                         ctx.beginPath();
                         for (let i = 0; i < params.segments; i++) {
