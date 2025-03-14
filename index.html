@@ -3,309 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Meditation App</title>
-    <script src="./three.min.js"></script>
+    <title>Authentic Gamelan Ensemble</title>
     <style>
         body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f1e9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             margin: 0;
-            overflow: hidden;
-            background-color: #000;
+            color: #333;
         }
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-family: Arial, sans-serif;
-            z-index: 1;
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            color: #8b4513;
+            margin-bottom: 20px;
         }
         button {
+            background-color: #d2691e;
+            color: white;
+            border: none;
             padding: 10px 20px;
-            font-size: 16px;
-            margin: 5px 0;
+            margin: 5px;
+            border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
         }
-        canvas {
-            display: block;
+        button:hover {
+            background-color: #cd5c5c;
+        }
+        input, select {
+            padding: 8px;
+            margin: 10px 5px;
+            width: 70%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .note-display {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #555;
         }
     </style>
 </head>
 <body>
-    <!-- UI -->
-    <div id="ui">
-        <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click anywhere to spawn a meditation orb. In VR, use controllers to spawn orbs.</p>
-        <p id="status">Status: Desktop Mode</p>
+    <div class="container">
+        <h1>Authentic Gamelan Ensemble</h1>
+        <div class="controls">
+            <input type="text" id="balunganInput" placeholder="Enter balungan (e.g., 2 3 5 6)" value="2 3 5 6">
+            <select id="cycleLength">
+                <option value="4">Cycle: 4 beats</option>
+                <option value="8">Cycle: 8 beats</option>
+                <option value="16">Cycle: 16 beats</option>
+            </select>
+            <select id="irama">
+                <option value="lancer">Irama Lancer (Fast)</option>
+                <option value="tanggung">Irama Tanggung (Medium)</option>
+                <option value="dados">Irama Dados (Slow)</option>
+            </select>
+            <button onclick="playGamelan()">Play Gamelan</button>
+            <button onclick="stopGamelan()">Stop</button>
+            <button onclick="transitionIrama()">Next Irama</button>
+        </div>
+        <div class="note-display" id="currentNote">Current Balungan: </div>
     </div>
 
-    <!-- Audio -->
-    <audio id="ambientSound" loop>
-        <source src="./ambient.mp3" type="audio/mp3">
-        <!-- Placeholder: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
-        Your browser does not support the audio element.
-    </audio>
-
-    <!-- Three.js Logic -->
     <script>
-        // Scene Setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let oscillators = [];
+        let currentIrama = 'lancer'; // Default irama
 
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 1);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-        pointLight.position.set(0, 10, 10);
-        scene.add(pointLight);
+        // Slendro scale frequencies (tuned closer to Javanese slendro)
+        const slendroScale = {
+            1: 240, // Adjusted for gamelan feel
+            2: 270,
+            3: 300,
+            5: 360,
+            6: 400
+        };
 
-        // Floating Islands
-        const islandGeometry = new THREE.SphereGeometry(5, 32, 32);
-        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22, shininess: 10 });
-        for (let i = 0; i < 5; i++) {
-            const island = new THREE.Mesh(islandGeometry, islandMaterial);
-            island.position.set(
-                (Math.random() - 0.5) * 50,
-                (Math.random() - 0.5) * 20,
-                (Math.random() - 0.5) * 50 - 20
-            );
-            scene.add(island);
+        // Gong sound (low frequency for gong ageng)
+        const gongFrequency = 55; // Deep tone for cycle end
+
+        // Irama timing multipliers (authentic density changes)
+        const iramaTimings = {
+            lancer: 0.25,   // Fast tempo, high density
+            tanggung: 0.5,  // Medium tempo
+            dados: 1.0      // Slow tempo, low density
+        };
+
+        // Create an oscillator with gain
+        function createOscillator(frequency, type = 'sine', gainValue = 0.2, duration = 0.5) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            return { oscillator, gainNode };
         }
 
-        // Starry Sky
-        const starsGeometry = new THREE.BufferGeometry();
-        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
-        const starVertices = [];
-        for (let i = 0; i < 1000; i++) {
-            starVertices.push(
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200
-            );
-        }
-        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const stars = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(stars);
+        // Play the gamelan arrangement
+        function playGamelan() {
+            stopGamelan();
+            const balungan = document.getElementById('balunganInput').value.split(' ').map(Number);
+            const cycleLength = parseInt(document.getElementById('cycleLength').value);
+            const baseTime = iramaTimings[currentIrama];
+            let time = audioContext.currentTime;
 
-        // Meditation Orbs
-        const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-        const orbs = [];
+            // Repeat balungan for the cycle length
+            for (let i = 0; i < cycleLength; i++) {
+                const note = balungan[i % balungan.length];
+                if (slendroScale[note]) {
+                    // Balungan (core melody) - sine wave
+                    const balunganOsc = createOscillator(slendroScale[note], 'sine', 0.3, baseTime);
+                    balunganOsc.oscillator.start(time + i * baseTime);
+                    balunganOsc.oscillator.stop(time + (i + 1) * baseTime);
+                    oscillators.push(balunganOsc.oscillator);
 
-        // Initial meditation orb in front of the user
-        function createInitialOrbs() {
-            for (let i = 0; i < 3; i++) {
-                const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-                orb.position.set(
-                    (Math.random() - 0.5) * 10,
-                    1.5 + (Math.random() - 0.5) * 2,
-                    -5 - (Math.random() * 5)
-                );
-                orb.userData = { time: performance.now() / 1000 };
-                orbs.push(orb);
-                scene.add(orb);
-            }
-        }
-        createInitialOrbs();
+                    // Elaboration (bonang-like) - triangle wave, faster in higher irama
+                    const elabOsc = createOscillator(slendroScale[note] * 2, 'triangle', 0.1, baseTime / 2);
+                    elabOsc.oscillator.start(time + i * baseTime + baseTime * 0.1);
+                    elabOsc.oscillator.stop(time + (i + 1) * baseTime);
+                    oscillators.push(elabOsc.oscillator);
 
-        // Floor for VR orientation
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x3f7f7f, 
-            transparent: true, 
-            opacity: 0.5 
-        });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.1;
-        scene.add(floor);
+                    // Gong ageng at cycle end
+                    if ((i + 1) % cycleLength === 0) {
+                        const gongOsc = createOscillator(gongFrequency, 'sine', 0.5, 1.5);
+                        gongOsc.oscillator.start(time + i * baseTime);
+                        gongOsc.gainNode.gain.exponentialRampToValueAtTime(0.001, time + (i + 1) * baseTime + 1.5);
+                        gongOsc.oscillator.stop(time + (i + 1) * baseTime + 1.5);
+                        oscillators.push(gongOsc.oscillator);
+                    }
 
-        // Camera Position
-        camera.position.set(0, 1.6, 5); // Typical VR camera height
-
-        // Audio
-        const audio = document.getElementById('ambientSound');
-        
-        // Function to start audio with user gesture
-        function startAudio() {
-            audio.play().catch(e => console.log('Audio playback failed:', e));
-        }
-        
-        // Listen for user interaction to start audio
-        document.addEventListener('click', startAudio, { once: true });
-
-        // VR Setup
-        const vrButton = document.getElementById('enterVRButton');
-        const statusText = document.getElementById('status');
-
-        // Controller Setup
-        let controller1, controller2;
-        let controllerGrip1, controllerGrip2;
-
-        function setupVRControllers() {
-            // Controllers
-            controller1 = renderer.xr.getController(0);
-            controller1.addEventListener('selectstart', onSelectStart);
-            controller1.addEventListener('selectend', onSelectEnd);
-            scene.add(controller1);
-
-            controller2 = renderer.xr.getController(1);
-            controller2.addEventListener('selectstart', onSelectStart);
-            controller2.addEventListener('selectend', onSelectEnd);
-            scene.add(controller2);
-
-            // Controller models
-            const controllerModelFactory = new THREE.XRControllerModelFactory();
-
-            controllerGrip1 = renderer.xr.getControllerGrip(0);
-            controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-            scene.add(controllerGrip1);
-
-            controllerGrip2 = renderer.xr.getControllerGrip(1);
-            controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-            scene.add(controllerGrip2);
-
-            // Controller visualization
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, -1)
-            ]);
-
-            const line = new THREE.Line(geometry);
-            line.scale.z = 5;
-
-            controller1.add(line.clone());
-            controller2.add(line.clone());
-        }
-
-        // Controller interaction
-        function onSelectStart(event) {
-            const controller = event.target;
-            createOrbAtController(controller);
-        }
-
-        function onSelectEnd(event) {
-            // Handle controller release if needed
-        }
-
-        function createOrbAtController(controller) {
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-            
-            // Get controller position in world space
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-            
-            orb.position.copy(position);
-            orb.userData = { time: performance.now() / 1000 };
-            orbs.push(orb);
-            scene.add(orb);
-        }
-
-        // Check VR Support
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
-                statusText.textContent = supported ? 'Status: Desktop Mode' : 'Status: VR Not Available';
-                console.log('VR Supported:', supported);
-            }).catch(err => {
-                console.error('VR Support Check Failed:', err);
-                vrButton.disabled = true;
-                vrButton.textContent = 'VR Not Supported';
-            });
-        } else {
-            console.log('WebXR not available in this browser');
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR Not Supported';
-            statusText.textContent = 'Status: WebXR Not Supported';
-        }
-
-        // Enter/Exit VR
-        vrButton.addEventListener('click', () => {
-            startAudio(); // Try to start audio when VR button is clicked
-            
-            if (renderer.xr.isPresenting) {
-                renderer.xr.getSession().end();
-                vrButton.textContent = 'Enter VR';
-                statusText.textContent = 'Status: Desktop Mode';
-            } else {
-                navigator.xr.requestSession('immersive-vr', {
-                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-                }).then(session => {
-                    renderer.xr.setSession(session);
-                    vrButton.textContent = 'Exit VR';
-                    statusText.textContent = 'Status: VR Mode';
-                    console.log('VR Session Started');
-                    
-                    // Setup VR controllers when session starts
-                    setupVRControllers();
-                    
-                    session.addEventListener('end', () => {
-                        vrButton.textContent = 'Enter VR';
-                        statusText.textContent = 'Status: Desktop Mode';
-                        console.log('VR Session Ended');
-                    });
-                }).catch(err => {
-                    console.error('Failed to start VR:', err);
-                    statusText.textContent = 'Status: VR Failed - Check Console';
-                });
-            }
-        });
-
-        // Spawn Orbs on Click (desktop mode)
-        document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON') return;
-            if (renderer.xr.isPresenting) return; // Don't spawn orbs on click in VR mode
-            
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-            orb.position.set(
-                (Math.random() - 0.5) * 20,
-                (Math.random() - 0.5) * 10 + 5,
-                (Math.random() - 0.5) * 20 - 10
-            );
-            orb.userData = { time: performance.now() / 1000 };
-            orbs.push(orb);
-            scene.add(orb);
-        });
-
-        // Animation Loop
-        let time = 0;
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render() {
-            // Rotate Stars
-            stars.rotation.y += 0.0003;
-
-            // Animate Orbs
-            time = performance.now() / 1000;
-            orbs.forEach((orb, index) => {
-                const elapsed = time - orb.userData.time;
-                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
-                orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
-                orb.position.y += 0.005;
-                if (elapsed > 30) {
-                    scene.remove(orb);
-                    orbs.splice(index, 1);
+                    // Update display
+                    setTimeout(() => {
+                        document.getElementById('currentNote').textContent = `Current Balungan: ${note} (Irama: ${currentIrama})`;
+                    }, i * baseTime * 1000);
                 }
-            });
-
-            renderer.render(scene, camera);
+            }
         }
-        animate();
 
-        // Resize Handling
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // Transition to the next irama
+        function transitionIrama() {
+            const iramaSelect = document.getElementById('irama');
+            if (currentIrama === 'lancer') {
+                currentIrama = 'tanggung';
+                iramaSelect.value = 'tanggung';
+            } else if (currentIrama === 'tanggung') {
+                currentIrama = 'dados';
+                iramaSelect.value = 'dados';
+            } else {
+                currentIrama = 'lancer';
+                iramaSelect.value = 'lancer';
+            }
+            playGamelan(); // Replay with new irama
+        }
+
+        // Stop all oscillators
+        function stopGamelan() {
+            oscillators.forEach(osc => osc.stop());
+            oscillators = [];
+            document.getElementById('currentNote').textContent = 'Current Balungan: Stopped';
+        }
+
+        // Sync irama selection with currentIrama
+        document.getElementById('irama').addEventListener('change', (e) => {
+            currentIrama = e.target.value;
+            playGamelan();
         });
     </script>
 </body>
