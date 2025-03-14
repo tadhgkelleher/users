@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Healing Prototype</title>
+    <title>Three.js Meditation App</title>
     <script src="./three.min.js"></script>
     <style>
         body {
@@ -19,13 +19,11 @@
             font-family: Arial, sans-serif;
             z-index: 1;
         }
-        #breathingButton {
-            display: none;
+        button {
             padding: 10px 20px;
             font-size: 16px;
-        }
-        button, input {
             margin: 5px 0;
+            cursor: pointer;
         }
         canvas {
             display: block;
@@ -35,94 +33,131 @@
 <body>
     <!-- UI -->
     <div id="ui">
-        <label for="painLevel">Pain Level (1-10): </label>
-        <input type="range" id="painLevel" min="1" max="10" value="5">
-        <br>
-        <button id="startButton">Start</button>
-        <button id="breathingButton">Click with each inhalation</button>
-        <p id="instructions">Set your pain level and click Start. Then, click when the sphere starts expanding (every 10s).</p>
-        <p id="counterDisplay">Matches: 0</p>
+        <button id="enterVRButton">Enter VR</button>
+        <p id="instructions">Click anywhere to spawn a meditation orb. Breathe with the rhythm of the glowing lights.</p>
     </div>
+
+    <!-- Audio -->
+    <audio id="ambientSound" loop>
+        <source src="./ambient.mp3" type="audio/mp3">
+        <!-- Placeholder: replace with your local file or a hosted URL -->
+        <!-- Example: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
+        Your browser does not support the audio element.
+    </audio>
 
     <!-- Three.js Logic -->
     <script>
         // Scene Setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.xr.enabled = true; // Enable WebXR for VR
         document.body.appendChild(renderer.domElement);
 
-        // Sphere
-        const geometry = new THREE.SphereGeometry(1.25, 32, 32);
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red
-        const sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(0, 0, -5);
-        scene.add(sphere);
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 1);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+        pointLight.position.set(0, 10, 10);
+        scene.add(pointLight);
 
-        // Background (Sky-like)
-        scene.background = new THREE.Color(0x87CEEB);
+        // Floating Islands
+        const islandGeometry = new THREE.SphereGeometry(5, 32, 32);
+        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22, shininess: 10 });
+        for (let i = 0; i < 5; i++) {
+            const island = new THREE.Mesh(islandGeometry, islandMaterial);
+            island.position.set(
+                (Math.random() - 0.5) * 50,
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 50 - 20
+            );
+            scene.add(island);
+        }
+
+        // Starry Sky
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
+        const starVertices = [];
+        for (let i = 0; i < 1000; i++) {
+            starVertices.push(
+                (Math.random() - 0.5) * 200,
+                (Math.random() - 0.5) * 200,
+                (Math.random() - 0.5) * 200
+            );
+        }
+        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+
+        // Meditation Orbs
+        const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
+        const orbs = [];
 
         // Camera Position
-        camera.position.z = 5;
+        camera.position.set(0, 5, 10);
 
-        // Animation Variables
-        const period = 10; // 10s cycle
-        let windowSize = 1;
-        let startTime;
-        let counter = 0;
-        let isStarted = false;
-        let scale = 1;
+        // Audio
+        const audio = document.getElementById('ambientSound');
+        audio.play().catch(e => console.log('Audio playback failed:', e));
 
-        // DOM Elements
-        const painLevelInput = document.getElementById('painLevel');
-        const startButton = document.getElementById('startButton');
-        const breathingButton = document.getElementById('breathingButton');
-        const counterDisplay = document.getElementById('counterDisplay');
-
-        // Adjust timing window based on pain level
-        painLevelInput.addEventListener('input', () => {
-            const painLevel = parseInt(painLevelInput.value);
-            windowSize = 0.5 + (painLevel - 1) / 9 * 1.5; // 0.5s to 2s
-        });
-
-        // Start the experience
-        startButton.addEventListener('click', () => {
-            startTime = performance.now() / 1000;
-            isStarted = true;
-            startButton.style.display = 'none';
-            breathingButton.style.display = 'block';
-        });
-
-        // Handle breathing button clicks
-        breathingButton.addEventListener('click', () => {
-            if (!isStarted) return;
-
-            const currentTime = performance.now() / 1000;
-            const t = currentTime - startTime;
-            const closestTarget = Math.round(t / period) * period;
-            const diff = Math.abs(t - closestTarget);
-
-            if (diff < windowSize) {
-                counter++;
+        // VR Button
+        const vrButton = document.getElementById('enterVRButton');
+        vrButton.addEventListener('click', () => {
+            if (renderer.xr.isPresenting) {
+                renderer.xr.getSession().end();
+                vrButton.textContent = 'Enter VR';
             } else {
-                counter = 0;
+                renderer.xr.enabled = true;
+                navigator.xr.requestSession('immersive-vr').then(session => {
+                    renderer.xr.setSession(session);
+                    vrButton.textContent = 'Exit VR';
+                }).catch(err => console.log('VR not available:', err));
             }
+        });
 
-            counterDisplay.textContent = `Matches: ${counter}`;
-            material.color.setHex(counter >= 3 ? 0x00ff00 : 0xff0000); // Green or Red
+        // Check VR Availability
+        navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+            vrButton.disabled = !supported;
+            vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
+        });
+
+        // Spawn Orbs on Click
+        document.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') return; // Ignore button clicks
+            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+            orb.position.set(
+                (Math.random() - 0.5) * 20,
+                (Math.random() - 0.5) * 10 + 5,
+                (Math.random() - 0.5) * 20 - 10
+            );
+            orb.userData = { time: performance.now() / 1000 };
+            orbs.push(orb);
+            scene.add(orb);
         });
 
         // Animation Loop
+        let time = 0;
         function animate() {
             requestAnimationFrame(animate);
 
-            if (isStarted) {
-                const elapsed = (performance.now() / 1000) - startTime;
-                const phase = (elapsed % period) / period; // 0 to 1 over 10s
-                scale = 1 + 0.5 * Math.sin(phase * Math.PI * 2); // 1 to 1.5 and back
-                sphere.scale.set(scale, scale, scale);
-            }
+            // Rotate Stars
+            stars.rotation.y += 0.001;
+
+            // Animate Orbs (Breathing Rhythm)
+            time = performance.now() / 1000;
+            orbs.forEach((orb, index) => {
+                const elapsed = time - orb.userData.time;
+                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5); // 10s cycle
+                orb.scale.set(scale, scale, scale);
+                orb.material.opacity = Math.max(0.2, 1 - elapsed / 20); // Fade out over 20s
+                orb.position.y += 0.01; // Float upward
+                if (elapsed > 20) {
+                    scene.remove(orb);
+                    orbs.splice(index, 1);
+                }
+            });
 
             renderer.render(scene, camera);
         }
