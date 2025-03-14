@@ -271,7 +271,7 @@
     <canvas id="mandalaCanvas" width="800" height="800"></canvas>
     <canvas id="vrCanvas"></canvas>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="./three.min.js"></script>
     <script>
         const mandalaCanvas = document.getElementById('mandalaCanvas');
         const ctx = mandalaCanvas.getContext('2d');
@@ -352,8 +352,8 @@
                     initAudio();
                     const source = audioContext.createMediaStreamSource(stream);
                     voiceAnalyser = audioContext.createAnalyser();
-                    voiceAnalyser.fftSize = 1024;
-                    voiceAnalyser.smoothingTimeConstant = 0.9;
+                    voiceAnalyser.fftSize = 2048; // Higher resolution for better pitch detection
+                    voiceAnalyser.smoothingTimeConstant = 0.7; // Slightly less smoothing for faster response
                     source.connect(voiceAnalyser);
 
                     const bufferLength = voiceAnalyser.fftSize;
@@ -365,17 +365,17 @@
                         const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
                         voiceAmplitude = getAmplitude(dataArray);
 
-                        if (pitch !== -1) {
+                        if (pitch !== -1 && pitch > 20 && pitch < 2000) { // Filter extreme pitches
                             pitchHistory.push(pitch);
-                            if (pitchHistory.length > 5) pitchHistory.shift();
+                            if (pitchHistory.length > 3) pitchHistory.shift();
                             voicePitch = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
                         } else {
-                            voicePitch *= 0.9;
+                            voicePitch *= 0.95; // Gentle decay
                         }
 
                         updateVoiceParams();
                         updateSoundMeter();
-                        if (voiceAmplitude > 0.1 || droneOscillator) animate();
+                        if (voiceAmplitude > 0.05 || droneOscillator) animate(); // Lowered threshold
                         requestAnimationFrame(detectPitch);
                     }
                     detectPitch();
@@ -421,15 +421,19 @@
         function getAmplitude(buf) {
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-            return Math.min(1, sum / buf.length / 0.5);
+            return Math.min(1, sum / buf.length / 0.3); // Increased sensitivity
         }
 
         function updateVoiceParams() {
-            const stability = voicePitch > 0 ? 1 - Math.abs(voicePitch - params.baseFreq) / 200 : 0;
-            if (voiceAmplitude > 0.1 && stability > 0.8) {
-                params.segments = Math.min(20, params.segments + 1);
+            // More responsive segment adjustment based on amplitude and pitch
+            if (voiceAmplitude > 0.05) {
+                params.segments = Math.min(30, Math.max(3, params.segments + voiceAmplitude * 2));
+                params.initialRadius = Math.min(400, 200 + voicePitch * 0.2); // Pitch affects size
+                params.modulation = 1 + voiceAmplitude; // Dynamic modulation
             } else {
-                params.segments = Math.max(3, params.segments - 0.5);
+                params.segments = Math.max(3, params.segments - 0.2);
+                params.initialRadius = Math.max(200, params.initialRadius - 1);
+                params.modulation = Math.max(1, params.modulation - 0.05);
             }
             needsRedraw = true;
         }
@@ -610,7 +614,7 @@
                 gradient.addColorStop(0.5, params.secondaryColor);
                 gradient.addColorStop(1, params.lineColor);
 
-                ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * audioFactor;
+                ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * (1 + audioFactor);
                 ctx.strokeStyle = gradient;
                 ctx.shadowBlur = 40 * audioFactor;
                 ctx.shadowColor = params.secondaryColor;
@@ -621,7 +625,7 @@
                         for (let i = 0; i < params.segments; i++) {
                             const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
                             const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 0.9);
+                            const dist = r * (0.6 + mod * 1.2); // Increased voice impact
                             ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
                         }
                         ctx.closePath();
@@ -708,17 +712,17 @@
 
             for (let i = 0; i < params.segments; i++) {
                 const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
-                const x = centerX + params.initialRadius * Math.cos(angle) * audioFactor;
-                const y = centerY + params.initialRadius * Math.sin(angle) * audioFactor;
+                const x = centerX + params.initialRadius * Math.cos(angle) * (1 + audioFactor * 0.5);
+                const y = centerY + params.initialRadius * Math.sin(angle) * (1 + audioFactor * 0.5);
                 drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
             }
 
             ctx.fillStyle = params.secondaryColor;
             for (let i = 0; i < 50; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * audioFactor;
+                const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
                 ctx.beginPath();
-                ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * audioFactor, 0, Math.PI * 2);
+                ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
                 ctx.fill();
             }
             needsRedraw = false;
@@ -784,11 +788,11 @@
         }
 
         function animate(timestamp) {
-            if (timestamp - lastUpdate > 50) {
+            if (timestamp - lastUpdate > 33) { // ~30 FPS
                 generateMandala(timeFactor);
                 lastUpdate = timestamp;
             }
-            if (voiceAmplitude > 0.1 || droneOscillator) {
+            if (voiceAmplitude > 0.05 || droneOscillator) {
                 animationId = requestAnimationFrame(animate);
             } else {
                 cancelAnimationFrame(animationId);
@@ -873,7 +877,7 @@
             generateMandala(0);
 
             const formTab = document.getElementById('formTab').querySelector('.control-panel');
-            createSliderControl('Segments', 3, 20, 1, params.segments, 'segments', formTab);
+            createSliderControl('Segments', 3, 30, 1, params.segments, 'segments', formTab);
             createSliderControl('Levels', 1, 6, 1, params.levels, 'levels', formTab);
             createSliderControl('Scale Factor', 0.1, 1.0, 0.05, params.scaleFactor, 'scaleFactor', formTab);
             createSliderControl('Initial Radius', 50, 400, 10, params.initialRadius, 'initialRadius', formTab);
