@@ -1,568 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Techno Buddha: VR Mandala</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Orbitron&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-      background: radial-gradient(circle, #0a0015, #1a0033);
-      color: #ffd700;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      overflow: hidden;
-      touch-action: none; /* Prevent mobile scroll interference */
-    }
-    h1 {
-      font-family: 'Cinzel', serif;
-      font-size: clamp(2rem, 5vw, 3rem);
-      color: #ffcc00;
-      text-shadow: 0 0 10px #00ffcc;
-      margin: 20px 0;
-    }
-    #mandalaCanvas {
-      border: 4px solid #ffd700;
-      border-radius: 50%;
-      background: rgba(10, 0, 21, 0.9);
-      box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
-      width: clamp(300px, 90vw, 800px);
-      height: clamp(300px, 90vw, 800px);
-      margin: 20px auto;
-      display: block;
-      touch-action: pinch-zoom; /* Allow pinch but not page scroll */
-    }
-    #vrCanvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 20;
-      display: none;
-    }
-    button {
-      background: linear-gradient(135deg, #ff00ff, #00ffcc);
-      padding: 8px 16px;
-      border: 2px solid #ffd700;
-      border-radius: 8px;
-      color: #0a0015;
-      font-size: clamp(12px, 3vw, 14px);
-      font-weight: bold;
-      cursor: pointer;
-      margin: 5px;
-    }
-    button:hover {
-      background: linear-gradient(135deg, #00ffcc, #ff00ff);
-      box-shadow: 0 0 10px #ffd700;
-    }
-    .modal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(10, 0, 21, 0.95);
-      padding: 20px;
-      border: 2px solid #ffd700;
-      border-radius: 10px;
-      z-index: 100;
-      display: none;
-    }
-    .modal.active {
-      display: block;
-    }
-    #soundMeter {
-      position: fixed;
-      bottom: 10px;
-      left: 10px;
-      width: clamp(100px, 20vw, 150px);
-      height: 15px;
-      background: #1a0033;
-      border: 2px solid #00ffcc;
-      border-radius: 4px;
-    }
-    #soundBar {
-      height: 100%;
-      background: linear-gradient(90deg, #ff00ff, #ffd700);
-      transition: width 0.2s ease;
-    }
-    #soundInfo {
-      position: fixed;
-      bottom: 30px;
-      left: 10px;
-      color: #00ffcc;
-      font-size: clamp(0.7rem, 2vw, 0.9rem);
-      text-shadow: 0 0 5px #ffd700;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VR Healing Prototype</title>
+    <script src="/aframe.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #breathingButton {
+            display: none;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        button, input {
+            margin: 5px 0;
+        }
+    </style>
 </head>
 <body>
-  <h1>Techno Buddha: VR Mandala</h1>
+    <!-- A-Frame Scene -->
+    <a-scene>
+        <a-sphere id="breathingSphere" position="0 1.25 -5" radius="1.25" color="red"></a-sphere>
+        <a-sky color="#87CEEB"></a-sky> <!-- Light blue sky for calming effect -->
+    </a-scene>
 
-  <div class="controls">
-    <button id="settings">Mantras</button>
-    <button id="drone">Invoke Drone</button>
-    <button id="startVoice">Awaken Voice</button>
-    <button id="enterVR">Enter VR</button>
-  </div>
+    <!-- User Interface -->
+    <div id="ui">
+        <label for="painLevel">Pain Level (1-10): </label>
+        <input type="range" id="painLevel" min="1" max="10" value="5">
+        <br>
+        <button id="startButton">Start</button>
+        <button id="breathingButton">Click with each inhalation</button>
+        <p id="instructions">Set your pain level and click Start. Then, click the button when the sphere starts expanding (every 10 seconds).</p>
+        <p id="counterDisplay">Matches: 0</p>
+    </div>
 
-  <div id="settingsModal" class="modal">
-    <button onclick="applySetting('healing')">Healing (6 Hz)</button>
-    <button onclick="applySetting('sleep')">Sleep (2 Hz)</button>
-    <button onclick="applySetting('relax')">Relax (10 Hz)</button>
-    <button onclick="applySetting('enlighten')">Enlighten (7.83 Hz)</button>
-    <button onclick="applySetting('activate')">Activate (20 Hz)</button>
-  </div>
+    <!-- JavaScript Logic -->
+    <script>
+        // Constants and Variables
+        const period = 10; // Breathing cycle in seconds (10s = 6 breaths per minute)
+        let windowSize = 1; // Timing window in seconds, adjusted by pain level
+        let startTime; // Time when the experience starts
+        let counter = 0; // Consecutive matches
+        let isStarted = false; // State of the experience
 
-  <div id="soundMeter"><div id="soundBar" style="width: 0%;"></div></div>
-  <div id="soundInfo">Energy: 0% | Frequency: 0 Hz | Tempo: 0 BPM</div>
+        // DOM Elements
+        const painLevelInput = document.getElementById('painLevel');
+        const startButton = document.getElementById('startButton');
+        const breathingButton = document.getElementById('breathingButton');
+        const counterDisplay = document.getElementById('counterDisplay');
+        const sphere = document.querySelector('#breathingSphere');
 
-  <canvas id="mandalaCanvas"></canvas>
-  <canvas id="vrCanvas"></canvas>
-
-  <script src="./three.min.js"></script>
-  <script>
-    const mandalaCanvas = document.getElementById('mandalaCanvas');
-    const ctx = mandalaCanvas.getContext('2d');
-    const vrCanvas = document.getElementById('vrCanvas');
-    mandalaCanvas.width = Math.min(window.innerWidth * 0.9, 800);
-    mandalaCanvas.height = mandalaCanvas.width;
-
-    let animationId = null;
-    let audioContext, droneOscillator1, droneOscillator2, droneOscillator3, droneGain, lfo, kickOscillator, kickGain, voiceAnalyser;
-    let scene, camera, renderer, mandalaGroup;
-    let voicePitch = 0, smoothedAmplitude = 0, droneAmplitude = 0;
-    let rotationSpeed = 0, timeFactor = 0, totalRotation = 0, kickTime = 0;
-    let voiceInitialized = false;
-    let segments = 12, levels = 4;
-
-    const params = {
-      baseFreq: 108,
-      audibleFreq: 108,
-      kickTempo: 54,
-      initialRadius: 100,
-      scaleFactor: 0.5,
-      lineWidth: 2
-    };
-
-    // Audio Initialization
-    function initAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioContext.state === 'suspended') audioContext.resume();
-    }
-
-    function toggleDrone() {
-      initAudio();
-      if (droneOscillator1) {
-        droneOscillator1.stop();
-        droneOscillator2.stop();
-        droneOscillator3.stop();
-        lfo.stop();
-        kickOscillator.stop();
-        droneOscillator1 = null;
-        droneOscillator2 = null;
-        droneOscillator3 = null;
-        lfo = null;
-        kickOscillator = null;
-        kickGain = null;
-        droneAmplitude = 0;
-        document.getElementById('drone').textContent = 'Invoke Drone';
-      } else {
-        droneOscillator1 = audioContext.createOscillator();
-        droneOscillator2 = audioContext.createOscillator();
-        droneOscillator3 = audioContext.createOscillator();
-        droneGain = audioContext.createGain();
-        lfo = audioContext.createOscillator();
-        kickOscillator = audioContext.createOscillator();
-        kickGain = audioContext.createGain();
-
-        droneOscillator1.type = 'sawtooth';
-        droneOscillator2.type = 'sine';
-        droneOscillator3.type = 'triangle';
-        lfo.type = 'sine';
-        kickOscillator.type = 'sine';
-
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
-        lfo.frequency.value = 0.2;
-        kickOscillator.frequency.value = 60;
-        droneGain.gain.value = 0.2; // Louder drone
-        kickGain.gain.value = 0;
-        droneAmplitude = 0.2;
-
-        lfo.connect(droneGain.gain);
-        droneOscillator1.connect(droneGain);
-        droneOscillator2.connect(droneGain);
-        droneOscillator3.connect(droneGain);
-        droneGain.connect(audioContext.destination);
-        kickOscillator.connect(kickGain);
-        kickGain.connect(audioContext.destination);
-
-        droneOscillator1.start();
-        droneOscillator2.start();
-        droneOscillator3.start();
-        lfo.start();
-        kickOscillator.start();
-        document.getElementById('drone').textContent = 'Silence Drone';
-        updateDroneParams();
-      }
-    }
-
-    function updateDroneParams() {
-      if (droneOscillator1) {
-        rotationSpeed = droneAmplitude * 0.1 + smoothedAmplitude * 0.03;
-        const kickInterval = 60 / params.kickTempo;
-        kickTime += 1 / 60;
-        if (kickTime >= kickInterval) {
-          kickGain.gain.setValueAtTime(0.8 * (1 + smoothedAmplitude), audioContext.currentTime); // Louder kick
-          kickGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-          kickTime = 0;
-        }
-        requestAnimationFrame(updateDroneParams);
-      } else {
-        rotationSpeed = 0;
-      }
-    }
-
-    function initVoiceControl() {
-      if (voiceInitialized) return;
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(stream => {
-          initAudio();
-          const source = audioContext.createMediaStreamSource(stream);
-          voiceAnalyser = audioContext.createAnalyser();
-          voiceAnalyser.fftSize = 2048;
-          voiceAnalyser.smoothingTimeConstant = 0.9;
-          source.connect(voiceAnalyser);
-          voiceInitialized = true;
-          document.getElementById('startVoice').textContent = 'Voice Awakened';
-          console.log('Voice initialized');
-        })
-        .catch(e => {
-          console.error('Voice failed:', e);
-          document.getElementById('startVoice').textContent = 'Voice Failed';
+        // Adjust timing window based on pain level
+        painLevelInput.addEventListener('input', () => {
+            const painLevel = parseInt(painLevelInput.value);
+            windowSize = 0.5 + (painLevel - 1) / 9 * 1.5; // Ranges from 0.5s (pain=1) to 2s (pain=10)
         });
-    }
 
-    function updateVoice() {
-      if (!voiceInitialized || !voiceAnalyser) return;
-      const dataArray = new Float32Array(voiceAnalyser.fftSize);
-      voiceAnalyser.getFloatTimeDomainData(dataArray);
-      const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-      const rawAmplitude = getAmplitude(dataArray);
+        // Start the experience
+        startButton.addEventListener('click', () => {
+            startTime = performance.now() / 1000; // Current time in seconds
+            isStarted = true;
+            startButton.style.display = 'none';
+            breathingButton.style.display = 'block';
 
-      if (pitch !== -1 && pitch > 20 && pitch < 1000) voicePitch = pitch;
-      else voicePitch = params.audibleFreq;
+            // Start sphere animation (expands and contracts every 10s)
+            sphere.setAttribute('animation', {
+                property: 'scale',
+                from: '1 1 1',
+                to: '1.5 1.5 1.5',
+                dur: period * 1000 / 2, // 5s to expand, 5s to contract
+                easing: 'linear',
+                loop: true,
+                dir: 'alternate'
+            });
+        });
 
-      smoothedAmplitude = Math.max(rawAmplitude, smoothedAmplitude * 0.95);
-      segments = Math.floor(6 + smoothedAmplitude * 30); // 6 to 36
-      levels = Math.floor(1 + smoothedAmplitude * 7);    // 1 to 8
-      params.kickTempo = Math.round(voicePitch / 2);
-      updateSoundMeter();
-    }
+        // Handle breathing button clicks
+        breathingButton.addEventListener('click', () => {
+            if (!isStarted) return;
 
-    function autoCorrelate(buf, sampleRate) {
-      let rms = 0;
-      for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
-      rms = Math.sqrt(rms / buf.length);
-      if (rms < 0.01) return -1;
+            const currentTime = performance.now() / 1000;
+            const t = currentTime - startTime; // Time elapsed since start
+            const closestTarget = Math.round(t / period) * period; // Nearest target time (0, 10, 20, etc.)
+            const diff = Math.abs(t - closestTarget); // Difference from target
 
-      let r1 = 0, r2 = buf.length - 1, thres = 0.2;
-      for (let i = 0; i < buf.length / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-      for (let i = 1; i < buf.length / 2; i++) if (Math.abs(buf[buf.length - i]) < thres) { r2 = buf.length - i; break; }
+            // Check if click is within the timing window
+            if (diff < windowSize) {
+                counter++;
+            } else {
+                counter = 0; // Reset on mismatch
+            }
 
-      buf = buf.slice(r1, r2);
-      let c = new Array(buf.length).fill(0);
-      for (let i = 0; i < buf.length; i++)
-        for (let j = 0; j < buf.length - i; j++)
-          c[i] += buf[j] * buf[j + i];
-
-      let d = 0;
-      while (c[d] > c[d + 1]) d++;
-      let maxval = -1, maxpos = -1;
-      for (let i = d; i < buf.length; i++) {
-        if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-      }
-      return sampleRate / maxpos;
-    }
-
-    function getAmplitude(buf) {
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-      return Math.min(1, sum / buf.length / 0.25);
-    }
-
-    function updateSoundMeter() {
-      const energyPercent = Math.round(smoothedAmplitude * 100);
-      document.getElementById('soundBar').style.width = `${energyPercent}%`;
-      document.getElementById('soundInfo').textContent = `Energy: ${energyPercent}% | Frequency: ${Math.round(voicePitch)} Hz | Tempo: ${params.kickTempo} BPM`;
-    }
-
-    // Scrolling Controls
-    let lastY = 0;
-    mandalaCanvas.addEventListener('wheel', (e) => {
-      segments += Math.round(e.deltaY * -0.1);
-      segments = Math.max(6, Math.min(36, segments));
-      e.preventDefault();
-    });
-
-    mandalaCanvas.addEventListener('touchstart', (e) => {
-      lastY = e.touches[0].clientY;
-    });
-
-    mandalaCanvas.addEventListener('touchmove', (e) => {
-      const deltaY = lastY - e.touches[0].clientY;
-      segments += Math.round(deltaY * 0.1);
-      segments = Math.max(6, Math.min(36, segments));
-      lastY = e.touches[0].clientY;
-      e.preventDefault();
-    });
-
-    // 2D Mandala
-    function generateMandala() {
-      const centerX = mandalaCanvas.width / 2;
-      const centerY = mandalaCanvas.height / 2;
-      ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(totalRotation);
-      ctx.translate(-centerX, -centerY);
-
-      function drawRecursiveShape(x, y, radius, level) {
-        if (level > levels) return;
-
-        const gradient = ctx.createLinearGradient(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
-        gradient.addColorStop(0, '#ffd700');
-        gradient.addColorStop(1, '#ff00ff');
-
-        ctx.lineWidth = params.lineWidth * (1 - (level - 1) / levels * 0.5);
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * 2 * Math.PI;
-          const pointX = x + radius * Math.cos(angle);
-          const pointY = y + radius * Math.sin(angle);
-          if (i === 0) ctx.moveTo(pointX, pointY);
-          else ctx.lineTo(pointX, pointY);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = gradient;
-        ctx.stroke();
-
-        drawRecursiveShape(x, y, radius * params.scaleFactor, level + 1);
-      }
-
-      for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * 2 * Math.PI;
-        const x = centerX + params.initialRadius * Math.cos(angle);
-        const y = centerY + params.initialRadius * Math.sin(angle);
-        drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
-      }
-
-      ctx.restore();
-    }
-
-    // VR Initialization
-    function initVR() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-      renderer.xr.enabled = true;
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      mandalaGroup = new THREE.Group();
-      scene.add(mandalaGroup);
-
-      const voidGeometry = new THREE.SphereGeometry(600, 64, 64);
-      const voidMaterial = new THREE.MeshBasicMaterial({ color: 0x0a0015, side: THREE.BackSide });
-      scene.add(new THREE.Mesh(voidGeometry, voidMaterial));
-
-      const starCount = 2000;
-      const starPositions = new Float32Array(starCount * 3);
-      for (let i = 0; i < starCount; i++) {
-        const theta = Math.random() * 2 * Math.PI;
-        const phi = Math.acos(2 * Math.random() - 1);
-        const radius = 600 * Math.cbrt(Math.random());
-        starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-        starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-        starPositions[i * 3 + 2] = radius * Math.cos(phi);
-      }
-      const starGeometry = new THREE.BufferGeometry();
-      starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-      const starMaterial = new THREE.PointsMaterial({ color: 0xffd700, size: 1 });
-      scene.add(new THREE.Points(starGeometry, starMaterial));
-
-      updateVRMandala();
-      camera.position.z = 20; // Further back
-
-      let isVRActive = false;
-      document.getElementById('enterVR').addEventListener('click', async () => {
-        if (isVRActive) {
-          vrCanvas.style.display = 'none';
-          renderer.setAnimationLoop(null);
-          document.getElementById('enterVR').textContent = 'Enter VR';
-          isVRActive = false;
-          return;
-        }
-
-        try {
-          const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-          renderer.xr.setSession(session);
-          renderer.setAnimationLoop(animateVR);
-          vrCanvas.style.display = 'block';
-          document.getElementById('enterVR').textContent = 'Exit VR';
-          isVRActive = true;
-
-          if (!voiceInitialized) initVoiceControl();
-
-          session.addEventListener('end', () => {
-            vrCanvas.style.display = 'none';
-            renderer.setAnimationLoop(null);
-            document.getElementById('enterVR').textContent = 'Enter VR';
-            isVRActive = false;
-          });
-        } catch (e) {
-          console.error('VR failed:', e);
-          document.getElementById('enterVR').textContent = 'VR Failed';
-        }
-      });
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        mandalaCanvas.width = Math.min(window.innerWidth * 0.9, 800);
-        mandalaCanvas.height = mandalaCanvas.width;
-      });
-    }
-
-    function updateVRMandala() {
-      mandalaGroup.clear();
-
-      function createShape(radius, level) {
-        if (level > levels) return;
-
-        const geometry = new THREE.BufferGeometry();
-        const positions = [];
-        for (let i = 0; i < segments; i++) {
-          const angle = (i / segments) * 2 * Math.PI;
-          const x = radius * Math.cos(angle);
-          const y = radius * Math.sin(angle);
-          positions.push(x, y, 0);
-        }
-        positions.push(positions[0], positions[1], 0); // Close loop
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        const material = new THREE.LineBasicMaterial({ color: new THREE.Color().setHSL(level / levels, 1, 0.5) });
-        const line = new THREE.Line(geometry, material);
-        mandalaGroup.add(line);
-
-        createShape(radius * params.scaleFactor, level + 1);
-      }
-
-      for (let i = 0; i < segments; i++) {
-        const angle = (i / segments) * 2 * Math.PI;
-        const x = params.initialRadius * Math.cos(angle) / 20;
-        const y = params.initialRadius * Math.sin(angle) / 20;
-        const group = new THREE.Group();
-        group.position.set(x, y, 0);
-        createShape(params.initialRadius * params.scaleFactor / 20, 1);
-        mandalaGroup.add(group);
-      }
-
-      mandalaGroup.rotation.z = totalRotation;
-      mandalaGroup.position.z = Math.sin(timeFactor) * 2; // Subtle zoom
-    }
-
-    function animateVR() {
-      totalRotation += rotationSpeed;
-      timeFactor += 0.01;
-      updateVoice();
-      updateVRMandala();
-      renderer.render(scene, camera);
-    }
-
-    // Mantra Settings
-    function applySetting(setting) {
-      document.getElementById('settingsModal').classList.remove('active');
-      switch (setting) {
-        case 'healing':
-          params.baseFreq = 6;
-          params.audibleFreq = 54;
-          params.kickTempo = 54 / 2;
-          break;
-        case 'sleep':
-          params.baseFreq = 2;
-          params.audibleFreq = 36;
-          params.kickTempo = 36 / 2;
-          break;
-        case 'relax':
-          params.baseFreq = 10;
-          params.audibleFreq = 40;
-          params.kickTempo = 40 / 2;
-          break;
-        case 'enlighten':
-          params.baseFreq = 7.83;
-          params.audibleFreq = 108;
-          params.kickTempo = 108 / 2;
-          break;
-        case 'activate':
-          params.baseFreq = 20;
-          params.audibleFreq = 72;
-          params.kickTempo = 72 / 2;
-          break;
-      }
-      if (droneOscillator1) {
-        droneOscillator1.frequency.value = params.audibleFreq;
-        droneOscillator2.frequency.value = params.audibleFreq * 1.618;
-        droneOscillator3.frequency.value = params.audibleFreq * 2.718;
-      }
-      segments = 12;
-      levels = 4;
-      smoothedAmplitude = 0;
-      generateMandala();
-    }
-
-    function showSettingsModal() {
-      document.getElementById('settingsModal').classList.add('active');
-    }
-
-    // Animation Loop
-    function animate() {
-      if (animationId) cancelAnimationFrame(animationId);
-      totalRotation += rotationSpeed;
-      timeFactor += 0.01;
-      updateVoice();
-      generateMandala();
-      if (droneOscillator1 || smoothedAmplitude > 0.05) {
-        animationId = requestAnimationFrame(animate);
-      }
-    }
-
-    // Initialization
-    function init() {
-      document.getElementById('settings').addEventListener('click', () => {
-        initAudio();
-        showSettingsModal();
-      });
-      document.getElementById('drone').addEventListener('click', toggleDrone);
-      document.getElementById('startVoice').addEventListener('click', initVoiceControl);
-      initVR();
-      animate();
-    }
-
-    window.onload = () => {
-      if (typeof THREE === 'undefined') {
-        console.error('Three.js not loaded');
-      } else {
-        init();
-      }
-    };
-  </script>
+            // Update UI and provide feedback
+            counterDisplay.textContent = `Matches: ${counter}`;
+            if (counter >= 3) {
+                sphere.setAttribute('color', 'green'); // Success feedback
+            } else {
+                sphere.setAttribute('color', 'red'); // Default/mismatch feedback
+            }
+        });
+    </script>
 </body>
 </html>
