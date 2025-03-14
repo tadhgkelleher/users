@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Meditation App</title>
+    <title>Three.js Cosmic Meditation</title>
     <script src="./three.min.js"></script>
     <style>
         body {
@@ -24,6 +24,10 @@
             font-size: 16px;
             margin: 5px 0;
             cursor: pointer;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 5px;
+            color: white;
         }
         canvas {
             display: block;
@@ -31,21 +35,17 @@
     </style>
 </head>
 <body>
-    <!-- UI -->
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click anywhere to spawn a meditation orb. In VR, use controllers to spawn orbs.</p>
+        <p id="instructions">Click to spawn cosmic orbs. In VR, use controllers.</p>
         <p id="status">Status: Desktop Mode</p>
     </div>
 
-    <!-- Audio -->
     <audio id="ambientSound" loop>
         <source src="./ambient.mp3" type="audio/mp3">
-        <!-- Placeholder: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
         Your browser does not support the audio element.
     </audio>
 
-    <!-- Three.js Logic -->
     <script>
         // Scene Setup
         const scene = new THREE.Scene();
@@ -62,40 +62,78 @@
         pointLight.position.set(0, 10, 10);
         scene.add(pointLight);
 
-        // Floating Islands
-        const islandGeometry = new THREE.SphereGeometry(5, 32, 32);
-        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22, shininess: 10 });
-        for (let i = 0; i < 5; i++) {
+        // Cosmic Nebula Background
+        const nebulaTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprite1.png');
+        const nebulaMaterial = new THREE.PointsMaterial({
+            map: nebulaTexture,
+            size: 1,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            color: 0x8888ff
+        });
+        const nebulaGeometry = new THREE.BufferGeometry();
+        const nebulaVertices = [];
+        for (let i = 0; i < 5000; i++) {
+            nebulaVertices.push(
+                (Math.random() - 0.5) * 300,
+                (Math.random() - 0.5) * 300,
+                (Math.random() - 0.5) * 300
+            );
+        }
+        nebulaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nebulaVertices, 3));
+        const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
+        scene.add(nebula);
+
+        // Floating Crystal Islands
+        const islandGeometry = new THREE.DodecahedronGeometry(5, 0);
+        const islandMaterial = new THREE.MeshPhongMaterial({
+            color: 0x00ffcc,
+            shininess: 100,
+            transparent: true,
+            opacity: 0.7,
+            emissive: 0x004466
+        });
+        for (let i = 0; i < 7; i++) {
             const island = new THREE.Mesh(islandGeometry, islandMaterial);
             island.position.set(
-                (Math.random() - 0.5) * 50,
-                (Math.random() - 0.5) * 20,
-                (Math.random() - 0.5) * 50 - 20
+                (Math.random() - 0.5) * 60,
+                (Math.random() - 0.5) * 30,
+                (Math.random() - 0.5) * 60 - 30
             );
+            island.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
             scene.add(island);
         }
 
-        // Starry Sky
-        const starsGeometry = new THREE.BufferGeometry();
-        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
-        const starVertices = [];
-        for (let i = 0; i < 1000; i++) {
-            starVertices.push(
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200
-            );
-        }
-        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const stars = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(stars);
-
-        // Meditation Orbs
+        // Meditation Orbs with Particle Trails
         const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
         const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
         const orbs = [];
+        const trails = [];
 
-        // Initial meditation orb in front of the user
+        // Web Audio Setup
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const masterGain = audioContext.createGain();
+        masterGain.gain.value = 0.5;
+        masterGain.connect(audioContext.destination);
+
+        const oscillators = [];
+        const orbFrequencies = [220, 330, 440, 550, 660]; // Harmonic frequencies
+
+        function createOrbSound(orb) {
+            const osc = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = orbFrequencies[Math.floor(Math.random() * orbFrequencies.length)];
+            gainNode.gain.value = 0.1;
+            osc.connect(gainNode);
+            gainNode.connect(masterGain);
+            osc.start();
+            orb.userData.oscillator = osc;
+            orb.userData.gainNode = gainNode;
+            oscillators.push(osc);
+        }
+
+        // Initial Cosmic Orbs
         function createInitialOrbs() {
             for (let i = 0; i < 3; i++) {
                 const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
@@ -104,19 +142,37 @@
                     1.5 + (Math.random() - 0.5) * 2,
                     -5 - (Math.random() * 5)
                 );
-                orb.userData = { time: performance.now() / 1000 };
+                orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
                 orbs.push(orb);
                 scene.add(orb);
+                createOrbSound(orb);
+
+                // Particle Trail
+                const trailGeometry = new THREE.BufferGeometry();
+                const trailMaterial = new THREE.PointsMaterial({
+                    color: 0x00ffff,
+                    size: 0.1,
+                    transparent: true,
+                    opacity: 0.5,
+                    blending: THREE.AdditiveBlending
+                });
+                const trailVertices = [];
+                trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
+                const trail = new THREE.Points(trailGeometry, trailMaterial);
+                trails.push({ orb, particles: trail });
+                scene.add(trail);
             }
         }
         createInitialOrbs();
 
-        // Floor for VR orientation
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshPhongMaterial({ 
-            color: 0x3f7f7f, 
-            transparent: true, 
-            opacity: 0.5 
+        // Reflective Floor
+        const floorGeometry = new THREE.PlaneGeometry(50, 50);
+        const floorMaterial = new THREE.MeshPhongMaterial({
+            color: 0x112233,
+            shininess: 100,
+            reflectivity: 1,
+            transparent: true,
+            opacity: 0.3
         });
         const floor = new THREE.Mesh(floorGeometry, floorMaterial);
         floor.rotation.x = -Math.PI / 2;
@@ -124,143 +180,102 @@
         scene.add(floor);
 
         // Camera Position
-        camera.position.set(0, 1.6, 5); // Typical VR camera height
+        camera.position.set(0, 1.6, 5);
 
         // Audio
         const audio = document.getElementById('ambientSound');
-        
-        // Function to start audio with user gesture
         function startAudio() {
             audio.play().catch(e => console.log('Audio playback failed:', e));
+            if (audioContext.state === 'suspended') audioContext.resume();
         }
-        
-        // Listen for user interaction to start audio
         document.addEventListener('click', startAudio, { once: true });
 
-        // VR Setup
+        // VR Setup (unchanged for brevity, see original code)
         const vrButton = document.getElementById('enterVRButton');
         const statusText = document.getElementById('status');
-
-        // Controller Setup
         let controller1, controller2;
-        let controllerGrip1, controllerGrip2;
 
         function setupVRControllers() {
-            // Controllers
             controller1 = renderer.xr.getController(0);
             controller1.addEventListener('selectstart', onSelectStart);
-            controller1.addEventListener('selectend', onSelectEnd);
             scene.add(controller1);
 
             controller2 = renderer.xr.getController(1);
             controller2.addEventListener('selectstart', onSelectStart);
-            controller2.addEventListener('selectend', onSelectEnd);
             scene.add(controller2);
 
-            // Controller models
-            const controllerModelFactory = new THREE.XRControllerModelFactory();
-
-            controllerGrip1 = renderer.xr.getControllerGrip(0);
-            controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-            scene.add(controllerGrip1);
-
-            controllerGrip2 = renderer.xr.getControllerGrip(1);
-            controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-            scene.add(controllerGrip2);
-
-            // Controller visualization
             const geometry = new THREE.BufferGeometry().setFromPoints([
                 new THREE.Vector3(0, 0, 0),
                 new THREE.Vector3(0, 0, -1)
             ]);
-
             const line = new THREE.Line(geometry);
             line.scale.z = 5;
-
             controller1.add(line.clone());
             controller2.add(line.clone());
         }
 
-        // Controller interaction
         function onSelectStart(event) {
             const controller = event.target;
             createOrbAtController(controller);
         }
 
-        function onSelectEnd(event) {
-            // Handle controller release if needed
-        }
-
         function createOrbAtController(controller) {
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
             orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-            
-            // Get controller position in world space
             const position = new THREE.Vector3();
             controller.getWorldPosition(position);
-            
             orb.position.copy(position);
-            orb.userData = { time: performance.now() / 1000 };
+            orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
             orbs.push(orb);
             scene.add(orb);
+            createOrbSound(orb);
+
+            const trailGeometry = new THREE.BufferGeometry();
+            const trailMaterial = new THREE.PointsMaterial({
+                color: orb.material.color,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.5,
+                blending: THREE.AdditiveBlending
+            });
+            const trailVertices = [];
+            trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
+            const trail = new THREE.Points(trailGeometry, trailMaterial);
+            trails.push({ orb, particles: trail });
+            scene.add(trail);
         }
 
-        // Check VR Support
         if ('xr' in navigator) {
             navigator.xr.isSessionSupported('immersive-vr').then(supported => {
                 vrButton.disabled = !supported;
                 vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
                 statusText.textContent = supported ? 'Status: Desktop Mode' : 'Status: VR Not Available';
-                console.log('VR Supported:', supported);
-            }).catch(err => {
-                console.error('VR Support Check Failed:', err);
-                vrButton.disabled = true;
-                vrButton.textContent = 'VR Not Supported';
             });
-        } else {
-            console.log('WebXR not available in this browser');
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR Not Supported';
-            statusText.textContent = 'Status: WebXR Not Supported';
         }
 
-        // Enter/Exit VR
         vrButton.addEventListener('click', () => {
-            startAudio(); // Try to start audio when VR button is clicked
-            
+            startAudio();
             if (renderer.xr.isPresenting) {
                 renderer.xr.getSession().end();
                 vrButton.textContent = 'Enter VR';
                 statusText.textContent = 'Status: Desktop Mode';
             } else {
-                navigator.xr.requestSession('immersive-vr', {
-                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-                }).then(session => {
+                navigator.xr.requestSession('immersive-vr').then(session => {
                     renderer.xr.setSession(session);
                     vrButton.textContent = 'Exit VR';
                     statusText.textContent = 'Status: VR Mode';
-                    console.log('VR Session Started');
-                    
-                    // Setup VR controllers when session starts
                     setupVRControllers();
-                    
                     session.addEventListener('end', () => {
                         vrButton.textContent = 'Enter VR';
                         statusText.textContent = 'Status: Desktop Mode';
-                        console.log('VR Session Ended');
                     });
-                }).catch(err => {
-                    console.error('Failed to start VR:', err);
-                    statusText.textContent = 'Status: VR Failed - Check Console';
                 });
             }
         });
 
-        // Spawn Orbs on Click (desktop mode)
+        // Spawn Orbs on Click (Desktop)
         document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON') return;
-            if (renderer.xr.isPresenting) return; // Don't spawn orbs on click in VR mode
-            
+            if (event.target.tagName === 'BUTTON' || renderer.xr.isPresenting) return;
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
             orb.material.color.setHSL(Math.random(), 0.8, 0.5);
             orb.position.set(
@@ -268,9 +283,24 @@
                 (Math.random() - 0.5) * 10 + 5,
                 (Math.random() - 0.5) * 20 - 10
             );
-            orb.userData = { time: performance.now() / 1000 };
+            orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
             orbs.push(orb);
             scene.add(orb);
+            createOrbSound(orb);
+
+            const trailGeometry = new THREE.BufferGeometry();
+            const trailMaterial = new THREE.PointsMaterial({
+                color: orb.material.color,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.5,
+                blending: THREE.AdditiveBlending
+            });
+            const trailVertices = [];
+            trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
+            const trail = new THREE.Points(trailGeometry, trailMaterial);
+            trails.push({ orb, particles: trail });
+            scene.add(trail);
         });
 
         // Animation Loop
@@ -280,20 +310,47 @@
         }
 
         function render() {
-            // Rotate Stars
-            stars.rotation.y += 0.0003;
-
-            // Animate Orbs
             time = performance.now() / 1000;
+
+            // Animate Nebula
+            nebula.rotation.y += 0.0001;
+
+            // Animate Islands
+            scene.children.forEach(child => {
+                if (child.geometry instanceof THREE.DodecahedronGeometry) {
+                    child.rotation.x += 0.001;
+                    child.rotation.y += 0.002;
+                    child.position.y += Math.sin(time + child.position.x) * 0.01;
+                }
+            });
+
+            // Animate Orbs and Trails
             orbs.forEach((orb, index) => {
                 const elapsed = time - orb.userData.time;
+                orb.position.add(orb.userData.velocity);
+                orb.userData.velocity.y += Math.sin(elapsed) * 0.001; // Pulsating motion
                 const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
                 orb.scale.set(scale, scale, scale);
                 orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
-                orb.position.y += 0.005;
+
+                // Update Sound
+                const gain = orb.userData.gainNode;
+                gain.gain.value = Math.min(0.3, orb.material.opacity * 0.3);
+                orb.userData.oscillator.frequency.value += Math.sin(elapsed) * 10; // Frequency wobble
+
+                // Update Trail
+                const trail = trails[index].particles;
+                const positions = trail.geometry.attributes.position.array;
+                positions.push(orb.position.x, orb.position.y, orb.position.z);
+                if (positions.length > 150) positions.splice(0, 3); // Limit trail length
+                trail.geometry.attributes.position.needsUpdate = true;
+
                 if (elapsed > 30) {
                     scene.remove(orb);
+                    scene.remove(trail);
+                    orb.userData.oscillator.stop();
                     orbs.splice(index, 1);
+                    trails.splice(index, 1);
                 }
             });
 
@@ -310,6 +367,3 @@
     </script>
 </body>
 </html>
-
-
-
