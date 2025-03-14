@@ -278,7 +278,7 @@
         const vrCanvas = document.getElementById('vrCanvas');
         let animationId = null;
         let audioContext, droneOscillator, droneGain, voiceAnalyser;
-        let scene, camera, renderer, mandalaGroup;
+        let scene, camera, renderer, mandalaPlane;
         let voicePitch = 0;
         let voiceAmplitude = 0;
         let droneAmplitude = 0;
@@ -352,8 +352,8 @@
                     initAudio();
                     const source = audioContext.createMediaStreamSource(stream);
                     voiceAnalyser = audioContext.createAnalyser();
-                    voiceAnalyser.fftSize = 2048; // Higher resolution for better pitch detection
-                    voiceAnalyser.smoothingTimeConstant = 0.7; // Slightly less smoothing for faster response
+                    voiceAnalyser.fftSize = 2048;
+                    voiceAnalyser.smoothingTimeConstant = 0.7;
                     source.connect(voiceAnalyser);
 
                     const bufferLength = voiceAnalyser.fftSize;
@@ -365,17 +365,17 @@
                         const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
                         voiceAmplitude = getAmplitude(dataArray);
 
-                        if (pitch !== -1 && pitch > 20 && pitch < 2000) { // Filter extreme pitches
+                        if (pitch !== -1 && pitch > 20 && pitch < 2000) {
                             pitchHistory.push(pitch);
                             if (pitchHistory.length > 3) pitchHistory.shift();
                             voicePitch = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
                         } else {
-                            voicePitch *= 0.95; // Gentle decay
+                            voicePitch *= 0.95;
                         }
 
                         updateVoiceParams();
                         updateSoundMeter();
-                        if (voiceAmplitude > 0.05 || droneOscillator) animate(); // Lowered threshold
+                        if (voiceAmplitude > 0.05 || droneOscillator) animate();
                         requestAnimationFrame(detectPitch);
                     }
                     detectPitch();
@@ -421,15 +421,14 @@
         function getAmplitude(buf) {
             let sum = 0;
             for (let i = 0; i < buf.length; i++) sum += Math.abs(buf[i]);
-            return Math.min(1, sum / buf.length / 0.3); // Increased sensitivity
+            return Math.min(1, sum / buf.length / 0.3);
         }
 
         function updateVoiceParams() {
-            // More responsive segment adjustment based on amplitude and pitch
             if (voiceAmplitude > 0.05) {
                 params.segments = Math.min(30, Math.max(3, params.segments + voiceAmplitude * 2));
-                params.initialRadius = Math.min(400, 200 + voicePitch * 0.2); // Pitch affects size
-                params.modulation = 1 + voiceAmplitude; // Dynamic modulation
+                params.initialRadius = Math.min(400, 200 + voicePitch * 0.2);
+                params.modulation = 1 + voiceAmplitude;
             } else {
                 params.segments = Math.max(3, params.segments - 0.2);
                 params.initialRadius = Math.max(200, params.initialRadius - 1);
@@ -444,32 +443,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Shaders
-        const vertexShader = `
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            void main() {
-                vUv = uv;
-                vNormal = normal;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `;
-
-        const fragmentShader = `
-            uniform vec3 color1;
-            uniform vec3 color2;
-            uniform float time;
-            uniform float audioFactor;
-            varying vec2 vUv;
-            varying vec3 vNormal;
-            void main() {
-                vec3 baseColor = mix(color1, color2, vUv.y + sin(time) * 0.1);
-                float glow = audioFactor * 0.5;
-                vec3 finalColor = baseColor + glow;
-                gl_FragColor = vec4(finalColor, 1.0);
-            }
-        `;
-
+        // VR Initialization - 2D Plane
         function initVR() {
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -489,9 +463,14 @@
             renderer.xr.enabled = true;
             renderer.setSize(window.innerWidth, window.innerHeight);
 
-            mandalaGroup = new THREE.Group();
-            mandalaGroup.position.z = -10;
-            scene.add(mandalaGroup);
+            // Create a plane with the mandala canvas as texture
+            const texture = new THREE.CanvasTexture(mandalaCanvas);
+            const geometry = new THREE.PlaneGeometry(10, 10); // Size in VR space
+            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            mandalaPlane = new THREE.Mesh(geometry, material);
+            mandalaPlane.position.z = -5; // Position in front of the camera
+            scene.add(mandalaPlane);
+
             camera.position.z = 0;
 
             document.getElementById('enterVR').addEventListener('click', async () => {
@@ -520,86 +499,14 @@
             });
         }
 
-        function updateVRMandala() {
-            if (!mandalaGroup) return;
-            if (mandalaGroup.children.length === 0) {
-                generateRecursiveShape(0, 0, params.initialRadius * 0.05, 1);
-            }
-            const audioFactor = voiceAmplitude + droneAmplitude;
-            mandalaGroup.children.forEach(obj => {
-                if (obj.material.uniforms) {
-                    obj.material.uniforms.time.value = timeFactor;
-                    obj.material.uniforms.audioFactor.value = audioFactor;
-                    obj.material.uniforms.color1.value.set(params.lineColor);
-                    obj.material.uniforms.color2.value.set(params.secondaryColor);
-                }
-            });
-        }
-
-        function generateRecursiveShape(x, y, r, level) {
-            if (level > params.levels) return;
-            const audioFactor = voiceAmplitude + droneAmplitude;
-            const material = new THREE.ShaderMaterial({
-                vertexShader, fragmentShader,
-                uniforms: {
-                    time: { value: timeFactor },
-                    audioFactor: { value: audioFactor },
-                    color1: { value: new THREE.Color(params.lineColor) },
-                    color2: { value: new THREE.Color(params.secondaryColor) }
-                },
-                side: THREE.DoubleSide,
-                transparent: true,
-                blending: THREE.AdditiveBlending
-            });
-
-            const points = [];
-            for (let i = 0; i < params.segments; i++) {
-                const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
-                let dist = r;
-                switch (params.patternType) {
-                    case 'cymatic': dist = r * (0.6 + Math.sin(angle * level * 3 + timeFactor) * audioFactor * 0.9); break;
-                    case 'vortex': dist = r * (1 + Math.cos(angle) * 0.3 * audioFactor); break;
-                    case 'nebula': dist = r * (0.5 + Math.cos(i) * 0.7 * audioFactor); break;
-                    case 'chaos': dist = r * (0.3 + Math.sin(level) * 0.9 * audioFactor); break;
-                    case 'flower': dist = r * audioFactor * 0.6; break;
-                    case 'yantra': dist = r * audioFactor; break;
-                    case 'tunnel': dist = r * (1 - level / params.levels) * (1 + 0.3); break;
-                    case 'hypercube': dist = r * (0.6 + Math.cos(level) * audioFactor * 0.6); break;
-                }
-                points.push(new THREE.Vector3(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, Math.sin(angle + level) * r * 0.2 * audioFactor));
-            }
-
-            const curve = new THREE.CatmullRomCurve3(points, true);
-            const tubeGeometry = new THREE.TubeGeometry(curve, 64, 0.1 * (1 + voiceAmplitude), 8, true);
-            const tube = new THREE.Mesh(tubeGeometry, material);
-            mandalaGroup.add(tube);
-
-            const ringGeometry = new THREE.BufferGeometry();
-            const ringVertices = points.map(p => new THREE.Vector3(p.x, p.y, p.z * 0.5));
-            ringGeometry.setFromPoints(ringVertices);
-            const ring = new THREE.LineLoop(ringGeometry, new THREE.LineBasicMaterial({
-                color: params.secondaryColor,
-                transparent: true,
-                opacity: 0.8 + audioFactor * 0.2,
-                blending: THREE.AdditiveBlending
-            }));
-            mandalaGroup.add(ring);
-
-            for (let i = 0; i < params.segments; i++) {
-                const angle = (i / params.segments) * Math.PI * 2;
-                const nextX = x + Math.cos(angle) * r * audioFactor;
-                const nextY = y + Math.sin(angle) * r * audioFactor;
-                generateRecursiveShape(nextX, nextY, r * params.scaleFactor, level + 1);
-            }
-        }
-
         function animateVR() {
-            updateVRMandala();
-            mandalaGroup.rotation.z += rotationSpeed;
+            // Update the texture with the latest mandala canvas
+            mandalaPlane.material.map.needsUpdate = true;
+            mandalaPlane.rotation.z += rotationSpeed; // Keep drone rotation effect
             renderer.render(scene, camera);
         }
 
-        // 2D Mandala Generation
+        // 2D Mandala Generation (Used for both Desktop and VR)
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
             ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
@@ -625,7 +532,7 @@
                         for (let i = 0; i < params.segments; i++) {
                             const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
                             const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 1.2); // Increased voice impact
+                            const dist = r * (0.6 + mod * 1.2);
                             ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
                         }
                         ctx.closePath();
@@ -776,7 +683,6 @@
             if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
             needsRedraw = true;
             generateMandala(0);
-            updateVRMandala();
         }
 
         // Utility Functions
@@ -788,7 +694,7 @@
         }
 
         function animate(timestamp) {
-            if (timestamp - lastUpdate > 33) { // ~30 FPS
+            if (timestamp - lastUpdate > 33) {
                 generateMandala(timeFactor);
                 lastUpdate = timestamp;
             }
@@ -828,7 +734,6 @@
                 params[paramName] = isColor ? control.value : parseFloat(control.value);
                 needsRedraw = true;
                 generateMandala(0);
-                updateVRMandala();
             });
 
             controlRow.appendChild(label);
@@ -857,7 +762,6 @@
                 params[paramName] = control.value;
                 needsRedraw = true;
                 generateMandala(0);
-                updateVRMandala();
             });
 
             controlRow.appendChild(label);
