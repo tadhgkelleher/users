@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentic Gamelan Ensemble</title>
+    <title>Full Gamelan Ensemble</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -66,7 +66,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Authentic Gamelan Ensemble</h1>
+        <h1>Full Gamelan Ensemble</h1>
         <div class="controls">
             <input type="text" id="balunganInput" placeholder="Enter balungan (e.g., 2 3 5 6)" value="2 3 5 6">
             <select id="cycleLength">
@@ -74,123 +74,183 @@
                 <option value="8">Cycle: 8 beats</option>
                 <option value="16">Cycle: 16 beats</option>
             </select>
-            <select id="irama">
-                <option value="lancer">Irama Lancer (Fast)</option>
-                <option value="tanggung">Irama Tanggung (Medium)</option>
-                <option value="dados">Irama Dados (Slow)</option>
-            </select>
-            <button onclick="playGamelan()">Play Gamelan</button>
+            <button onclick="startGamelan()">Start Gamelan</button>
             <button onclick="stopGamelan()">Stop</button>
-            <button onclick="transitionIrama()">Next Irama</button>
+            <button onclick="transitionIrama()">Transition Irama</button>
         </div>
-        <div class="note-display" id="currentNote">Current Balungan: </div>
+        <div class="note-display" id="currentNote">Current Balungan: Stopped</div>
     </div>
 
     <script>
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         let oscillators = [];
-        let currentIrama = 'lancer'; // Default irama
+        let isPlaying = false;
+        let currentIrama = 'lancer';
+        let targetIramaTiming = 0.25; // Starting with lancer
+        let currentTiming = 0.25;
 
-        // Slendro scale frequencies (tuned closer to Javanese slendro)
+        // Slendro scale frequencies (Javanese approximation)
         const slendroScale = {
-            1: 240, // Adjusted for gamelan feel
+            1: 240,
             2: 270,
             3: 300,
             5: 360,
             6: 400
         };
 
-        // Gong sound (low frequency for gong ageng)
-        const gongFrequency = 55; // Deep tone for cycle end
-
-        // Irama timing multipliers (authentic density changes)
-        const iramaTimings = {
-            lancer: 0.25,   // Fast tempo, high density
-            tanggung: 0.5,  // Medium tempo
-            dados: 1.0      // Slow tempo, low density
+        // Instrument characteristics
+        const instruments = {
+            gong: { freq: 55, type: 'sine', gain: 0.5, decay: 2.0 },        // Gong ageng
+            kenong: { freqMult: 1.5, type: 'triangle', gain: 0.3, decay: 0.8 }, // Mid-range gong
+            balungan: { freqMult: 1, type: 'sine', gain: 0.3, decay: 0.5 },  // Core melody
+            bonangBarung: { freqMult: 2, type: 'triangle', gain: 0.2, decay: 0.4 }, // Mid elaboration
+            bonangPanerus: { freqMult: 4, type: 'square', gain: 0.1, decay: 0.2 },  // High elaboration
+            peking: { freqMult: 2, type: 'sawtooth', gain: 0.15, decay: 0.3 } // Fast interlocking
         };
 
-        // Create an oscillator with gain
-        function createOscillator(frequency, type = 'sine', gainValue = 0.2, duration = 0.5) {
+        // Irama timings
+        const iramaTimings = {
+            lancer: 0.25,   // Fast
+            tanggung: 0.5,  // Medium
+            dados: 1.0      // Slow
+        };
+
+        // Create oscillator with envelope
+        function createOscillator(frequency, type, gainValue, decay, startTime) {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             oscillator.type = type;
-            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
+            oscillator.frequency.setValueAtTime(frequency, startTime);
+            gainNode.gain.setValueAtTime(gainValue, startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + decay);
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            return { oscillator, gainNode };
+            oscillator.start(startTime);
+            oscillator.stop(startTime + decay);
+            return oscillator;
         }
 
-        // Play the gamelan arrangement
-        function playGamelan() {
-            stopGamelan();
-            const balungan = document.getElementById('balunganInput').value.split(' ').map(Number);
-            const cycleLength = parseInt(document.getElementById('cycleLength').value);
-            const baseTime = iramaTimings[currentIrama];
-            let time = audioContext.currentTime;
-
-            // Repeat balungan for the cycle length
-            for (let i = 0; i < cycleLength; i++) {
-                const note = balungan[i % balungan.length];
+        // Play gamelan cycle
+        function playCycle(startTime, balungan, cycleLength) {
+            balungan.forEach((note, index) => {
                 if (slendroScale[note]) {
-                    // Balungan (core melody) - sine wave
-                    const balunganOsc = createOscillator(slendroScale[note], 'sine', 0.3, baseTime);
-                    balunganOsc.oscillator.start(time + i * baseTime);
-                    balunganOsc.oscillator.stop(time + (i + 1) * baseTime);
-                    oscillators.push(balunganOsc.oscillator);
+                    const beatTime = startTime + index * currentTiming;
+                    const baseFreq = slendroScale[note];
 
-                    // Elaboration (bonang-like) - triangle wave, faster in higher irama
-                    const elabOsc = createOscillator(slendroScale[note] * 2, 'triangle', 0.1, baseTime / 2);
-                    elabOsc.oscillator.start(time + i * baseTime + baseTime * 0.1);
-                    elabOsc.oscillator.stop(time + (i + 1) * baseTime);
-                    oscillators.push(elabOsc.oscillator);
+                    // Balungan
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.balungan.freqMult,
+                        instruments.balungan.type,
+                        instruments.balungan.gain,
+                        instruments.balungan.decay,
+                        beatTime
+                    ));
 
-                    // Gong ageng at cycle end
-                    if ((i + 1) % cycleLength === 0) {
-                        const gongOsc = createOscillator(gongFrequency, 'sine', 0.5, 1.5);
-                        gongOsc.oscillator.start(time + i * baseTime);
-                        gongOsc.gainNode.gain.exponentialRampToValueAtTime(0.001, time + (i + 1) * baseTime + 1.5);
-                        gongOsc.oscillator.stop(time + (i + 1) * baseTime + 1.5);
-                        oscillators.push(gongOsc.oscillator);
+                    // Bonang Barung (mid-range elaboration)
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.bonangBarung.freqMult,
+                        instruments.bonangBarung.type,
+                        instruments.bonangBarung.gain,
+                        instruments.bonangBarung.decay,
+                        beatTime + currentTiming * 0.1
+                    ));
+
+                    // Bonang Panerus (high, dense elaboration)
+                    for (let i = 0; i < 2; i++) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.bonangPanerus.freqMult,
+                            instruments.bonangPanerus.type,
+                            instruments.bonangPanerus.gain,
+                            instruments.bonangPanerus.decay,
+                            beatTime + (currentTiming / 2) * i
+                        ));
+                    }
+
+                    // Peking (fast interlocking)
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.peking.freqMult,
+                        instruments.peking.type,
+                        instruments.peking.gain,
+                        instruments.peking.decay,
+                        beatTime + currentTiming * 0.05
+                    ));
+
+                    // Kenong (every 2 beats)
+                    if (index % 2 === 0) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.kenong.freqMult,
+                            instruments.kenong.type,
+                            instruments.kenong.gain,
+                            instruments.kenong.decay,
+                            beatTime
+                        ));
+                    }
+
+                    // Gong Ageng (cycle end)
+                    if ((index + 1) % cycleLength === 0) {
+                        oscillators.push(createOscillator(
+                            instruments.gong.freq,
+                            instruments.gong.type,
+                            instruments.gong.gain,
+                            instruments.gong.decay,
+                            beatTime
+                        ));
                     }
 
                     // Update display
                     setTimeout(() => {
-                        document.getElementById('currentNote').textContent = `Current Balungan: ${note} (Irama: ${currentIrama})`;
-                    }, i * baseTime * 1000);
+                        document.getElementById('currentNote').textContent = 
+                            `Current Balungan: ${note} (Irama: ${currentIrama}, Timing: ${currentTiming.toFixed(2)}s)`;
+                    }, (beatTime - audioContext.currentTime) * 1000);
                 }
+            });
+
+            // Schedule next cycle
+            if (isPlaying) {
+                const nextCycleTime = startTime + cycleLength * currentTiming;
+                setTimeout(() => playCycle(nextCycleTime, balungan, cycleLength), 
+                    (nextCycleTime - audioContext.currentTime - 0.1) * 1000);
             }
         }
 
-        // Transition to the next irama
+        // Start continuous playback
+        function startGamelan() {
+            if (!isPlaying) {
+                isPlaying = true;
+                const balungan = document.getElementById('balunganInput').value.split(' ').map(Number);
+                const cycleLength = parseInt(document.getElementById('cycleLength').value);
+                playCycle(audioContext.currentTime, balungan, cycleLength);
+
+                // Gradually adjust timing for smooth transitions
+                setInterval(() => {
+                    if (Math.abs(currentTiming - targetIramaTiming) > 0.01) {
+                        currentTiming += (targetIramaTiming - currentTiming) * 0.05; // Smooth transition
+                    }
+                }, 100);
+            }
+        }
+
+        // Transition to next irama
         function transitionIrama() {
-            const iramaSelect = document.getElementById('irama');
             if (currentIrama === 'lancer') {
                 currentIrama = 'tanggung';
-                iramaSelect.value = 'tanggung';
+                targetIramaTiming = iramaTimings.tanggung;
             } else if (currentIrama === 'tanggung') {
                 currentIrama = 'dados';
-                iramaSelect.value = 'dados';
+                targetIramaTiming = iramaTimings.dados;
             } else {
                 currentIrama = 'lancer';
-                iramaSelect.value = 'lancer';
+                targetIramaTiming = iramaTimings.lancer;
             }
-            playGamelan(); // Replay with new irama
         }
 
-        // Stop all oscillators
+        // Stop playback
         function stopGamelan() {
+            isPlaying = false;
             oscillators.forEach(osc => osc.stop());
             oscillators = [];
             document.getElementById('currentNote').textContent = 'Current Balungan: Stopped';
         }
-
-        // Sync irama selection with currentIrama
-        document.getElementById('irama').addEventListener('change', (e) => {
-            currentIrama = e.target.value;
-            playGamelan();
-        });
     </script>
 </body>
 </html>
