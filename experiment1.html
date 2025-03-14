@@ -447,7 +447,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-       // VR Initialization
+   // VR Initialization
 function initVR() {
     if (!window.THREE) {
         console.error('Three.js not loaded');
@@ -479,81 +479,103 @@ function initVR() {
 
     camera.position.z = 0;
 
+    // Global variable to track if voice detection is active
+    let voiceDetectionActive = false;
+    let voiceDetectionInterval = null;
+
     document.getElementById('enterVR').addEventListener('click', async () => {
-        // Ensure audio is initialized
+        // First ensure audio context is initialized and resumed
         initAudio();
+        await audioContext.resume();
         
-        // Initialize voice control first and wait for it to complete
-        if (!voiceAnalyser) {
+        // Force initialize voice control if not already done
+        if (!voiceAnalyser || !voiceDetectionActive) {
+            // Clear any existing detection interval
+            if (voiceDetectionInterval) {
+                clearInterval(voiceDetectionInterval);
+                voiceDetectionInterval = null;
+            }
+            
             try {
-                // Create a promise-based version of voice control initialization
-                await new Promise((resolve, reject) => {
-                    navigator.mediaDevices.getUserMedia({ audio: true })
-                        .then(stream => {
-                            const source = audioContext.createMediaStreamSource(stream);
-                            voiceAnalyser = audioContext.createAnalyser();
-                            voiceAnalyser.fftSize = 2048;
-                            voiceAnalyser.smoothingTimeConstant = 0.7;
-                            source.connect(voiceAnalyser);
-                            console.log('Voice analyser initialized for VR');
-                            
-                            const bufferLength = voiceAnalyser.fftSize;
-                            const dataArray = new Float32Array(bufferLength);
-                            const pitchHistory = [];
-                            
-                            function detectPitch() {
-                                voiceAnalyser.getFloatTimeDomainData(dataArray);
-                                const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-                                voiceAmplitude = getAmplitude(dataArray);
-                                
-                                if (pitch !== -1 && pitch > 20 && pitch < 2000) {
-                                    pitchHistory.push(pitch);
-                                    if (pitchHistory.length > 3) pitchHistory.shift();
-                                    voicePitch = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
-                                } else {
-                                    voicePitch *= 0.95;
-                                }
-                                
-                                updateVoiceParams();
-                                updateSoundMeter();
-                                if (voiceAmplitude > 0.05 || droneOscillator) {
-                                    animate();
-                                }
-                                requestAnimationFrame(detectPitch);
-                            }
-                            detectPitch();
-                            resolve();
-                        })
-                        .catch(error => {
-                            console.error('Voice control initialization failed:', error);
-                            reject(error);
-                        });
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // If we already have an analyser, disconnect and recreate it
+                if (voiceAnalyser) {
+                    voiceAnalyser.disconnect();
+                }
+                
+                const source = audioContext.createMediaStreamSource(stream);
+                voiceAnalyser = audioContext.createAnalyser();
+                voiceAnalyser.fftSize = 2048;
+                voiceAnalyser.smoothingTimeConstant = 0.7;
+                source.connect(voiceAnalyser);
+                
+                console.log('Voice analyser initialized and connected for VR');
+                
+                const bufferLength = voiceAnalyser.fftSize;
+                const dataArray = new Float32Array(bufferLength);
+                
+                // Create a persistent loop for voice detection that won't be affected by animation frame throttling
+                function runVoiceDetection() {
+                    console.log("Voice detection running");
+                    voiceDetectionActive = true;
+                    
+                    if (voiceAnalyser) {
+                        voiceAnalyser.getFloatTimeDomainData(dataArray);
+                        const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+                        voiceAmplitude = getAmplitude(dataArray);
+                        
+                        if (pitch !== -1 && pitch > 20 && pitch < 2000) {
+                            voicePitch = pitch;
+                        } else {
+                            voicePitch *= 0.95;
+                        }
+                        
+                        updateVoiceParams();
+                        updateSoundMeter();
+                        
+                        // Force redraw on significant amplitude
+                        if (voiceAmplitude > 0.05) {
+                            needsRedraw = true;
+                        }
+                    }
+                }
+                
+                // Run voice detection at a fixed interval independent of animation frames
+                voiceDetectionInterval = setInterval(runVoiceDetection, 50);
+                
+                // Start animation loop immediately
+                needsRedraw = true;
+                animate();
+                
             } catch (error) {
-                console.error('Failed to initialize voice control:', error);
-                // Continue anyway - VR might still work without voice
+                console.error('Voice control failed to initialize:', error);
+                voiceDetectionActive = false;
             }
         }
         
-        // Make sure audio context is resumed
-        await audioContext.resume();
-        
-        // Now try to enter VR mode
+        // Try to enter VR mode
         try {
             const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+            
             session.addEventListener('end', () => {
                 vrCanvas.style.display = 'none';
                 renderer.setAnimationLoop(null);
                 document.getElementById('enterVR').textContent = 'Enter Temple';
+                
+                // Don't stop voice detection when exiting VR - keep it running
             });
-            renderer.xr.setSession(session);
-            renderer.setAnimationLoop(animateVR);
-            vrCanvas.style.display = 'block';
-            document.getElementById('enterVR').textContent = 'Sing & Drone';
             
-            // Force animation to start immediately
-            needsRedraw = true;
-            animate();
+            renderer.xr.setSession(session);
+            renderer.setAnimationLoop(() => {
+                // Always mark as needing redraw in VR
+                needsRedraw = true;
+                animateVR();
+            });
+            
+            vrCanvas.style.display = 'block';
+            document.getElementById('enterVR').textContent = 'Singing in VR';
+            
         } catch (err) {
             console.error('VR Failed:', err);
             document.getElementById('enterVR').textContent = 'VR Failed';
@@ -567,13 +589,19 @@ function initVR() {
     });
 }
 
-        function animateVR() {
-            mandalaPlane.material.map.needsUpdate = true;
-            mandalaPlane.rotation.z += rotationSpeed;
-            generateMandala(timeFactor); // Ensure mandala updates in VR
-            renderer.render(scene, camera);
-        }
-
+// Also modify the animateVR function to ensure the mandala is always updated
+function animateVR() {
+    mandalaPlane.material.map.needsUpdate = true;
+    mandalaPlane.rotation.z += rotationSpeed;
+    
+    // Always update the mandala in VR mode
+    generateMandala(timeFactor);
+    
+    // Update time factor independently
+    timeFactor += 0.01 + (voiceAmplitude * 0.05);
+    
+    renderer.render(scene, camera);
+}
         // 2D Mandala Generation
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
