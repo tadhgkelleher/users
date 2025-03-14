@@ -35,13 +35,13 @@
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
         <p id="instructions">Click anywhere to spawn a meditation orb. Breathe with the rhythm of the glowing lights.</p>
+        <p id="status">Status: Desktop Mode</p>
     </div>
 
     <!-- Audio -->
     <audio id="ambientSound" loop>
         <source src="./ambient.mp3" type="audio/mp3">
-        <!-- Placeholder: replace with your local file or a hosted URL -->
-        <!-- Example: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
+        <!-- Placeholder: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
         Your browser does not support the audio element.
     </audio>
 
@@ -52,7 +52,7 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true; // Enable WebXR for VR
+        renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
 
         // Lighting
@@ -102,30 +102,56 @@
         const audio = document.getElementById('ambientSound');
         audio.play().catch(e => console.log('Audio playback failed:', e));
 
-        // VR Button
+        // VR Setup
         const vrButton = document.getElementById('enterVRButton');
+        const statusText = document.getElementById('status');
+
+        // Check VR Support
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+                vrButton.disabled = !supported;
+                vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
+                statusText.textContent = supported ? 'Status: Desktop Mode' : 'Status: VR Not Available';
+                console.log('VR Supported:', supported);
+            }).catch(err => {
+                console.error('VR Support Check Failed:', err);
+                vrButton.disabled = true;
+                vrButton.textContent = 'VR Not Supported';
+            });
+        } else {
+            console.log('WebXR not available in this browser');
+            vrButton.disabled = true;
+            vrButton.textContent = 'VR Not Supported';
+            statusText.textContent = 'Status: WebXR Not Supported';
+        }
+
+        // Enter/Exit VR
         vrButton.addEventListener('click', () => {
             if (renderer.xr.isPresenting) {
                 renderer.xr.getSession().end();
                 vrButton.textContent = 'Enter VR';
+                statusText.textContent = 'Status: Desktop Mode';
             } else {
-                renderer.xr.enabled = true;
                 navigator.xr.requestSession('immersive-vr').then(session => {
                     renderer.xr.setSession(session);
                     vrButton.textContent = 'Exit VR';
-                }).catch(err => console.log('VR not available:', err));
+                    statusText.textContent = 'Status: VR Mode';
+                    console.log('VR Session Started');
+                    session.addEventListener('end', () => {
+                        vrButton.textContent = 'Enter VR';
+                        statusText.textContent = 'Status: Desktop Mode';
+                        console.log('VR Session Ended');
+                    });
+                }).catch(err => {
+                    console.error('Failed to start VR:', err);
+                    statusText.textContent = 'Status: VR Failed - Check Console';
+                });
             }
-        });
-
-        // Check VR Availability
-        navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-            vrButton.disabled = !supported;
-            vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
         });
 
         // Spawn Orbs on Click
         document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON') return; // Ignore button clicks
+            if (event.target.tagName === 'BUTTON') return;
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
             orb.position.set(
                 (Math.random() - 0.5) * 20,
@@ -145,14 +171,14 @@
             // Rotate Stars
             stars.rotation.y += 0.001;
 
-            // Animate Orbs (Breathing Rhythm)
+            // Animate Orbs
             time = performance.now() / 1000;
             orbs.forEach((orb, index) => {
                 const elapsed = time - orb.userData.time;
-                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5); // 10s cycle
+                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
                 orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 20); // Fade out over 20s
-                orb.position.y += 0.01; // Float upward
+                orb.material.opacity = Math.max(0.2, 1 - elapsed / 20);
+                orb.position.y += 0.01;
                 if (elapsed > 20) {
                     scene.remove(orb);
                     orbs.splice(index, 1);
