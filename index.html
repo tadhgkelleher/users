@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full Gamelan Ensemble</title>
+    <title>Complete Gamelan Ensemble</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -11,7 +11,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             color: #333;
         }
@@ -21,7 +21,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
         }
         h1 {
@@ -66,9 +66,15 @@
 </head>
 <body>
     <div class="container">
-        <h1>Full Gamelan Ensemble</h1>
+        <h1>Complete Gamelan Ensemble</h1>
         <div class="controls">
             <input type="text" id="balunganInput" placeholder="Enter balungan (e.g., 2 3 5 6)" value="2 3 5 6">
+            <select id="presetBalungan" onchange="loadPreset()">
+                <option value="">Select Preset Balungan</option>
+                <option value="2 3 5 6">Lancaran (2 3 5 6)</option>
+                <option value="6 5 3 2 6 5 3 2">Ketawang (6 5 3 2)</option>
+                <option value="3 2 1 6 5 3 2 1">Ladrang (3 2 1 6 5 3 2 1)</option>
+            </select>
             <select id="cycleLength">
                 <option value="4">Cycle: 4 beats</option>
                 <option value="8">Cycle: 8 beats</option>
@@ -86,10 +92,10 @@
         let oscillators = [];
         let isPlaying = false;
         let currentIrama = 'lancer';
-        let targetIramaTiming = 0.25; // Starting with lancer
+        let targetIramaTiming = 0.25;
         let currentTiming = 0.25;
 
-        // Slendro scale frequencies (Javanese approximation)
+        // Slendro scale (Javanese approximation)
         const slendroScale = {
             1: 240,
             2: 270,
@@ -98,102 +104,130 @@
             6: 400
         };
 
-        // Instrument characteristics
+        // Instrument definitions with texture
         const instruments = {
-            gong: { freq: 55, type: 'sine', gain: 0.5, decay: 2.0 },        // Gong ageng
-            kenong: { freqMult: 1.5, type: 'triangle', gain: 0.3, decay: 0.8 }, // Mid-range gong
-            balungan: { freqMult: 1, type: 'sine', gain: 0.3, decay: 0.5 },  // Core melody
-            bonangBarung: { freqMult: 2, type: 'triangle', gain: 0.2, decay: 0.4 }, // Mid elaboration
-            bonangPanerus: { freqMult: 4, type: 'square', gain: 0.1, decay: 0.2 },  // High elaboration
-            peking: { freqMult: 2, type: 'sawtooth', gain: 0.15, decay: 0.3 } // Fast interlocking
+            gong: { freq: 55, type: 'sine', gain: 0.6, decay: 2.5, filterFreq: 100 }, // Deep, resonant
+            kempul: { freqMult: 0.5, type: 'sine', gain: 0.4, decay: 1.5, filterFreq: 200 }, // Mid-low gong
+            kenong: { freqMult: 1.5, type: 'triangle', gain: 0.35, decay: 1.0, filterFreq: 800 }, // Bright mid
+            slenthem: { freqMult: 0.5, type: 'sine', gain: 0.3, decay: 1.2, filterFreq: 400 }, // Low balungan
+            demung: { freqMult: 1, type: 'sine', gain: 0.3, decay: 0.8, filterFreq: 600 }, // Low-mid balungan
+            saronBarung: { freqMult: 1, type: 'triangle', gain: 0.25, decay: 0.6, filterFreq: 1000 }, // Main balungan
+            saronPanerus: { freqMult: 2, type: 'square', gain: 0.2, decay: 0.4, filterFreq: 1200 }, // High balungan
+            bonangBarung: { freqMult: 2, type: 'triangle', gain: 0.2, decay: 0.5, filterFreq: 1500 }, // Mid elaboration
+            bonangPanerus: { freqMult: 4, type: 'square', gain: 0.15, decay: 0.3, filterFreq: 2000 }, // High elaboration
+            peking: { freqMult: 2, type: 'sawtooth', gain: 0.18, decay: 0.35, filterFreq: 1800 } // Interlocking
         };
 
-        // Irama timings
+        // Irama timings and pattern density
         const iramaTimings = {
-            lancer: 0.25,   // Fast
+            lancer: 0.25,   // Fast, dense
             tanggung: 0.5,  // Medium
-            dados: 1.0      // Slow
+            dados: 1.0      // Slow, sparse
         };
 
-        // Create oscillator with envelope
-        function createOscillator(frequency, type, gainValue, decay, startTime) {
+        // Create oscillator with filter and envelope
+        function createOscillator(frequency, type, gainValue, decay, filterFreq, startTime) {
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+
             oscillator.type = type;
             oscillator.frequency.setValueAtTime(frequency, startTime);
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(filterFreq, startTime);
             gainNode.gain.setValueAtTime(gainValue, startTime);
             gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + decay);
-            oscillator.connect(gainNode);
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
             gainNode.connect(audioContext.destination);
             oscillator.start(startTime);
             oscillator.stop(startTime + decay);
             return oscillator;
         }
 
-        // Play gamelan cycle
+        // Play gamelan cycle with irama-specific patterns
         function playCycle(startTime, balungan, cycleLength) {
             balungan.forEach((note, index) => {
                 if (slendroScale[note]) {
                     const beatTime = startTime + index * currentTiming;
                     const baseFreq = slendroScale[note];
 
-                    // Balungan
-                    oscillators.push(createOscillator(
-                        baseFreq * instruments.balungan.freqMult,
-                        instruments.balungan.type,
-                        instruments.balungan.gain,
-                        instruments.balungan.decay,
-                        beatTime
-                    ));
-
-                    // Bonang Barung (mid-range elaboration)
-                    oscillators.push(createOscillator(
-                        baseFreq * instruments.bonangBarung.freqMult,
-                        instruments.bonangBarung.type,
-                        instruments.bonangBarung.gain,
-                        instruments.bonangBarung.decay,
-                        beatTime + currentTiming * 0.1
-                    ));
-
-                    // Bonang Panerus (high, dense elaboration)
-                    for (let i = 0; i < 2; i++) {
+                    // Gong (end of cycle)
+                    if ((index + 1) % cycleLength === 0) {
                         oscillators.push(createOscillator(
-                            baseFreq * instruments.bonangPanerus.freqMult,
-                            instruments.bonangPanerus.type,
-                            instruments.bonangPanerus.gain,
-                            instruments.bonangPanerus.decay,
-                            beatTime + (currentTiming / 2) * i
+                            instruments.gong.freq, instruments.gong.type, instruments.gong.gain,
+                            instruments.gong.decay, instruments.gong.filterFreq, beatTime
                         ));
                     }
 
-                    // Peking (fast interlocking)
-                    oscillators.push(createOscillator(
-                        baseFreq * instruments.peking.freqMult,
-                        instruments.peking.type,
-                        instruments.peking.gain,
-                        instruments.peking.decay,
-                        beatTime + currentTiming * 0.05
-                    ));
+                    // Kempul (every 4 beats)
+                    if (index % 4 === 0) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.kempul.freqMult, instruments.kempul.type, instruments.kempul.gain,
+                            instruments.kempul.decay, instruments.kempul.filterFreq, beatTime
+                        ));
+                    }
 
                     // Kenong (every 2 beats)
                     if (index % 2 === 0) {
                         oscillators.push(createOscillator(
-                            baseFreq * instruments.kenong.freqMult,
-                            instruments.kenong.type,
-                            instruments.kenong.gain,
-                            instruments.kenong.decay,
-                            beatTime
+                            baseFreq * instruments.kenong.freqMult, instruments.kenong.type, instruments.kenong.gain,
+                            instruments.kenong.decay, instruments.kenong.filterFreq, beatTime
                         ));
                     }
 
-                    // Gong Ageng (cycle end)
-                    if ((index + 1) % cycleLength === 0) {
+                    // Slenthem (low balungan, every beat)
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.slenthem.freqMult, instruments.slenthem.type, instruments.slenthem.gain,
+                        instruments.slenthem.decay, instruments.slenthem.filterFreq, beatTime
+                    ));
+
+                    // Demung (low-mid balungan)
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.demung.freqMult, instruments.demung.type, instruments.demung.gain,
+                        instruments.demung.decay, instruments.demung.filterFreq, beatTime
+                    ));
+
+                    // Saron Barung (main balungan)
+                    oscillators.push(createOscillator(
+                        baseFreq * instruments.saronBarung.freqMult, instruments.saronBarung.type, instruments.saronBarung.gain,
+                        instruments.saronBarung.decay, instruments.saronBarung.filterFreq, beatTime
+                    ));
+
+                    // Saron Panerus (high balungan, doubles in lancer)
+                    let panerusCount = currentIrama === 'lancer' ? 2 : 1;
+                    for (let i = 0; i < panerusCount; i++) {
                         oscillators.push(createOscillator(
-                            instruments.gong.freq,
-                            instruments.gong.type,
-                            instruments.gong.gain,
-                            instruments.gong.decay,
-                            beatTime
+                            baseFreq * instruments.saronPanerus.freqMult, instruments.saronPanerus.type, instruments.saronPanerus.gain,
+                            instruments.saronPanerus.decay, instruments.saronPanerus.filterFreq, beatTime + (currentTiming / panerusCount) * i
+                        ));
+                    }
+
+                    // Bonang Barung (mid elaboration, denser in lancer)
+                    let barungCount = currentIrama === 'lancer' ? 2 : currentIrama === 'tanggung' ? 1 : 0.5;
+                    for (let i = 0; i < barungCount; i++) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.bonangBarung.freqMult, instruments.bonangBarung.type, instruments.bonangBarung.gain,
+                            instruments.bonangBarung.decay, instruments.bonangBarung.filterFreq, beatTime + (currentTiming / barungCount) * i
+                        ));
+                    }
+
+                    // Bonang Panerus (high elaboration, very dense in lancer)
+                    let panerusBonangCount = currentIrama === 'lancer' ? 4 : currentIrama === 'tanggung' ? 2 : 1;
+                    for (let i = 0; i < panerusBonangCount; i++) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.bonangPanerus.freqMult, instruments.bonangPanerus.type, instruments.bonangPanerus.gain,
+                            instruments.bonangPanerus.decay, instruments.bonangPanerus.filterFreq, beatTime + (currentTiming / panerusBonangCount) * i
+                        ));
+                    }
+
+                    // Peking (interlocking, fast in lancer)
+                    let pekingCount = currentIrama === 'lancer' ? 3 : currentIrama === 'tanggung' ? 2 : 1;
+                    for (let i = 0; i < pekingCount; i++) {
+                        oscillators.push(createOscillator(
+                            baseFreq * instruments.peking.freqMult, instruments.peking.type, instruments.peking.gain,
+                            instruments.peking.decay, instruments.peking.filterFreq, beatTime + (currentTiming / pekingCount) * i
                         ));
                     }
 
@@ -221,10 +255,10 @@
                 const cycleLength = parseInt(document.getElementById('cycleLength').value);
                 playCycle(audioContext.currentTime, balungan, cycleLength);
 
-                // Gradually adjust timing for smooth transitions
+                // Smooth timing transition
                 setInterval(() => {
                     if (Math.abs(currentTiming - targetIramaTiming) > 0.01) {
-                        currentTiming += (targetIramaTiming - currentTiming) * 0.05; // Smooth transition
+                        currentTiming += (targetIramaTiming - currentTiming) * 0.05;
                     }
                 }, 100);
             }
@@ -250,6 +284,14 @@
             oscillators.forEach(osc => osc.stop());
             oscillators = [];
             document.getElementById('currentNote').textContent = 'Current Balungan: Stopped';
+        }
+
+        // Load preset balungan
+        function loadPreset() {
+            const preset = document.getElementById('presetBalungan').value;
+            if (preset) {
+                document.getElementById('balunganInput').value = preset;
+            }
         }
     </script>
 </body>
