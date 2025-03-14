@@ -34,16 +34,13 @@
     <!-- UI -->
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click anywhere to spawn a meditation orb. In VR, use controllers to spawn orbs. Aim and 'shoot' (trigger) to split existing orbs.</p>
-        <p id="status">Status: Desktop Mode</p>
+        <p id="instructions">Click anywhere to spawn or split orbs. In VR, use controllers.</p>
+        <label for="spawnDistance">Spawn Distance:</label>
+        <input type="range" id="spawnDistance" min="0.5" max="5" value="1" step="0.1">
+        <br>
+        <label for="soundFrequency">Sound Frequency:</label>
+        <input type="range" id="soundFrequency" min="200" max="800" value="440" step="1">
     </div>
-
-    <!-- Audio -->
-    <audio id="ambientSound" loop>
-        <source src="./ambient.mp3" type="audio/mp3">
-        <!-- Placeholder: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
-        Your browser does not support the audio element.
-    </audio>
 
     <!-- Three.js Logic -->
     <script>
@@ -92,7 +89,7 @@
 
         // Meditation Orbs
         const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const smallerOrbGeometry = new THREE.SphereGeometry(0.25, 8, 8); // Smaller orbs
+        const smallerOrbGeometry = new THREE.SphereGeometry(0.25, 8, 8);
         const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
         const orbs = [];
 
@@ -112,18 +109,275 @@
         // Camera Position
         camera.position.set(0, 1.6, 5);
 
-        // Audio
-        const audio = document.getElementById('ambientSound');
+        // Audio Context and Oscillator
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
 
-        function startAudio() {
-            audio.play().catch(e => console.log('Audio playback failed:', e));
+        oscillator.type = 'sine'; // Can be 'sine', 'square', 'sawtooth', 'triangle'
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Default frequency
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);  //Volume
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+
+
+        // UI element for spawn distance
+        const spawnDistanceSlider = document.getElementById('spawnDistance');
+        let currentSpawnDistance = parseFloat(spawnDistanceSlider.value);
+
+        spawnDistanceSlider.addEventListener('input', () => {
+            currentSpawnDistance = parseFloat(spawnDistanceSlider.value);
+            console.log("Spawn Distance updated:", currentSpawnDistance); //Debugging
+        });
+
+        // UI element for sound frequency
+        const soundFrequencySlider = document.getElementById('soundFrequency');
+
+        soundFrequencySlider.addEventListener('input', () => {
+            oscillator.frequency.setValueAtTime(parseFloat(soundFrequencySlider.value), audioContext.currentTime);
+        });
+
+
+        function createOrbAtController(controller) {
+            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
+
+            const matrix = new THREE.Matrix4();
+            matrix.identity().extractRotation(controller.matrixWorld);
+
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyMatrix4(matrix);
+
+            const position = new THREE.Vector3();
+            controller.getWorldPosition(position);
+
+            const spawnPosition = new THREE.Vector3();
+            spawnPosition.copy(position);
+            const spawnDistance = currentSpawnDistance;  // Get the value *inside* this function
+            spawnPosition.add(direction.multiplyScalar(spawnDistance));
+
+            orb.position.copy(spawnPosition);
+            orb.userData = {
+                time: performance.now() / 1000,
+                velocity: new THREE.Vector3(),
+                rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1) // Add rotation
+            };
+            orbs.push(orb);
+            scene.add(orb);
         }
 
-        document.addEventListener('click', startAudio, { once: true });
 
-        // VR Setup
-        const vrButton = document.getElementById('enterVRButton');
-        const statusText = document.getElementById('status');
+        // Add some random scaling of newly created objects
+        function getRandomScaleFactor() {
+            return 0.5 + Math.random() * 1.5;  // Scales from 0.5 to 2
+        }
+
+
+        function shootOrb(controller) {
+            // Get controller position and direction
+            const position = new THREE.Vector3();
+            controller.getWorldPosition(position);
+
+            const matrix = new THREE.Matrix4();
+            matrix.identity().extractRotation(controller.matrixWorld);
+
+            const direction = new THREE.Vector3(0, 0, -1);
+            direction.applyMatrix4(matrix);
+
+            // Create a raycaster
+            const raycaster = new THREE.Raycaster(position, direction);
+
+            // Check for intersections with existing orbs
+            const intersects = raycaster.intersectObjects(orbs);
+
+            if (intersects.length > 0) {
+                // Split the first intersected orb
+                const intersectedOrb = intersects[0].object;
+                splitOrb(intersectedOrb);
+            } else {
+                // If no orbs are hit, create a new orb
+                createOrbAtController(controller);
+
+            }
+        }
+
+        function splitOrb(orbToSplit) {
+            // Remove the orb to be split
+            scene.remove(orbToSplit);
+            const index = orbs.indexOf(orbToSplit);
+            if (index > -1) {
+                orbs.splice(index, 1);
+            }
+
+            // Create smaller orbs
+            const numSmallerOrbs = 5; // Number of smaller orbs to create
+
+            for (let i = 0; i < numSmallerOrbs; i++) {
+                const smallerOrb = new THREE.Mesh(smallerOrbGeometry, orbMaterial.clone());
+                smallerOrb.material.color.setHSL(Math.random(), 0.8, 0.5);
+
+                // Position the smaller orbs slightly offset from the original orb's position
+                smallerOrb.position.copy(orbToSplit.position);
+                smallerOrb.position.x += (Math.random() - 0.5) * 0.5;
+                smallerOrb.position.y += (Math.random() - 0.5) * 0.5;
+                smallerOrb.position.z += (Math.random() - 0.5) * 0.5;
+
+
+                //Apply random scale to new orbs
+                const scaleFactor = getRandomScaleFactor();
+                smallerOrb.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+
+                // WILD FEATURE - Give each smaller orb a random velocity
+                const randomDirection = new THREE.Vector3(
+                    Math.random() - 0.5,
+                    Math.random() - 0.5,
+                    Math.random() - 0.5
+                ).normalize(); // Random direction
+                const speed = 0.1 + Math.random() * 0.2; // Random speed
+
+
+                smallerOrb.userData = {
+                    time: performance.now() / 1000,
+                    velocity: randomDirection.multiplyScalar(speed),
+                    rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1) //rotation
+                };
+                orbs.push(smallerOrb);
+                scene.add(smallerOrb);
+            }
+        }
+
+        // Check VR Support
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+                vrButton.disabled = !supported;
+                vrButton.textContent = 'Enter VR';
+                console.log('VR Supported:', supported);
+            }).catch(err => {
+                console.error('VR Support Check Failed:', err);
+                vrButton.disabled = true;
+                vrButton.textContent = 'VR Not Supported';
+            });
+        } else {
+            vrButton.disabled = true;
+            vrButton.textContent = 'VR Not Supported';
+        }
+
+        // Enter/Exit VR
+        vrButton.addEventListener('click', () => {
+
+
+            if (renderer.xr.isPresenting) {
+                renderer.xr.getSession().end();
+                vrButton.textContent = 'Enter VR';
+            } else {
+                navigator.xr.requestSession('immersive-vr', {
+                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+                }).then(session => {
+                    renderer.xr.setSession(session);
+                    vrButton.textContent = 'Exit VR';
+                    setupVRControllers();
+
+                    session.addEventListener('end', () => {
+                        vrButton.textContent = 'Enter VR';
+                    });
+                }).catch(err => {
+                    console.error('Failed to start VR:', err);
+                });
+            }
+        });
+
+        // Spawn Orbs on Click (desktop mode)
+        document.addEventListener('click', (event) => {
+            if (event.target.tagName === 'BUTTON') return;
+            if (renderer.xr.isPresenting) return;
+            shootOrbDesktop(event);
+        });
+
+
+        function shootOrbDesktop(event) {
+            // Get mouse click position in normalized device coordinates
+            const mouse = new THREE.Vector2();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Create a Raycaster from the camera
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+
+            // Intersect with existing orbs
+            const intersects = raycaster.intersectObjects(orbs);
+
+            if (intersects.length > 0) {
+                // Split the first intersected orb
+                const intersectedOrb = intersects[0].object;
+                splitOrb(intersectedOrb);
+            }
+            else { //If no orb is selected create one at the point of intersection with the floor
+                const intersectPoint = new THREE.Vector3();
+                const planeNormal = new THREE.Vector3(0, 1, 0);  // Up direction
+                const planeConstant = 0;                           // Distance from the origin
+                raycaster.ray.intersectPlane(new THREE.Plane(planeNormal, planeConstant), intersectPoint);
+
+                // Create the orb at the intersection point
+                if (intersectPoint) {
+                    const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
+                    orb.material.color.setHSL(Math.random(), 0.8, 0.5);
+                    orb.position.copy(intersectPoint);
+                    orb.position.y = 1 // Offset orb slightly above the floor.
+                    orb.userData = {
+                        time: performance.now() / 1000,
+                        velocity: new THREE.Vector3(),
+                        rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1)
+                    };
+                    orbs.push(orb);
+                    scene.add(orb);
+                }
+
+            }
+        }
+
+
+        // Animation Loop
+        let time = 0;
+        function animate() {
+            renderer.setAnimationLoop(render);
+        }
+
+        function render() {
+            // Rotate Stars
+            stars.rotation.y += 0.0003;
+
+            // Animate Orbs
+            time = performance.now() / 1000;
+            orbs.forEach((orb, index) => {
+                const elapsed = time - orb.userData.time;
+                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
+                orb.scale.set(scale, scale, scale);
+                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
+
+                // Apply velocity for independent movement
+                orb.position.x += orb.userData.velocity.x;
+                orb.position.y += orb.userData.velocity.y;
+                orb.position.z += orb.userData.velocity.z;
+
+                //Rotation
+                orb.rotation.x += orb.userData.rotationSpeed.x;
+                orb.rotation.y += orb.userData.rotationSpeed.y;
+                orb.rotation.z += orb.userData.rotationSpeed.z;
+
+                // Optionally, remove orbs that go too far away
+                if (orb.position.length() > 100) {
+                    scene.remove(orb);
+                    orbs.splice(index, 1);
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
 
         // Controller Setup
         let controller1, controller2;
@@ -174,207 +428,7 @@
             // Handle controller release if needed
         }
 
-        function createOrbAtController(controller) {
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
 
-            const matrix = new THREE.Matrix4();
-            matrix.identity().extractRotation(controller.matrixWorld);
-
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyMatrix4(matrix);
-
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-
-            const spawnDistance = 1;
-            const spawnPosition = new THREE.Vector3();
-            spawnPosition.copy(position);
-            spawnPosition.add(direction.multiplyScalar(spawnDistance));
-
-            orb.position.copy(spawnPosition);
-            orb.userData = { time: performance.now() / 1000 };
-            orbs.push(orb);
-            scene.add(orb);
-        }
-
-        function shootOrb(controller) {
-            // Get controller position and direction
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-
-            const matrix = new THREE.Matrix4();
-            matrix.identity().extractRotation(controller.matrixWorld);
-
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyMatrix4(matrix);
-
-            // Create a raycaster
-            const raycaster = new THREE.Raycaster(position, direction);
-
-            // Check for intersections with existing orbs
-            const intersects = raycaster.intersectObjects(orbs);
-
-            if (intersects.length > 0) {
-                // Split the first intersected orb
-                const intersectedOrb = intersects[0].object;
-                splitOrb(intersectedOrb);
-            } else {
-                // If no orbs are hit, create a new orb
-                createOrbAtController(controller);
-            }
-        }
-
-        function splitOrb(orbToSplit) {
-            // Remove the orb to be split
-            scene.remove(orbToSplit);
-            const index = orbs.indexOf(orbToSplit);
-            if (index > -1) {
-                orbs.splice(index, 1);
-            }
-
-            // Create smaller orbs
-            const numSmallerOrbs = 5; // Number of smaller orbs to create
-
-            for (let i = 0; i < numSmallerOrbs; i++) {
-                const smallerOrb = new THREE.Mesh(smallerOrbGeometry, orbMaterial.clone());
-                smallerOrb.material.color.setHSL(Math.random(), 0.8, 0.5);
-
-                // Position the smaller orbs slightly offset from the original orb's position
-                smallerOrb.position.copy(orbToSplit.position);
-                smallerOrb.position.x += (Math.random() - 0.5) * 0.5;
-                smallerOrb.position.y += (Math.random() - 0.5) * 0.5;
-                smallerOrb.position.z += (Math.random() - 0.5) * 0.5;
-
-                smallerOrb.userData = { time: performance.now() / 1000 };
-                orbs.push(smallerOrb);
-                scene.add(smallerOrb);
-            }
-        }
-
-        // Check VR Support
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = 'Enter VR';
-                statusText.textContent = 'Status: Desktop Mode';
-                console.log('VR Supported:', supported);
-            }).catch(err => {
-                console.error('VR Support Check Failed:', err);
-                vrButton.disabled = true;
-                vrButton.textContent = 'VR Not Supported';
-            });
-        } else {
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR Not Supported';
-            statusText.textContent = 'Status: WebXR Not Supported';
-        }
-
-        // Enter/Exit VR
-        vrButton.addEventListener('click', () => {
-            startAudio(); // Try to start audio when VR button is clicked
-
-            if (renderer.xr.isPresenting) {
-                renderer.xr.getSession().end();
-                vrButton.textContent = 'Enter VR';
-                statusText.textContent = 'Status: Desktop Mode';
-            } else {
-                navigator.xr.requestSession('immersive-vr', {
-                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-                }).then(session => {
-                    renderer.xr.setSession(session);
-                    vrButton.textContent = 'Exit VR';
-                    statusText.textContent = 'Status: VR Mode';
-                    console.log('VR Session Started');
-                    setupVRControllers();
-
-                    session.addEventListener('end', () => {
-                        vrButton.textContent = 'Enter VR';
-                        statusText.textContent = 'Status: Desktop Mode';
-                        console.log('VR Session Ended');
-                    });
-                }).catch(err => {
-                    console.error('Failed to start VR:', err);
-                    statusText.textContent = 'Status: VR Failed - Check Console';
-                });
-            }
-        });
-
-        // Spawn Orbs on Click (desktop mode)
-        document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON') return;
-            if (renderer.xr.isPresenting) return;
-            shootOrbDesktop(event);
-        });
-
-
-        function shootOrbDesktop(event) {
-            // Get mouse click position in normalized device coordinates
-            const mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Create a Raycaster from the camera
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            // Intersect with existing orbs
-            const intersects = raycaster.intersectObjects(orbs);
-
-            if (intersects.length > 0) {
-                // Split the first intersected orb
-                const intersectedOrb = intersects[0].object;
-                splitOrb(intersectedOrb);
-            }
-            else { //If no orb is selected create one at the point of intersection with the floor
-              const intersectPoint = new THREE.Vector3();
-              const planeNormal = new THREE.Vector3(0, 1, 0);  // Up direction
-              const planeConstant = 0;                           // Distance from the origin
-              raycaster.ray.intersectPlane(new THREE.Plane(planeNormal, planeConstant), intersectPoint);
-
-              // Create the orb at the intersection point
-              if (intersectPoint) {
-                  const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-                  orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-                  orb.position.copy(intersectPoint);
-                  orb.position.y = 1 // Offset orb slightly above the floor.
-                  orb.userData = { time: performance.now() / 1000 };
-                  orbs.push(orb);
-                  scene.add(orb);
-              }
-
-            }
-        }
-
-
-
-        // Animation Loop
-        let time = 0;
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render() {
-            // Rotate Stars
-            stars.rotation.y += 0.0003;
-
-            // Animate Orbs
-            time = performance.now() / 1000;
-            orbs.forEach((orb, index) => {
-                const elapsed = time - orb.userData.time;
-                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
-                orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
-                orb.position.y += 0.005;
-                if (elapsed > 30) {
-                    scene.remove(orb);
-                    orbs.splice(index, 1);
-                }
-            });
-
-            renderer.render(scene, camera);
-        }
-        animate();
 
         // Resize Handling
         window.addEventListener('resize', () => {
