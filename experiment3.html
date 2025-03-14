@@ -1,1 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Local Three.js Voice-Controlled Sound Experiment</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Sing/speak to influence spheres!<br>Click to create new spheres</div>
 
+    <!-- Only Three.js in the same folder -->
+    <script src="three.min.js"></script>
+
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Audio listener
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+
+        // Ambient background sound
+        const ambient = new THREE.Audio(listener);
+        const audioLoader = new THREE.AudioLoader();
+        audioLoader.load(
+            'ambient.mp3', // Local file
+            function(buffer) {
+                ambient.setBuffer(buffer);
+                ambient.setLoop(true);
+                ambient.setVolume(0.3);
+                ambient.play();
+            },
+            undefined,
+            function(err) { console.error('Error loading ambient sound:', err); }
+        );
+
+        // Microphone setup
+        let analyser, frequencyData;
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                const audioContext = new AudioContext();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                source.connect(analyser);
+                frequencyData = new Uint8Array(analyser.frequencyBinCount);
+            })
+            .catch(err => console.error('Microphone access denied:', err));
+
+        // Sound spheres
+        const soundSpheres = [];
+        
+        class SoundSphere {
+            constructor(position) {
+                const geometry = new THREE.SphereGeometry(0.2, 32, 32);
+                const material = new THREE.MeshPhongMaterial({
+                    color: Math.random() * 0xffffff,
+                    emissive: 0x333333
+                });
+                this.mesh = new THREE.Mesh(geometry, material);
+                this.mesh.position.copy(position);
+                scene.add(this.mesh);
+
+                this.sound = new THREE.PositionalAudio(listener);
+                this.sound.setRefDistance(1);
+                this.sound.setRolloffFactor(2);
+                audioLoader.load(
+                    'sphere-sound.mp3', // Local file
+                    (buffer) => {
+                        this.sound.setBuffer(buffer);
+                        this.sound.setLoop(true);
+                        this.sound.setVolume(0.5);
+                        this.sound.play();
+                    },
+                    undefined,
+                    (err) => { console.error('Error loading sphere sound:', err); }
+                );
+                this.mesh.add(this.sound);
+
+                this.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02,
+                    (Math.random() - 0.5) * 0.02
+                );
+                this.baseColor = this.mesh.material.color.getHex();
+                this.baseScale = 0.2;
+            }
+
+            update(voiceLevel, mousePos) {
+                this.mesh.position.add(this.velocity);
+                
+                if (Math.abs(this.mesh.position.x) > 5) this.velocity.x *= -1;
+                if (Math.abs(this.mesh.position.y) > 5) this.velocity.y *= -1;
+                if (Math.abs(this.mesh.position.z) > 5) this.velocity.z *= -1;
+
+                if (voiceLevel > 0) {
+                    const scaleFactor = 1 + voiceLevel * 0.02;
+                    this.mesh.scale.setScalar(this.baseScale * scaleFactor);
+                    this.sound.setVolume(Math.min(1, 0.5 + voiceLevel * 0.01));
+                    this.velocity.multiplyScalar(1 + voiceLevel * 0.001);
+                    this.mesh.material.color.setHSL(voiceLevel * 0.005, 1, 0.5);
+                } else {
+                    this.mesh.scale.setScalar(this.baseScale);
+                    this.mesh.material.color.setHex(this.baseColor);
+                }
+
+                if (mousePos) {
+                    const distance = this.mesh.position.distanceTo(mousePos);
+                    if (distance < 2) {
+                        const force = new THREE.Vector3()
+                            .subVectors(this.mesh.position, mousePos)
+                            .normalize()
+                            .multiplyScalar(0.05);
+                        this.velocity.add(force);
+                    }
+                }
+            }
+        }
+
+        // Lighting and floor
+        scene.add(new THREE.AmbientLight(0x404040));
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(0, 5, 5);
+        scene.add(pointLight);
+
+        const floor = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 20),
+            new THREE.MeshPhongMaterial({ color: 0x222222 })
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -2;
+        scene.add(floor);
+
+        // Initial spheres
+        for (let i = 0; i < 5; i++) {
+            const pos = new THREE.Vector3(
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8,
+                (Math.random() - 0.5) * 8
+            );
+            soundSpheres.push(new SoundSphere(pos));
+        }
+
+        // Mouse controls
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let mouseWorldPos = null;
+
+        document.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(floor);
+            if (intersects.length > 0) {
+                mouseWorldPos = intersects[0].point;
+                mouseWorldPos.y = 0;
+            }
+        });
+
+        document.addEventListener('click', () => {
+            if (mouseWorldPos) {
+                soundSpheres.push(new SoundSphere(mouseWorldPos.clone()));
+            }
+        });
+
+        camera.position.set(0, 5, 10);
+        camera.lookAt(0, 0, 0);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            let voiceLevel = 0;
+            if (analyser) {
+                analyser.getByteFrequencyData(frequencyData);
+                voiceLevel = frequencyData.reduce((a, b) => a + b) / frequencyData.length;
+            }
+
+            soundSpheres.forEach(sphere => {
+                sphere.update(voiceLevel, mouseWorldPos);
+                sphere.mesh.rotation.x += 0.01;
+                sphere.mesh.rotation.y += 0.01;
+            });
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
