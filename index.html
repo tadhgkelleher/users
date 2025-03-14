@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR Healing Prototype</title>
-   <script src="./aframe.min.js"></script>
+    <title>Three.js Healing Prototype</title>
+    <script src="./three.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -17,6 +17,7 @@
             left: 20px;
             color: white;
             font-family: Arial, sans-serif;
+            z-index: 1;
         }
         #breathingButton {
             display: none;
@@ -26,65 +27,71 @@
         button, input {
             margin: 5px 0;
         }
+        canvas {
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <!-- A-Frame Scene -->
-    <a-scene>
-        <a-sphere id="breathingSphere" position="0 1.25 -5" radius="1.25" color="red"></a-sphere>
-        <a-sky color="#87CEEB"></a-sky> <!-- Light blue sky for calming effect -->
-    </a-scene>
-
-    <!-- User Interface -->
+    <!-- UI -->
     <div id="ui">
         <label for="painLevel">Pain Level (1-10): </label>
         <input type="range" id="painLevel" min="1" max="10" value="5">
         <br>
         <button id="startButton">Start</button>
         <button id="breathingButton">Click with each inhalation</button>
-        <p id="instructions">Set your pain level and click Start. Then, click the button when the sphere starts expanding (every 10 seconds).</p>
+        <p id="instructions">Set your pain level and click Start. Then, click when the sphere starts expanding (every 10s).</p>
         <p id="counterDisplay">Matches: 0</p>
     </div>
 
-    <!-- JavaScript Logic -->
+    <!-- Three.js Logic -->
     <script>
-        // Constants and Variables
-        const period = 10; // Breathing cycle in seconds (10s = 6 breaths per minute)
-        let windowSize = 1; // Timing window in seconds, adjusted by pain level
-        let startTime; // Time when the experience starts
-        let counter = 0; // Consecutive matches
-        let isStarted = false; // State of the experience
+        // Scene Setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Sphere
+        const geometry = new THREE.SphereGeometry(1.25, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.set(0, 0, -5);
+        scene.add(sphere);
+
+        // Background (Sky-like)
+        scene.background = new THREE.Color(0x87CEEB);
+
+        // Camera Position
+        camera.position.z = 5;
+
+        // Animation Variables
+        const period = 10; // 10s cycle
+        let windowSize = 1;
+        let startTime;
+        let counter = 0;
+        let isStarted = false;
+        let scale = 1;
 
         // DOM Elements
         const painLevelInput = document.getElementById('painLevel');
         const startButton = document.getElementById('startButton');
         const breathingButton = document.getElementById('breathingButton');
         const counterDisplay = document.getElementById('counterDisplay');
-        const sphere = document.querySelector('#breathingSphere');
 
         // Adjust timing window based on pain level
         painLevelInput.addEventListener('input', () => {
             const painLevel = parseInt(painLevelInput.value);
-            windowSize = 0.5 + (painLevel - 1) / 9 * 1.5; // Ranges from 0.5s (pain=1) to 2s (pain=10)
+            windowSize = 0.5 + (painLevel - 1) / 9 * 1.5; // 0.5s to 2s
         });
 
         // Start the experience
         startButton.addEventListener('click', () => {
-            startTime = performance.now() / 1000; // Current time in seconds
+            startTime = performance.now() / 1000;
             isStarted = true;
             startButton.style.display = 'none';
             breathingButton.style.display = 'block';
-
-            // Start sphere animation (expands and contracts every 10s)
-            sphere.setAttribute('animation', {
-                property: 'scale',
-                from: '1 1 1',
-                to: '1.5 1.5 1.5',
-                dur: period * 1000 / 2, // 5s to expand, 5s to contract
-                easing: 'linear',
-                loop: true,
-                dir: 'alternate'
-            });
         });
 
         // Handle breathing button clicks
@@ -92,24 +99,40 @@
             if (!isStarted) return;
 
             const currentTime = performance.now() / 1000;
-            const t = currentTime - startTime; // Time elapsed since start
-            const closestTarget = Math.round(t / period) * period; // Nearest target time (0, 10, 20, etc.)
-            const diff = Math.abs(t - closestTarget); // Difference from target
+            const t = currentTime - startTime;
+            const closestTarget = Math.round(t / period) * period;
+            const diff = Math.abs(t - closestTarget);
 
-            // Check if click is within the timing window
             if (diff < windowSize) {
                 counter++;
             } else {
-                counter = 0; // Reset on mismatch
+                counter = 0;
             }
 
-            // Update UI and provide feedback
             counterDisplay.textContent = `Matches: ${counter}`;
-            if (counter >= 3) {
-                sphere.setAttribute('color', 'green'); // Success feedback
-            } else {
-                sphere.setAttribute('color', 'red'); // Default/mismatch feedback
+            material.color.setHex(counter >= 3 ? 0x00ff00 : 0xff0000); // Green or Red
+        });
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (isStarted) {
+                const elapsed = (performance.now() / 1000) - startTime;
+                const phase = (elapsed % period) / period; // 0 to 1 over 10s
+                scale = 1 + 0.5 * Math.sin(phase * Math.PI * 2); // 1 to 1.5 and back
+                sphere.scale.set(scale, scale, scale);
             }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Resize Handling
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
