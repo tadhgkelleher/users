@@ -3,367 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Cosmic Meditation</title>
-    <script src="./three.min.js"></script>
+    <title>Experiment Hub</title>
     <style>
-        body {
+        * {
             margin: 0;
-            overflow: hidden;
-            background-color: #000;
-        }
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
+            padding: 0;
+            box-sizing: border-box;
             font-family: Arial, sans-serif;
-            z-index: 1;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 5px 0;
-            cursor: pointer;
-            background: linear-gradient(45deg, #ff00ff, #00ffff);
-            border: none;
-            border-radius: 5px;
-            color: white;
+
+        body {
+            background: #1a1a1a;
+            color: #ffffff;
+            line-height: 1.6;
+            padding: 20px;
         }
-        canvas {
-            display: block;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        header {
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #00ffcc;
+            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+        }
+
+        .description {
+            font-size: 1.2rem;
+            color: #cccccc;
+            margin-bottom: 2rem;
+        }
+
+        .experiment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+        }
+
+        .experiment-card {
+            background: #2d2d2d;
+            padding: 2rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid #00ffcc33;
+        }
+
+        .experiment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.2);
+            border-color: #00ffcc;
+        }
+
+        .experiment-card a {
+            text-decoration: none;
+            color: #00ffcc;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .experiment-card p {
+            color: #999999;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            margin-top: 3rem;
+            padding: 1rem;
+            color: #666666;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .experiment-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="ui">
-        <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click to spawn cosmic orbs. In VR, use controllers.</p>
-        <p id="status">Status: Desktop Mode</p>
+    <div class="container">
+        <header>
+            <h1>Experiment Hub</h1>
+            <p class="description">A collection of WebVR and Sound Experiments</p>
+        </header>
+
+        <div class="experiment-grid">
+            <div class="experiment-card">
+                <a href="experiment1.html">Experiment 1</a>
+                <p>WebVR Experience</p>
+            </div>
+            
+            <div class="experiment-card">
+                <a href="experiment2.html">Experiment 2</a>
+                <p>Sound Experiment</p>
+            </div>
+            
+            <div class="experiment-card">
+                <a href="experiment3.html">Experiment 3</a>
+                <p>WebVR + Sound Combo</p>
+            </div>
+            
+            <div class="experiment-card">
+                <a href="experiment4.html">Experiment 4</a>
+                <p>Interactive Audio</p>
+            </div>
+        </div>
+
+        <footer>
+            <p>More experiments coming soon...</p>
+        </footer>
     </div>
-
-    <audio id="ambientSound" loop>
-        <source src="./ambient.mp3" type="audio/mp3">
-        Your browser does not support the audio element.
-    </audio>
-
-    <script>
-        // Scene Setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 1);
-        scene.add(ambientLight);
-        const pointLight = new THREE.PointLight(0xffffff, 1, 100);
-        pointLight.position.set(0, 10, 10);
-        scene.add(pointLight);
-
-        // Cosmic Nebula Background
-        const nebulaTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprite1.png');
-        const nebulaMaterial = new THREE.PointsMaterial({
-            map: nebulaTexture,
-            size: 1,
-            transparent: true,
-            blending: THREE.AdditiveBlending,
-            color: 0x8888ff
-        });
-        const nebulaGeometry = new THREE.BufferGeometry();
-        const nebulaVertices = [];
-        for (let i = 0; i < 5000; i++) {
-            nebulaVertices.push(
-                (Math.random() - 0.5) * 300,
-                (Math.random() - 0.5) * 300,
-                (Math.random() - 0.5) * 300
-            );
-        }
-        nebulaGeometry.setAttribute('position', new THREE.Float32BufferAttribute(nebulaVertices, 3));
-        const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
-        scene.add(nebula);
-
-        // Floating Crystal Islands
-        const islandGeometry = new THREE.DodecahedronGeometry(5, 0);
-        const islandMaterial = new THREE.MeshPhongMaterial({
-            color: 0x00ffcc,
-            shininess: 100,
-            transparent: true,
-            opacity: 0.7,
-            emissive: 0x004466
-        });
-        for (let i = 0; i < 7; i++) {
-            const island = new THREE.Mesh(islandGeometry, islandMaterial);
-            island.position.set(
-                (Math.random() - 0.5) * 60,
-                (Math.random() - 0.5) * 30,
-                (Math.random() - 0.5) * 60 - 30
-            );
-            island.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-            scene.add(island);
-        }
-
-        // Meditation Orbs with Particle Trails
-        const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-        const orbs = [];
-        const trails = [];
-
-        // Web Audio Setup
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const masterGain = audioContext.createGain();
-        masterGain.gain.value = 0.5;
-        masterGain.connect(audioContext.destination);
-
-        const oscillators = [];
-        const orbFrequencies = [220, 330, 440, 550, 660]; // Harmonic frequencies
-
-        function createOrbSound(orb) {
-            const osc = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = orbFrequencies[Math.floor(Math.random() * orbFrequencies.length)];
-            gainNode.gain.value = 0.1;
-            osc.connect(gainNode);
-            gainNode.connect(masterGain);
-            osc.start();
-            orb.userData.oscillator = osc;
-            orb.userData.gainNode = gainNode;
-            oscillators.push(osc);
-        }
-
-        // Initial Cosmic Orbs
-        function createInitialOrbs() {
-            for (let i = 0; i < 3; i++) {
-                const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-                orb.position.set(
-                    (Math.random() - 0.5) * 10,
-                    1.5 + (Math.random() - 0.5) * 2,
-                    -5 - (Math.random() * 5)
-                );
-                orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
-                orbs.push(orb);
-                scene.add(orb);
-                createOrbSound(orb);
-
-                // Particle Trail
-                const trailGeometry = new THREE.BufferGeometry();
-                const trailMaterial = new THREE.PointsMaterial({
-                    color: 0x00ffff,
-                    size: 0.1,
-                    transparent: true,
-                    opacity: 0.5,
-                    blending: THREE.AdditiveBlending
-                });
-                const trailVertices = [];
-                trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
-                const trail = new THREE.Points(trailGeometry, trailMaterial);
-                trails.push({ orb, particles: trail });
-                scene.add(trail);
-            }
-        }
-        createInitialOrbs();
-
-        // Reflective Floor
-        const floorGeometry = new THREE.PlaneGeometry(50, 50);
-        const floorMaterial = new THREE.MeshPhongMaterial({
-            color: 0x112233,
-            shininess: 100,
-            reflectivity: 1,
-            transparent: true,
-            opacity: 0.3
-        });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.1;
-        scene.add(floor);
-
-        // Camera Position
-        camera.position.set(0, 1.6, 5);
-
-        // Audio
-        const audio = document.getElementById('ambientSound');
-        function startAudio() {
-            audio.play().catch(e => console.log('Audio playback failed:', e));
-            if (audioContext.state === 'suspended') audioContext.resume();
-        }
-        document.addEventListener('click', startAudio, { once: true });
-
-        // VR Setup (unchanged for brevity, see original code)
-        const vrButton = document.getElementById('enterVRButton');
-        const statusText = document.getElementById('status');
-        let controller1, controller2;
-
-        function setupVRControllers() {
-            controller1 = renderer.xr.getController(0);
-            controller1.addEventListener('selectstart', onSelectStart);
-            scene.add(controller1);
-
-            controller2 = renderer.xr.getController(1);
-            controller2.addEventListener('selectstart', onSelectStart);
-            scene.add(controller2);
-
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, -1)
-            ]);
-            const line = new THREE.Line(geometry);
-            line.scale.z = 5;
-            controller1.add(line.clone());
-            controller2.add(line.clone());
-        }
-
-        function onSelectStart(event) {
-            const controller = event.target;
-            createOrbAtController(controller);
-        }
-
-        function createOrbAtController(controller) {
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-            orb.position.copy(position);
-            orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
-            orbs.push(orb);
-            scene.add(orb);
-            createOrbSound(orb);
-
-            const trailGeometry = new THREE.BufferGeometry();
-            const trailMaterial = new THREE.PointsMaterial({
-                color: orb.material.color,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.5,
-                blending: THREE.AdditiveBlending
-            });
-            const trailVertices = [];
-            trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
-            const trail = new THREE.Points(trailGeometry, trailMaterial);
-            trails.push({ orb, particles: trail });
-            scene.add(trail);
-        }
-
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = supported ? 'Enter VR' : 'VR Not Supported';
-                statusText.textContent = supported ? 'Status: Desktop Mode' : 'Status: VR Not Available';
-            });
-        }
-
-        vrButton.addEventListener('click', () => {
-            startAudio();
-            if (renderer.xr.isPresenting) {
-                renderer.xr.getSession().end();
-                vrButton.textContent = 'Enter VR';
-                statusText.textContent = 'Status: Desktop Mode';
-            } else {
-                navigator.xr.requestSession('immersive-vr').then(session => {
-                    renderer.xr.setSession(session);
-                    vrButton.textContent = 'Exit VR';
-                    statusText.textContent = 'Status: VR Mode';
-                    setupVRControllers();
-                    session.addEventListener('end', () => {
-                        vrButton.textContent = 'Enter VR';
-                        statusText.textContent = 'Status: Desktop Mode';
-                    });
-                });
-            }
-        });
-
-        // Spawn Orbs on Click (Desktop)
-        document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON' || renderer.xr.isPresenting) return;
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-            orb.position.set(
-                (Math.random() - 0.5) * 20,
-                (Math.random() - 0.5) * 10 + 5,
-                (Math.random() - 0.5) * 20 - 10
-            );
-            orb.userData = { time: performance.now() / 1000, velocity: new THREE.Vector3(0, 0.02, 0) };
-            orbs.push(orb);
-            scene.add(orb);
-            createOrbSound(orb);
-
-            const trailGeometry = new THREE.BufferGeometry();
-            const trailMaterial = new THREE.PointsMaterial({
-                color: orb.material.color,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.5,
-                blending: THREE.AdditiveBlending
-            });
-            const trailVertices = [];
-            trailGeometry.setAttribute('position', new THREE.Float32BufferAttribute(trailVertices, 3));
-            const trail = new THREE.Points(trailGeometry, trailMaterial);
-            trails.push({ orb, particles: trail });
-            scene.add(trail);
-        });
-
-        // Animation Loop
-        let time = 0;
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render() {
-            time = performance.now() / 1000;
-
-            // Animate Nebula
-            nebula.rotation.y += 0.0001;
-
-            // Animate Islands
-            scene.children.forEach(child => {
-                if (child.geometry instanceof THREE.DodecahedronGeometry) {
-                    child.rotation.x += 0.001;
-                    child.rotation.y += 0.002;
-                    child.position.y += Math.sin(time + child.position.x) * 0.01;
-                }
-            });
-
-            // Animate Orbs and Trails
-            orbs.forEach((orb, index) => {
-                const elapsed = time - orb.userData.time;
-                orb.position.add(orb.userData.velocity);
-                orb.userData.velocity.y += Math.sin(elapsed) * 0.001; // Pulsating motion
-                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
-                orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
-
-                // Update Sound
-                const gain = orb.userData.gainNode;
-                gain.gain.value = Math.min(0.3, orb.material.opacity * 0.3);
-                orb.userData.oscillator.frequency.value += Math.sin(elapsed) * 10; // Frequency wobble
-
-                // Update Trail
-                const trail = trails[index].particles;
-                const positions = trail.geometry.attributes.position.array;
-                positions.push(orb.position.x, orb.position.y, orb.position.z);
-                if (positions.length > 150) positions.splice(0, 3); // Limit trail length
-                trail.geometry.attributes.position.needsUpdate = true;
-
-                if (elapsed > 30) {
-                    scene.remove(orb);
-                    scene.remove(trail);
-                    orb.userData.oscillator.stop();
-                    orbs.splice(index, 1);
-                    trails.splice(index, 1);
-                }
-            });
-
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Resize Handling
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
 </body>
 </html>
