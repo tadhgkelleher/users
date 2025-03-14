@@ -139,6 +139,9 @@
             oscillator.frequency.setValueAtTime(parseFloat(soundFrequencySlider.value), audioContext.currentTime);
         });
 
+        // VR Setup - Get elements *after* the DOM has loaded
+        let vrButton = document.getElementById('enterVRButton');
+        let statusText = document.getElementById('status');  // Assuming you have a <p id="status"> element
 
         function createOrbAtController(controller) {
             const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
@@ -249,7 +252,7 @@
             }
         }
 
-        // Check VR Support
+       // Check VR Support - After DOM is ready and vrButton is defined
         if ('xr' in navigator) {
             navigator.xr.isSessionSupported('immersive-vr').then(supported => {
                 vrButton.disabled = !supported;
@@ -264,6 +267,7 @@
             vrButton.disabled = true;
             vrButton.textContent = 'VR Not Supported';
         }
+
 
         // Enter/Exit VR
         vrButton.addEventListener('click', () => {
