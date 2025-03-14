@@ -447,72 +447,125 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Initialization
-        function initVR() {
-            if (!window.THREE) {
-                console.error('Three.js not loaded');
-                document.getElementById('enterVR').textContent = 'VR Unavailable';
-                return;
+       // VR Initialization
+function initVR() {
+    if (!window.THREE) {
+        console.error('Three.js not loaded');
+        document.getElementById('enterVR').textContent = 'VR Unavailable';
+        return;
+    }
+    if (!navigator.xr) {
+        console.warn('WebXR not supported');
+        document.getElementById('enterVR').textContent = 'VR Not Supported';
+        document.getElementById('enterVR').disabled = true;
+        return;
+    }
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
+    renderer.xr.enabled = true;
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const texture = new THREE.CanvasTexture(mandalaCanvas);
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    const geometry = new THREE.PlaneGeometry(8, 8);
+    const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+    mandalaPlane = new THREE.Mesh(geometry, material);
+    mandalaPlane.position.z = -3;
+    scene.add(mandalaPlane);
+
+    camera.position.z = 0;
+
+    document.getElementById('enterVR').addEventListener('click', async () => {
+        // Ensure audio is initialized
+        initAudio();
+        
+        // Initialize voice control first and wait for it to complete
+        if (!voiceAnalyser) {
+            try {
+                // Create a promise-based version of voice control initialization
+                await new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getUserMedia({ audio: true })
+                        .then(stream => {
+                            const source = audioContext.createMediaStreamSource(stream);
+                            voiceAnalyser = audioContext.createAnalyser();
+                            voiceAnalyser.fftSize = 2048;
+                            voiceAnalyser.smoothingTimeConstant = 0.7;
+                            source.connect(voiceAnalyser);
+                            console.log('Voice analyser initialized for VR');
+                            
+                            const bufferLength = voiceAnalyser.fftSize;
+                            const dataArray = new Float32Array(bufferLength);
+                            const pitchHistory = [];
+                            
+                            function detectPitch() {
+                                voiceAnalyser.getFloatTimeDomainData(dataArray);
+                                const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+                                voiceAmplitude = getAmplitude(dataArray);
+                                
+                                if (pitch !== -1 && pitch > 20 && pitch < 2000) {
+                                    pitchHistory.push(pitch);
+                                    if (pitchHistory.length > 3) pitchHistory.shift();
+                                    voicePitch = pitchHistory.reduce((a, b) => a + b) / pitchHistory.length;
+                                } else {
+                                    voicePitch *= 0.95;
+                                }
+                                
+                                updateVoiceParams();
+                                updateSoundMeter();
+                                if (voiceAmplitude > 0.05 || droneOscillator) {
+                                    animate();
+                                }
+                                requestAnimationFrame(detectPitch);
+                            }
+                            detectPitch();
+                            resolve();
+                        })
+                        .catch(error => {
+                            console.error('Voice control initialization failed:', error);
+                            reject(error);
+                        });
+                });
+            } catch (error) {
+                console.error('Failed to initialize voice control:', error);
+                // Continue anyway - VR might still work without voice
             }
-            if (!navigator.xr) {
-                console.warn('WebXR not supported');
-                document.getElementById('enterVR').textContent = 'VR Not Supported';
-                document.getElementById('enterVR').disabled = true;
-                return;
-            }
-
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-            renderer.xr.enabled = true;
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-
-            const texture = new THREE.CanvasTexture(mandalaCanvas);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            const geometry = new THREE.PlaneGeometry(8, 8);
-            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-            mandalaPlane = new THREE.Mesh(geometry, material);
-            mandalaPlane.position.z = -3;
-            scene.add(mandalaPlane);
-
-            camera.position.z = 0;
-
-            document.getElementById('enterVR').addEventListener('click', async () => {
-                // Ensure audio and voice are fully initialized
-                initAudio();
-                if (!voiceAnalyser) {
-                    initVoiceControl();
-                    console.log('Voice control initialized on VR entry');
-                }
-                await audioContext.resume(); // Ensure audio context is running
-
-                try {
-                    const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-                    session.addEventListener('end', () => {
-                        vrCanvas.style.display = 'none';
-                        renderer.setAnimationLoop(null);
-                        document.getElementById('enterVR').textContent = 'Enter Temple';
-                    });
-                    renderer.xr.setSession(session);
-                    renderer.setAnimationLoop(animateVR);
-                    vrCanvas.style.display = 'block';
-                    document.getElementById('enterVR').textContent = 'Sing & Drone';
-                    // Start animation immediately
-                    animate();
-                } catch (err) {
-                    console.error('VR Failed:', err);
-                    document.getElementById('enterVR').textContent = 'VR Failed';
-                }
-            });
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
         }
+        
+        // Make sure audio context is resumed
+        await audioContext.resume();
+        
+        // Now try to enter VR mode
+        try {
+            const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
+            session.addEventListener('end', () => {
+                vrCanvas.style.display = 'none';
+                renderer.setAnimationLoop(null);
+                document.getElementById('enterVR').textContent = 'Enter Temple';
+            });
+            renderer.xr.setSession(session);
+            renderer.setAnimationLoop(animateVR);
+            vrCanvas.style.display = 'block';
+            document.getElementById('enterVR').textContent = 'Sing & Drone';
+            
+            // Force animation to start immediately
+            needsRedraw = true;
+            animate();
+        } catch (err) {
+            console.error('VR Failed:', err);
+            document.getElementById('enterVR').textContent = 'VR Failed';
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+}
 
         function animateVR() {
             mandalaPlane.material.map.needsUpdate = true;
