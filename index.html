@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Three.js Meditation App</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three/examples/js/libs/lil-gui.min.js"></script>
-
+    <script src="./three.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -43,7 +40,7 @@
 
     <!-- Audio -->
     <audio id="ambientSound" loop>
-        <source src="ambient.mp3" type="audio/mp3">
+        <source src="./ambient.mp3" type="audio/mp3">
         <!-- Placeholder: <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mp3"> -->
         Your browser does not support the audio element.
     </audio>
@@ -97,9 +94,6 @@
         const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
         const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
         const orbs = [];
-
-        // Initial meditation orb in front of the user (Removed)
-        // Instead create on click/controller interaction
 
         // Floor for VR orientation
         const floorGeometry = new THREE.PlaneGeometry(20, 20);
@@ -286,8 +280,6 @@
                 scene.add(orb);
             }
         });
-
-
 
         // Animation Loop
         let time = 0;
