@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Meditation App</title>
+    <meta name="viewport" content="width=device-width, initial-scale: 1.0">
+    <title>Bubble Shooter VR</title>
     <script src="./three.min.js"></script>
     <style>
         body {
@@ -11,6 +11,7 @@
             overflow: hidden;
             background-color: #000;
         }
+
         #ui {
             position: absolute;
             top: 20px;
@@ -19,31 +20,35 @@
             font-family: Arial, sans-serif;
             z-index: 1;
         }
+
         button {
             padding: 10px 20px;
             font-size: 16px;
             margin: 5px 0;
             cursor: pointer;
         }
+
         canvas {
             display: block;
         }
     </style>
 </head>
 <body>
-    <!-- UI -->
     <div id="ui">
         <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Click anywhere to spawn or split orbs. In VR, use controllers.</p>
-        <label for="spawnDistance">Spawn Distance:</label>
-        <input type="range" id="spawnDistance" min="0.5" max="5" value="1" step="0.1">
-        <br>
-        <label for="soundFrequency">Sound Frequency:</label>
-        <input type="range" id="soundFrequency" min="200" max="800" value="440" step="1">
+        <p id="instructions">Shoot bubbles to match colors and clear them.</p>
+        <p id="score">Score: 0</p>
     </div>
 
-    <!-- Three.js Logic -->
     <script>
+        // Constants
+        const BUBBLE_RADIUS = 0.5;
+        const GRID_WIDTH = 10;
+        const GRID_HEIGHT = 10;
+        const COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00];  // Red, Green, Blue, Yellow
+        const SHOT_SPEED = 10;
+        const ROW_OFFSET = BUBBLE_RADIUS * Math.sqrt(3);  // Offset for hexagonal grid
+
         // Scene Setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -59,347 +64,82 @@
         directionalLight.position.set(1, 1, 1).normalize();
         scene.add(directionalLight);
 
-        // Floating Islands
-        const islandGeometry = new THREE.SphereGeometry(5, 32, 32);
-        const islandMaterial = new THREE.MeshPhongMaterial({ color: 0x228B22, shininess: 10 });
-        for (let i = 0; i < 5; i++) {
-            const island = new THREE.Mesh(islandGeometry, islandMaterial);
-            island.position.set(
-                (Math.random() - 0.5) * 50,
-                (Math.random() - 0.5) * 20,
-                (Math.random() - 0.5) * 50 - 20
-            );
-            scene.add(island);
+        // Score
+        let score = 0;
+        const scoreElement = document.getElementById('score');
+
+        // Bubble Grid
+        const bubbleGrid = [];
+
+        function createBubble(x, y, color) {
+            const geometry = new THREE.SphereGeometry(BUBBLE_RADIUS, 16, 16);
+            const material = new THREE.MeshBasicMaterial({ color: color });
+            const bubble = new THREE.Mesh(geometry, material);
+
+            bubble.position.x = x;
+            bubble.position.y = y;
+            bubble.position.z = -10; // Keep bubbles a bit away from the camera
+            bubble.userData.color = color;
+            return bubble;
         }
 
-        // Starry Sky
-        const starsGeometry = new THREE.BufferGeometry();
-        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
-        const starVertices = [];
-        for (let i = 0; i < 1000; i++) {
-            starVertices.push(
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200,
-                (Math.random() - 0.5) * 200
-            );
-        }
-        starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
-        const stars = new THREE.Points(starsGeometry, starsMaterial);
-        scene.add(stars);
+        function populateGrid() {
+            for (let row = 0; row < GRID_HEIGHT; row++) {
+                bubbleGrid[row] = [];
+                for (let col = 0; col < GRID_WIDTH; col++) {
+                    // Hexagonal Grid Layout
+                    const x = col * 2 * BUBBLE_RADIUS + (row % 2) * BUBBLE_RADIUS;
+                    const y = row * ROW_OFFSET;
 
-        // Meditation Orbs
-        const orbGeometry = new THREE.SphereGeometry(0.5, 16, 16);
-        const smallerOrbGeometry = new THREE.SphereGeometry(0.25, 8, 8);
-        const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-        const orbs = [];
-
-        // Floor for VR orientation
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
-        const floorMaterial = new THREE.MeshPhongMaterial({
-            color: 0x3f7f7f,
-            transparent: true,
-            opacity: 0.5,
-            side: THREE.DoubleSide
-        });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = -0.1;
-        scene.add(floor);
-
-        // Camera Position
-        camera.position.set(0, 1.6, 5);
-
-        // Audio Context and Oscillator
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.type = 'sine'; // Can be 'sine', 'square', 'sawtooth', 'triangle'
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Default frequency
-        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);  //Volume
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.start();
-
-
-        // UI element for spawn distance
-        const spawnDistanceSlider = document.getElementById('spawnDistance');
-        let currentSpawnDistance = parseFloat(spawnDistanceSlider.value);
-
-        spawnDistanceSlider.addEventListener('input', () => {
-            currentSpawnDistance = parseFloat(spawnDistanceSlider.value);
-            console.log("Spawn Distance updated:", currentSpawnDistance); //Debugging
-        });
-
-        // UI element for sound frequency
-        const soundFrequencySlider = document.getElementById('soundFrequency');
-
-        soundFrequencySlider.addEventListener('input', () => {
-            oscillator.frequency.setValueAtTime(parseFloat(soundFrequencySlider.value), audioContext.currentTime);
-        });
-
-        // VR Setup - Get elements *after* the DOM has loaded
-        let vrButton = document.getElementById('enterVRButton');
-        let statusText = document.getElementById('status');  // Assuming you have a <p id="status"> element
-
-        function createOrbAtController(controller) {
-            const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-            orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-
-            const matrix = new THREE.Matrix4();
-            matrix.identity().extractRotation(controller.matrixWorld);
-
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyMatrix4(matrix);
-
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-
-            const spawnPosition = new THREE.Vector3();
-            spawnPosition.copy(position);
-            const spawnDistance = currentSpawnDistance;  // Get the value *inside* this function
-            spawnPosition.add(direction.multiplyScalar(spawnDistance));
-
-            orb.position.copy(spawnPosition);
-            orb.userData = {
-                time: performance.now() / 1000,
-                velocity: new THREE.Vector3(),
-                rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1) // Add rotation
-            };
-            orbs.push(orb);
-            scene.add(orb);
-        }
-
-
-        // Add some random scaling of newly created objects
-        function getRandomScaleFactor() {
-            return 0.5 + Math.random() * 1.5;  // Scales from 0.5 to 2
-        }
-
-
-        function shootOrb(controller) {
-            // Get controller position and direction
-            const position = new THREE.Vector3();
-            controller.getWorldPosition(position);
-
-            const matrix = new THREE.Matrix4();
-            matrix.identity().extractRotation(controller.matrixWorld);
-
-            const direction = new THREE.Vector3(0, 0, -1);
-            direction.applyMatrix4(matrix);
-
-            // Create a raycaster
-            const raycaster = new THREE.Raycaster(position, direction);
-
-            // Check for intersections with existing orbs
-            const intersects = raycaster.intersectObjects(orbs);
-
-            if (intersects.length > 0) {
-                // Split the first intersected orb
-                const intersectedOrb = intersects[0].object;
-                splitOrb(intersectedOrb);
-            } else {
-                // If no orbs are hit, create a new orb
-                createOrbAtController(controller);
-
-            }
-        }
-
-        function splitOrb(orbToSplit) {
-            // Remove the orb to be split
-            scene.remove(orbToSplit);
-            const index = orbs.indexOf(orbToSplit);
-            if (index > -1) {
-                orbs.splice(index, 1);
-            }
-
-            // Create smaller orbs
-            const numSmallerOrbs = 5; // Number of smaller orbs to create
-
-            for (let i = 0; i < numSmallerOrbs; i++) {
-                const smallerOrb = new THREE.Mesh(smallerOrbGeometry, orbMaterial.clone());
-                smallerOrb.material.color.setHSL(Math.random(), 0.8, 0.5);
-
-                // Position the smaller orbs slightly offset from the original orb's position
-                smallerOrb.position.copy(orbToSplit.position);
-                smallerOrb.position.x += (Math.random() - 0.5) * 0.5;
-                smallerOrb.position.y += (Math.random() - 0.5) * 0.5;
-                smallerOrb.position.z += (Math.random() - 0.5) * 0.5;
-
-
-                //Apply random scale to new orbs
-                const scaleFactor = getRandomScaleFactor();
-                smallerOrb.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-
-                // WILD FEATURE - Give each smaller orb a random velocity
-                const randomDirection = new THREE.Vector3(
-                    Math.random() - 0.5,
-                    Math.random() - 0.5,
-                    Math.random() - 0.5
-                ).normalize(); // Random direction
-                const speed = 0.1 + Math.random() * 0.2; // Random speed
-
-
-                smallerOrb.userData = {
-                    time: performance.now() / 1000,
-                    velocity: randomDirection.multiplyScalar(speed),
-                    rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1) //rotation
-                };
-                orbs.push(smallerOrb);
-                scene.add(smallerOrb);
-            }
-        }
-
-       // Check VR Support - After DOM is ready and vrButton is defined
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = 'Enter VR';
-                console.log('VR Supported:', supported);
-            }).catch(err => {
-                console.error('VR Support Check Failed:', err);
-                vrButton.disabled = true;
-                vrButton.textContent = 'VR Not Supported';
-            });
-        } else {
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR Not Supported';
-        }
-
-
-        // Enter/Exit VR
-        vrButton.addEventListener('click', () => {
-
-
-            if (renderer.xr.isPresenting) {
-                renderer.xr.getSession().end();
-                vrButton.textContent = 'Enter VR';
-            } else {
-                navigator.xr.requestSession('immersive-vr', {
-                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-                }).then(session => {
-                    renderer.xr.setSession(session);
-                    vrButton.textContent = 'Exit VR';
-                    setupVRControllers();
-
-                    session.addEventListener('end', () => {
-                        vrButton.textContent = 'Enter VR';
-                    });
-                }).catch(err => {
-                    console.error('Failed to start VR:', err);
-                });
-            }
-        });
-
-        // Spawn Orbs on Click (desktop mode)
-        document.addEventListener('click', (event) => {
-            if (event.target.tagName === 'BUTTON') return;
-            if (renderer.xr.isPresenting) return;
-            shootOrbDesktop(event);
-        });
-
-
-        function shootOrbDesktop(event) {
-            // Get mouse click position in normalized device coordinates
-            const mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Create a Raycaster from the camera
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            // Intersect with existing orbs
-            const intersects = raycaster.intersectObjects(orbs);
-
-            if (intersects.length > 0) {
-                // Split the first intersected orb
-                const intersectedOrb = intersects[0].object;
-                splitOrb(intersectedOrb);
-            }
-            else { //If no orb is selected create one at the point of intersection with the floor
-                const intersectPoint = new THREE.Vector3();
-                const planeNormal = new THREE.Vector3(0, 1, 0);  // Up direction
-                const planeConstant = 0;                           // Distance from the origin
-                raycaster.ray.intersectPlane(new THREE.Plane(planeNormal, planeConstant), intersectPoint);
-
-                // Create the orb at the intersection point
-                if (intersectPoint) {
-                    const orb = new THREE.Mesh(orbGeometry, orbMaterial.clone());
-                    orb.material.color.setHSL(Math.random(), 0.8, 0.5);
-                    orb.position.copy(intersectPoint);
-                    orb.position.y = 1 // Offset orb slightly above the floor.
-                    orb.userData = {
-                        time: performance.now() / 1000,
-                        velocity: new THREE.Vector3(),
-                        rotationSpeed: new THREE.Vector3((Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1)
-                    };
-                    orbs.push(orb);
-                    scene.add(orb);
+                    const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                    const bubble = createBubble(x - (GRID_WIDTH * BUBBLE_RADIUS), y - (GRID_HEIGHT * ROW_OFFSET / 2), color); // Centered
+                    scene.add(bubble);
+                    bubbleGrid[row][col] = bubble;
                 }
+            }
+        }
+        populateGrid();
 
+        // Shooting Bubble
+        let shootingBubble = null;  // The bubble being shot
+        let shotDirection = new THREE.Vector3(0, 0, 0);  // Direction of the shot
+
+        function createShootingBubble() {
+            const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+            const bubble = createBubble(0, -5, color); // Positioned at the bottom
+            scene.add(bubble);
+            return bubble;
+        }
+
+        function resetShootingBubble() {
+            if (shootingBubble) {
+                scene.remove(shootingBubble);
+            }
+            shootingBubble = createShootingBubble();
+        }
+        resetShootingBubble();
+
+
+        function launchBubble(direction) {
+            if (shootingBubble) {
+                shotDirection.copy(direction).normalize(); // Normalize to avoid changing speed
+                shootingBubble.userData.isShooting = true;
             }
         }
 
-
-        // Animation Loop
-        let time = 0;
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-        function render() {
-            // Rotate Stars
-            stars.rotation.y += 0.0003;
-
-            // Animate Orbs
-            time = performance.now() / 1000;
-            orbs.forEach((orb, index) => {
-                const elapsed = time - orb.userData.time;
-                const scale = 1 + 0.5 * Math.sin(elapsed * Math.PI / 5);
-                orb.scale.set(scale, scale, scale);
-                orb.material.opacity = Math.max(0.2, 1 - elapsed / 30);
-
-                // Apply velocity for independent movement
-                orb.position.x += orb.userData.velocity.x;
-                orb.position.y += orb.userData.velocity.y;
-                orb.position.z += orb.userData.velocity.z;
-
-                //Rotation
-                orb.rotation.x += orb.userData.rotationSpeed.x;
-                orb.rotation.y += orb.userData.rotationSpeed.y;
-                orb.rotation.z += orb.userData.rotationSpeed.z;
-
-                // Optionally, remove orbs that go too far away
-                if (orb.position.length() > 100) {
-                    scene.remove(orb);
-                    orbs.splice(index, 1);
-                }
-            });
-
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        // Controller Setup
+        // VR Controller setup
         let controller1, controller2;
         let controllerGrip1, controllerGrip2;
 
         function setupVRControllers() {
-            // Controllers
             controller1 = renderer.xr.getController(0);
             controller1.addEventListener('selectstart', onSelectStart);
-            controller1.addEventListener('selectend', onSelectEnd);
             scene.add(controller1);
 
             controller2 = renderer.xr.getController(1);
             controller2.addEventListener('selectstart', onSelectStart);
-            controller2.addEventListener('selectend', onSelectEnd);
             scene.add(controller2);
 
-            // Controller models
             const controllerModelFactory = new THREE.XRControllerModelFactory();
 
             controllerGrip1 = renderer.xr.getControllerGrip(0);
@@ -410,32 +150,198 @@
             controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
             scene.add(controllerGrip2);
 
-            // Controller visualization
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(0, 0, -1)
-            ]);
-
+            // Visualize controller direction
+            const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1)]);
             const line = new THREE.Line(geometry);
-            line.scale.z = 5;
-
+            line.scale.z = 10;
             controller1.add(line.clone());
             controller2.add(line.clone());
         }
 
         function onSelectStart(event) {
             const controller = event.target;
-            shootOrb(controller);
+
+            // Get the controller's direction
+            const direction = new THREE.Vector3();
+            controller.getWorldDirection(direction);
+
+            launchBubble(direction);  // Launch in the controller's direction
         }
 
-        function onSelectEnd(event) {
-            // Handle controller release if needed
+        // Collision Detection
+        function checkCollision(bubble) {
+            for (let row = 0; row < GRID_HEIGHT; row++) {
+                for (let col = 0; col < GRID_WIDTH; col++) {
+                    const existingBubble = bubbleGrid[row][col];
+                    if (existingBubble) {
+                        const distance = bubble.position.distanceTo(existingBubble.position);
+                        if (distance < 2 * BUBBLE_RADIUS) {
+                            return { row: row, col: col };  // Return collision location
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function placeBubble(bubble, collision) {
+            if (collision) {
+                // Find an empty spot adjacent to the collision point
+                let newRow = collision.row;
+                let newCol = collision.col;
+
+                //Basic logic. Needs refinement
+                if (bubbleGrid[newRow][newCol -1 ] == null) {
+                  newCol = newCol -1;
+                }
+                else if (bubbleGrid[newRow][newCol +1 ] == null) {
+                  newCol = newCol +1;
+                }
+
+                bubble.position.copy(bubbleGrid[collision.row][collision.col].position);
+                bubble.position.z = -10; // Correct z position
+                bubbleGrid[newRow][newCol] = bubble;
+
+                const x = newCol * 2 * BUBBLE_RADIUS + (newRow % 2) * BUBBLE_RADIUS;
+                const y = newRow * ROW_OFFSET;
+                bubble.position.x = x - (GRID_WIDTH * BUBBLE_RADIUS);
+                bubble.position.y = y - (GRID_HEIGHT * ROW_OFFSET / 2);
+
+                bubble.userData.isShooting = false;
+                shootingBubble = null;
+                resetShootingBubble();
+                return {row:newRow, col:newCol}
+            }
+            return null;
         }
 
 
+        function checkMatches(startRow, startCol) {
+            const startBubble = bubbleGrid[startRow][startCol];
+            if (!startBubble) return [];
 
-        // Resize Handling
-        window.addEventListener('resize', () => {
+            const matchedBubbles = [];
+            const visited = {};
+            const color = startBubble.userData.color;
+
+            function explore(row, col) {
+                if (row < 0 || row >= GRID_HEIGHT || col < 0 || col >= GRID_WIDTH) return;
+                if (visited[row + ',' + col]) return;
+
+                const bubble = bubbleGrid[row][col];
+                if (!bubble || bubble.userData.color !== color) return;
+
+                visited[row + ',' + col] = true;
+                matchedBubbles.push(bubble);
+
+                explore(row + 1, col);
+                explore(row - 1, col);
+                explore(row, col + 1);
+                explore(row, col - 1);
+
+                // Adjust for Hexagonal Grid
+                if (row % 2 === 0) {
+                    explore(row - 1, col - 1);
+                    explore(row + 1, col - 1);
+                } else {
+                    explore(row - 1, col + 1);
+                    explore(row + 1, col + 1);
+                }
+            }
+
+            explore(startRow, startCol);
+            return matchedBubbles;
+        }
+
+        function removeMatches(matches) {
+            if (matches.length >= 3) {
+                matches.forEach(bubble => {
+                    for (let row = 0; row < GRID_HEIGHT; row++) {
+                        for (let col = 0; col < GRID_WIDTH; col++) {
+                            if (bubbleGrid[row][col] === bubble) {
+                                scene.remove(bubble);
+                                bubbleGrid[row][col] = null;
+                                score += 10; // Increase score
+                                scoreElement.textContent = 'Score: ' + score;
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // VR and Non-VR mode
+        camera.position.set(0, 0, 0);
+
+        // VR Support check
+        let vrButton = document.getElementById('enterVRButton');
+        let statusText = document.getElementById('status');  // Make sure you have a status display in your HTML
+
+        if ('xr' in navigator) {
+            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+                vrButton.disabled = !supported;
+                vrButton.textContent = supported ? 'Enter VR' : 'VR not supported';
+            });
+        }
+        else {
+            vrButton.disabled = true;
+            vrButton.textContent = 'VR not supported';
+        }
+
+        vrButton.addEventListener('click', function() {
+
+            if (renderer.xr.isPresenting) {
+                renderer.xr.getSession().end();
+                vrButton.textContent = 'Enter VR';
+            } else {
+                navigator.xr.requestSession('immersive-vr', {
+                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
+                }).then(function(session) {
+                    renderer.xr.setSession(session);
+                    vrButton.textContent = 'Exit VR';
+                    setupVRControllers();
+                }).catch(function(error) {
+                    console.error("Failed to start VR", error);
+                });
+            }
+        });
+
+
+        // Animation loop
+        function animate() {
+            renderer.setAnimationLoop(render);
+        }
+
+        function render() {
+            if (shootingBubble && shootingBubble.userData.isShooting) {
+                shootingBubble.position.addScaledVector(shotDirection, SHOT_SPEED / 60);
+
+                const collision = checkCollision(shootingBubble);
+                if (collision) {
+                    shootingBubble.userData.isShooting = false;
+
+                    let newPos = placeBubble(shootingBubble, collision)
+                    if (newPos) {
+                      const matches = checkMatches(newPos.row, newPos.col);
+                      removeMatches(matches);
+
+                    }
+                }
+                else if (shootingBubble.position.length() > 50)
+                {
+                   shootingBubble.userData.isShooting = false;
+                   shootingBubble = null;
+                   resetShootingBubble();
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle browser resize
+        window.addEventListener('resize', function() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
