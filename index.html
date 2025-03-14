@@ -2,443 +2,708 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VR Bubble Shooter - Aimed!</title>
-    <script src="./three.min.js"></script>
+    <title>Sublime Gamelan Simulation</title>
     <style>
         body {
+            font-family: 'Crimson Text', serif;  /* More refined font */
+            background: linear-gradient(135deg, #38262d, #6a3931); /* Rich gradient */
+            color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
-            overflow: hidden;
-            background-color: #000;
+            overflow: hidden; /* Hides scrollbars (intentional full-screen aesthetic) */
         }
 
-        #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-family: Arial, sans-serif;
-            z-index: 1;
+        .container {
+            background: rgba(0, 0, 0, 0.7); /* Subtle transparency */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
         }
 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 5px 0;
+        h1 {
+            font-family: 'Playfair Display', serif;  /* Elegant header */
+            font-size: 36px;
+            color: #f0ead6;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8); /* Depth to the header */
+        }
+
+        button, select {
+            background: #c68642; /* Updated colors */
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 17px;
+            transition: background 0.3s ease;
+            font-family: inherit; /* Use the body's font */
+            outline: none;
+            box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
         }
 
-        canvas {
-            display: block;
+        button:hover, select:hover {
+            background: #966130; /* Darker hover state */
+        }
+
+        input {
+            padding: 10px;
+            margin: 10px 5px;
+            width: 70%;
+            border: 1px solid #777;
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            font-family: inherit; /* Inherit font for input */
+            outline: none;
+        }
+
+        input::placeholder {
+            color: #aaa; /* Placeholder color */
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .note-display {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #f0ead6;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
+            font-style: italic; /* Emphasize note information */
+        }
+
+        /* Visual Elements */
+        #visualizer {
+            width: 80%;
+            height: 80px;
+            margin: 20px auto;
+            border: 1px solid #8b4513;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Animation Styles */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .active-note {
+            animation: pulse 1s infinite; /* Animates active note */
+        }
+
+        /* Additional Instruments Container (Optional) */
+        .instrument-controls {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #777;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.6);
         }
     </style>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
 </head>
 <body>
-    <div id="ui">
-        <button id="enterVRButton">Enter VR</button>
-        <p id="instructions">Aim with the gun (mouse/VR controller) and shoot!</p>
-        <p id="score">Score: 0</p>
-        <p id="level">Level: 1</p>
+    <div class="container">
+        <h1>Sublime Gamelan Simulation</h1>
+        <div class="controls">
+            <input type="text" id="balunganInput" placeholder="Enter balungan (e.g., 2 3 5 6)" value="2 3 5 6">
+            <select id="presetBalungan" onchange="loadPreset()">
+                <option value="">Select Preset (Patét)</option>
+                <option value="2 3 5 6">Lancaran (2 3 5 6)</option>
+                <option value="6 5 3 2 6 5 3 2">Ketawang (6 5 3 2)</option>
+                <option value="3 2 1 6 5 3 2 1">Ladrang (3 2 1 6 5 3 2 1)</option>
+            </select>
+            <select id="cycleLength">
+                <option value="4">Cycle: 4 beats (Gatra)</option>
+                <option value="8">Cycle: 8 beats (Kembang)</option>
+                <option value="16">Cycle: 16 beats (Bawa)</option>
+            </select>
+            <select id="kendhangStyle">
+              <option value="traditional">Traditional Kendhang</option>
+              <option value="simple">Simplified Kendhang</option>
+            </select>
+            <button onclick="startGamelan()">Start (Miwiti)</button>
+            <button onclick="stopGamelan()">Stop (Mungkasi)</button>
+            <button onclick="transitionIrama()">Transition Irama (Ngelancari)</button>
+            <button onclick="toggleDebugging()">Toggle Debugging (Suksma)</button>
+
+        </div>
+        <div class="instrument-controls">
+          <label for="volumeMaster">Master Volume</label>
+          <input type="range" id="volumeMaster" min="0" max="1" step="0.01" value="0.5" oninput="setMasterVolume(this.value)">
+          <br>
+          <label for="detuning">Slendro Tuning Variation (cents)</label>
+          <input type="range" id="detuning" min="-50" max="50" step="1" value="0" oninput="updateSlendroTuning(this.value)">
+        </div>
+        <div class="note-display" id="currentNote">Current Balungan: Stopped</div>
+        <div id="visualizer"></div> <!-- Add a visualizer div -->
+        <p>Crafted with ❤️  using the beauty of web audio and an old understanding.</p>
     </div>
 
     <script>
-        // --- Constants ---
-        const BUBBLE_RADIUS = 0.5;
-        const GRID_WIDTH = 10;
-        const GRID_HEIGHT = 15;
-        const COLORS = [0xff0000, 0x00ff00, 0x0000ff, 0xffff00, 0xff69b4];
-        const SHOT_SPEED = 15;
-        const ROW_OFFSET = BUBBLE_RADIUS * Math.sqrt(3);
-        const POWERUP_CHANCE = 0.05;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        let oscillators = [];
+        let isPlaying = false;
+        let currentIrama = 'lancer';
+        let targetIramaTiming = 4.0;
+        let currentTiming = 4.0;
+        let masterGainNode = audioContext.createGain();
+        masterGainNode.connect(audioContext.destination);
+        let slendroDetuning = 0; // Cents, allows microtonal adjustments
 
-        // --- Power-up Types ---
-        const POWERUP_TYPES = {
-            CLEAR_ROW: "CLEAR_ROW",
-            COLOR_BOMB: "COLOR_BOMB",
-            SCORE_BOOST: "SCORE_BOOST"
+        let analyser; // For visualization
+        let bufferLength;
+        let dataArray;
+
+        // Extended Instruments Parameters.
+        let pekingAttack = 0.01;
+        let bonangRelease = 0.75;
+        let decayMultiplier = 1;  // global instrument property for fast / slower music
+
+
+        let kendhangSamples = {
+          'tung': 'tung.wav',
+          'tak': 'tak.wav'
+        };
+        let loadedKendhangSounds = {};
+
+        let isDebugging = false; // flag to toggle debugging outputs.
+
+
+        const originalSlendroScale = { 1: 240, 2: 270, 3: 300, 5: 360, 6: 400 }; // base frequency for default config
+        let slendroScale = {...originalSlendroScale}; // Creates a COPY
+        // Adjusted Instrument Definitions (Emphasis on character)
+        const instruments = {
+            gong: { freq: 52, type: 'sine', gain: 0.7, decay: 3 * decayMultiplier, filterFreq: 90, pan:0, customType: false },
+            kempul: { freqMult: 0.45, type: 'sine', gain: 0.45, decay: 1.8*decayMultiplier, filterFreq: 180, pan: -0.1, customType: false },
+            kenong: { freqMult: 1.45, type: 'triangle', gain: 0.4, decay: 1.2*decayMultiplier, filterFreq: 700, pan: 0.1, customType: false },
+            saronBarung: { freqMult: 0.98, type: 'triangle', gain: 0.3, decay: 0.65*decayMultiplier, filterFreq: 1100, pan: -0.1, customType: false },
+            saronPanerus: { freqMult: 2.05, type: 'square', gain: 0.23, decay: 0.45*decayMultiplier, filterFreq: 1350, pan: 0.1, customType: false },
+            bonangBarung: { freqMult: 2.1, type: 'triangle', gain: 0.25, decay: 0.65*decayMultiplier, filterFreq: 1600, pan: -0.05, customType: false },
+            bonangPanerus: { freqMult: 4.08, type: 'square', gain: 0.18, decay: 0.4*decayMultiplier, filterFreq: 2200, pan: 0.05, customType: false },
+            peking: { freqMult: 2.02, type: 'sawtooth', gain: 0.21, decay: 0.4*decayMultiplier, filterFreq: 1900, pan: 0, customType: false },
+            kendhang: { sampleName: 'tung', gain: 0.7, pan: 0, customType: true,  customSampleRate:44100 } // Sample Based sound
         };
 
-        // --- Game State ---
-        let score = 0;
-        let level = 1;
-        let bubbleGrid = [];
-        let shootingBubble = null;
-        let shotDirection = new THREE.Vector3(0, 0, 0);
-        let aimingGun = null; // The gun object for aiming
+        const iramaTimings = { lancer: 4.0, tanggung: 2.0, dados: 1.0 };
+        const subdivisionsPerNote = { lancer: 8, tanggung: 4, dados: 2 };
 
-        // --- UI Elements ---
-        const scoreElement = document.getElementById('score');
-        const levelElement = document.getElementById('level');
-
-        // --- Three.js Setup ---
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.xr.enabled = true;
-        document.body.appendChild(renderer.domElement);
-
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0x404040, 1);
-        scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-        directionalLight.position.set(1, 1, 1).normalize();
-        scene.add(directionalLight);
-
-        // --- Aiming Gun ---
-        function createAimingGun() {
-            const geometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 12); // Cylinder shape
-            const material = new THREE.MeshBasicMaterial({ color: 0x888888 }); // Gray color
-            const gun = new THREE.Mesh(geometry, material);
-
-            gun.position.set(0, -5, 0);  // Position at the bottom
-            gun.rotation.x = Math.PI / 2; // Rotate to point forward
-
-            return gun;
+        // PANNING (new!)
+        function createPannerNode(panValue) {
+          const panner = audioContext.createPanner();
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          panner.setPosition(panValue, 0, 1 - Math.abs(panValue)); // X, Y, Z – create a spatial feel
+          return panner;
         }
 
-        aimingGun = createAimingGun();
-        scene.add(aimingGun);
+        // Function to handle waveform override when "customType"
+        function playSampleBasedSound (sampleBuffer, startTime, instrumentDefinition){
+          if(!sampleBuffer) {
+            console.warn('buffer for' + instrumentDefinition + 'is not defined or loaded');
+            return;
+          }
+          let source = audioContext.createBufferSource();
+          source.buffer = sampleBuffer;
+          let gainNode = audioContext.createGain();
 
-        // --- Bubble Creation and Grid Management ---
-        function createBubble(x, y, color, isPowerup = false) {
-            const geometry = new THREE.SphereGeometry(BUBBLE_RADIUS, 16, 16);
-            const material = new THREE.MeshBasicMaterial({ color: color });
-            const bubble = new THREE.Mesh(geometry, material);
+          gainNode.gain.setValueAtTime(instrumentDefinition.gain, startTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + instrumentDefinition.decay);
+          source.connect(gainNode);
 
-            bubble.position.set(x, y, -10);
-            bubble.userData = { color: color, isPowerup: isPowerup };
-            return bubble;
+          let panner = createPannerNode(instrumentDefinition.pan)
+          gainNode.connect(panner);
+
+          panner.connect(masterGainNode); // connect pan node to Master volume
+          source.start(startTime);
+          source.stop(startTime + instrumentDefinition.decay); // define length
+
+          return source;
         }
 
 
-        function getRandomColor() {
-            return COLORS[Math.floor(Math.random() * COLORS.length)];
+        function createOscillator(frequency, instrumentDefinition, startTime) {
+          let oscillator;
+          if(instrumentDefinition.customType){ // allows waveforms defined via external files.
+
+            instrumentDefinition.alreadyDecoded? playSampleBasedSound(instrumentDefinition.buffer, startTime, instrumentDefinition):
+            console.warn('Trying to play an non existent Buffer');
+
+          }else{
+
+            oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            const filter = audioContext.createBiquadFilter();
+
+            oscillator.type = instrumentDefinition.type;
+            oscillator.frequency.setValueAtTime(frequency, startTime); // + micro tuning here
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(instrumentDefinition.filterFreq, startTime);
+
+            // set Master Gain
+            gainNode.gain.setValueAtTime(0, startTime);  // Set to 0 initially
+            gainNode.gain.linearRampToValueAtTime(instrumentDefinition.gain, startTime + pekingAttack); // gentle Attack curve (experimental);
+
+            // Ramping off the note (with a configurable exponental ramp).
+            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + instrumentDefinition.decay);
+
+
+            oscillator.connect(filter);
+            filter.connect(gainNode);
+
+            // create panning and route it properly
+
+            let panner = createPannerNode(instrumentDefinition.pan); // passing default parameteres of panning configuration.
+            gainNode.connect(panner);
+
+
+            panner.connect(masterGainNode);
+            oscillator.start(startTime);
+            oscillator.stop(startTime + instrumentDefinition.decay);
+            return oscillator;
+          }
         }
 
-        function createRandomBubble(x, y) {
-            const isPowerup = Math.random() < POWERUP_CHANCE;
-            const color = isPowerup ? 0xffffff : getRandomColor(); // White for Power-ups
-            return createBubble(x, y, color, isPowerup);
+        function getBonangBarungPattern(note, nextNote, irama, beatTime, subTime) {
+            const baseFreq = slendroScale[note];
+            const nextFreq = slendroScale[nextNote];
+            const pattern = [];
+            const subdivisions = subdivisionsPerNote[irama];
+            for (let k = 0; k < subdivisions; k++) {
+                const time = beatTime + k * subTime;
+                const freq = (k % 2 === 0) ? baseFreq : nextFreq; // Imbal pattern
+                pattern.push({ freq: freq * instruments.bonangBarung.freqMult, time });
+            }
+            return pattern;
         }
 
-        function populateGrid() {
-            bubbleGrid = Array(GRID_HEIGHT).fill(null).map(() => Array(GRID_WIDTH).fill(null));
-
-            for (let row = 0; row < 5; row++) {
-                for (let col = 0; col < GRID_WIDTH; col++) {
-                    const x = col * 2 * BUBBLE_RADIUS + (row % 2) * BUBBLE_RADIUS;
-                    const y = row * ROW_OFFSET;
-
-                    const bubble = createRandomBubble(x - (GRID_WIDTH * BUBBLE_RADIUS), y - (GRID_HEIGHT * ROW_OFFSET / 2));
-
-                    bubbleGrid[row][col] = bubble;
-                    scene.add(bubble);
+        function getBonangPanerusPattern(note, irama, beatTime, currentTiming) {
+            const baseFreq = slendroScale[note];
+            const pattern = [];
+            if (irama === 'lancer') {
+                const polyrhythmSubTime = currentTiming / 3; // 3 against 4
+                for (let k = 0; k < 3; k++) {
+                    const time = beatTime + k * polyrhythmSubTime;
+                    pattern.push({ freq: baseFreq * instruments.bonangPanerus.freqMult, time });
                 }
-            }
-        }
-
-        function resetGrid() {
-            bubbleGrid.forEach(row => row.forEach(bubble => {
-                if (bubble) scene.remove(bubble);
-            }));
-            bubbleGrid = [];
-            populateGrid();
-        }
-
-        // --- Shooting ---
-        function createShootingBubble() {
-            const isPowerup = Math.random() < POWERUP_CHANCE;
-            const color = isPowerup ? 0xffffff : getRandomColor();
-            const bubble = createBubble(0, -5, color, isPowerup);
-            return bubble;
-        }
-
-        function resetShootingBubble() {
-            if (shootingBubble) scene.remove(shootingBubble);
-            shootingBubble = createShootingBubble();
-            scene.add(shootingBubble);
-        }
-
-        function launchBubble() {
-            if (shootingBubble) {
-                shotDirection.set(0,0,-1); //Shoot based on gun direction
-                aimingGun.getWorldDirection(shotDirection);
-                shotDirection.normalize();
-                shootingBubble.userData.isShooting = true;
-            }
-        }
-
-        // --- Collision and Placement ---
-        function checkCollision(bubble) {
-            for (let row = 0; row < GRID_HEIGHT; row++) {
-                for (let col = 0; col < GRID_WIDTH; col++) {
-                    const existingBubble = bubbleGrid[row][col];
-                    if (existingBubble) {
-                        const distance = bubble.position.distanceTo(existingBubble.position);
-                        if (distance < 2 * BUBBLE_RADIUS) {
-                            return { row: row, col: col };
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-
-        function placeBubble(bubble, collision) {
-            if (!collision) return null;
-
-            let newRow = collision.row;
-            let newCol = collision.col;
-
-            // More sophisticated placement logic
-            let placed = false;
-            const adjacentPositions = [
-                { row: newRow, col: newCol - 1 },
-                { row: newRow, col: newCol + 1 },
-                { row: newRow - 1, col: newCol + (newRow % 2) },
-                { row: newRow - 1, col: newCol - 1 + (newRow % 2) },
-                { row: newRow + 1, col: newCol + (newRow % 2) },
-                { row: newRow + 1, col: newCol - 1 + (newRow % 2) }
-            ];
-
-            for (const pos of adjacentPositions) {
-                if (pos.row >= 0 && pos.row < GRID_HEIGHT && pos.col >= 0 && pos.col < GRID_WIDTH && !bubbleGrid[pos.row][pos.col]) {
-
-                    newRow = pos.row;
-                    newCol = pos.col;
-                    placed = true;
-                    break;  // Place in the first available spot
-                }
-            }
-
-            if (!placed) return null;  // No place to put it!
-
-            // Calculate world position based on grid
-            const x = newCol * 2 * BUBBLE_RADIUS + (newRow % 2) * BUBBLE_RADIUS;
-            const y = newRow * ROW_OFFSET;
-
-            bubble.position.x = x - (GRID_WIDTH * BUBBLE_RADIUS);
-            bubble.position.y = y - (GRID_HEIGHT * ROW_OFFSET / 2);
-            bubble.position.z = -10; //Ensure correct z
-
-            bubble.userData.isShooting = false;
-            bubbleGrid[newRow][newCol] = bubble;
-
-            return { row: newRow, col: newCol };
-        }
-
-
-        // --- Matching and Power-ups ---
-        function checkMatches(startRow, startCol) {
-            const startBubble = bubbleGrid[startRow][startCol];
-            if (!startBubble || startBubble.userData.isPowerup) return [];
-
-            const matchedBubbles = [];
-            const visited = {};
-            const color = startBubble.userData.color;
-
-            function explore(row, col) {
-                if (row < 0 || row >= GRID_HEIGHT || col < 0 || col >= GRID_WIDTH) return;
-                if (visited[row + ',' + col]) return;
-
-                const bubble = bubbleGrid[row][col];
-                if (!bubble || bubble.userData.isPowerup || bubble.userData.color !== color) return;
-
-                visited[row + ',' + col] = true;
-                matchedBubbles.push(bubble);
-
-                explore(row + 1, col);
-                explore(row - 1, col);
-                explore(row, col + 1);
-                explore(row, col - 1);
-
-                if (row % 2 === 0) {
-                    explore(row - 1, col - 1);
-                    explore(row + 1, col - 1);
-                } else {
-                    explore(row - 1, col + 1);
-                    explore(row + 1, col + 1);
-                }
-            }
-
-            explore(startRow, startCol);
-            return matchedBubbles;
-        }
-
-        function removeMatches(matches) {
-            if (matches.length >= 3) {
-                matches.forEach(bubble => {
-                    for (let row = 0; row < GRID_HEIGHT; row++) {
-                        for (let col = 0; col < GRID_WIDTH; col++) {
-                            if (bubbleGrid[row][col] === bubble) {
-                                scene.remove(bubble);
-                                bubbleGrid[row][col] = null;
-                                increaseScore(10);
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        function increaseScore(amount) {
-            score += amount;
-            scoreElement.textContent = 'Score: ' + score;
-        }
-
-        // --- Desktop Controls ---
-        document.addEventListener('mousedown', function() {
-            launchBubble();
-        });
-
-        document.addEventListener('mousemove', (event) => {
-            // Calculate mouse position in normalized device coordinates (-1 to +1) for both axes.
-            const mouse = new THREE.Vector2();
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            // Create a ray from the camera through the mouse position
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera(mouse, camera);
-
-            // Define a plane to intersect with (the aiming plane)
-            const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);  // Plane is at z=0
-            const intersectPoint = new THREE.Vector3();
-
-            raycaster.ray.intersectPlane(plane, intersectPoint);
-
-            // Now aim the gun at the intersection point
-            if (intersectPoint) {
-                aimingGun.lookAt(intersectPoint);
-                aimingGun.rotation.x += Math.PI / 2; // Adjust for cylinder orientation
-            }
-        });
-
-        // --- VR Controller Setup ---
-        let controller1, controller2;
-        let controllerGrip1, controllerGrip2;
-
-        function setupVRControllers() {
-            controller1 = renderer.xr.getController(0);
-            controller1.addEventListener('selectstart', onSelectStart);
-            scene.add(controller1);
-
-            controller2 = renderer.xr.getController(1);
-            controller2.addEventListener('selectstart', onSelectStart);
-            scene.add(controller2);
-
-            const controllerModelFactory = new THREE.XRControllerModelFactory();
-
-            controllerGrip1 = renderer.xr.getControllerGrip(0);
-            controllerGrip1.add(controllerModelFactory.createControllerModel(controllerGrip1));
-            scene.add(controllerGrip1);
-
-            controllerGrip2 = renderer.xr.getControllerGrip(1);
-            controllerGrip2.add(controllerModelFactory.createControllerModel(controllerGrip2));
-            scene.add(controllerGrip2);
-
-           // Attach the aiming gun to the controller (controller1 in this case)
-           controller1.add(aimingGun);
-           aimingGun.position.set(0, -0.2, -0.5); // Adjust position relative to controller
-           aimingGun.rotation.set(0, 0, 0);
-        }
-
-        function onSelectStart(event) {
-            launchBubble();
-        }
-
-        // --- VR and Non-VR Setup ---
-        camera.position.set(0, 0, 0);
-
-        // VR Support check
-        let vrButton = document.getElementById('enterVRButton');
-        let statusText = document.getElementById('status');
-
-        if ('xr' in navigator) {
-            navigator.xr.isSessionSupported('immersive-vr').then(supported => {
-                vrButton.disabled = !supported;
-                vrButton.textContent = supported ? 'Enter VR' : 'VR not supported';
-            });
-        }
-        else {
-            vrButton.disabled = true;
-            vrButton.textContent = 'VR not supported';
-        }
-
-        vrButton.addEventListener('click', function() {
-            if (renderer.xr.isPresenting) {
-                renderer.xr.getSession().end();
-                vrButton.textContent = 'Enter VR';
-
-              //Detach the gun if exiting VR
-               if (aimingGun.parent) {
-                    aimingGun.parent.remove(aimingGun);
-                    scene.add(aimingGun);
-                    aimingGun.position.set(0, -5, 0);
-                }
-
-
             } else {
-                navigator.xr.requestSession('immersive-vr', {
-                    optionalFeatures: ['local-floor', 'bounded-floor', 'hand-tracking']
-                }).then(function(session) {
-                    renderer.xr.setSession(session);
-                    vrButton.textContent = 'Exit VR';
-                    setupVRControllers();
-                }).catch(function(error) {
-                    console.error("Failed to start VR", error);
-                });
-            }
-        });
-
-
-        // --- Main Game Loop ---
-        function animate() {
-            renderer.setAnimationLoop(render);
-        }
-
-
-        function render() {
-            if (shootingBubble && shootingBubble.userData.isShooting) {
-                shootingBubble.position.addScaledVector(shotDirection, SHOT_SPEED / 60);
-
-                const collision = checkCollision(shootingBubble);
-                if (collision) {
-                    shootingBubble.userData.isShooting = false;
-                    const newPos = placeBubble(shootingBubble, collision);
-
-                    if (newPos) {
-                        const matches = checkMatches(newPos.row, newPos.col);
-                        removeMatches(matches);
-                    }
-
-                    resetShootingBubble();
-                    checkLevelUp();
-
-                } else if (shootingBubble.position.length() > 50) { // Out of bounds
-                    shootingBubble.userData.isShooting = false;
-                    resetShootingBubble();
+                const subdivisions = subdivisionsPerNote[irama] * 2; // Twice as fast as barung
+                const subTime = currentTiming / subdivisions;
+                for (let k = 0; k < subdivisions; k++) {
+                    const time = beatTime + k * subTime;
+                    const freq = (k % 2 === 0) ? baseFreq * 2 : baseFreq * 4; // Gembyang (octave jumps)
+                    pattern.push({ freq: freq, time });
                 }
             }
+            return pattern;
+        }
 
-            renderer.render(scene, camera);
+        function playKendhangPattern (startTime, style = 'traditional', cycleLength) {
+
+          if(cycleLength === 4){
+
+            const beatSpacing = currentTiming;
+
+              if (style === 'traditional') {
+                // Implement a simplified version here. Replace with sample triggers
+
+                  triggerKendhang(startTime, 'tung', instruments.kendhang)
+                  triggerKendhang(startTime + beatSpacing, 'tak', instruments.kendhang);
+                  triggerKendhang(startTime + 2 * beatSpacing, 'tak', instruments.kendhang);
+                  triggerKendhang(startTime + 3 * beatSpacing, 'tung', instruments.kendhang);
+
+              } else {
+                  triggerKendhang(startTime, 'tung', instruments.kendhang); // simplified (Tung in First place!)
+              }
+          }
+        }
+
+        // Trigger a single sample note based on Kendang Samples
+        function triggerKendhang(startTime, sampleName, instrumentDefinition){
+          const sampleBuffer = loadedKendhangSounds[sampleName];
+          if(!sampleBuffer) {
+            console.warn('error buffer', sampleName);
+          }
+          let source = audioContext.createBufferSource();
+
+          source.buffer = sampleBuffer;
+          let gainNode = audioContext.createGain();
+
+          // ramping configuration
+          gainNode.gain.setValueAtTime(instrumentDefinition.gain, startTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);  // always low time;
+
+          source.connect(gainNode);
+
+          let panner = createPannerNode(instrumentDefinition.pan)
+
+          gainNode.connect(panner);
+          panner.connect(masterGainNode); // connect to master volumen;
+
+
+          source.start(startTime);
+          source.stop(startTime + instrumentDefinition.decay); // short for better definition
+
+        }
+
+        // Toggle instrument on / off parameters
+        function changeInstrumentSettings(nameInstrument, isOn){
+
+          console.warn('setting off all note instruments')
+
+        }
+
+        function playCycle(startTime, balungan, cycleLength) {
+
+            const subdivisions = subdivisionsPerNote[currentIrama];
+            const subTime = currentTiming / subdivisions;
+            const kendhangStyle = document.getElementById('kendhangStyle').value;
+
+            balungan.forEach((note, index) => {
+                if (slendroScale[note]) {
+                    const beatTime = startTime + index * currentTiming;
+                    const baseFreq = slendroScale[note];
+                    const nextNote = balungan[(index + 1) % cycleLength];
+
+
+                    // Colotomic instruments (for 4-beat cycle example)
+                    if (cycleLength === 4) {
+
+                        if (index === 3) {oscillators.push(createOscillator(
+                            instruments.gong.freq, instruments.gong, beatTime
+                        ))} // gong
+                        if (index === 1 || index === 3) {oscillators.push(createOscillator(
+                            baseFreq * instruments.kenong.freqMult, instruments.kenong, beatTime
+                        ))};  // kenong
+                        if (index === 0 || index === 2) {oscillators.push(createOscillator(
+                           baseFreq * instruments.kempul.freqMult, instruments.kempul, beatTime
+                        ))}; // kempul
+
+
+                    }
+
+                  if (isDebugging){
+
+                    console.warn('starting Note Debugg === ');
+                    console.warn(arguments);
+                    console.warn(startTime, balungan, cycleLength,  arguments, kendhangStyle);
+
+                  }
+
+                    // Visual Cue
+                    highlightNote(note, startTime, currentTiming);
+
+                    // Saron Barung (balungan)
+
+                      oscillators.push(createOscillator(
+                        baseFreq * instruments.saronBarung.freqMult, instruments.saronBarung, beatTime
+                      ));
+
+
+                    // Peking (simple elaboration)
+
+                    for (let k = 0; k < subdivisions; k++) {
+
+                        const time = beatTime + k * subTime;
+                        oscillators.push(createOscillator(
+                          baseFreq * instruments.peking.freqMult, instruments.peking, time
+                        ));
+
+                    }
+
+
+                    // Bonang Barung (imbal pattern)
+                    const barungPattern = getBonangBarungPattern(note, nextNote, currentIrama, beatTime, subTime);
+                    barungPattern.forEach(p => {
+
+                         oscillators.push(createOscillator(
+                           p.freq, instruments.bonangBarung, p.time
+                         ));
+
+
+                    });
+
+                    // Bonang Panerus (gembyang and polyrhythm)
+                    const panerusPattern = getBonangPanerusPattern(note, currentIrama, beatTime, currentTiming);
+                    panerusPattern.forEach(p => {
+                         oscillators.push(createOscillator(
+                           p.freq, instruments.bonangPanerus, p.time
+                        ));
+
+
+                    });
+
+                    // Saron Panerus (high-pitched elaboration)
+                    for (let k = 0; k < subdivisions; k++) {
+
+                        const time = beatTime + k * subTime;
+                          oscillators.push(createOscillator(
+                           baseFreq * instruments.saronPanerus.freqMult, instruments.saronPanerus, time
+                          ));
+
+                    }
+
+
+
+                    setTimeout(() => {
+                        document.getElementById('currentNote').textContent =
+                            `Current Balungan: ${note} (Irama: ${currentIrama}, Timing: ${currentTiming.toFixed(2)}s)`;
+                    }, (beatTime - audioContext.currentTime) * 1000);
+                }
+            });
+
+
+              // play simple Drum Patterns after notes,
+            playKendhangPattern(startTime, kendhangStyle, cycleLength);
+
+            if (isPlaying) {
+                const nextCycleTime = startTime + cycleLength * currentTiming;
+
+                setTimeout(() => playCycle(nextCycleTime, balungan, cycleLength),
+                    (nextCycleTime - audioContext.currentTime - 0.1) * 1000);
+
+                    updateVisualizer();  // Update the visualizer
+            }
         }
 
 
-        // --- Initialize Game ---
-        populateGrid();
-        resetShootingBubble();
-        animate();
 
-        // --- Event Listeners ---
-        window.addEventListener('resize', function() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth / window.innerHeight);
-        });
+        // === STARTING FUNCTIONS / MAIN LOOPING functions =====
 
+        function startGamelan() {
+            if (!isPlaying) {
+                isPlaying = true;
+                const balungan = document.getElementById('balunganInput').value.split(' ').map(Number);
+                const cycleLength = parseInt(document.getElementById('cycleLength').value);
+
+
+                // play drum pattersns in repeat!
+                playCycle(audioContext.currentTime, balungan, cycleLength);
+                setInterval(() => {
+                    if (Math.abs(currentTiming - targetIramaTiming) > 0.01) {
+                        currentTiming += (targetIramaTiming - currentTiming) * 0.05;
+                    }
+                }, 100);
+            }
+        }
+
+        function transitionIrama() {
+            if (currentIrama === 'lancer') { currentIrama = 'tanggung'; targetIramaTiming = iramaTimings.tanggung; }
+            else if (currentIrama === 'tanggung') { currentIrama = 'dados'; targetIramaTiming = iramaTimings.dados; }
+            else { currentIrama = 'lancer'; targetIramaTiming = iramaTimings.lancer; }
+        }
+
+
+        function stopGamelan() {
+
+          console.log("stopping");
+            isPlaying = false;
+            oscillators.forEach(osc => osc.stop());
+            oscillators = [];
+            document.getElementById('currentNote').textContent = 'Current Balungan: Stopped';
+             clearHighlight();
+        }
+
+
+        function loadPreset() {
+            const preset = document.getElementById('presetBalungan').value;
+            if (preset) document.getElementById('balunganInput').value = preset;
+        }
+
+
+        // ======  UTILITY / SETTING FUNCTIONS =====
+         // Adjust overall Volume on Slider;
+        function setMasterVolume(volume) {
+            masterGainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        }
+        function toggleDebugging() {
+            isDebugging = !isDebugging;
+
+             if(isDebugging)console.warn('turning ON console Log debugger')
+        }
+
+        // Change Detuning Value
+        function updateSlendroTuning(cents) {
+
+          slendroDetuning = parseInt(cents);
+          for(const key in originalSlendroScale){
+
+              slendroScale[key] = originalSlendroScale[key] * Math.pow(2, (slendroDetuning / 1200));  // applying exponential cent functionallity for accurate tuning behaviour;
+
+              // slendroScale[key] = originalSlendroScale[key] + slendroDetuning
+            if(isDebugging){console.warn("Key and its number on Scale (tuned)"+key, slendroScale[key]);}
+          }
+
+        }
+         //===== Visualization and Effects =====
+        const visualizer = document.getElementById('visualizer');
+        const canvasCtx = visualizer.getContext('2d');
+
+
+        function initVisualizer() {
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048; // higher = smoother, but more demanding
+            bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+
+             // Correct connection, connecting analzer between to last Gain / PAN;
+             masterGainNode.disconnect(audioContext.destination);  // removes default source
+             masterGainNode.connect(analyser);
+
+             analyser.connect(audioContext.destination) // Analyser connected on Master;
+
+
+             drawVisualization(); //  Loop
+        }
+
+         function drawVisualization() {
+            requestAnimationFrame(drawVisualization);
+            analyser.getByteTimeDomainData(dataArray);
+            canvasCtx.fillStyle = 'rgba(0, 0, 0, 0.8)'; // Clears screen (more opaque background);
+            canvasCtx.fillRect(0, 0, visualizer.width, visualizer.height);
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = 'rgb(255,255, 255)';
+            canvasCtx.beginPath();
+            const sliceWidth = visualizer.width * 1.0 / bufferLength;
+            let x = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * visualizer.height/2;
+                if (i === 0) canvasCtx.moveTo(x, y);
+                else canvasCtx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            canvasCtx.lineTo(visualizer.width, visualizer.height/2);
+            canvasCtx.stroke();
+        }
+
+
+         function updateVisualizer() {
+
+             if (!analyser){
+
+                 return
+
+             };  // check it it is loaded
+
+             analyser.fftSize = 2048; // reset parameters (it might bugout)
+              drawVisualization()
+
+         }
+
+         // Active / HIGH LIGHITNG ===
+
+         //  highlightNote(note) is missing (adds color, animation,  dynamic border glow on buttons,
+
+        function highlightNote(note, startTime, timing){
+
+           let timeOutTimer = Math.abs(timing * 750); // setting dynamic timeouts.
+          console.warn('Highlighting with  setTimeout (testing async):'+timeOutTimer+'s'+  arguments);
+           let currentNoteElement =  document.getElementById('balunganInput');
+           if(!currentNoteElement)return;
+
+               //   Add style  - active Class will trigger animation effect
+
+                currentNoteElement.classList.add('active-note'); // triggering current css on that note;
+
+
+                   //Clear Styles - Async Call in Timing
+
+              setTimeout(() => {  currentNoteElement.classList.remove('active-note'); }, timeOutTimer);
+        }
+        function clearHighlight() { // Reset and avoid  Note to  'stay lit' because some internal Stop action issues and timing related stuff...
+
+          let currentNoteElement =  document.getElementById('balunganInput');
+            if(!currentNoteElement)return;
+               // Reset styling (when game reset).
+
+            currentNoteElement.classList.remove('active-note');
+
+          console.log("cleaningHighlight"); // debugger to  check calls;
+        }
+        //====== ASSET LOADER FUNCTUINS
+
+        //LOAD ALL  SOUNDS
+
+         async function loadAssets() {
+
+          visualizer.width = visualizer.offsetWidth;  // Correctly sets  (to fill its container)
+          visualizer.height = visualizer.offsetHeight; // Same
+
+
+            console.log("starting Asset Loading");  // Debugger Function loading
+              initVisualizer();  //  init on audio loaded completely
+
+            try {
+
+                // looping Drum sampler Buffer load.
+                for(const key in kendhangSamples) {
+                    loadedKendhangSounds[key] = await loadAudioBuffer(`audio/${kendhangSamples[key]}`);
+
+                      if (instruments.kendhang) {
+
+                           // assign Kendhang Sampeles directly, to their instrumet. and define all parameters directly
+
+                        instruments.kendhang.buffer = loadedKendhangSounds[key];
+                        instruments.kendhang.alreadyDecoded = true;
+
+
+                          //debugging
+                        if(isDebugging){console.log('Loaded Sound '+key)}
+                       }
+
+                  };  // async loops all  Kendhang Files
+
+            } catch (error) {
+                 console.error("asset load Problem "+error);
+
+             } finally{
+
+              console.log("Assets  Finished! (All done for starting)...");
+
+              console.warn('check global Instrument definitions assigned'); //checking function end
+               if(isDebugging){console.warn(instruments)};  // log if function has error
+             }
+         }
+
+        async function loadAudioBuffer(url) {
+
+          const response = await fetch(url);
+
+              if (!response.ok) { // checks only for general success
+                throw new Error(`Could not fetch audio,  url issue:${response.status}`); // throwing ERROR, and will return directly there
+            }
+          const arrayBuffer = await response.arrayBuffer(); // returning content only when 1st validation is DONE;
+
+
+          try{
+            let decodedAudio = await audioContext.decodeAudioData(arrayBuffer); // might fail to decode
+
+
+                return decodedAudio
+
+          }catch(error){
+           throw new Error(`Decoding failed, file might corrupted: ${error}`)
+           console.error('load SampleFile, ERROR:'+error);  // debugger reasons to track decode
+          }
+        }
+      window.onload = loadAssets;  // calls all Sound file / decoders ON-Fileload! - this triggeres START and prevent user gesture issues!
     </script>
 </body>
 </html>
