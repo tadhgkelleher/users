@@ -242,7 +242,7 @@
             color: #00ffff;
             text-shadow: 0 0 10px #ff00ff;
         }
-     </style>
+        </style>
 </head>
 
 <body>
@@ -293,7 +293,7 @@
         const vrCanvas = document.getElementById('vrCanvas');
         let animationId = null;
         let audioContext, droneOscillator, droneGain, voiceAnalyser;
-        let scene, camera, renderer, mandalaPlane, particleSystem;
+        let scene, camera, renderer, mandalaPlane, orbs = [];
         let voicePitch = 0;
         let voiceAmplitude = 0;
         let droneAmplitude = 0;
@@ -467,7 +467,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Initialization with Particles
+        // VR Initialization with Orbs
         function initVR() {
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -492,41 +492,16 @@
             texture.minFilter = THREE.LinearFilter;
             texture.magFilter = THREE.LinearFilter;
 
-            // Smoother mandala geometry
-            const geometry = new THREE.PlaneGeometry(8, 8, 256, 256); // Increased segments for smoothness
-            const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
+            // Larger plane to avoid square edges, high resolution
+            const geometry = new THREE.PlaneGeometry(12, 12, 256, 256); // Increased size to 12x12
+            const material = new THREE.MeshBasicMaterial({ 
+                map: texture, 
+                side: THREE.DoubleSide, 
+                transparent: true 
+            });
             mandalaPlane = new THREE.Mesh(geometry, material);
             mandalaPlane.position.z = -8;
             scene.add(mandalaPlane);
-
-            // Particle System
-            const particleCount = 1000;
-            const particlesGeometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            const colors = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                const radius = 10 * Math.random();
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                positions[i] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i + 2] = radius * Math.cos(phi);
-                colors[i] = Math.random();
-                colors[i + 1] = Math.random();
-                colors[i + 2] = 1.0;
-            }
-
-            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-            const particleMaterial = new THREE.PointsMaterial({
-                size: 0.1,
-                vertexColors: true,
-                transparent: true,
-                opacity: 0.8
-            });
-            particleSystem = new THREE.Points(particlesGeometry, particleMaterial);
-            scene.add(particleSystem);
 
             camera.position.z = 0;
 
@@ -585,6 +560,8 @@
                         vrCanvas.style.display = 'none';
                         renderer.setAnimationLoop(null);
                         document.getElementById('enterVR').textContent = 'Enter Temple';
+                        orbs.forEach(orb => scene.remove(orb));
+                        orbs = [];
                     });
 
                     renderer.xr.setSession(session);
@@ -608,20 +585,50 @@
             });
         }
 
-        // VR Animation with Particles
+        // VR Animation with Orbs
         function animateVR() {
             mandalaPlane.material.map.needsUpdate = true;
             mandalaPlane.rotation.z += rotationSpeed;
 
-            // Update particles based on voice
-            const positions = particleSystem.geometry.attributes.position.array;
-            for (let i = 0; i < positions.length; i += 3) {
-                positions[i] += Math.sin(timeFactor + i) * voiceAmplitude * 0.05;
-                positions[i + 1] += Math.cos(timeFactor + i) * voiceAmplitude * 0.05;
-                positions[i + 2] += Math.sin(timeFactor + i) * voiceAmplitude * 0.05;
+            // Spawn orbs based on voice amplitude
+            if (voiceAmplitude > 0.05 && Math.random() < voiceAmplitude * 0.1) {
+                const orbGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+                const orbMaterial = new THREE.MeshBasicMaterial({ 
+                    color: new THREE.Color(params.secondaryColor), 
+                    transparent: true, 
+                    opacity: 0.8 
+                });
+                const orb = new THREE.Mesh(orbGeometry, orbMaterial);
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 4 * (0.5 + Math.random() * 0.5); // Start near mandala edge
+                orb.position.set(
+                    radius * Math.cos(angle),
+                    radius * Math.sin(angle),
+                    -8
+                );
+                orb.userData = { 
+                    velocity: new THREE.Vector3(
+                        Math.cos(angle) * 0.05,
+                        Math.sin(angle) * 0.05,
+                        0.02 * (Math.random() - 0.5)
+                    ), 
+                    life: 1.0 
+                };
+                scene.add(orb);
+                orbs.push(orb);
             }
-            particleSystem.geometry.attributes.position.needsUpdate = true;
-            particleSystem.rotation.y += 0.01 * voiceAmplitude;
+
+            // Update orbs
+            orbs = orbs.filter(orb => {
+                orb.position.add(orb.userData.velocity);
+                orb.userData.life -= 0.01;
+                orb.material.opacity = orb.userData.life * 0.8;
+                if (orb.userData.life <= 0) {
+                    scene.remove(orb);
+                    return false;
+                }
+                return true;
+            });
 
             generateMandala(timeFactor);
             timeFactor += 0.01 + (voiceAmplitude * 0.05);
@@ -629,7 +636,7 @@
             renderer.render(scene, camera);
         }
 
-        // 2D Mandala Generation (unchanged)
+        // 2D Mandala Generation with Circular Mask
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
             ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
@@ -637,6 +644,7 @@
             const centerY = mandalaCanvas.height / 2;
             const audioFactor = voiceAmplitude + droneAmplitude;
 
+            // Draw mandala content
             function drawRecursiveShape(x, y, r, level) {
                 if (level > params.levels) return;
                 const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
@@ -755,6 +763,14 @@
                 ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
                 ctx.fill();
             }
+
+            // Apply circular mask
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
             needsRedraw = false;
         }
 
