@@ -242,7 +242,7 @@
             color: #00ffff;
             text-shadow: 0 0 10px #ff00ff;
         }
-        </style>
+      </style>
 </head>
 
 <body>
@@ -467,7 +467,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Initialization with Orbs
+        // VR Initialization with More Orbs
         function initVR() {
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -492,8 +492,7 @@
             texture.minFilter = THREE.LinearFilter;
             texture.magFilter = THREE.LinearFilter;
 
-            // Larger plane to avoid square edges, high resolution
-            const geometry = new THREE.PlaneGeometry(12, 12, 256, 256); // Increased size to 12x12
+            const geometry = new THREE.PlaneGeometry(12, 12, 256, 256);
             const material = new THREE.MeshBasicMaterial({ 
                 map: texture, 
                 side: THREE.DoubleSide, 
@@ -585,44 +584,54 @@
             });
         }
 
-        // VR Animation with Orbs
+        // VR Animation with Enhanced Orbs
         function animateVR() {
             mandalaPlane.material.map.needsUpdate = true;
             mandalaPlane.rotation.z += rotationSpeed;
 
-            // Spawn orbs based on voice amplitude
-            if (voiceAmplitude > 0.05 && Math.random() < voiceAmplitude * 0.1) {
-                const orbGeometry = new THREE.SphereGeometry(0.1, 16, 16);
-                const orbMaterial = new THREE.MeshBasicMaterial({ 
-                    color: new THREE.Color(params.secondaryColor), 
-                    transparent: true, 
-                    opacity: 0.8 
-                });
-                const orb = new THREE.Mesh(orbGeometry, orbMaterial);
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 4 * (0.5 + Math.random() * 0.5); // Start near mandala edge
-                orb.position.set(
-                    radius * Math.cos(angle),
-                    radius * Math.sin(angle),
-                    -8
-                );
-                orb.userData = { 
-                    velocity: new THREE.Vector3(
-                        Math.cos(angle) * 0.05,
-                        Math.sin(angle) * 0.05,
-                        0.02 * (Math.random() - 0.5)
-                    ), 
-                    life: 1.0 
-                };
-                scene.add(orb);
-                orbs.push(orb);
+            // Spawn more orbs based on voice amplitude
+            if (voiceAmplitude > 0.05) {
+                const spawnCount = Math.floor(voiceAmplitude * 5); // More orbs with higher amplitude
+                for (let i = 0; i < spawnCount; i++) {
+                    if (Math.random() < voiceAmplitude * 0.3) { // Increased spawn chance
+                        const size = 0.05 + Math.random() * 0.15; // Variable size for bubbles
+                        const orbGeometry = new THREE.SphereGeometry(size, 16, 16);
+                        const orbMaterial = new THREE.MeshBasicMaterial({ 
+                            color: new THREE.Color(params.secondaryColor), 
+                            transparent: true, 
+                            opacity: 0.9 
+                        });
+                        const orb = new THREE.Mesh(orbGeometry, orbMaterial);
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = 4 * (0.5 + Math.random() * 0.5);
+                        orb.position.set(
+                            radius * Math.cos(angle),
+                            radius * Math.sin(angle),
+                            -8
+                        );
+                        orb.userData = { 
+                            velocity: new THREE.Vector3(
+                                Math.cos(angle) * 0.03 * (0.5 + Math.random()),
+                                Math.sin(angle) * 0.03 * (0.5 + Math.random()),
+                                0.05 + Math.random() * 0.03 // Upward bias
+                            ), 
+                            life: 0.8 + Math.random() * 0.4, // Shorter life for more turnover
+                            wobble: Math.random() * Math.PI * 2
+                        };
+                        scene.add(orb);
+                        orbs.push(orb);
+                    }
+                }
             }
 
-            // Update orbs
+            // Update orbs with bubble-like motion
             orbs = orbs.filter(orb => {
+                orb.userData.wobble += 0.1;
                 orb.position.add(orb.userData.velocity);
-                orb.userData.life -= 0.01;
-                orb.material.opacity = orb.userData.life * 0.8;
+                orb.position.x += Math.sin(orb.userData.wobble) * 0.02 * voiceAmplitude;
+                orb.position.y += Math.cos(orb.userData.wobble) * 0.02 * voiceAmplitude;
+                orb.userData.life -= 0.015; // Faster fade
+                orb.material.opacity = orb.userData.life * 0.9;
                 if (orb.userData.life <= 0) {
                     scene.remove(orb);
                     return false;
@@ -644,7 +653,6 @@
             const centerY = mandalaCanvas.height / 2;
             const audioFactor = voiceAmplitude + droneAmplitude;
 
-            // Draw mandala content
             function drawRecursiveShape(x, y, r, level) {
                 if (level > params.levels) return;
                 const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
