@@ -242,7 +242,7 @@
             color: #00ffff;
             text-shadow: 0 0 10px #ff00ff;
         }
-       </style>
+          </style>
 </head>
 
 <body>
@@ -292,7 +292,7 @@
         const ctx = mandalaCanvas.getContext('2d');
         const vrCanvas = document.getElementById('vrCanvas');
         let animationId = null;
-        let audioContext, droneOscillator, droneGain, droneLFO, voiceAnalyser;
+        let audioContext, droneOscillator, droneGain, voiceAnalyser;
         let scene, camera, renderer, mandalaPlane, orbs = [];
         let voicePitch = 0;
         let voiceAmplitude = 0;
@@ -303,12 +303,12 @@
         let lastUpdate = 0;
 
         const params = {
-            segments: 12, // More segments for intricacy
-            levels: 6,   // More levels for depth
+            segments: 3,
+            levels: 4,
             scaleFactor: 0.7,
-            initialRadius: 150, // Smaller initial size
+            initialRadius: 200,
             lineColor: '#ff00ff',
-            lineWidth: 1.5,     // Thinner lines
+            lineWidth: 3,
             baseFreq: 110,
             waveform: 'sine',
             secondaryColor: '#00ffff',
@@ -327,35 +327,24 @@
             }
         }
 
-        // Drone Control with Character
+        // Drone Control
         function toggleDrone() {
             initAudio();
             if (droneOscillator) {
                 droneOscillator.stop();
-                droneLFO.stop();
                 droneOscillator = null;
                 droneGain = null;
-                droneLFO = null;
                 droneAmplitude = 0;
                 document.getElementById('drone').textContent = 'Start Drone';
             } else {
                 droneOscillator = audioContext.createOscillator();
                 droneGain = audioContext.createGain();
-                droneLFO = audioContext.createOscillator(); // Low-frequency oscillator for modulation
-                droneLFO.type = 'sine';
-                droneLFO.frequency.value = 0.5; // Slow pulsation
-                const lfoGain = audioContext.createGain();
-                lfoGain.gain.value = 10; // Modulation depth
-
                 droneOscillator.type = params.waveform;
                 droneOscillator.frequency.value = params.baseFreq;
                 droneGain.gain.value = 0.1;
                 droneAmplitude = 0.1;
-
-                droneLFO.connect(lfoGain).connect(droneOscillator.frequency);
                 droneOscillator.connect(droneGain).connect(audioContext.destination);
                 droneOscillator.start();
-                droneLFO.start();
                 document.getElementById('drone').textContent = 'Stop Drone';
                 updateDroneParams();
             }
@@ -461,12 +450,12 @@
 
         function updateVoiceParams() {
             if (voiceAmplitude > 0.05) {
-                params.segments = Math.min(50, Math.max(12, params.segments + voiceAmplitude * 2));
-                params.initialRadius = Math.min(300, 150 + voicePitch * 0.1);
+                params.segments = Math.min(30, Math.max(3, params.segments + voiceAmplitude * 2));
+                params.initialRadius = Math.min(400, 200 + voicePitch * 0.2);
                 params.modulation = 1 + voiceAmplitude;
             } else {
-                params.segments = Math.max(12, params.segments - 0.2);
-                params.initialRadius = Math.max(150, params.initialRadius - 1);
+                params.segments = Math.max(3, params.segments - 0.2);
+                params.initialRadius = Math.max(200, params.initialRadius - 1);
                 params.modulation = Math.max(1, params.modulation - 0.05);
             }
             needsRedraw = true;
@@ -478,7 +467,7 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-        // VR Initialization
+        // VR Initialization with More Orbs
         function initVR() {
             if (!window.THREE) {
                 console.error('Three.js not loaded');
@@ -503,14 +492,14 @@
             texture.minFilter = THREE.LinearFilter;
             texture.magFilter = THREE.LinearFilter;
 
-            const geometry = new THREE.PlaneGeometry(8, 8, 256, 256); // Smaller size (8x8)
+            const geometry = new THREE.PlaneGeometry(12, 12, 256, 256);
             const material = new THREE.MeshBasicMaterial({ 
                 map: texture, 
                 side: THREE.DoubleSide, 
                 transparent: true 
             });
             mandalaPlane = new THREE.Mesh(geometry, material);
-            mandalaPlane.position.z = -10; // Moved further back
+            mandalaPlane.position.z = -8;
             scene.add(mandalaPlane);
 
             camera.position.z = 0;
@@ -595,16 +584,17 @@
             });
         }
 
-        // VR Animation with Orbs
+        // VR Animation with Enhanced Orbs
         function animateVR() {
             mandalaPlane.material.map.needsUpdate = true;
             mandalaPlane.rotation.z += rotationSpeed;
 
+            // Spawn more orbs based on voice amplitude
             if (voiceAmplitude > 0.05) {
-                const spawnCount = Math.floor(voiceAmplitude * 5);
+                const spawnCount = Math.floor(voiceAmplitude * 5); // More orbs with higher amplitude
                 for (let i = 0; i < spawnCount; i++) {
-                    if (Math.random() < voiceAmplitude * 0.3) {
-                        const size = 0.05 + Math.random() * 0.15;
+                    if (Math.random() < voiceAmplitude * 0.3) { // Increased spawn chance
+                        const size = 0.05 + Math.random() * 0.15; // Variable size for bubbles
                         const orbGeometry = new THREE.SphereGeometry(size, 16, 16);
                         const orbMaterial = new THREE.MeshBasicMaterial({ 
                             color: new THREE.Color(params.secondaryColor), 
@@ -613,19 +603,19 @@
                         });
                         const orb = new THREE.Mesh(orbGeometry, orbMaterial);
                         const angle = Math.random() * Math.PI * 2;
-                        const radius = 3 * (0.5 + Math.random() * 0.5); // Adjusted for smaller mandala
+                        const radius = 4 * (0.5 + Math.random() * 0.5);
                         orb.position.set(
                             radius * Math.cos(angle),
                             radius * Math.sin(angle),
-                            -10
+                            -8
                         );
                         orb.userData = { 
                             velocity: new THREE.Vector3(
                                 Math.cos(angle) * 0.03 * (0.5 + Math.random()),
                                 Math.sin(angle) * 0.03 * (0.5 + Math.random()),
-                                0.05 + Math.random() * 0.03
+                                0.05 + Math.random() * 0.03 // Upward bias
                             ), 
-                            life: 0.8 + Math.random() * 0.4,
+                            life: 0.8 + Math.random() * 0.4, // Shorter life for more turnover
                             wobble: Math.random() * Math.PI * 2
                         };
                         scene.add(orb);
@@ -634,12 +624,13 @@
                 }
             }
 
+            // Update orbs with bubble-like motion
             orbs = orbs.filter(orb => {
                 orb.userData.wobble += 0.1;
                 orb.position.add(orb.userData.velocity);
                 orb.position.x += Math.sin(orb.userData.wobble) * 0.02 * voiceAmplitude;
                 orb.position.y += Math.cos(orb.userData.wobble) * 0.02 * voiceAmplitude;
-                orb.userData.life -= 0.015;
+                orb.userData.life -= 0.015; // Faster fade
                 orb.material.opacity = orb.userData.life * 0.9;
                 if (orb.userData.life <= 0) {
                     scene.remove(orb);
@@ -654,7 +645,7 @@
             renderer.render(scene, camera);
         }
 
-        // 2D Mandala Generation with New Patterns
+        // 2D Mandala Generation with Circular Mask
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
             ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
@@ -686,47 +677,6 @@
                         ctx.closePath();
                         ctx.stroke();
                         break;
-                    case 'schumann': // Inspired by Schumann Resonance (7.83 Hz)
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.783;
-                            const dist = r * (0.5 + Math.sin(angle * 7.83 + timeFactor) * audioFactor * 0.5);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'pi': // Pi-based pattern
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
-                            const dist = r * (0.5 + Math.sin(angle * Math.PI + timeFactor) * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'golden': // Golden Ratio (φ ≈ 1.618)
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 1.618;
-                            const dist = r * (0.5 + Math.cos(angle * 1.618 + timeFactor) * audioFactor * 0.618);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'mandelbrot': // Simplified Mandelbrot-inspired spiral
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor;
-                            const z = i / params.segments;
-                            const dist = r * (0.5 + audioFactor * Math.sin(z * z + timeFactor));
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
                     case 'vortex':
                         ctx.beginPath();
                         for (let i = 0; i < params.segments / level; i++) {
@@ -738,6 +688,67 @@
                             ctx.moveTo(x, y);
                             ctx.quadraticCurveTo(x1, y1, x2, y2);
                         }
+                        ctx.stroke();
+                        break;
+                    case 'nebula':
+                        ctx.beginPath();
+                        for (let i = 0; i < 12; i++) {
+                            const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
+                            const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
+                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                        break;
+                    case 'chaos':
+                        ctx.beginPath();
+                        const points = Math.floor(Math.random() * 8) + 5;
+                        for (let i = 0; i < points; i++) {
+                            const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
+                            const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
+                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                        break;
+                    case 'flower':
+                        ctx.beginPath();
+                        for (let i = 0; i < 10; i++) {
+                            const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
+                            const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
+                            ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+                        }
+                        ctx.stroke();
+                        break;
+                    case 'yantra':
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
+                            ctx.moveTo(x, y);
+                            ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+                        }
+                        ctx.stroke();
+                        break;
+                    case 'tunnel':
+                        ctx.beginPath();
+                        for (let i = 0; i < params.segments; i++) {
+                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
+                            const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
+                            const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
+                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                        break;
+                    case 'hypercube':
+                        ctx.beginPath();
+                        for (let i = 0; i < 8; i++) {
+                            const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
+                            const mod = Math.cos(level + timeFactor) * audioFactor;
+                            const dist = r * (0.6 + mod * 0.6);
+                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                        }
+                        ctx.closePath();
                         ctx.stroke();
                         break;
                 }
@@ -761,6 +772,7 @@
                 ctx.fill();
             }
 
+            // Apply circular mask
             ctx.globalCompositeOperation = 'destination-in';
             ctx.beginPath();
             ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
@@ -780,10 +792,10 @@
             switch (preset) {
                 case 'mandala':
                     Object.assign(params, {
-                        segments: 12,
-                        levels: 6,
+                        segments: 3,
+                        levels: 5,
                         scaleFactor: 0.8,
-                        initialRadius: 200,
+                        initialRadius: 250,
                         lineColor: '#ff4500',
                         secondaryColor: '#ffd700',
                         patternType: 'cymatic',
@@ -794,13 +806,13 @@
                     break;
                 case 'yantra':
                     Object.assign(params, {
-                        segments: 15,
-                        levels: 5,
+                        segments: 3,
+                        levels: 3,
                         scaleFactor: 0.6,
-                        initialRadius: 180,
+                        initialRadius: 200,
                         lineColor: '#8a2be2',
                         secondaryColor: '#ff00ff',
-                        patternType: 'schumann',
+                        patternType: 'yantra',
                         baseFreq: 136.1,
                         waveform: 'triangle',
                         modulation: 1
@@ -808,13 +820,13 @@
                     break;
                 case 'sufi':
                     Object.assign(params, {
-                        segments: 18,
+                        segments: 3,
                         levels: 4,
                         scaleFactor: 0.7,
-                        initialRadius: 220,
+                        initialRadius: 300,
                         lineColor: '#00ced1',
                         secondaryColor: '#228b22',
-                        patternType: 'golden',
+                        patternType: 'vortex',
                         baseFreq: 174,
                         waveform: 'sawtooth',
                         modulation: 1.5
@@ -822,13 +834,13 @@
                     break;
                 case 'zen':
                     Object.assign(params, {
-                        segments: 20,
-                        levels: 3,
+                        segments: 3,
+                        levels: 1,
                         scaleFactor: 0.9,
                         initialRadius: 150,
                         lineColor: '#000000',
                         secondaryColor: '#ffffff',
-                        patternType: 'pi',
+                        patternType: 'flower',
                         baseFreq: 0,
                         waveform: 'sine',
                         modulation: 0
@@ -935,12 +947,12 @@
             generateMandala(0);
 
             const formTab = document.getElementById('formTab').querySelector('.control-panel');
-            createSliderControl('Segments', 3, 50, 1, params.segments, 'segments', formTab);
-            createSliderControl('Levels', 1, 8, 1, params.levels, 'levels', formTab);
+            createSliderControl('Segments', 3, 30, 1, params.segments, 'segments', formTab);
+            createSliderControl('Levels', 1, 6, 1, params.levels, 'levels', formTab);
             createSliderControl('Scale Factor', 0.1, 1.0, 0.05, params.scaleFactor, 'scaleFactor', formTab);
-            createSliderControl('Initial Radius', 50, 300, 10, params.initialRadius, 'initialRadius', formTab);
-            createSliderControl('Line Width', 0.5, 5, 0.5, params.lineWidth, 'lineWidth', formTab);
-            createDropdownControl('Pattern Type', ['cymatic', 'schumann', 'pi', 'golden', 'mandelbrot', 'vortex'], params.patternType, 'patternType', formTab);
+            createSliderControl('Initial Radius', 50, 400, 10, params.initialRadius, 'initialRadius', formTab);
+            createSliderControl('Line Width', 1, 10, 1, params.lineWidth, 'lineWidth', formTab);
+            createDropdownControl('Pattern Type', ['cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra', 'tunnel', 'hypercube'], params.patternType, 'patternType', formTab);
             createSliderControl("Modulation", 0, 2, 0.1, params.modulation, 'modulation', formTab);
             createSliderControl('Line Color', null, null, null, params.lineColor, 'lineColor', formTab, true);
             createSliderControl('Secondary Color', null, null, null, params.secondaryColor, 'secondaryColor', formTab, true);
@@ -951,7 +963,6 @@
 
             window.addEventListener('unload', () => {
                 if (droneOscillator) droneOscillator.stop();
-                if (droneLFO) droneLFO.stop();
                 if (audioContext) audioContext.close();
                 cancelAnimationFrame(animationId);
             });
