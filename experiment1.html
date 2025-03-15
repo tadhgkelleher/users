@@ -779,7 +779,7 @@
             needsRedraw = false;
         }
 
-        // Guided Meditation
+               // Guided Meditation
         function startGuidedMeditation() {
             const phases = [{
                     duration: 300000,
@@ -802,7 +802,7 @@
             ];
             let phaseIndex = 0;
 
-            functionnextPhase() {
+            function nextPhase() {
                 if (phaseIndex >= phases.length) return;
                 const phase = phases[phaseIndex];
                 params.patternType = phase.pattern;
@@ -816,7 +816,6 @@
             }
             nextPhase();
         }
-
         // Preset Modal
         function showPresetModal() {
             document.getElementById('presetModal').classList.add('active');
