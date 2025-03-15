@@ -19,10 +19,21 @@
         }
 
         @keyframes nebulaFlow {
-            0% { background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c); }
-            33% { background: radial-gradient(circle, #ff00ff, #00ffff, #9b59b6); }
-            66% { background: radial-gradient(circle, #ff4500, #1a3b5c, #ff6ec7); }
-            100% { background: radial-gradient(circle, #2a2a5c, #9b59b6, #0a0a1f); }
+            0% {
+                background: radial-gradient(circle, #0a0a1f, #1a1a3b, #2a2a5c);
+            }
+
+            33% {
+                background: radial-gradient(circle, #ff00ff, #00ffff, #9b59b6);
+            }
+
+            66% {
+                background: radial-gradient(circle, #ff4500, #1a3b5c, #ff6ec7);
+            }
+
+            100% {
+                background: radial-gradient(circle, #2a2a5c, #9b59b6, #0a0a1f);
+            }
         }
 
         h1 {
@@ -35,8 +46,13 @@
         }
 
         @keyframes mantraGlow {
-            0% { text-shadow: 0 0 20px #ff6ec7, 0 0 40px #9b59b6; }
-            100% { text-shadow: 0 0 40px #00ffff, 0 0 80px #ff4500; }
+            0% {
+                text-shadow: 0 0 20px #ff6ec7, 0 0 40px #9b59b6;
+            }
+
+            100% {
+                text-shadow: 0 0 40px #00ffff, 0 0 80px #ff4500;
+            }
         }
 
         #mandalaCanvas {
@@ -348,7 +364,9 @@
 
         // Voice Detection
         function initVoiceControl() {
-            navigator.mediaDevices.getUserMedia({ audio: true })
+            navigator.mediaDevices.getUserMedia({
+                    audio: true
+                })
                 .then(stream => {
                     initAudio();
                     const source = audioContext.createMediaStreamSource(stream);
@@ -394,9 +412,19 @@
             rms = Math.sqrt(rms / SIZE);
             if (rms < 0.01) return -1;
 
-            let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-            for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-            for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+            let r1 = 0,
+                r2 = SIZE - 1,
+                thres = 0.2;
+            for (let i = 0; i < SIZE / 2; i++)
+                if (Math.abs(buf[i]) < thres) {
+                    r1 = i;
+                    break;
+                }
+            for (let i = 1; i < SIZE / 2; i++)
+                if (Math.abs(buf[SIZE - i]) < thres) {
+                    r2 = SIZE - i;
+                    break;
+                }
 
             buf = buf.slice(r1, r2);
             SIZE = buf.length;
@@ -408,13 +436,19 @@
 
             let d = 0;
             while (c[d] > c[d + 1]) d++;
-            let maxval = -1, maxpos = -1;
+            let maxval = -1,
+                maxpos = -1;
             for (let i = d; i < SIZE; i++) {
-                if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+                if (c[i] > maxval) {
+                    maxval = c[i];
+                    maxpos = i;
+                }
             }
             let T0 = maxpos;
 
-            let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+            let x1 = c[T0 - 1],
+                x2 = c[T0],
+                x3 = c[T0 + 1];
             let a = (x1 + x3 - 2 * x2) / 2;
             let b = (x3 - x1) / 2;
             if (a) T0 -= b / (2 * a);
@@ -447,161 +481,175 @@
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
         }
 
-   // VR Initialization
-function initVR() {
-    if (!window.THREE) {
-        console.error('Three.js not loaded');
-        document.getElementById('enterVR').textContent = 'VR Unavailable';
-        return;
-    }
-    if (!navigator.xr) {
-        console.warn('WebXR not supported');
-        document.getElementById('enterVR').textContent = 'VR Not Supported';
-        document.getElementById('enterVR').disabled = true;
-        return;
-    }
-
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ canvas: vrCanvas, antialias: true });
-    renderer.xr.enabled = true;
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    const texture = new THREE.CanvasTexture(mandalaCanvas);
-    texture.minFilter = THREE.LinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    const geometry = new THREE.PlaneGeometry(8, 8);
-    const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-    mandalaPlane = new THREE.Mesh(geometry, material);
-    mandalaPlane.position.z = -3;
-    scene.add(mandalaPlane);
-
-    camera.position.z = 0;
-
-    // Global variable to track if voice detection is active
-    let voiceDetectionActive = false;
-    let voiceDetectionInterval = null;
-
-    document.getElementById('enterVR').addEventListener('click', async () => {
-        // First ensure audio context is initialized and resumed
-        initAudio();
-        await audioContext.resume();
-        
-        // Force initialize voice control if not already done
-        if (!voiceAnalyser || !voiceDetectionActive) {
-            // Clear any existing detection interval
-            if (voiceDetectionInterval) {
-                clearInterval(voiceDetectionInterval);
-                voiceDetectionInterval = null;
+        // VR Initialization
+        function initVR() {
+            if (!window.THREE) {
+                console.error('Three.js not loaded');
+                document.getElementById('enterVR').textContent = 'VR Unavailable';
+                return;
             }
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // If we already have an analyser, disconnect and recreate it
-                if (voiceAnalyser) {
-                    voiceAnalyser.disconnect();
-                }
-                
-                const source = audioContext.createMediaStreamSource(stream);
-                voiceAnalyser = audioContext.createAnalyser();
-                voiceAnalyser.fftSize = 2048;
-                voiceAnalyser.smoothingTimeConstant = 0.7;
-                source.connect(voiceAnalyser);
-                
-                console.log('Voice analyser initialized and connected for VR');
-                
-                const bufferLength = voiceAnalyser.fftSize;
-                const dataArray = new Float32Array(bufferLength);
-                
-                // Create a persistent loop for voice detection that won't be affected by animation frame throttling
-                function runVoiceDetection() {
-                    console.log("Voice detection running");
-                    voiceDetectionActive = true;
-                    
-                    if (voiceAnalyser) {
-                        voiceAnalyser.getFloatTimeDomainData(dataArray);
-                        const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
-                        voiceAmplitude = getAmplitude(dataArray);
-                        
-                        if (pitch !== -1 && pitch > 20 && pitch < 2000) {
-                            voicePitch = pitch;
-                        } else {
-                            voicePitch *= 0.95;
+            if (!navigator.xr) {
+                console.warn('WebXR not supported');
+                document.getElementById('enterVR').textContent = 'VR Not Supported';
+                document.getElementById('enterVR').disabled = true;
+                return;
+            }
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({
+                canvas: vrCanvas,
+                antialias: true
+            });
+            renderer.xr.enabled = true;
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const texture = new THREE.CanvasTexture(mandalaCanvas);
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+
+            // Create a more detailed geometry for VR
+            const geometry = new THREE.PlaneGeometry(8, 8, 128, 128); // Increased segments for detail
+            const material = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide
+            });
+            mandalaPlane = new THREE.Mesh(geometry, material);
+
+            // Position the mandala further back
+            mandalaPlane.position.z = -8; // Changed position
+            scene.add(mandalaPlane);
+
+            camera.position.z = 0;
+
+            // Global variable to track if voice detection is active
+            let voiceDetectionActive = false;
+            let voiceDetectionInterval = null;
+
+            document.getElementById('enterVR').addEventListener('click', async () => {
+                // First ensure audio context is initialized and resumed
+                initAudio();
+                await audioContext.resume();
+
+                // Force initialize voice control if not already done
+                if (!voiceAnalyser || !voiceDetectionActive) {
+                    // Clear any existing detection interval
+                    if (voiceDetectionInterval) {
+                        clearInterval(voiceDetectionInterval);
+                        voiceDetectionInterval = null;
+                    }
+
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({
+                            audio: true
+                        });
+
+                        // If we already have an analyser, disconnect and recreate it
+                        if (voiceAnalyser) {
+                            voiceAnalyser.disconnect();
                         }
-                        
-                        updateVoiceParams();
-                        updateSoundMeter();
-                        
-                        // Force redraw on significant amplitude
-                        if (voiceAmplitude > 0.05) {
-                            needsRedraw = true;
+
+                        const source = audioContext.createMediaStreamSource(stream);
+                        voiceAnalyser = audioContext.createAnalyser();
+                        voiceAnalyser.fftSize = 2048;
+                        voiceAnalyser.smoothingTimeConstant = 0.7;
+                        source.connect(voiceAnalyser);
+
+                        console.log('Voice analyser initialized and connected for VR');
+
+                        const bufferLength = voiceAnalyser.fftSize;
+                        const dataArray = new Float32Array(bufferLength);
+
+                        // Create a persistent loop for voice detection that won't be affected by animation frame throttling
+                        function runVoiceDetection() {
+                            console.log("Voice detection running");
+                            voiceDetectionActive = true;
+
+                            if (voiceAnalyser) {
+                                voiceAnalyser.getFloatTimeDomainData(dataArray);
+                                const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+                                voiceAmplitude = getAmplitude(dataArray);
+
+                                if (pitch !== -1 && pitch > 20 && pitch < 2000) {
+                                    voicePitch = pitch;
+                                } else {
+                                    voicePitch *= 0.95;
+                                }
+
+                                updateVoiceParams();
+                                updateSoundMeter();
+
+                                // Force redraw on significant amplitude
+                                if (voiceAmplitude > 0.05) {
+                                    needsRedraw = true;
+                                }
+                            }
                         }
+
+                        // Run voice detection at a fixed interval independent of animation frames
+                        voiceDetectionInterval = setInterval(runVoiceDetection, 50);
+
+                        // Start animation loop immediately
+                        needsRedraw = true;
+                        animate();
+
+                    } catch (error) {
+                        console.error('Voice control failed to initialize:', error);
+                        voiceDetectionActive = false;
                     }
                 }
-                
-                // Run voice detection at a fixed interval independent of animation frames
-                voiceDetectionInterval = setInterval(runVoiceDetection, 50);
-                
-                // Start animation loop immediately
-                needsRedraw = true;
-                animate();
-                
-            } catch (error) {
-                console.error('Voice control failed to initialize:', error);
-                voiceDetectionActive = false;
-            }
-        }
-        
-        // Try to enter VR mode
-        try {
-            const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
-            
-            session.addEventListener('end', () => {
-                vrCanvas.style.display = 'none';
-                renderer.setAnimationLoop(null);
-                document.getElementById('enterVR').textContent = 'Enter Temple';
-                
-                // Don't stop voice detection when exiting VR - keep it running
-            });
-            
-            renderer.xr.setSession(session);
-            renderer.setAnimationLoop(() => {
-                // Always mark as needing redraw in VR
-                needsRedraw = true;
-                animateVR();
-            });
-            
-            vrCanvas.style.display = 'block';
-            document.getElementById('enterVR').textContent = 'Singing in VR';
-            
-        } catch (err) {
-            console.error('VR Failed:', err);
-            document.getElementById('enterVR').textContent = 'VR Failed';
-        }
-    });
 
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-}
+                // Try to enter VR mode
+                try {
+                    const session = await navigator.xr.requestSession('immersive-vr', {
+                        optionalFeatures: ['local-floor']
+                    });
 
-// Also modify the animateVR function to ensure the mandala is always updated
-function animateVR() {
-    mandalaPlane.material.map.needsUpdate = true;
-    mandalaPlane.rotation.z += rotationSpeed;
-    
-    // Always update the mandala in VR mode
-    generateMandala(timeFactor);
-    
-    // Update time factor independently
-    timeFactor += 0.01 + (voiceAmplitude * 0.05);
-    
-    renderer.render(scene, camera);
-}
+                    session.addEventListener('end', () => {
+                        vrCanvas.style.display = 'none';
+                        renderer.setAnimationLoop(null);
+                        document.getElementById('enterVR').textContent = 'Enter Temple';
+
+                        // Don't stop voice detection when exiting VR - keep it running
+                    });
+
+                    renderer.xr.setSession(session);
+                    renderer.setAnimationLoop(() => {
+                        // Always mark as needing redraw in VR
+                        needsRedraw = true;
+                        animateVR();
+                    });
+
+                    vrCanvas.style.display = 'block';
+                    document.getElementById('enterVR').textContent = 'Singing in VR';
+
+                } catch (err) {
+                    console.error('VR Failed:', err);
+                    document.getElementById('enterVR').textContent = 'VR Failed';
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Also modify the animateVR function to ensure the mandala is always updated
+        function animateVR() {
+            mandalaPlane.material.map.needsUpdate = true;
+            mandalaPlane.rotation.z += rotationSpeed;
+
+            // Always update the mandala in VR mode
+            generateMandala(timeFactor);
+
+            // Update time factor independently
+            timeFactor += 0.01 + (voiceAmplitude * 0.05);
+
+            renderer.render(scene, camera);
+        }
         // 2D Mandala Generation
         function generateMandala(timeFactor) {
             if (!needsRedraw) return;
@@ -733,14 +781,28 @@ function animateVR() {
 
         // Guided Meditation
         function startGuidedMeditation() {
-            const phases = [
-                { duration: 300000, pattern: 'cymatic', freq: 100, color: '#ff4500' },
-                { duration: 300000, pattern: 'vortex', freq: 300, color: '#00ffff' },
-                { duration: 300000, pattern: 'nebula', freq: 500, color: '#ff00ff' }
+            const phases = [{
+                    duration: 300000,
+                    pattern: 'cymatic',
+                    freq: 100,
+                    color: '#ff4500'
+                },
+                {
+                    duration: 300000,
+                    pattern: 'vortex',
+                    freq: 300,
+                    color: '#00ffff'
+                },
+                {
+                    duration: 300000,
+                    pattern: 'nebula',
+                    freq: 500,
+                    color: '#ff00ff'
+                }
             ];
             let phaseIndex = 0;
 
-            function nextPhase() {
+            functionnextPhase() {
                 if (phaseIndex >= phases.length) return;
                 const phase = phases[phaseIndex];
                 params.patternType = phase.pattern;
@@ -764,16 +826,60 @@ function animateVR() {
             document.getElementById('presetModal').classList.remove('active');
             switch (preset) {
                 case 'mandala':
-                    Object.assign(params, { segments: 3, levels: 5, scaleFactor: 0.8, initialRadius: 250, lineColor: '#ff4500', secondaryColor: '#ffd700', patternType: 'cymatic', baseFreq: 110, waveform: 'sine', modulation: 0.5 });
+                    Object.assign(params, {
+                        segments: 3,
+                        levels: 5,
+                        scaleFactor: 0.8,
+                        initialRadius: 250,
+                        lineColor: '#ff4500',
+                        secondaryColor: '#ffd700',
+                        patternType: 'cymatic',
+                        baseFreq: 110,
+                        waveform: 'sine',
+                        modulation: 0.5
+                    });
                     break;
                 case 'yantra':
-                    Object.assign(params, { segments: 3, levels: 3, scaleFactor: 0.6, initialRadius: 200, lineColor: '#8a2be2', secondaryColor: '#ff00ff', patternType: 'yantra', baseFreq: 136.1, waveform: 'triangle', modulation: 1 });
+                    Object.assign(params, {
+                        segments: 3,
+                        levels: 3,
+                        scaleFactor: 0.6,
+                        initialRadius: 200,
+                        lineColor: '#8a2be2',
+                        secondaryColor: '#ff00ff',
+                        patternType: 'yantra',
+                        baseFreq: 136.1,
+                        waveform: 'triangle',
+                        modulation: 1
+                    });
                     break;
                 case 'sufi':
-                    Object.assign(params, { segments: 3, levels: 4, scaleFactor: 0.7, initialRadius: 300, lineColor: '#00ced1', secondaryColor: '#228b22', patternType: 'vortex', baseFreq: 174, waveform: 'sawtooth', modulation: 1.5 });
+                    Object.assign(params, {
+                        segments: 3,
+                        levels: 4,
+                        scaleFactor: 0.7,
+                        initialRadius: 300,
+                        lineColor: '#00ced1',
+                        secondaryColor: '#228b22',
+                        patternType: 'vortex',
+                        baseFreq: 174,
+                        waveform: 'sawtooth',
+                        modulation: 1.5
+                    });
                     break;
                 case 'zen':
-                    Object.assign(params, { segments: 3, levels: 1, scaleFactor: 0.9, initialRadius: 150, lineColor: '#000000', secondaryColor: '#ffffff', patternType: 'flower', baseFreq: 0, waveform: 'sine', modulation: 0 });
+                    Object.assign(params, {
+                        segments: 3,
+                        levels: 1,
+                        scaleFactor: 0.9,
+                        initialRadius: 150,
+                        lineColor: '#000000',
+                        secondaryColor: '#ffffff',
+                        patternType: 'flower',
+                        baseFreq: 0,
+                        waveform: 'sine',
+                        modulation: 0
+                    });
                     break;
             }
             if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
