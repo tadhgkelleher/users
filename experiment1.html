@@ -632,215 +632,259 @@
             renderer.render(scene, camera);
         }
 
-        // 2D Mandala Generation
-        function generateMandala(timeFactor) {
-            if (!needsRedraw) return;
-            ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-            const centerX = mandalaCanvas.width / 2;
-            const centerY = mandalaCanvas.height / 2;
-            const audioFactor = voiceAmplitude + droneAmplitude;
+       function generateMandala(timeFactor) {
+    if (!needsRedraw) return;
+    ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+    const centerX = mandalaCanvas.width / 2;
+    const centerY = mandalaCanvas.height / 2;
+    const audioFactor = voiceAmplitude + droneAmplitude;
 
-            function drawRecursiveShape(x, y, r, level) {
-                if (level > params.levels) return;
-                const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
-                gradient.addColorStop(0, params.lineColor);
-                gradient.addColorStop(0.5, params.secondaryColor);
-                gradient.addColorStop(1, params.lineColor);
+    function drawRecursiveShape(x, y, r, level) {
+        if (level > params.levels) return;
+        const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+        gradient.addColorStop(0, params.lineColor);
+        gradient.addColorStop(0.5, params.secondaryColor);
+        gradient.addColorStop(1, params.lineColor);
 
-                ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * (1 + audioFactor);
-                ctx.strokeStyle = gradient;
-                ctx.shadowBlur = 40 * audioFactor;
-                ctx.shadowColor = params.secondaryColor;
+        ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * (1 + audioFactor);
+        ctx.strokeStyle = gradient;
+        ctx.shadowBlur = 40 * audioFactor;
+        ctx.shadowColor = params.secondaryColor;
 
-                switch (params.patternType) {
-                    case 'cymatic':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
-                            const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 1.2);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+        switch (params.patternType) {
+            case 'cymatic':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
+                    const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
+                    const dist = r * (0.6 + mod * 1.2);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'vortex':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments / level; i++) {
+                    const angle = (i / (params.segments / level)) * Math.PI * 2 + timeFactor * 1.2;
+                    const x1 = x + r * Math.cos(angle);
+                    const y1 = y + r * Math.sin(angle);
+                    const x2 = x + r * 0.4 * Math.cos(angle + Math.PI / (params.segments / level));
+                    const y2 = y + r * 0.4 * Math.sin(angle + Math.PI / (params.segments / level));
+                    ctx.moveTo(x, y);
+                    ctx.quadraticCurveTo(x1, y1, x2, y2);
+                }
+                ctx.stroke();
+                break;
+            case 'nebula':
+                ctx.beginPath();
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
+                    const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'chaos':
+                ctx.beginPath();
+                const points = Math.floor(Math.random() * 8) + 5;
+                for (let i = 0; i < points; i++) {
+                    const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
+                    const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'flower':
+                ctx.beginPath();
+                for (let i = 0; i < 10; i++) {
+                    const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
+                    const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
+                    ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+                }
+                ctx.stroke();
+                break;
+            case 'yantra':
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+                }
+                ctx.stroke();
+                break;
+            case 'tunnel':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
+                    const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
+                    const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'hypercube':
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
+                    const mod = Math.cos(level + timeFactor) * audioFactor;
+                    const dist = r * (0.6 + mod * 0.6);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'mandelbrot':
+                ctx.beginPath();
+                const iterations = 20 + Math.floor(audioFactor * 20);
+                const buddhaPoints = [];
+                const scale = r / 200;
+
+                for (let i = 0; i < params.segments * 5; i++) {
+                    let zr = 0, zi = 0;
+                    const cr = (Math.cos(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
+                    const ci = (Math.sin(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
+
+                    for (let n = 0; n < iterations; n++) {
+                        const zrNew = zr * zr - zi * zi + cr;
+                        const ziNew = 2 * zr * zi + ci;
+                        zr = zrNew;
+                        zi = ziNew;
+
+                        if (zr * zr + zi * zi > 4) {
+                            buddhaPoints.push({ x: zr * scale, y: zi * scale });
+                            break;
                         }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'vortex':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments / level; i++) {
-                            const angle = (i / (params.segments / level)) * Math.PI * 2 + timeFactor * 1.2;
-                            const x1 = x + r * Math.cos(angle);
-                            const y1 = y + r * Math.sin(angle);
-                            const x2 = x + r * 0.4 * Math.cos(angle + Math.PI / (params.segments / level));
-                            const y2 = y + r * 0.4 * Math.sin(angle + Math.PI / (params.segments / level));
-                            ctx.moveTo(x, y);
-                            ctx.quadraticCurveTo(x1, y1, x2, y2);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'nebula':
-                        ctx.beginPath();
-                        for (let i = 0; i < 12; i++) {
-                            const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
-                            const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'chaos':
-                        ctx.beginPath();
-                        const points = Math.floor(Math.random() * 8) + 5;
-                        for (let i = 0; i < points; i++) {
-                            const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
-                            const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'flower':
-                        ctx.beginPath();
-                        for (let i = 0; i < 10; i++) {
-                            const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
-                            const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
-                            ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'yantra':
-                        ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
-                            ctx.moveTo(x, y);
-                            ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'tunnel':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
-                            const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
-                            const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'hypercube':
-                        ctx.beginPath();
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
-                            const mod = Math.cos(level + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 0.6);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'mandelbrot':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
-                            const mod = Math.sin(angle * level + timeFactor) * audioFactor * 0.5;
-                            const dist = r * (0.5 + mod * (1 + Math.cos(timeFactor + level) * 0.3));
-                            const xNext = x + Math.cos(angle) * dist;
-                            const yNext = y + Math.sin(angle) * dist;
-                            ctx.lineTo(xNext, yNext);
-                            if (level < params.levels) {
-                                ctx.lineTo(xNext * (1 + audioFactor * 0.2), yNext * (1 + audioFactor * 0.2));
-                            }
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'pi':
-                        ctx.beginPath();
-                        const piDigits = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3];
-                        for (let i = 0; i < params.segments; i++) {
-                            const digit = piDigits[i % piDigits.length];
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor + digit * 0.1;
-                            const dist = r * (0.5 + digit / 10 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'schumann':
-                        ctx.beginPath();
-                        const resonance = 7.83 * (1 + audioFactor);
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.3;
-                            const ripple = Math.sin(timeFactor + level * resonance * 0.1) * r * 0.4 * audioFactor;
-                            const dist = r * (0.6 + ripple);
-                            ctx.arc(x, y, dist, angle, angle + Math.PI / params.segments);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'floweroflife':
-                        ctx.beginPath();
-                        const circleCount = 6;
-                        for (let i = 0; i < circleCount; i++) {
-                            const angle = (i / circleCount) * Math.PI * 2 + timeFactor * 0.2;
-                            const dist = r * 0.5 * (1 + audioFactor * 0.3);
-                            ctx.arc(
-                                x + Math.cos(angle) * dist,
-                                y + Math.sin(angle) * dist,
-                                r * params.scaleFactor * (1 + audioFactor),
-                                0,
-                                Math.PI * 2
-                            );
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'e8':
-                        ctx.beginPath();
-                        const nodes = 8;
-                        for (let i = 0; i < nodes; i++) {
-                            const angle1 = (i / nodes) * Math.PI * 2 + timeFactor * 0.4;
-                            const dist1 = r * (0.5 + Math.sin(timeFactor) * audioFactor);
-                            const x1 = x + Math.cos(angle1) * dist1;
-                            const y1 = y + Math.sin(angle1) * dist1;
-                            for (let j = 0; j < nodes; j++) {
-                                const angle2 = (j / nodes) * Math.PI * 2 + timeFactor * 0.4;
-                                const dist2 = r * (0.5 + Math.cos(timeFactor) * audioFactor);
-                                const x2 = x + Math.cos(angle2) * dist2;
-                                const y2 = y + Math.sin(angle2) * dist2;
-                                ctx.moveTo(x1, y1);
-                                ctx.lineTo(x2, y2);
-                            }
-                        }
-                        ctx.stroke();
-                        break;
+                    }
                 }
 
-                drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
-            }
+                ctx.fillStyle = params.secondaryColor;
+                buddhaPoints.forEach(point => {
+                    const px = x + point.x * (1 + audioFactor * 0.5);
+                    const py = y + point.y * (1 + audioFactor * 0.5);
+                    ctx.beginPath();
+                    ctx.arc(px, py, 1 + audioFactor * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
 
-            for (let i = 0; i < params.segments; i++) {
-                const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
-                const x = centerX + params.initialRadius * Math.cos(angle) * (1 + audioFactor * 0.5);
-                const y = centerY + params.initialRadius * Math.sin(angle) * (1 + audioFactor * 0.5);
-                drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
-            }
-
-            ctx.fillStyle = params.secondaryColor;
-            for (let i = 0; i < 50; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
+                ctx.strokeStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.globalCompositeOperation = 'destination-in';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
-
-            needsRedraw = false;
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
+                    const mod = Math.sin(angle * level + timeFactor) * audioFactor * 0.3;
+                    const dist = r * (0.7 + mod);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'pi':
+                ctx.beginPath();
+                const piDigits = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3];
+                for (let i = 0; i < params.segments; i++) {
+                    const digit = piDigits[i % piDigits.length];
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor + digit * 0.1;
+                    const dist = r * (0.5 + digit / 10 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'schumann':
+                ctx.beginPath();
+                const resonance = 7.83 * (1 + audioFactor);
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.3;
+                    const ripple = Math.sin(timeFactor + level * resonance * 0.1) * r * 0.4 * audioFactor;
+                    const dist = r * (0.6 + ripple);
+                    ctx.arc(x, y, dist, angle, angle + Math.PI / params.segments);
+                }
+                ctx.stroke();
+                break;
+            case 'floweroflife':
+                ctx.beginPath();
+                const circleCount = 6;
+                for (let i = 0; i < circleCount; i++) {
+                    const angle = (i / circleCount) * Math.PI * 2 + timeFactor * 0.2;
+                    const dist = r * 0.5 * (1 + audioFactor * 0.3);
+                    ctx.arc(
+                        x + Math.cos(angle) * dist,
+                        y + Math.sin(angle) * dist,
+                        r * params.scaleFactor * (1 + audioFactor),
+                        0,
+                        Math.PI * 2
+                    );
+                }
+                ctx.stroke();
+                break;
+            case 'e8':
+                ctx.beginPath();
+                const nodes = 8;
+                for (let i = 0; i < nodes; i++) {
+                    const angle1 = (i / nodes) * Math.PI * 2 + timeFactor * 0.4;
+                    const dist1 = r * (0.5 + Math.sin(timeFactor) * audioFactor);
+                    const x1 = x + Math.cos(angle1) * dist1;
+                    const y1 = y + Math.sin(angle1) * dist1;
+                    for (let j = 0; j < nodes; j++) {
+                        const angle2 = (j / nodes) * Math.PI * 2 + timeFactor * 0.4;
+                        const dist2 = r * (0.5 + Math.cos(timeFactor) * audioFactor);
+                        const x2 = x + Math.cos(angle2) * dist2;
+                        const y2 = y + Math.sin(angle2) * dist2;
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                    }
+                }
+                ctx.stroke();
+                break;
         }
+
+        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
+    }
+
+    for (let i = 0; i < params.segments; i++) {
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
+        const x = centerX + params.initialRadius * Math.cos(angle) * (1 + audioFactor * 0.5);
+        const y = centerY + params.initialRadius * Math.sin(angle) * (1 + audioFactor * 0.5);
+        drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
+    }
+
+    // Add central light
+    const lightRadius = 20 + audioFactor * 30; // Base size + audio scaling
+    const lightGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, lightRadius);
+    lightGradient.addColorStop(0, params.secondaryColor); // Bright center
+    lightGradient.addColorStop(0.5, `${params.secondaryColor}80`); // Semi-transparent mid
+    lightGradient.addColorStop(1, `${params.secondaryColor}00`); // Fade to transparent
+
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, lightRadius, 0, Math.PI * 2);
+    ctx.fillStyle = lightGradient;
+    ctx.shadowBlur = 60 * (1 + audioFactor); // Glow intensifies with sound
+    ctx.shadowColor = params.secondaryColor;
+    ctx.fill();
+    ctx.shadowBlur = 40 * audioFactor; // Reset shadow for other elements
+
+    // Additional decorative points around the center
+    ctx.fillStyle = params.secondaryColor;
+    for (let i = 0; i < 50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
+        ctx.beginPath();
+        ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Apply circular mask
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    needsRedraw = false;
+}
 
         // Preset Modal
         function showPresetModal() {
