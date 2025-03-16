@@ -847,140 +847,140 @@
             document.getElementById('presetModal').classList.add('active');
         }
 
-        function applyPreset(preset) {
-            document.getElementById('presetModal').classList.remove('active');
-            switch (preset) {
-                case 'mandala':
-                    Object.assign(params, {
-                        segments: 3,
-                        levels: 5,
-                        scaleFactor: 0.8,
-                        initialRadius: 250,
-                        lineColor: '#ff4500',
-                        secondaryColor: '#ffd700',
-                        patternType: 'cymatic',
-                        baseFreq: 110,
-                        waveform: 'sine',
-                        modulation: 0.5
-                    });
-                    break;
-                case 'yantra':
-                    Object.assign(params, {
-                        segments: 3,
-                        levels: 3,
-                        scaleFactor: 0.6,
-                        initialRadius: 200,
-                        lineColor: '#8a2be2',
-                        secondaryColor: '#ff00ff',
-                        patternType: 'yantra',
-                        baseFreq: 136.1,
-                        waveform: 'triangle',
-                        modulation: 1
-                    });
-                    break;
-                case 'sufi':
-                    Object.assign(params, {
-                        segments: 3,
-                        levels: 4,
-                        scaleFactor: 0.7,
-                        initialRadius: 300,
-                        lineColor: '#00ced1',
-                        secondaryColor: '#228b22',
-                        patternType: 'vortex',
-                        baseFreq: 174,
-                        waveform: 'sawtooth',
-                        modulation: 1.5
-                    });
-                    break;
-                case 'zen':
-                    Object.assign(params, {
-                        segments: 3,
-                        levels: 1,
-                        scaleFactor: 0.9,
-                        initialRadius: 150,
-                        lineColor: '#000000',
-                        secondaryColor: '#ffffff',
-                        patternType: 'flower',
-                        baseFreq: 0,
-                        waveform: 'sine',
-                        modulation: 0
-                    });
-                    break;
-                case 'mandelbrot':
-                    Object.assign(params, {
-                        segments: 4,
-                        levels: 4,
-                        scaleFactor: 0.75,
-                        initialRadius: 200,
-                        lineColor: '#ff1493',
-                        secondaryColor: '#00ff00',
-                        patternType: 'mandelbrot',
-                        baseFreq: 432,
-                        waveform: 'sine',
-                        modulation: 1.2
-                    });
-                    break;
-                case 'pi':
-                    Object.assign(params, {
-                        segments: 10,
-                        levels: 3,
-                        scaleFactor: 0.7,
-                        initialRadius: 180,
-                        lineColor: '#ff8c00',
-                        secondaryColor: '#1e90ff',
-                        patternType: 'pi',
-                        baseFreq: 314,
-                        waveform: 'triangle',
-                        modulation: 0.8
-                    });
-                    break;
-                case 'schumann':
-                    Object.assign(params, {
-                        segments: 5,
-                        levels: 4,
-                        scaleFactor: 0.85,
-                        initialRadius: 220,
-                        lineColor: '#00fa9a',
-                        secondaryColor: '#4682b4',
-                        patternType: 'schumann',
-                        baseFreq: 7.83,
-                        waveform: 'sine',
-                        modulation: 1.0
-                    });
-                    break;
-                case 'floweroflife':
-                    Object.assign(params, {
-                        segments: 6,
-                        levels: 3,
-                        scaleFactor: 0.6,
-                        initialRadius: 250,
-                        lineColor: '#ffd700',
-                        secondaryColor: '#ff4500',
-                        patternType: 'floweroflife',
-                        baseFreq: 528,
-                        waveform: 'sine',
-                        modulation: 0.5
-                    });
-                    break;
-                case 'e8':
-                    Object.assign(params, {
-                        segments: 8,
-                        levels: 2,
-                        scaleFactor: 0.8,
-                        initialRadius: 200,
-                        lineColor: '#9400d3',
-                        secondaryColor: '#00ffff',
-                        patternType: 'e8',
-                        baseFreq: 639,
-                        waveform: 'sawtooth',
-                        modulation: 1.5
-                    });
-                    break;
-            }
-            if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
-            needsRedraw = true;
-            generateMandala(0);
-        }
+       function applyPreset(preset) {
+    document.getElementById('presetModal').classList.remove('active');
+    switch (preset) {
+        case 'mandala':
+            Object.assign(params, {
+                segments: 8,              // More segments for radial symmetry typical of Tibetan mandalas
+                levels: 5,                // Deep recursion for intricate detailing
+                scaleFactor: 0.75,        // Slightly tighter scaling for nested patterns
+                initialRadius: 300,       // Larger radius for a grand, meditative presence
+                lineColor: '#ff4500',     // Vibrant orange for warmth and energy
+                secondaryColor: '#ffd700', // Gold for sacredness and enlightenment
+                patternType: 'cymatic',   // Cymatic reflects vibrational harmony
+                baseFreq: 108,            // Sacred number in Buddhism/Hinduism
+                waveform: 'sine',         // Smooth, pure tone for meditation
+                modulation: 0.8           // Gentle audio response
+            });
+            break;
+        case 'yantra':
+            Object.assign(params, {
+                segments: 4,              // Fourfold symmetry common in yantras (e.g., Sri Yantra)
+                levels: 4,                // Moderate recursion for layered triangles
+                scaleFactor: 0.65,        // Tighter scaling for precision
+                initialRadius: 200,       // Balanced size for focus
+                lineColor: '#ff00ff',     // Magenta for spiritual energy
+                secondaryColor: '#ffd700', // Gold for divinity
+                patternType: 'yantra',    // Dedicated yantra pattern for triangular geometry
+                baseFreq: 136.1,          // Cosmic OM frequency (year-tone)
+                waveform: 'triangle',     // Triangular wave for sharp, resonant edges
+                modulation: 1.2           // Stronger modulation for dynamic energy
+            });
+            break;
+        case 'sufi':
+            Object.assign(params, {
+                segments: 12,             // Higher segments for swirling, dance-like motion
+                levels: 3,                // Fewer levels to emphasize flow over complexity
+                scaleFactor: 0.8,         // Larger scaling for expansive spirals
+                initialRadius: 280,       // Slightly larger for a whirling effect
+                lineColor: '#00ced1',     // Turquoise for mystical clarity
+                secondaryColor: '#228b22', // Forest green for Sufi connection to nature
+                patternType: 'vortex',    // Vortex suits the whirling dervish motion
+                baseFreq: 174,            // Low healing frequency for grounding
+                waveform: 'sawtooth',     // Rich, textured tone for depth
+                modulation: 1.8           // High modulation for dynamic swirling
+            });
+            break;
+        case 'zen':
+            Object.assign(params, {
+                segments: 1,              // Minimal segments for simplicity (single circle)
+                levels: 1,                // Single level for Zen minimalism
+                scaleFactor: 0.95,        // Near-full scale for a bold, singular shape
+                initialRadius: 180,       // Moderate size for calm presence
+                lineColor: '#000000',     // Black for stark simplicity
+                secondaryColor: '#ffffff', // White for purity and void
+                patternType: 'flower',    // Flower pattern adapted for a single Enso circle
+                baseFreq: 0,              // No drone for silence (Zen focus)
+                waveform: 'sine',         // Pure tone if sound is added
+                modulation: 0.2           // Minimal modulation for stillness
+            });
+            break;
+        case 'mandelbrot':
+            Object.assign(params, {
+                segments: 6,              // Symmetrical segments for fractal balance
+                levels: 3,                // Fewer levels to focus on Buddhabrot-like density
+                scaleFactor: 0.8,         // Larger scaling for fractal spread
+                initialRadius: 250,       // Bigger radius for prominence
+                lineColor: '#ffd700',     // Gold for a Buddha-like outline
+                secondaryColor: '#ff4500', // Orange for glowing fractal points
+                patternType: 'mandelbrot', // Dedicated Mandelbrot pattern
+                baseFreq: 432,            // Healing frequency tied to universal harmony
+                waveform: 'sine',         // Smooth tone for meditative depth
+                modulation: 1.0           // Balanced audio response
+            });
+            break;
+        case 'pi':
+            Object.assign(params, {
+                segments: 10,             // Matches the 10 digits used in the pi pattern
+                levels: 4,                // More levels for spiral complexity
+                scaleFactor: 0.7,         // Moderate scaling for a tight spiral
+                initialRadius: 200,       // Balanced size for visibility
+                lineColor: '#ff8c00',     // Orange for mathematical warmth
+                secondaryColor: '#1e90ff', // Blue for infinite depth
+                patternType: 'pi',        // Dedicated Pi spiral pattern
+                baseFreq: 314,            // Frequency inspired by 3.14 (π)
+                waveform: 'triangle',     // Sharp wave for precision
+                modulation: 0.9           // Subtle modulation for organic flow
+            });
+            break;
+        case 'schumann':
+            Object.assign(params, {
+                segments: 7,              // Reflects the 7 main Schumann resonances
+                levels: 5,                // Deep recursion for wave-like layers
+                scaleFactor: 0.9,         // Larger scaling for expansive ripples
+                initialRadius: 240,       // Bigger radius for Earth resonance
+                lineColor: '#00fa9a',     // Aqua for natural energy
+                secondaryColor: '#4682b4', // Steel blue for atmospheric depth
+                patternType: 'schumann',  // Dedicated Schumann pattern
+                baseFreq: 7.83,           // Fundamental Schumann resonance
+                waveform: 'sine',         // Pure tone for harmonic resonance
+                modulation: 1.1           // Gentle modulation for wave motion
+            });
+            break;
+        case 'floweroflife':
+            Object.assign(params, {
+                segments: 6,              // Hexagonal symmetry (6 circles around 1)
+                levels: 4,                // More levels for overlapping circles
+                scaleFactor: 0.55,        // Tighter scaling for precise overlaps
+                initialRadius: 280,       // Larger radius for a full grid
+                lineColor: '#ffd700',     // Gold for sacred geometry
+                secondaryColor: '#ff4500', // Orange for life energy
+                patternType: 'floweroflife', // Dedicated Flower of Life pattern
+                baseFreq: 528,            // "Love" frequency for healing
+                waveform: 'sine',         // Smooth tone for harmony
+                modulation: 0.7           // Subtle modulation for organic feel
+            });
+            break;
+        case 'e8':
+            Object.assign(params, {
+                segments: 8,              // Matches the 8 dimensions of E8
+                levels: 3,                // Moderate recursion for lattice complexity
+                scaleFactor: 0.85,        // Larger scaling for interconnected nodes
+                initialRadius: 220,       // Balanced size for symmetry
+                lineColor: '#9400d3',     // Deep purple for cosmic mystery
+                secondaryColor: '#00ffff', // Cyan for high-dimensional clarity
+                patternType: 'e8',        // Dedicated E8 lattice pattern
+                baseFreq: 639,            // Frequency for connection (Solfeggio)
+                waveform: 'sawtooth',     // Rich tone for complexity
+                modulation: 1.4           // Strong modulation for dynamic lattice
+            });
+            break;
+    }
+    if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
+    needsRedraw = true;
+    generateMandala(0);
+}
 
         // Utility Functions
         function downloadMandala() {
