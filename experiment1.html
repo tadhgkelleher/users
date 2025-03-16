@@ -632,7 +632,7 @@
             renderer.render(scene, camera);
         }
 
-    function generateMandala(timeFactor) {
+function generateMandala(timeFactor) {
     if (!needsRedraw) return;
     ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
     const centerX = mandalaCanvas.width / 2;
@@ -652,6 +652,7 @@
         ctx.shadowColor = params.secondaryColor;
 
         switch (params.patternType) {
+            // [Pattern cases remain unchanged, keeping your original logic]
             case 'cymatic':
                 ctx.beginPath();
                 for (let i = 0; i < params.segments; i++) {
@@ -851,15 +852,42 @@
         drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
     }
 
-    ctx.fillStyle = params.secondaryColor;
-    for (let i = 0; i < 50; i++) {
+    // Enhanced Bubble Generation with Divine Glow
+    ctx.shadowBlur = 60 * (1 + audioFactor); // Increased shadow blur for glow
+    ctx.shadowColor = `rgba(${hexToRgb(params.secondaryColor)}, ${0.8 + audioFactor * 0.5})`; // Dynamic opacity
+    const bubbleCount = 100 + Math.floor(audioFactor * 150); // More bubbles, scaled with audio
+    for (let i = 0; i < bubbleCount; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
+        const baseDist = params.initialRadius * (Math.random() * 0.8 + 0.2); // Start closer to center
+        const emanation = Math.sin(timeFactor + i * 0.1) * 50 * (1 + audioFactor); // Outward movement
+        const dist = baseDist + emanation;
+        const size = 2 + Math.random() * 4 * (1 + audioFactor * 2); // Larger bubbles with audio
+
+        // Gradient for divine glow effect
+        const bubbleGradient = ctx.createRadialGradient(
+            centerX + Math.cos(angle) * dist, 
+            centerY + Math.sin(angle) * dist, 
+            0, 
+            centerX + Math.cos(angle) * dist, 
+            centerY + Math.sin(angle) * dist, 
+            size
+        );
+        bubbleGradient.addColorStop(0, `${params.secondaryColor}cc`); // Semi-transparent center
+        bubbleGradient.addColorStop(1, `${params.lineColor}00`); // Fade to transparent
+
+        ctx.fillStyle = bubbleGradient;
         ctx.beginPath();
-        ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
+        ctx.arc(
+            centerX + Math.cos(angle) * dist, 
+            centerY + Math.sin(angle) * dist, 
+            size, 
+            0, 
+            Math.PI * 2
+        );
         ctx.fill();
     }
 
+    // Clip to circular boundary
     ctx.globalCompositeOperation = 'destination-in';
     ctx.beginPath();
     ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
@@ -867,6 +895,14 @@
     ctx.globalCompositeOperation = 'source-over';
 
     needsRedraw = false;
+}
+
+// Helper function to convert hex color to RGB
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `${r}, ${g}, ${b}`;
 }
 
         // Preset Modal
