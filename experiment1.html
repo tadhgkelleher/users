@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmic Weaver: Voice of the Void - Game</title>
+    <title>Cosmic Weaver: Voice of the Void</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
     <style>
         body {
@@ -66,30 +66,140 @@
             display: none;
         }
 
-        #gameInfo {
-            position: fixed;
-            top: 20px;
-            left: 20px;
+        .glyph-tab {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #9b59b6, #ff6ec7);
+            border-radius: 10px 10px 0 0;
+            color: #ffffff;
+            cursor: pointer;
+            text-shadow: 0 0 10px #00ffff;
+            transition: all 0.3s;
+        }
+
+        .glyph-tab:hover,
+        .glyph-tab.active {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            color: #1a1a3b;
+            transform: translateY(-5px);
+        }
+
+        .tab-content {
+            display: none;
+            background: rgba(10, 10, 40, 0.95);
+            padding: 20px;
+            border-radius: 0 0 15px 15px;
+            border: 3px solid #ff6ec7;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 0 60px rgba(255, 0, 255, 0.7);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .control-panel {
+            background: linear-gradient(135deg, #1e1e3b, #ff00ff);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .control-row {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .control-label {
             color: #00ffff;
-            text-shadow: 0 0 10px #ff00ff;
-            font-size: 1.2rem;
+            text-shadow: 0 0 5px #ff00ff;
+            margin-right: 10px;
+            white-space: nowrap;
         }
 
-        #progressBar {
-            position: fixed;
-            top: 60px;
-            left: 20px;
-            width: 200px;
-            height: 20px;
-            background: #333;
-            border: 2px solid #00ffff;
+        input[type="range"],
+        input[type="color"],
+        select {
+            flex-grow: 1;
+            padding: 8px;
             border-radius: 5px;
+            border: 1px solid #ff00ff;
+            background-color: rgba(26, 26, 59, 0.7);
+            color: #e0e0ff;
+            margin-right: 10px;
         }
 
-        #progressFill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff00ff, #00ffff);
-            transition: width 0.3s ease;
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 10'%3E%3Cpath fill='%2300FFFF' d='M0 0 L5 5 L0 10 Z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right center;
+            background-size: 0.8em;
+            padding-right: 25px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            border: 2px solid #1a1a3b;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.1);
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            color: #1a1a3b;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
+        }
+
+        button:hover {
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 1);
+        }
+
+        .preset-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 40, 0.95);
+            padding: 20px;
+            border: 3px solid #00ffff;
+            border-radius: 15px;
+            z-index: 100;
+            display: none;
+        }
+
+        .preset-modal.active {
+            display: block;
+        }
+
+        .preset-modal button {
+            margin: 10px;
+            padding: 5px;
+            border-radius: 5px;
         }
 
         #soundMeter {
@@ -106,7 +216,7 @@
         #soundBar {
             height: 100%;
             background: linear-gradient(90deg, #ff00ff, #00ffff);
-            transition: width 0.1s ease;
+            transition: width 0.1s;
         }
 
         #soundInfo {
@@ -116,46 +226,45 @@
             color: #00ffff;
             text-shadow: 0 0 10px #ff00ff;
         }
-
-        .controls {
-            margin: 20px;
-        }
-
-        button {
-            background: linear-gradient(45deg, #ff00ff, #00ffff);
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            color: #1a1a3b;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.4s;
-            box-shadow: 0 0 20px rgba(255, 0, 255, 0.9);
-            margin: 5px;
-        }
-
-        button:hover {
-            background: linear-gradient(45deg, #00ffff, #ff00ff);
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(0, 255, 255, 1);
-        }
     </style>
 </head>
 
 <body>
-    <h1>Cosmic Weaver: Voice of the Void - Game</h1>
+    <h1>Cosmic Weaver: Voice of the Void</h1>
 
-    <div id="gameInfo">Level: 1 | Score: 0 | Target: 0 Hz</div>
-    <div id="progressBar">
-        <div id="progressFill" style="width: 0%;"></div>
+    <div class="tab-container">
+        <span class="glyph-tab active" onclick="openTab(event, 'formTab')">✴</span>
+        <span class="glyph-tab" onclick="openTab(event, 'freqTab')">✶</span>
+        <span class="glyph-tab" onclick="openTab(event, 'voidTab')">✹</span>
+    </div>
+
+    <div id="formTab" class="tab-content active">
+        <div class="control-panel"></div>
+    </div>
+    <div id="freqTab" class="tab-content">
+        <div class="control-panel"></div>
+    </div>
+    <div id="voidTab" class="tab-content">
+        <div class="control-panel"></div>
     </div>
 
     <div class="controls">
-        <button id="startGame">Start Game</button>
+        <button id="presets">Sacred Patterns</button>
         <button id="drone">Toggle Drone</button>
         <button id="download">Capture Void</button>
         <button id="enterVR">Enter Temple</button>
+    </div>
+
+    <div id="presetModal" class="preset-modal">
+        <button onclick="applyPreset('mandala')">Tibetan Mandala</button>
+        <button onclick="applyPreset('yantra')">Hindu Yantra</button>
+        <button onclick="applyPreset('sufi')">Sufi Spiral</button>
+        <button onclick="applyPreset('zen')">Zen Enso</button>
+        <button onclick="applyPreset('mandelbrot')">Mandelbrot Echo</button>
+        <button onclick="applyPreset('pi')">Pi Spiral</button>
+        <button onclick="applyPreset('schumann')">Schumann Pulse</button>
+        <button onclick="applyPreset('floweroflife')">Flower of Life</button>
+        <button onclick="applyPreset('e8')">E8 Lattice</button>
     </div>
 
     <div id="soundMeter">
@@ -166,7 +275,7 @@
     <canvas id="mandalaCanvas" width="800" height="800"></canvas>
     <canvas id="vrCanvas"></canvas>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="./three.min.js"></script>
     <script>
         const mandalaCanvas = document.getElementById('mandalaCanvas');
         const ctx = mandalaCanvas.getContext('2d');
@@ -182,27 +291,7 @@
         let needsRedraw = true;
         let lastUpdate = 0;
 
-        // Game State
-        let score = 0;
-        let level = 1;
-        let targetPitch = 0;
-        let targetAmplitude = 0.3;
-        let sustainTime = 0;
-        let requiredSustain = 2000;
-        const LEVEL_SCORE_THRESHOLD = 1000;
-        const levels = [
-            { preset: 'mandala', targetPitch: 110, targetAmplitude: 0.3, pitchTolerance: 20, sustain: 2000 },
-            { preset: 'yantra', targetPitch: 136.1, targetAmplitude: 0.4, pitchTolerance: 15, sustain: 3000 },
-            { preset: 'sufi', targetPitch: 174, targetAmplitude: 0.5, pitchTolerance: 12, sustain: 4000 },
-            { preset: 'zen', targetPitch: 220, targetAmplitude: 0.6, pitchTolerance: 10, sustain: 5000 },
-            { preset: 'mandelbrot', targetPitch: 432, targetAmplitude: 0.7, pitchTolerance: 8, sustain: 6000 },
-            { preset: 'pi', targetPitch: 314, targetAmplitude: 0.8, pitchTolerance: 6, sustain: 7000 },
-            { preset: 'schumann', targetPitch: 7.83, targetAmplitude: 0.9, pitchTolerance: 5, sustain: 8000 },
-            { preset: 'floweroflife', targetPitch: 528, targetAmplitude: 1.0, pitchTolerance: 4, sustain: 9000 },
-            { preset: 'e8', targetPitch: 639, targetAmplitude: 1.0, pitchTolerance: 3, sustain: 10000 }
-        ];
-
-        const defaultParams = {
+        const params = {
             segments: 3,
             levels: 4,
             scaleFactor: 0.7,
@@ -215,10 +304,6 @@
             modulation: 1,
             patternType: 'cymatic'
         };
-
-        const params = { ...defaultParams };
-        const IDLE_THRESHOLD = 0.05;
-        const INTERPOLATION_SPEED = 0.05;
 
         // Audio Initialization
         function initAudio() {
@@ -294,8 +379,11 @@
                             voicePitch *= 0.95;
                         }
 
-                        updateGameState();
+                        updateVoiceParams();
                         updateSoundMeter();
+                        if (voiceAmplitude > 0.05 || droneOscillator) {
+                            animate();
+                        }
                         requestAnimationFrame(detectPitch);
                     }
                     detectPitch();
@@ -349,73 +437,20 @@
             return Math.min(1, sum / buf.length / 0.3);
         }
 
-        function interpolateValue(current, target, speed) {
-            return current + (target - current) * speed;
-        }
-
-        // Game Logic
-        function updateGameState() {
-            const currentLevel = levels[level - 1];
-            targetPitch = currentLevel.targetPitch;
-            targetAmplitude = currentLevel.targetAmplitude;
-            requiredSustain = currentLevel.sustain;
-            const pitchTolerance = currentLevel.pitchTolerance;
-
-            if (voiceAmplitude > IDLE_THRESHOLD) {
-                const pitchError = Math.abs(voicePitch - targetPitch);
-                if (pitchError < pitchTolerance && voiceAmplitude >= targetAmplitude) {
-                    sustainTime += 16;
-                    const points = Math.floor((1 - pitchError / pitchTolerance) * 10 + voiceAmplitude * 10);
-                    score += points;
-                    params.segments = Math.min(30, params.segments + voiceAmplitude * 0.5);
-                    params.initialRadius = Math.min(400, params.initialRadius + voicePitch * 0.05);
-                    params.modulation = 1 + voiceAmplitude * 0.5;
-
-                    if (sustainTime >= requiredSustain && score >= level * LEVEL_SCORE_THRESHOLD) {
-                        advanceLevel();
-                    }
-                } else {
-                    sustainTime = Math.max(0, sustainTime - 32);
-                    score = Math.max(0, score - 5);
-                }
+        function updateVoiceParams() {
+            if (voiceAmplitude > 0.05) {
+                params.segments = Math.min(30, Math.max(3, params.segments + voiceAmplitude * 2));
+                params.initialRadius = Math.min(400, 200 + voicePitch * 0.2);
+                params.modulation = 1 + voiceAmplitude;
             } else {
-                sustainTime = Math.max(0, sustainTime - 16);
-                params.segments = interpolateValue(params.segments, defaultParams.segments, INTERPOLATION_SPEED);
-                params.initialRadius = interpolateValue(params.initialRadius, defaultParams.initialRadius, INTERPOLATION_SPEED);
-                params.modulation = interpolateValue(params.modulation, defaultParams.modulation, INTERPOLATION_SPEED);
-                timeFactor = interpolateValue(timeFactor, 0, INTERPOLATION_SPEED);
+                params.segments = Math.max(3, params.segments - 0.2);
+                params.initialRadius = Math.max(200, params.initialRadius - 1);
+                params.modulation = Math.max(1, params.modulation - 0.05);
             }
-
-            updateUI();
             needsRedraw = true;
         }
 
-        function advanceLevel() {
-            if (level < levels.length) {
-                level++;
-                sustainTime = 0;
-                applyPreset(levels[level - 1].preset);
-                console.log(`Advanced to Level ${level}`);
-            } else {
-                alert('Congratulations! You’ve mastered all levels!');
-                resetGame();
-            }
-        }
-
-        function resetGame() {
-            score = 0;
-            level = 1;
-            sustainTime = 0;
-            applyPreset(levels[0].preset);
-            orbs.forEach(orb => scene && scene.remove(orb));
-            orbs = [];
-            needsRedraw = true;
-        }
-
-        function updateUI() {
-            document.getElementById('gameInfo').textContent = `Level: ${level} | Score: ${score} | Target: ${Math.round(targetPitch)} Hz`;
-            const progress = Math.min(100, (score / (level * LEVEL_SCORE_THRESHOLD)) * 100);
-            document.getElementById('progressFill').style.width = `${progress}%`;
+        function updateSoundMeter() {
             const amplitudePercent = Math.round(voiceAmplitude * 100);
             document.getElementById('soundBar').style.width = `${amplitudePercent}%`;
             document.getElementById('soundInfo').textContent = `Amplitude: ${amplitudePercent}% | Pitch: ${Math.round(voicePitch)} Hz`;
@@ -458,9 +493,54 @@
 
             camera.position.z = 0;
 
+            let voiceDetectionActive = false;
+            let voiceDetectionInterval = null;
+
             document.getElementById('enterVR').addEventListener('click', async () => {
                 initAudio();
                 await audioContext.resume();
+
+                if (!voiceAnalyser || !voiceDetectionActive) {
+                    if (voiceDetectionInterval) clearInterval(voiceDetectionInterval);
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        if (voiceAnalyser) voiceAnalyser.disconnect();
+                        const source = audioContext.createMediaStreamSource(stream);
+                        voiceAnalyser = audioContext.createAnalyser();
+                        voiceAnalyser.fftSize = 2048;
+                        voiceAnalyser.smoothingTimeConstant = 0.7;
+                        source.connect(voiceAnalyser);
+                        console.log('Voice analyser initialized for VR');
+
+                        const bufferLength = voiceAnalyser.fftSize;
+                        const dataArray = new Float32Array(bufferLength);
+
+                        function runVoiceDetection() {
+                            voiceDetectionActive = true;
+                            if (voiceAnalyser) {
+                                voiceAnalyser.getFloatTimeDomainData(dataArray);
+                                const pitch = autoCorrelate(dataArray, audioContext.sampleRate);
+                                voiceAmplitude = getAmplitude(dataArray);
+
+                                if (pitch !== -1 && pitch > 20 && pitch < 2000) {
+                                    voicePitch = pitch;
+                                } else {
+                                    voicePitch *= 0.95;
+                                }
+
+                                updateVoiceParams();
+                                updateSoundMeter();
+                                if (voiceAmplitude > 0.05) needsRedraw = true;
+                            }
+                        }
+
+                        voiceDetectionInterval = setInterval(runVoiceDetection, 50);
+                        needsRedraw = true;
+                        animate();
+                    } catch (error) {
+                        console.error('Voice control failed:', error);
+                    }
+                }
 
                 try {
                     const session = await navigator.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] });
@@ -498,7 +578,7 @@
             mandalaPlane.material.map.needsUpdate = true;
             mandalaPlane.rotation.z += rotationSpeed;
 
-            if (voiceAmplitude > IDLE_THRESHOLD) {
+            if (voiceAmplitude > 0.05) {
                 const spawnCount = Math.floor(voiceAmplitude * 5);
                 for (let i = 0; i < spawnCount; i++) {
                     if (Math.random() < voiceAmplitude * 0.3) {
@@ -552,284 +632,387 @@
             renderer.render(scene, camera);
         }
 
-        // Mandala Generation
-        function generateMandala(timeFactor) {
-            if (!needsRedraw) return;
-            ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
-            const centerX = mandalaCanvas.width / 2;
-            const centerY = mandalaCanvas.height / 2;
-            const audioFactor = voiceAmplitude + droneAmplitude;
+    function generateMandala(timeFactor) {
+    if (!needsRedraw) return;
+    ctx.clearRect(0, 0, mandalaCanvas.width, mandalaCanvas.height);
+    const centerX = mandalaCanvas.width / 2;
+    const centerY = mandalaCanvas.height / 2;
+    const audioFactor = voiceAmplitude + droneAmplitude;
 
-            function drawRecursiveShape(x, y, r, level) {
-                if (level > params.levels) return;
-                const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
-                gradient.addColorStop(0, params.lineColor);
-                gradient.addColorStop(0.5, params.secondaryColor);
-                gradient.addColorStop(1, params.lineColor);
+    function drawRecursiveShape(x, y, r, level) {
+        if (level > params.levels) return;
+        const gradient = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
+        gradient.addColorStop(0, params.lineColor);
+        gradient.addColorStop(0.5, params.secondaryColor);
+        gradient.addColorStop(1, params.lineColor);
 
-                ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * (1 + audioFactor);
-                ctx.strokeStyle = gradient;
-                ctx.shadowBlur = 40 * audioFactor;
-                ctx.shadowColor = params.secondaryColor;
+        ctx.lineWidth = params.lineWidth * (1 - (level - 1) / params.levels * 0.7) * (1 + audioFactor);
+        ctx.strokeStyle = gradient;
+        ctx.shadowBlur = 40 * audioFactor;
+        ctx.shadowColor = params.secondaryColor;
 
-                switch (params.patternType) {
-                    case 'cymatic':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
-                            const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 1.2);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'vortex':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments / level; i++) {
-                            const angle = (i / (params.segments / level)) * Math.PI * 2 + timeFactor * 1.2;
-                            const x1 = x + r * Math.cos(angle);
-                            const y1 = y + r * Math.sin(angle);
-                            const x2 = x + r * 0.4 * Math.cos(angle + Math.PI / (params.segments / level));
-                            const y2 = y + r * 0.4 * Math.sin(angle + Math.PI / (params.segments / level));
-                            ctx.moveTo(x, y);
-                            ctx.quadraticCurveTo(x1, y1, x2, y2);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'nebula':
-                        ctx.beginPath();
-                        for (let i = 0; i < 12; i++) {
-                            const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
-                            const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'chaos':
-                        ctx.beginPath();
-                        const points = Math.floor(Math.random() * 8) + 5;
-                        for (let i = 0; i < points; i++) {
-                            const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
-                            const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'flower':
-                        ctx.beginPath();
-                        for (let i = 0; i < 10; i++) {
-                            const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
-                            const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
-                            ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'yantra':
-                        ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
-                            ctx.moveTo(x, y);
-                            ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'tunnel':
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
-                            const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
-                            const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'hypercube':
-                        ctx.beginPath();
-                        for (let i = 0; i < 8; i++) {
-                            const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
-                            const mod = Math.cos(level + timeFactor) * audioFactor;
-                            const dist = r * (0.6 + mod * 0.6);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'mandelbrot':
-                        ctx.beginPath();
-                        const iterations = 20 + Math.floor(audioFactor * 20);
-                        const buddhaPoints = [];
-                        const scale = r / 200;
+        switch (params.patternType) {
+            case 'cymatic':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
+                    const mod = Math.sin(angle * level * 3 + timeFactor) * audioFactor;
+                    const dist = r * (0.6 + mod * 1.2);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'vortex':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments / level; i++) {
+                    const angle = (i / (params.segments / level)) * Math.PI * 2 + timeFactor * 1.2;
+                    const x1 = x + r * Math.cos(angle);
+                    const y1 = y + r * Math.sin(angle);
+                    const x2 = x + r * 0.4 * Math.cos(angle + Math.PI / (params.segments / level));
+                    const y2 = y + r * 0.4 * Math.sin(angle + Math.PI / (params.segments / level));
+                    ctx.moveTo(x, y);
+                    ctx.quadraticCurveTo(x1, y1, x2, y2);
+                }
+                ctx.stroke();
+                break;
+            case 'nebula':
+                ctx.beginPath();
+                for (let i = 0; i < 12; i++) {
+                    const angle = (i / 12) * Math.PI * 2 + Math.sin(timeFactor * 0.4) * audioFactor;
+                    const dist = r * (0.5 + Math.cos(timeFactor + i) * 0.7 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'chaos':
+                ctx.beginPath();
+                const points = Math.floor(Math.random() * 8) + 5;
+                for (let i = 0; i < points; i++) {
+                    const angle = (i / points) * Math.PI * 2 + Math.random() * 0.6 + timeFactor;
+                    const dist = r * (0.3 + Math.sin(timeFactor + level) * 0.9 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'flower':
+                ctx.beginPath();
+                for (let i = 0; i < 10; i++) {
+                    const angle = (i / 10) * Math.PI * 2 + timeFactor * 0.8;
+                    const dist = r * audioFactor * (0.6 + Math.sin(timeFactor) * 0.4);
+                    ctx.arc(x + Math.cos(angle) * r * 0.5, y + Math.sin(angle) * r * 0.5, dist * 0.3, 0, Math.PI * 2);
+                }
+                ctx.stroke();
+                break;
+            case 'yantra':
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + timeFactor * 0.5;
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + Math.cos(angle) * r * audioFactor, y + Math.sin(angle) * r * audioFactor);
+                }
+                ctx.stroke();
+                break;
+            case 'tunnel':
+                ctx.beginPath();
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.9;
+                    const depth = Math.sin(level * 0.6 + timeFactor) * r * 0.4 * audioFactor;
+                    const dist = r * (1 - level / params.levels) * (1 + Math.cos(timeFactor) * 0.3);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist + depth);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'hypercube':
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2 + timeFactor * 1.1;
+                    const mod = Math.cos(level + timeFactor) * audioFactor;
+                    const dist = r * (0.6 + mod * 0.6);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'mandelbrot':
+                ctx.beginPath();
+                const iterations = 20 + Math.floor(audioFactor * 20);
+                const buddhaPoints = [];
+                const scale = r / 200;
 
-                        for (let i = 0; i < params.segments * 5; i++) {
-                            let zr = 0, zi = 0;
-                            const cr = (Math.cos(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
-                            const ci = (Math.sin(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
+                for (let i = 0; i < params.segments * 5; i++) {
+                    let zr = 0, zi = 0;
+                    const cr = (Math.cos(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
+                    const ci = (Math.sin(timeFactor + i * 0.1) * r * 0.5 * (1 + audioFactor)) / 200;
 
-                            for (let n = 0; n < iterations; n++) {
-                                const zrNew = zr * zr - zi * zi + cr;
-                                const ziNew = 2 * zr * zi + ci;
-                                zr = zrNew;
-                                zi = ziNew;
+                    for (let n = 0; n < iterations; n++) {
+                        const zrNew = zr * zr - zi * zi + cr;
+                        const ziNew = 2 * zr * zi + ci;
+                        zr = zrNew;
+                        zi = ziNew;
 
-                                if (zr * zr + zi * zi > 4) {
-                                    buddhaPoints.push({ x: zr * scale, y: zi * scale });
-                                    break;
-                                }
-                            }
+                        if (zr * zr + zi * zi > 4) {
+                            buddhaPoints.push({ x: zr * scale, y: zi * scale });
+                            break;
                         }
-
-                        ctx.fillStyle = params.secondaryColor;
-                        buddhaPoints.forEach(point => {
-                            const px = x + point.x * (1 + audioFactor * 0.5);
-                            const py = y + point.y * (1 + audioFactor * 0.5);
-                            ctx.beginPath();
-                            ctx.arc(px, py, 1 + audioFactor * 2, 0, Math.PI * 2);
-                            ctx.fill();
-                        });
-
-                        ctx.strokeStyle = gradient;
-                        ctx.beginPath();
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
-                            const mod = Math.sin(angle * level + timeFactor) * audioFactor * 0.3;
-                            const dist = r * (0.7 + mod);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'pi':
-                        ctx.beginPath();
-                        const piDigits = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3];
-                        for (let i = 0; i < params.segments; i++) {
-                            const digit = piDigits[i % piDigits.length];
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor + digit * 0.1;
-                            const dist = r * (0.5 + digit / 10 * audioFactor);
-                            ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
-                        }
-                        ctx.closePath();
-                        ctx.stroke();
-                        break;
-                    case 'schumann':
-                        ctx.beginPath();
-                        const resonance = 7.83 * (1 + audioFactor);
-                        for (let i = 0; i < params.segments; i++) {
-                            const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.3;
-                            const ripple = Math.sin(timeFactor + level * resonance * 0.1) * r * 0.4 * audioFactor;
-                            const dist = r * (0.6 + ripple);
-                            ctx.arc(x, y, dist, angle, angle + Math.PI / params.segments);
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'floweroflife':
-                        ctx.beginPath();
-                        const circleCount = 6;
-                        for (let i = 0; i < circleCount; i++) {
-                            const angle = (i / circleCount) * Math.PI * 2 + timeFactor * 0.2;
-                            const dist = r * 0.5 * (1 + audioFactor * 0.3);
-                            ctx.arc(
-                                x + Math.cos(angle) * dist,
-                                y + Math.sin(angle) * dist,
-                                r * params.scaleFactor * (1 + audioFactor),
-                                0,
-                                Math.PI * 2
-                            );
-                        }
-                        ctx.stroke();
-                        break;
-                    case 'e8':
-                        ctx.beginPath();
-                        const nodes = 8;
-                        for (let i = 0; i < nodes; i++) {
-                            const angle1 = (i / nodes) * Math.PI * 2 + timeFactor * 0.4;
-                            const dist1 = r * (0.5 + Math.sin(timeFactor) * audioFactor);
-                            const x1 = x + Math.cos(angle1) * dist1;
-                            const y1 = y + Math.sin(angle1) * dist1;
-                            for (let j = 0; j < nodes; j++) {
-                                const angle2 = (j / nodes) * Math.PI * 2 + timeFactor * 0.4;
-                                const dist2 = r * (0.5 + Math.cos(timeFactor) * audioFactor);
-                                const x2 = x + Math.cos(angle2) * dist2;
-                                const y2 = y + Math.sin(angle2) * dist2;
-                                ctx.moveTo(x1, y1);
-                                ctx.lineTo(x2, y2);
-                            }
-                        }
-                        ctx.stroke();
-                        break;
+                    }
                 }
 
-                drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
-            }
+                ctx.fillStyle = params.secondaryColor;
+                buddhaPoints.forEach(point => {
+                    const px = x + point.x * (1 + audioFactor * 0.5);
+                    const py = y + point.y * (1 + audioFactor * 0.5);
+                    ctx.beginPath();
+                    ctx.arc(px, py, 1 + audioFactor * 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
 
-            for (let i = 0; i < params.segments; i++) {
-                const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
-                const x = centerX + params.initialRadius * Math.cos(angle) * (1 + audioFactor * 0.5);
-                const y = centerY + params.initialRadius * Math.sin(angle) * (1 + audioFactor * 0.5);
-                drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
-            }
-
-            ctx.fillStyle = params.secondaryColor;
-            for (let i = 0; i < 50; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
+                ctx.strokeStyle = gradient;
                 ctx.beginPath();
-                ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
-                ctx.fill();
-            }
-
-            ctx.globalCompositeOperation = 'destination-in';
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.globalCompositeOperation = 'source-over';
-
-            needsRedraw = false;
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.5;
+                    const mod = Math.sin(angle * level + timeFactor) * audioFactor * 0.3;
+                    const dist = r * (0.7 + mod);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'pi':
+                ctx.beginPath();
+                const piDigits = [3, 1, 4, 1, 5, 9, 2, 6, 5, 3];
+                for (let i = 0; i < params.segments; i++) {
+                    const digit = piDigits[i % piDigits.length];
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor + digit * 0.1;
+                    const dist = r * (0.5 + digit / 10 * audioFactor);
+                    ctx.lineTo(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                break;
+            case 'schumann':
+                ctx.beginPath();
+                const resonance = 7.83 * (1 + audioFactor);
+                for (let i = 0; i < params.segments; i++) {
+                    const angle = (i / params.segments) * Math.PI * 2 + timeFactor * 0.3;
+                    const ripple = Math.sin(timeFactor + level * resonance * 0.1) * r * 0.4 * audioFactor;
+                    const dist = r * (0.6 + ripple);
+                    ctx.arc(x, y, dist, angle, angle + Math.PI / params.segments);
+                }
+                ctx.stroke();
+                break;
+            case 'floweroflife':
+                ctx.beginPath();
+                const circleCount = 6;
+                for (let i = 0; i < circleCount; i++) {
+                    const angle = (i / circleCount) * Math.PI * 2 + timeFactor * 0.2;
+                    const dist = r * 0.5 * (1 + audioFactor * 0.3);
+                    ctx.arc(
+                        x + Math.cos(angle) * dist,
+                        y + Math.sin(angle) * dist,
+                        r * params.scaleFactor * (1 + audioFactor),
+                        0,
+                        Math.PI * 2
+                    );
+                }
+                ctx.stroke();
+                break;
+            case 'e8':
+                ctx.beginPath();
+                const nodes = 8;
+                for (let i = 0; i < nodes; i++) {
+                    const angle1 = (i / nodes) * Math.PI * 2 + timeFactor * 0.4;
+                    const dist1 = r * (0.5 + Math.sin(timeFactor) * audioFactor);
+                    const x1 = x + Math.cos(angle1) * dist1;
+                    const y1 = y + Math.sin(angle1) * dist1;
+                    for (let j = 0; j < nodes; j++) {
+                        const angle2 = (j / nodes) * Math.PI * 2 + timeFactor * 0.4;
+                        const dist2 = r * (0.5 + Math.cos(timeFactor) * audioFactor);
+                        const x2 = x + Math.cos(angle2) * dist2;
+                        const y2 = y + Math.sin(angle2) * dist2;
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                    }
+                }
+                ctx.stroke();
+                break;
         }
 
-        // Presets
-        function applyPreset(preset) {
-            switch (preset) {
-                case 'mandala':
-                    Object.assign(params, { segments: 8, levels: 5, scaleFactor: 0.75, initialRadius: 300, lineColor: '#ff4500', secondaryColor: '#ffd700', patternType: 'cymatic', baseFreq: 108, waveform: 'sine', modulation: 0.8 });
-                    break;
-                case 'yantra':
-                    Object.assign(params, { segments: 4, levels: 4, scaleFactor: 0.65, initialRadius: 200, lineColor: '#ff00ff', secondaryColor: '#ffd700', patternType: 'yantra', baseFreq: 136.1, waveform: 'triangle', modulation: 1.2 });
-                    break;
-                case 'sufi':
-                    Object.assign(params, { segments: 12, levels: 3, scaleFactor: 0.8, initialRadius: 280, lineColor: '#00ced1', secondaryColor: '#228b22', patternType: 'vortex', baseFreq: 174, waveform: 'sawtooth', modulation: 1.8 });
-                    break;
-                case 'zen':
-                    Object.assign(params, { segments: 1, levels: 1, scaleFactor: 0.95, initialRadius: 180, lineColor: '#000000', secondaryColor: '#ffffff', patternType: 'flower', baseFreq: 220, waveform: 'sine', modulation: 0.2 });
-                    break;
-                case 'mandelbrot':
-                    Object.assign(params, { segments: 6, levels: 3, scaleFactor: 0.8, initialRadius: 250, lineColor: '#ffd700', secondaryColor: '#ff4500', patternType: 'mandelbrot', baseFreq: 432, waveform: 'sine', modulation: 1.0 });
-                    break;
-                case 'pi':
-                    Object.assign(params, { segments: 10, levels: 4, scaleFactor: 0.7, initialRadius: 200, lineColor: '#ff8c00', secondaryColor: '#1e90ff', patternType: 'pi', baseFreq: 314, waveform: 'triangle', modulation: 0.9 });
-                    break;
-                case 'schumann':
-                    Object.assign(params, { segments: 7, levels: 5, scaleFactor: 0.9, initialRadius: 240, lineColor: '#00fa9a', secondaryColor: '#4682b4', patternType: 'schumann', baseFreq: 7.83, waveform: 'sine', modulation: 1.1 });
-                    break;
-                case 'floweroflife':
-                    Object.assign(params, { segments: 6, levels: 4, scaleFactor: 0.55, initialRadius: 280, lineColor: '#ffd700', secondaryColor: '#ff4500', patternType: 'floweroflife', baseFreq: 528, waveform: 'sine', modulation: 0.7 });
-                    break;
-                case 'e8':
-                    Object.assign(params, { segments: 8, levels: 3, scaleFactor: 0.85, initialRadius: 220, lineColor: '#9400d3', secondaryColor: '#00ffff', patternType: 'e8', baseFreq: 639, waveform: 'sawtooth', modulation: 1.4 });
-                    break;
-            }
-            if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
-            needsRedraw = true;
-            generateMandala(0);
+        drawRecursiveShape(x, y, r * params.scaleFactor, level + 1);
+    }
+
+    for (let i = 0; i < params.segments; i++) {
+        const angle = (i / params.segments) * Math.PI * 2 + timeFactor * params.modulation;
+        const x = centerX + params.initialRadius * Math.cos(angle) * (1 + audioFactor * 0.5);
+        const y = centerY + params.initialRadius * Math.sin(angle) * (1 + audioFactor * 0.5);
+        drawRecursiveShape(x, y, params.initialRadius * params.scaleFactor, 1);
+    }
+
+    ctx.fillStyle = params.secondaryColor;
+    for (let i = 0; i < 50; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = params.initialRadius * (Math.random() * 0.5 + 0.5) * (1 + audioFactor);
+        ctx.beginPath();
+        ctx.arc(centerX + Math.cos(angle) * dist, centerY + Math.sin(angle) * dist, 2 * (1 + audioFactor), 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, mandalaCanvas.width / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    needsRedraw = false;
+}
+
+        // Preset Modal
+        function showPresetModal() {
+            document.getElementById('presetModal').classList.add('active');
         }
+
+       function applyPreset(preset) {
+    document.getElementById('presetModal').classList.remove('active');
+    switch (preset) {
+        case 'mandala':
+            Object.assign(params, {
+                segments: 8,              // More segments for radial symmetry typical of Tibetan mandalas
+                levels: 5,                // Deep recursion for intricate detailing
+                scaleFactor: 0.75,        // Slightly tighter scaling for nested patterns
+                initialRadius: 300,       // Larger radius for a grand, meditative presence
+                lineColor: '#ff4500',     // Vibrant orange for warmth and energy
+                secondaryColor: '#ffd700', // Gold for sacredness and enlightenment
+                patternType: 'cymatic',   // Cymatic reflects vibrational harmony
+                baseFreq: 108,            // Sacred number in Buddhism/Hinduism
+                waveform: 'sine',         // Smooth, pure tone for meditation
+                modulation: 0.8           // Gentle audio response
+            });
+            break;
+        case 'yantra':
+            Object.assign(params, {
+                segments: 4,              // Fourfold symmetry common in yantras (e.g., Sri Yantra)
+                levels: 4,                // Moderate recursion for layered triangles
+                scaleFactor: 0.65,        // Tighter scaling for precision
+                initialRadius: 200,       // Balanced size for focus
+                lineColor: '#ff00ff',     // Magenta for spiritual energy
+                secondaryColor: '#ffd700', // Gold for divinity
+                patternType: 'yantra',    // Dedicated yantra pattern for triangular geometry
+                baseFreq: 136.1,          // Cosmic OM frequency (year-tone)
+                waveform: 'triangle',     // Triangular wave for sharp, resonant edges
+                modulation: 1.2           // Stronger modulation for dynamic energy
+            });
+            break;
+        case 'sufi':
+            Object.assign(params, {
+                segments: 12,             // Higher segments for swirling, dance-like motion
+                levels: 3,                // Fewer levels to emphasize flow over complexity
+                scaleFactor: 0.8,         // Larger scaling for expansive spirals
+                initialRadius: 280,       // Slightly larger for a whirling effect
+                lineColor: '#00ced1',     // Turquoise for mystical clarity
+                secondaryColor: '#228b22', // Forest green for Sufi connection to nature
+                patternType: 'vortex',    // Vortex suits the whirling dervish motion
+                baseFreq: 174,            // Low healing frequency for grounding
+                waveform: 'sawtooth',     // Rich, textured tone for depth
+                modulation: 1.8           // High modulation for dynamic swirling
+            });
+            break;
+        case 'zen':
+            Object.assign(params, {
+                segments: 1,              // Minimal segments for simplicity (single circle)
+                levels: 1,                // Single level for Zen minimalism
+                scaleFactor: 0.95,        // Near-full scale for a bold, singular shape
+                initialRadius: 180,       // Moderate size for calm presence
+                lineColor: '#000000',     // Black for stark simplicity
+                secondaryColor: '#ffffff', // White for purity and void
+                patternType: 'flower',    // Flower pattern adapted for a single Enso circle
+                baseFreq: 0,              // No drone for silence (Zen focus)
+                waveform: 'sine',         // Pure tone if sound is added
+                modulation: 0.2           // Minimal modulation for stillness
+            });
+            break;
+        case 'mandelbrot':
+            Object.assign(params, {
+                segments: 6,              // Symmetrical segments for fractal balance
+                levels: 3,                // Fewer levels to focus on Buddhabrot-like density
+                scaleFactor: 0.8,         // Larger scaling for fractal spread
+                initialRadius: 250,       // Bigger radius for prominence
+                lineColor: '#ffd700',     // Gold for a Buddha-like outline
+                secondaryColor: '#ff4500', // Orange for glowing fractal points
+                patternType: 'mandelbrot', // Dedicated Mandelbrot pattern
+                baseFreq: 432,            // Healing frequency tied to universal harmony
+                waveform: 'sine',         // Smooth tone for meditative depth
+                modulation: 1.0           // Balanced audio response
+            });
+            break;
+        case 'pi':
+            Object.assign(params, {
+                segments: 10,             // Matches the 10 digits used in the pi pattern
+                levels: 4,                // More levels for spiral complexity
+                scaleFactor: 0.7,         // Moderate scaling for a tight spiral
+                initialRadius: 200,       // Balanced size for visibility
+                lineColor: '#ff8c00',     // Orange for mathematical warmth
+                secondaryColor: '#1e90ff', // Blue for infinite depth
+                patternType: 'pi',        // Dedicated Pi spiral pattern
+                baseFreq: 314,            // Frequency inspired by 3.14 (π)
+                waveform: 'triangle',     // Sharp wave for precision
+                modulation: 0.9           // Subtle modulation for organic flow
+            });
+            break;
+        case 'schumann':
+            Object.assign(params, {
+                segments: 7,              // Reflects the 7 main Schumann resonances
+                levels: 5,                // Deep recursion for wave-like layers
+                scaleFactor: 0.9,         // Larger scaling for expansive ripples
+                initialRadius: 240,       // Bigger radius for Earth resonance
+                lineColor: '#00fa9a',     // Aqua for natural energy
+                secondaryColor: '#4682b4', // Steel blue for atmospheric depth
+                patternType: 'schumann',  // Dedicated Schumann pattern
+                baseFreq: 7.83,           // Fundamental Schumann resonance
+                waveform: 'sine',         // Pure tone for harmonic resonance
+                modulation: 1.1           // Gentle modulation for wave motion
+            });
+            break;
+        case 'floweroflife':
+            Object.assign(params, {
+                segments: 6,              // Hexagonal symmetry (6 circles around 1)
+                levels: 4,                // More levels for overlapping circles
+                scaleFactor: 0.55,        // Tighter scaling for precise overlaps
+                initialRadius: 280,       // Larger radius for a full grid
+                lineColor: '#ffd700',     // Gold for sacred geometry
+                secondaryColor: '#ff4500', // Orange for life energy
+                patternType: 'floweroflife', // Dedicated Flower of Life pattern
+                baseFreq: 528,            // "Love" frequency for healing
+                waveform: 'sine',         // Smooth tone for harmony
+                modulation: 0.7           // Subtle modulation for organic feel
+            });
+            break;
+        case 'e8':
+            Object.assign(params, {
+                segments: 8,              // Matches the 8 dimensions of E8
+                levels: 3,                // Moderate recursion for lattice complexity
+                scaleFactor: 0.85,        // Larger scaling for interconnected nodes
+                initialRadius: 220,       // Balanced size for symmetry
+                lineColor: '#9400d3',     // Deep purple for cosmic mystery
+                secondaryColor: '#00ffff', // Cyan for high-dimensional clarity
+                patternType: 'e8',        // Dedicated E8 lattice pattern
+                baseFreq: 639,            // Frequency for connection (Solfeggio)
+                waveform: 'sawtooth',     // Rich tone for complexity
+                modulation: 1.4           // Strong modulation for dynamic lattice
+            });
+            break;
+    }
+    if (droneOscillator) droneOscillator.frequency.value = params.baseFreq;
+    needsRedraw = true;
+    generateMandala(0);
+}
 
         // Utility Functions
         function downloadMandala() {
             const link = document.createElement('a');
-            link.download = `cosmic-level-${level}.png`;
+            link.download = 'cosmic-spiral.png';
             link.href = mandalaCanvas.toDataURL('image/png');
             link.click();
         }
@@ -837,25 +1020,106 @@
         function animate(timestamp) {
             if (timestamp - lastUpdate > 33) {
                 generateMandala(timeFactor);
-                timeFactor += 0.01 + (voiceAmplitude * 0.05);
                 lastUpdate = timestamp;
             }
-            animationId = requestAnimationFrame(animate);
+            if (voiceAmplitude > 0.05 || droneOscillator) {
+                animationId = requestAnimationFrame(animate);
+            } else {
+                cancelAnimationFrame(animationId);
+            }
+        }
+
+        function openTab(evt, tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.glyph-tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        function createSliderControl(labelText, min, max, step, initialValue, paramName, tab, isColor = false) {
+            const controlRow = document.createElement('div');
+            controlRow.classList.add('control-row');
+
+            const label = document.createElement('label');
+            label.textContent = labelText + ':';
+            label.classList.add('control-label');
+
+            let control = isColor ? document.createElement('input') : document.createElement('input');
+            if (isColor) control.type = 'color';
+            else {
+                control.type = 'range';
+                control.min = min;
+                control.max = max;
+                control.step = step;
+            }
+            control.value = initialValue;
+
+            control.addEventListener('input', () => {
+                params[paramName] = isColor ? control.value : parseFloat(control.value);
+                needsRedraw = true;
+                generateMandala(0);
+            });
+
+            controlRow.appendChild(label);
+            controlRow.appendChild(control);
+            tab.appendChild(controlRow);
+        }
+
+        function createDropdownControl(labelText, options, initialValue, paramName, tab) {
+            const controlRow = document.createElement('div');
+            controlRow.classList.add('control-row');
+
+            const label = document.createElement('label');
+            label.textContent = labelText + ':';
+            label.classList.add('control-label');
+
+            const control = document.createElement('select');
+            options.forEach(optionValue => {
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                control.appendChild(option);
+            });
+            control.value = initialValue;
+
+            control.addEventListener('change', () => {
+                params[paramName] = control.value;
+                needsRedraw = true;
+                generateMandala(0);
+            });
+
+            controlRow.appendChild(label);
+            controlRow.appendChild(control);
+            tab.appendChild(controlRow);
         }
 
         // Initialization
         function init() {
-            document.getElementById('startGame').addEventListener('click', () => {
-                resetGame();
-                initVoiceControl();
-                animate(performance.now());
-            });
+            document.getElementById('presets').addEventListener('click', showPresetModal);
             document.getElementById('drone').addEventListener('click', toggleDrone);
             document.getElementById('download').addEventListener('click', downloadMandala);
 
+            initVoiceControl();
             initVR();
-            applyPreset(levels[0].preset);
             generateMandala(0);
+
+            const formTab = document.getElementById('formTab').querySelector('.control-panel');
+            createSliderControl('Segments', 3, 30, 1, params.segments, 'segments', formTab);
+            createSliderControl('Levels', 1, 6, 1, params.levels, 'levels', formTab);
+            createSliderControl('Scale Factor', 0.1, 1.0, 0.05, params.scaleFactor, 'scaleFactor', formTab);
+            createSliderControl('Initial Radius', 50, 400, 10, params.initialRadius, 'initialRadius', formTab);
+            createSliderControl('Line Width', 1, 10, 1, params.lineWidth, 'lineWidth', formTab);
+            createDropdownControl('Pattern Type', [
+                'cymatic', 'vortex', 'nebula', 'chaos', 'flower', 'yantra', 'tunnel', 'hypercube',
+                'mandelbrot', 'pi', 'schumann', 'floweroflife', 'e8'
+            ], params.patternType, 'patternType', formTab);
+            createSliderControl("Modulation", 0, 2, 0.1, params.modulation, 'modulation', formTab);
+            createSliderControl('Line Color', null, null, null, params.lineColor, 'lineColor', formTab, true);
+            createSliderControl('Secondary Color', null, null, null, params.secondaryColor, 'secondaryColor', formTab, true);
+
+            const freqTab = document.getElementById('freqTab').querySelector('.control-panel');
+            createSliderControl('Base Frequency', 50, 500, 10, params.baseFreq, 'baseFreq', freqTab);
+            createDropdownControl('Waveform', ['sine', 'triangle', 'square', 'sawtooth'], params.waveform, 'waveform', freqTab);
 
             window.addEventListener('unload', () => {
                 if (droneOscillator) droneOscillator.stop();
@@ -869,3 +1133,4 @@
 </body>
 
 </html>
+
