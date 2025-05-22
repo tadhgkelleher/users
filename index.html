@@ -3,127 +3,245 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experiment Hub</title>
+    <title>The Ultimate Guide to Urban Composting - My Eco Blog</title>
+    <meta name="description" content="Learn everything you need to know about starting and maintaining a successful compost bin in an urban environment. Tips, tricks, and benefits.">
+
+    <!-- 1. Google AdSense Core Script (Must be in <head>) -->
+    <!-- !!! REPLACE ca-pub-YOUR_PUBLISHER_ID with your actual AdSense Publisher ID !!! -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+            crossorigin="anonymous"></script>
+
+    <!-- Basic Styling for Demo - In a real site, this would be in a separate CSS file -->
     <style>
-        * {
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
         }
-
-        body {
-            background: #1a1a1a;
-            color: #ffffff;
-            line-height: 1.6;
-            padding: 20px;
-        }
-
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 80%;
+            max-width: 960px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1rem 0;
             text-align: center;
         }
-
-        header {
-            padding: 2rem 0;
+        header h1 { margin: 0; }
+        nav ul {
+            padding: 0;
+            list-style: none;
+            text-align: center;
+            background: #444;
         }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: #00ffcc;
-            text-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
-        }
-
-        .description {
-            font-size: 1.2rem;
-            color: #cccccc;
-            margin-bottom: 2rem;
-        }
-
-        .experiment-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            padding: 2rem;
-        }
-
-        .experiment-card {
-            background: #2d2d2d;
-            padding: 2rem;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            border: 1px solid #00ffcc33;
-        }
-
-        .experiment-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0, 255, 204, 0.2);
-            border-color: #00ffcc;
-        }
-
-        .experiment-card a {
+        nav ul li { display: inline; }
+        nav ul li a {
+            color: #fff;
+            padding: 10px 15px;
+            display: inline-block;
             text-decoration: none;
-            color: #00ffcc;
-            font-size: 1.5rem;
-            font-weight: bold;
         }
-
-        .experiment-card p {
-            color: #999999;
-            margin-top: 0.5rem;
+        nav ul li a:hover { background-color: #555; }
+        .main-content { padding: 20px 0; }
+        .article-header h1 { font-size: 2em; color: #333; }
+        .article-meta { font-size: 0.9em; color: #666; margin-bottom: 20px; }
+        .article-content p, .article-content ul, .article-content ol { margin-bottom: 1.5em; }
+        .article-content h2 { margin-top: 1.5em; margin-bottom: 0.5em; color: #444; }
+        .article-content img { max-width: 100%; height: auto; display: block; margin: 10px 0; }
+        .sidebar {
+            float: right;
+            width: 28%; /* Example width */
+            padding: 15px;
+            background-color: #f9f9f9;
+            margin-left: 2%;
+            box-sizing: border-box;
         }
-
+        .main-article {
+            float: left;
+            width: 70%; /* Example width */
+            box-sizing: border-box;
+        }
+        .clearfix::after { content: ""; clear: both; display: table; }
         footer {
-            margin-top: 3rem;
-            padding: 1rem;
-            color: #666666;
+            text-align: center;
+            padding: 20px;
+            background-color: #333;
+            color: #fff;
+            margin-top: 20px;
         }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .experiment-grid {
-                grid-template-columns: 1fr;
-            }
+        footer a { color: #aaffaa; text-decoration: none; }
+        /* Ad Placeholder Styling (visual aid, not strictly necessary for ads to work) */
+        .ad-placeholder {
+            background-color: #e9e9e9;
+            border: 1px dashed #ccc;
+            text-align: center;
+            padding: 10px;
+            margin: 20px 0;
+            min-height: 90px; /* So you can see it before ads load */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+            color: #777;
+        }
+        .adsbygoogle { /* AdSense may override this, but good to ensure block display for layout */
+           /* display: block; */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Experiment Hub</h1>
-            <p class="description">A collection of WebVR and Sound Experiments</p>
-        </header>
+    <header>
+        <h1>My Eco Blog: Sustainable Living Tips</h1>
+        <nav>
+            <ul>
+                <li><a href="/index.html">Home</a></li>
+                <li><a href="/categories/gardening.html">Gardening</a></li>
+                <li><a href="/categories/zero-waste.html">Zero Waste</a></li>
+                <li><a href="/about.html">About</a></li>
+                <li><a href="/contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
 
-        <div class="experiment-grid">
-            <div class="experiment-card">
-                <a href="experiment1.html">Experiment 1</a>
-                <p>WebVR Experience</p>
+    <div class="container clearfix">
+        <aside class="sidebar">
+            <h3>Popular Posts</h3>
+            <ul>
+                <li><a href="#">Post 1</a></li>
+                <li><a href="#">Post 2</a></li>
+                <li><a href="#">Post 3</a></li>
+            </ul>
+            <hr>
+            <!-- Ad Unit 1: Sidebar Ad (e.g., Medium Rectangle or Responsive) -->
+            <div class="ad-placeholder">
+                <p>(Ad Placeholder: Sidebar)</p>
+                <!-- !!! REPLACE ca-pub-YOUR_PUBLISHER_ID and YOUR_AD_SLOT_ID_SIDEBAR !!! -->
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                     data-ad-slot="YOUR_AD_SLOT_ID_SIDEBAR"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>
+                     (adsbygoogle = window.adsbygoogle || []).push({});
+                </script>
             </div>
-            
-            <div class="experiment-card">
-                <a href="experiment2.html">Experiment 2</a>
-                <p>Sound Experiment</p>
-            </div>
-            
-            <div class="experiment-card">
-                <a href="experiment3.html">Experiment 3</a>
-                <p>WebVR + Sound Combo</p>
-            </div>
-            
-            <div class="experiment-card">
-                <a href="experiment4.html">Experiment 4</a>
-                <p>Interactive Audio</p>
-            </div>
-        </div>
+            <hr>
+            <h3>Categories</h3>
+            <ul>
+                <li><a href="#">Composting</a></li>
+                <li><a href="#">Recycling</a></li>
+                <li><a href="#">DIY Projects</a></li>
+            </ul>
+        </aside>
 
-        <footer>
-            <p>More experiments coming soon...</p>
-        </footer>
+        <main class="main-article">
+            <article>
+                <header class="article-header">
+                    <h1>The Ultimate Guide to Urban Composting</h1>
+                    <p class="article-meta">Published on October 26, 2023 by Jane Doe</p>
+                </header>
+
+                <!-- Ad Unit 2: Top of Article Ad (Optional, use judiciously) -->
+                <!-- Some prefer not to have an ad right at the very top of content -->
+                <!-- If used, ensure it's not too large and doesn't push content too far down -->
+                <!-- <div class="ad-placeholder">
+                    <p>(Ad Placeholder: Top of Article)</p> -->
+                    <!-- !!! REPLACE ca-pub-YOUR_PUBLISHER_ID and YOUR_AD_SLOT_ID_TOP_ARTICLE !!! -->
+                <!--    <ins class="adsbygoogle"
+                         style="display:block; text-align:center;"
+                         data-ad-layout="in-article"
+                         data-ad-format="fluid"
+                         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                         data-ad-slot="YOUR_AD_SLOT_ID_TOP_ARTICLE"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div> -->
+
+
+                <div class="article-content">
+                    <p>Living in a city doesn't mean you can't embrace sustainability through composting! Urban composting might seem daunting, but with the right approach, it's entirely feasible and incredibly rewarding. This guide will walk you through everything you need to know.</p>
+                    
+                    <img src="placeholder-compost-bin.jpg" alt="A modern compost bin suitable for a balcony">
+                    <!-- In a real site, use a real image URL -->
+
+                    <h2>Why Compost in an Urban Setting?</h2>
+                    <p>You might wonder if it's worth the effort in a smaller space. Absolutely! Composting helps reduce landfill waste, creates nutrient-rich soil for your houseplants or community garden, and connects you more deeply with the food cycle. Every bit helps our planet.</p>
+
+                    <ul>
+                        <li>Reduces household waste significantly.</li>
+                        <li>Creates free, high-quality fertilizer.</li>
+                        <li>Lowers your carbon footprint.</li>
+                        <li>Teaches valuable lessons about nature.</li>
+                    </ul>
+
+                    <!-- Ad Unit 3: In-Article Ad (Good for longer content) -->
+                    <div class="ad-placeholder">
+                        <p>(Ad Placeholder: In-Article)</p>
+                        <!-- !!! REPLACE ca-pub-YOUR_PUBLISHER_ID and YOUR_AD_SLOT_ID_IN_ARTICLE !!! -->
+                        <ins class="adsbygoogle"
+                             style="display:block; text-align:center;"
+                             data-ad-layout="in-article"
+                             data-ad-format="fluid"
+                             data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                             data-ad-slot="YOUR_AD_SLOT_ID_IN_ARTICLE"></ins>
+                        <script>
+                             (adsbygoogle = window.adsbygoogle || []).push({});
+                        </script>
+                    </div>
+
+                    <h2>Choosing Your Composting Method</h2>
+                    <p>Several methods work well for urban environments:</p>
+                    <ol>
+                        <li><strong>Worm Composting (Vermicomposting):</strong> Ideal for small apartments. Worms do the work in a compact bin.</li>
+                        <li><strong>Bokashi Composting:</strong> A fermentation process that can handle all food scraps, including meat and dairy.</li>
+                        <li><strong>Small Tumbler or Bin Composting:</strong> If you have a balcony or small patio, a compact tumbler can work well.</li>
+                    </ol>
+                    <p>We'll delve deeper into each of these methods in upcoming posts. For now, consider your space and what types of waste you primarily produce.</p>
+
+                    <h2>Getting Started: What You'll Need</h2>
+                    <p>Regardless of the method, you'll need a few basics...</p>
+                    <!-- ... more high-quality, original content would continue here ... -->
+                    <p>Remember, patience is key. Composting is a natural process. Give it time, and you'll be rewarded with "black gold" for your plants!</p>
+                </div>
+
+                <!-- Ad Unit 4: End of Article Ad (Optional) -->
+                <div class="ad-placeholder">
+                    <p>(Ad Placeholder: End of Article)</p>
+                    <!-- !!! REPLACE ca-pub-YOUR_PUBLISHER_ID and YOUR_AD_SLOT_ID_END_ARTICLE !!! -->
+                    <ins class="adsbygoogle"
+                         style="display:block"
+                         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                         data-ad-slot="YOUR_AD_SLOT_ID_END_ARTICLE"
+                         data-ad-format="auto"
+                         data-full-width-responsive="true"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
+
+            </article>
+        </main>
     </div>
+
+    <footer>
+        <p>© 2023 My Eco Blog. All Rights Reserved.</p>
+        <p>
+            <a href="/privacy-policy.html">Privacy Policy</a> |
+            <a href="/terms-of-service.html">Terms of Service</a> |
+            <a href="/about.html">About Us</a>
+        </p>
+        <p><em>Important: Remember to create an ads.txt file in your site's root directory.</em></p>
+    </footer>
+
 </body>
 </html>
