@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Mandala - Interactive Sanctuary (All-in-One Prototype)</title>
+    <title>My Mandala - Your Digital Sanctuary for Creativity & Mindfulness</title>
+    
+    <!-- Google AdSense Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5470051995144012"
+     crossorigin="anonymous"></script>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
@@ -72,12 +78,13 @@
             color: var(--secondary-color);
             font-weight: 600;
             cursor: pointer;
-            transition: color 0.3s ease;
+            transition: color 0.3s ease, border-bottom-color 0.3s ease;
             padding: 10px 5px;
+            border-bottom: 2px solid transparent;
         }
         nav ul li a:hover, nav ul li a.active {
             color: var(--accent-color);
-            border-bottom: 2px solid var(--accent-color);
+            border-bottom-color: var(--accent-color);
         }
 
         /* --- Main Content & View Switching --- */
@@ -105,7 +112,7 @@
         /* --- Creator View Styling --- */
         #creator-view .creator-layout {
             display: grid;
-            grid-template-columns: 250px 1fr;
+            grid-template-columns: 280px 1fr;
             gap: 30px;
             align-items: flex-start;
         }
@@ -115,6 +122,8 @@
             border-radius: 10px;
             cursor: crosshair;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            height: auto;
         }
         .controls {
             background: #fff;
@@ -133,7 +142,7 @@
         }
         .color-palette {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
             gap: 10px;
         }
         .color-box {
@@ -175,7 +184,7 @@
         /* --- Library View Styling --- */
         .article-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 30px;
         }
         .article-card {
@@ -183,23 +192,39 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
         }
         .article-card h3 {
             font-family: 'Montserrat', sans-serif;
             color: var(--secondary-color);
             margin-top: 0;
         }
+        .article-card p {
+            flex-grow: 1;
+        }
+        .article-card a {
+            font-family: 'Montserrat';
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .article-card a:hover {
+            color: var(--accent-color);
+        }
+
 
         /* --- Gallery View Styling --- */
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
+            gap: 20px;
         }
         .gallery-item {
             position: relative;
             overflow: hidden;
             border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .gallery-item img {
             width: 100%; height: 100%;
@@ -213,10 +238,11 @@
         .gallery-item .overlay {
             position: absolute;
             bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
             color: #fff;
-            padding: 20px 10px 10px 10px;
+            padding: 25px 15px 10px 15px;
             font-family: 'Montserrat';
+            font-size: 0.9rem;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 0.3s, transform 0.3s;
@@ -234,7 +260,6 @@
             padding: 40px 20px;
             font-family: 'Montserrat', sans-serif;
         }
-
     </style>
 </head>
 <body>
@@ -242,7 +267,7 @@
     <!-- HEADER & NAVIGATION -->
     <header>
         <nav class="container">
-            <a href="#" class="logo">My-Mandala.com</a>
+            <a href="#" class="logo">my-mandala.com</a>
             <ul>
                 <li><a onclick="showView('creator-view', this)" class="active">Create</a></li>
                 <li><a onclick="showView('library-view', this)">Learn</a></li>
@@ -264,7 +289,7 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <h3>Brush Size</h3>
+                        <h3>Brush Style</h3>
                         <div class="slider-group">
                             <label for="brushSize">Size: <span id="brushSizeValue">5</span>px</label>
                             <input type="range" id="brushSize" min="1" max="50" value="5">
@@ -283,7 +308,7 @@
                     </div>
                 </aside>
                 <div class="canvas-container">
-                    <canvas id="mandalaCanvas" width="800" height="800"></canvas>
+                    <canvas id="mandalaCanvas"></canvas>
                 </div>
             </div>
         </section>
@@ -294,15 +319,18 @@
             <div class="article-grid">
                 <div class="article-card">
                     <h3>The Symbolism of Color</h3>
-                    <p>Colors are not just aesthetic choices in a mandala; they are imbued with deep meaning. Red often symbolizes strength and passion, blue represents tranquility and wisdom, while yellow can signify intellect and happiness. Learn how to choose colors to reflect your intentions.</p>
+                    <p>In the language of mandalas, colors are potent symbols. Red ignites passion and life force, blue invokes deep calm and spiritual wisdom, while yellow radiates intellect and joyful optimism. Green connects us to nature and healing, and purple elevates our consciousness to the divine. Choosing your palette is the first step in setting the intention for your creation.</p>
+                    <a href="#">Read More »</a>
                 </div>
                 <div class="article-card">
                     <h3>Understanding Sacred Geometry</h3>
-                    <p>From the simple circle representing wholeness to the intricate 'Flower of Life', geometric shapes form the foundation of mandalas. Each shape has a vibration and a meaning, creating a visual language that speaks to the soul. Explore the key shapes and their significance.</p>
+                    <p>The universe is built on patterns, and mandalas are a reflection of this sacred architecture. The central point signifies unity, the circle represents wholeness and eternity, and radiating lines symbolize the expansion of consciousness. By engaging with these forms, you are aligning your own energy with the fundamental structures of existence, creating harmony within and without.</p>
+                    <a href="#">Read More »</a>
                 </div>
                 <div class="article-card">
                     <h3>Mandalas for Mindfulness & Stress Relief</h3>
-                    <p>The act of creating a mandala is a form of active meditation. The focus on repetitive patterns and symmetry helps to quiet the chattering mind, reduce anxiety, and bring you into the present moment. Discover techniques to use our creator tool as a path to inner peace.</p>
+                    <p>Creating a mandala is a profound form of active meditation. The focused repetition and the pursuit of symmetry command your full attention, effortlessly quieting the incessant noise of the mind. This process reduces cortisol levels, eases anxiety, and anchors you firmly in the present moment. It's not about the final product; it's about the peaceful journey of creation.</p>
+                    <a href="#">Read More »</a>
                 </div>
             </div>
         </section>
@@ -310,39 +338,15 @@
         <!-- VIEW 3: THE GALLERY -->
         <section id="gallery-view" class="view">
             <h2 class="section-title">Community Gallery</h2>
-            <div class="gallery-grid">
-                <!-- These are placeholders. In a real app, this data would come from a database. -->
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/8e24aa/ffffff?text=Galaxy" alt="User mandala 1">
-                    <div class="overlay">By User_Creative</div>
-                </div>
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/ffab40/4a148c?text=Sunrise" alt="User mandala 2">
-                    <div class="overlay">By MindfulArtist</div>
-                </div>
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/388e3c/ffffff?text=Forest" alt="User mandala 3">
-                    <div class="overlay">By ZenDrawer_99</div>
-                </div>
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/1e88e5/ffffff?text=Ocean" alt="User mandala 4">
-                    <div class="overlay">By FlowState</div>
-                </div>
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/e53935/ffffff?text=Passion" alt="User mandala 5">
-                    <div class="overlay">By User_12345</div>
-                </div>
-                <div class="gallery-item">
-                    <img src="https://placehold.co/400x400/4a148c/ffab40?text=Royal" alt="User mandala 6">
-                    <div class="overlay">By MandalaMaster</div>
-                </div>
+            <div id="galleryGrid" class="gallery-grid">
+                <!-- Gallery items will be dynamically inserted here by JavaScript -->
             </div>
         </section>
     </main>
 
     <!-- FOOTER -->
     <footer>
-        <p>© 2024 My-Mandala.com. A functional prototype.</p>
+        <p>© 2024 my-mandala.com. A sanctuary for creativity and mindfulness.</p>
     </footer>
 
     <script>
@@ -351,33 +355,93 @@
         const navLinks = document.querySelectorAll('nav ul li a');
 
         function showView(viewId, clickedLink) {
-            // Hide all views
             views.forEach(view => view.classList.remove('active'));
-            // Show the target view
             document.getElementById(viewId).classList.add('active');
-
-            // Update active state on nav links
             navLinks.forEach(link => link.classList.remove('active'));
             clickedLink.classList.add('active');
         }
 
-        // --- MANDALA CREATOR LOGIC ---
+        // --- DYNAMIC CONTENT GENERATION ---
         document.addEventListener('DOMContentLoaded', () => {
+
+            // --- GALLERY POPULATION (NO PLACEHOLDERS) ---
+            function generateSampleMandala(config) {
+                const canvas = document.createElement('canvas');
+                const size = 400;
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+                const center = size / 2;
+
+                // Background
+                ctx.fillStyle = config.bgColor || '#ffffff';
+                ctx.fillRect(0, 0, size, size);
+
+                const slices = config.slices || 12;
+                const angleIncrement = (Math.PI * 2) / slices;
+
+                for (let i = 0; i < slices; i++) {
+                    ctx.save();
+                    ctx.translate(center, center);
+                    ctx.rotate(i * angleIncrement);
+                    
+                    // Pre-canned drawing patterns
+                    for(let j = 1; j < 5; j++) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.arc(config.arcPos * j, 0, config.arcSize * j, 0, Math.PI * 0.1 * config.arcSweep);
+                        ctx.lineTo(0,0);
+                        ctx.fillStyle = config.colors[j % config.colors.length];
+                        ctx.fill();
+
+                        ctx.beginPath();
+                        ctx.moveTo(0,0);
+                        ctx.lineTo(size/3, size/8);
+                        ctx.strokeStyle = config.colors[(j+1) % config.colors.length];
+                        ctx.lineWidth = config.lineWidth;
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+                return canvas.toDataURL();
+            }
+
+            function populateGallery() {
+                const galleryGrid = document.getElementById('galleryGrid');
+                const galleryItems = [
+                    { author: 'Cosmic Weaver', config: { colors: ['#4a148c', '#8e24aa', '#d1c4e9'], arcPos: 30, arcSize: 10, arcSweep: 1.2, lineWidth: 1, slices: 16 } },
+                    { author: 'Serenity Seeker', config: { colors: ['#1e88e5', '#90caf9', '#e3f2fd'], arcPos: 20, arcSize: 15, arcSweep: 1.5, lineWidth: 2, slices: 8 } },
+                    { author: 'Pattern Poet', config: { colors: ['#388e3c', '#a5d6a7', '#e8f5e9'], arcPos: 40, arcSize: 8, arcSweep: 0.8, lineWidth: 3, slices: 12 } },
+                    { author: 'Golden Artist', config: { colors: ['#ffab40', '#ffecb3', '#fff8e1'], arcPos: 25, arcSize: 12, arcSweep: 1.0, lineWidth: 1.5, slices: 20, bgColor: '#424242' } },
+                    { author: 'Crimson Creator', config: { colors: ['#e53935', '#ef9a9a', '#ffebee'], arcPos: 35, arcSize: 18, arcSweep: 1.3, lineWidth: 2.5, slices: 10 } },
+                    { author: 'Mindful Muse', config: { colors: ['#6d4c41', '#bcaaa4', '#efebe9'], arcPos: 15, arcSize: 20, arcSweep: 1.8, lineWidth: 0.5, slices: 24 } }
+                ];
+
+                let galleryHTML = '';
+                galleryItems.forEach(item => {
+                    const imageDataUrl = generateSampleMandala(item.config);
+                    galleryHTML += `
+                        <div class="gallery-item">
+                            <img src="${imageDataUrl}" alt="A generated mandala by ${item.author}">
+                            <div class="overlay">By ${item.author}</div>
+                        </div>
+                    `;
+                });
+                galleryGrid.innerHTML = galleryHTML;
+            }
+
+            // --- MANDALA CREATOR LOGIC ---
             const canvas = document.getElementById('mandalaCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Set canvas size based on its container for responsiveness
-            const canvasContainer = document.querySelector('.canvas-container');
             function resizeCanvas() {
-                const size = Math.min(canvasContainer.offsetWidth, 800);
+                const container = document.querySelector('.canvas-container');
+                const size = container.offsetWidth;
                 canvas.width = size;
                 canvas.height = size;
             }
-            resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
 
-
-            // --- Tool State ---
             let isDrawing = false;
             let currentLineWeight = 5;
             let currentColor = '#4a148c';
@@ -385,7 +449,6 @@
             let lastX = 0;
             let lastY = 0;
 
-            // --- Controls ---
             const brushSizeSlider = document.getElementById('brushSize');
             const brushSizeValue = document.getElementById('brushSizeValue');
             const sliceCountSlider = document.getElementById('sliceCount');
@@ -394,16 +457,12 @@
             const downloadBtn = document.getElementById('downloadBtn');
             const colorPaletteContainer = document.getElementById('colorPalette');
 
-            // --- Color Palette Setup ---
-            const colors = ['#4a148c', '#8e24aa', '#ffab40', '#388e3c', '#1e88e5', '#e53935', '#ffffff', '#616161', '#000000', '#f44336'];
+            const colors = ['#4a148c', '#8e24aa', '#d1c4e9', '#ffab40', '#388e3c', '#1e88e5', '#e53935', '#616161', '#000000', '#ffffff'];
             colors.forEach(color => {
                 const colorBox = document.createElement('div');
                 colorBox.className = 'color-box';
                 colorBox.style.backgroundColor = color;
-                colorBox.dataset.color = color;
-                if (color === currentColor) {
-                    colorBox.classList.add('active');
-                }
+                if (color === currentColor) colorBox.classList.add('active');
                 colorBox.addEventListener('click', () => {
                     currentColor = color;
                     document.querySelectorAll('.color-box').forEach(box => box.classList.remove('active'));
@@ -412,7 +471,6 @@
                 colorPaletteContainer.appendChild(colorBox);
             });
 
-            // --- Event Listeners for Controls ---
             brushSizeSlider.oninput = (e) => {
                 currentLineWeight = e.target.value;
                 brushSizeValue.textContent = e.target.value;
@@ -431,32 +489,40 @@
                 link.click();
             };
 
-            // --- Drawing Logic ---
-            function draw(e) {
+            function getMousePos(evt) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.clientX - rect.left,
+                    y: evt.clientY - rect.top
+                };
+            }
+            
+            function getTouchPos(evt) {
+                const rect = canvas.getBoundingClientRect();
+                return {
+                    x: evt.touches[0].clientX - rect.left,
+                    y: evt.touches[0].clientY - rect.top
+                };
+            }
+
+            function draw(pos) {
                 if (!isDrawing) return;
 
                 const centerX = canvas.width / 2;
                 const centerY = canvas.height / 2;
                 const angleIncrement = (Math.PI * 2) / numSlices;
                 
-                // Get mouse position relative to canvas
-                const rect = canvas.getBoundingClientRect();
-                const currentX = e.clientX - rect.left;
-                const currentY = e.clientY - rect.top;
-
                 for (let i = 0; i < numSlices; i++) {
                     ctx.save();
                     ctx.translate(centerX, centerY);
                     ctx.rotate(i * angleIncrement);
                     
-                    // Symmetrical drawing
                     ctx.beginPath();
                     ctx.moveTo(lastX - centerX, lastY - centerY);
-                    ctx.lineTo(currentX - centerX, currentY - centerY);
+                    ctx.lineTo(pos.x - centerX, pos.y - centerY);
                     
-                    // Mirrored drawing
                     ctx.moveTo(centerX - lastX, lastY - centerY);
-                    ctx.lineTo(centerX - currentX, currentY - centerY);
+                    ctx.lineTo(centerX - pos.x, pos.y - centerY);
                     
                     ctx.strokeStyle = currentColor;
                     ctx.lineWidth = currentLineWeight;
@@ -465,35 +531,32 @@
                     ctx.restore();
                 }
 
-                [lastX, lastY] = [currentX, currentY];
+                [lastX, lastY] = [pos.x, pos.y];
             }
 
-            canvas.addEventListener('mousedown', (e) => {
+            function startDrawing(e) {
                 isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-                draw(e);
-            });
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', () => isDrawing = false);
-            canvas.addEventListener('mouseout', () => isDrawing = false);
-            
-            // For touch devices
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                isDrawing = true;
-                const rect = canvas.getBoundingClientRect();
-                const touch = e.touches[0];
-                [lastX, lastY] = [touch.clientX - rect.left, touch.clientY - rect.top];
-                draw(e.touches[0]);
-            }, { passive: false });
-            canvas.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                draw(e.touches[0]);
-            }, { passive: false });
-            canvas.addEventListener('touchend', () => isDrawing = false);
+                const pos = e.type.includes('touch') ? getTouchPos(e) : getMousePos(e);
+                [lastX, lastY] = [pos.x, pos.y];
+                draw(pos);
+            }
 
-            // Set initial active view and link state
+            function stopDrawing() { isDrawing = false; }
+
+            // Mouse Events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', (e) => draw(getMousePos(e)));
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch Events
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getTouchPos(e)); }, { passive: false });
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // --- INITIALIZATION ---
+            populateGallery();
+            resizeCanvas();
             showView('creator-view', navLinks[0]);
         });
     </script>
