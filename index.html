@@ -34,6 +34,9 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+        body.modal-open {
+            overflow: hidden;
+        }
 
         .container {
             max-width: 1200px;
@@ -89,12 +92,12 @@
 
         /* --- Main Content & View Switching --- */
         .view {
-            display: none; /* Hidden by default */
+            display: none;
             padding: 60px 0;
             animation: fadeIn 0.5s ease-in-out;
         }
         .view.active {
-            display: block; /* Shown by JS */
+            display: block;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -155,10 +158,7 @@
         .color-box.active {
             border-color: var(--accent-color);
         }
-        .slider-group {
-            display: flex;
-            flex-direction: column;
-        }
+        .slider-group { display: flex; flex-direction: column; }
         .slider-group label {
             font-family: 'Montserrat';
             margin-bottom: 5px;
@@ -168,13 +168,9 @@
         .button-group { display: flex; flex-direction: column; gap: 10px; }
         .btn {
             background: var(--primary-color);
-            color: #fff;
-            border: none;
-            padding: 12px 15px;
-            font-family: 'Montserrat';
-            font-weight: 600;
-            border-radius: 5px;
-            cursor: pointer;
+            color: #fff; border: none; padding: 12px 15px;
+            font-family: 'Montserrat'; font-weight: 600;
+            border-radius: 5px; cursor: pointer;
             transition: background-color 0.3s;
         }
         .btn:hover { background: var(--secondary-color); }
@@ -189,30 +185,25 @@
         }
         .article-card {
             background: #fff;
-            padding: 25px;
-            border-radius: 10px;
+            padding: 25px; border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            display: flex;
-            flex-direction: column;
+            display: flex; flex-direction: column;
         }
         .article-card h3 {
             font-family: 'Montserrat', sans-serif;
             color: var(--secondary-color);
             margin-top: 0;
         }
-        .article-card p {
-            flex-grow: 1;
-        }
-        .article-card a {
+        .article-card .summary { flex-grow: 1; }
+        .article-card .read-more-link {
             font-family: 'Montserrat';
             color: var(--primary-color);
             text-decoration: none;
             font-weight: 600;
+            cursor: pointer;
         }
-        .article-card a:hover {
-            color: var(--accent-color);
-        }
-
+        .article-card .read-more-link:hover { color: var(--accent-color); }
+        .full-text { display: none; }
 
         /* --- Gallery View Styling --- */
         .gallery-grid {
@@ -221,44 +212,80 @@
             gap: 20px;
         }
         .gallery-item {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden;
+            border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
         .gallery-item img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            display: block;
-            transition: transform 0.4s ease;
+            width: 100%; height: 100%; object-fit: cover;
+            display: block; transition: transform 0.4s ease;
         }
-        .gallery-item:hover img {
-            transform: scale(1.1);
-        }
+        .gallery-item:hover img { transform: scale(1.1); }
         .gallery-item .overlay {
-            position: absolute;
-            bottom: 0; left: 0; right: 0;
+            position: absolute; bottom: 0; left: 0; right: 0;
             background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            color: #fff;
-            padding: 25px 15px 10px 15px;
-            font-family: 'Montserrat';
-            font-size: 0.9rem;
-            opacity: 0;
-            transform: translateY(20px);
+            color: #fff; padding: 25px 15px 10px 15px;
+            font-family: 'Montserrat'; font-size: 0.9rem;
+            opacity: 0; transform: translateY(20px);
             transition: opacity 0.3s, transform 0.3s;
         }
-        .gallery-item:hover .overlay {
+        .gallery-item:hover .overlay { opacity: 1; transform: translateY(0); }
+        
+        /* --- Modal Styling (NEW) --- */
+        #article-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #article-modal.visible {
             opacity: 1;
-            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            max-width: 700px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.95);
+            transition: transform 0.3s ease-in-out;
+        }
+        #article-modal.visible .modal-content {
+            transform: scale(1);
+        }
+        .modal-content h2 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--light-gray);
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close-modal:hover {
+            color: var(--text-color);
         }
 
         /* --- Footer --- */
         footer {
             background-color: var(--primary-color);
-            color: #fff;
-            text-align: center;
-            padding: 40px 20px;
-            font-family: 'Montserrat', sans-serif;
+            color: #fff; text-align: center;
+            padding: 40px 20px; font-family: 'Montserrat', sans-serif;
         }
     </style>
 </head>
@@ -282,34 +309,12 @@
             <h2 class="section-title">The Digital Mandala Creator</h2>
             <div class="creator-layout">
                 <aside class="controls">
-                    <div class="control-group">
-                        <h3>Colors</h3>
-                        <div class="color-palette" id="colorPalette">
-                            <!-- Colors will be added by JS -->
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <h3>Brush Style</h3>
-                        <div class="slider-group">
-                            <label for="brushSize">Size: <span id="brushSizeValue">5</span>px</label>
-                            <input type="range" id="brushSize" min="1" max="50" value="5">
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <h3>Symmetry</h3>
-                        <div class="slider-group">
-                            <label for="sliceCount">Slices: <span id="sliceCountValue">12</span></label>
-                            <input type="range" id="sliceCount" min="2" max="36" value="12" step="2">
-                        </div>
-                    </div>
-                    <div class="control-group button-group">
-                        <button id="clearBtn" class="btn">Clear Canvas</button>
-                        <button id="downloadBtn" class="btn accent">Download Mandala</button>
-                    </div>
+                    <div class="control-group"><h3>Colors</h3><div class="color-palette" id="colorPalette"></div></div>
+                    <div class="control-group"><h3>Brush Style</h3><div class="slider-group"><label for="brushSize">Size: <span id="brushSizeValue">5</span>px</label><input type="range" id="brushSize" min="1" max="50" value="5"></div></div>
+                    <div class="control-group"><h3>Symmetry</h3><div class="slider-group"><label for="sliceCount">Slices: <span id="sliceCountValue">12</span></label><input type="range" id="sliceCount" min="2" max="36" value="12" step="2"></div></div>
+                    <div class="control-group button-group"><button id="clearBtn" class="btn">Clear Canvas</button><button id="downloadBtn" class="btn accent">Download Mandala</button></div>
                 </aside>
-                <div class="canvas-container">
-                    <canvas id="mandalaCanvas"></canvas>
-                </div>
+                <div class="canvas-container"><canvas id="mandalaCanvas"></canvas></div>
             </div>
         </section>
 
@@ -319,18 +324,21 @@
             <div class="article-grid">
                 <div class="article-card">
                     <h3>The Symbolism of Color</h3>
-                    <p>In the language of mandalas, colors are potent symbols. Red ignites passion and life force, blue invokes deep calm and spiritual wisdom, while yellow radiates intellect and joyful optimism. Green connects us to nature and healing, and purple elevates our consciousness to the divine. Choosing your palette is the first step in setting the intention for your creation.</p>
-                    <a href="#">Read More »</a>
+                    <p class="summary">In the language of mandalas, colors are potent symbols. Red ignites passion, blue invokes calm, and yellow radiates optimism. Choosing your palette is the first step in setting your intention...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">In the rich visual language of mandalas, colors are never arbitrary; they are potent symbols that carry deep psychological and spiritual significance. Choosing your palette is the first step in setting the intention for your creation. <strong>Red</strong> is the color of the root chakra, symbolizing strength, energy, passion, and the life force itself. Use it when you need courage or vitality. <strong>Blue</strong>, the color of the throat and third-eye chakras, invokes tranquility, wisdom, and spiritual devotion. It is ideal for meditative pieces aimed at enhancing intuition and calm. <strong>Yellow</strong>, tied to the solar plexus chakra, radiates intellect, joyful optimism, and personal power. It's a wonderful color for mandalas intended to boost confidence and happiness. Meanwhile, <strong>Green</strong> resonates with the heart chakra, representing nature, healing, growth, and balance. Finally, <strong>Purple</strong>, connected to the crown chakra, elevates our consciousness, symbolizing royalty, magic, and the divine. By consciously selecting and combining these colors, your mandala becomes a powerful tool for personal transformation.</div>
                 </div>
                 <div class="article-card">
                     <h3>Understanding Sacred Geometry</h3>
-                    <p>The universe is built on patterns, and mandalas are a reflection of this sacred architecture. The central point signifies unity, the circle represents wholeness and eternity, and radiating lines symbolize the expansion of consciousness. By engaging with these forms, you are aligning your own energy with the fundamental structures of existence, creating harmony within and without.</p>
-                    <a href="#">Read More »</a>
+                    <p class="summary">The universe is built on patterns, and mandalas are a reflection of this sacred architecture. The central point, the circle, and radiating lines all hold profound meaning...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">The universe is built on elegant mathematical patterns, and mandalas are a beautiful, microcosm of this sacred architecture. Every line and shape holds a profound, archetypal meaning. The <strong>central point</strong>, or *bindu*, is the beginning—the seed of creation from which all else emerges. It represents unity and the source of existence. The <strong>circle</strong> that encloses the mandala is a universal symbol of wholeness, eternity, and the cyclical nature of life. It provides a container for the sacred space within. <strong>Triangles</strong> represent the trinity (mind, body, spirit) and dynamic energy; pointing up, they signify aspiration towards the divine, and pointing down, they represent the grounding of spiritual energy into the material world. The <strong>square</strong> often represents the physical world, stability, and the four cardinal directions. When you engage with these forms, you are aligning your own energy with the fundamental structures of existence, creating a deep sense of harmony within and without.</div>
                 </div>
                 <div class="article-card">
-                    <h3>Mandalas for Mindfulness & Stress Relief</h3>
-                    <p>Creating a mandala is a profound form of active meditation. The focused repetition and the pursuit of symmetry command your full attention, effortlessly quieting the incessant noise of the mind. This process reduces cortisol levels, eases anxiety, and anchors you firmly in the present moment. It's not about the final product; it's about the peaceful journey of creation.</p>
-                    <a href="#">Read More »</a>
+                    <h3>Mandalas for Mindfulness</h3>
+                    <p class="summary">Creating a mandala is a profound form of active meditation. The focused repetition and the pursuit of symmetry command your full attention, effortlessly quieting the mind...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">In our fast-paced world, finding moments of true presence can be a challenge. Creating a mandala offers a powerful and accessible path to mindfulness through a process known as active meditation. Unlike passive meditation where one sits in silence, this practice engages the hands and eyes in a focused, repetitive task. The pursuit of symmetry and the rhythmic motion of drawing command your full attention, leaving little room for anxious thoughts or external distractions. This focused state, often called "flow," effortlessly quiets the incessant chatter of the mind. Scientific studies have shown that such activities can lower heart rate, reduce blood pressure, and decrease levels of the stress hormone cortisol. It's not about achieving artistic perfection; the true benefit lies in the peaceful journey of creation. Each line drawn is a step back to your center, a moment of calm in the chaos of daily life.</div>
                 </div>
             </div>
         </section>
@@ -338,11 +346,18 @@
         <!-- VIEW 3: THE GALLERY -->
         <section id="gallery-view" class="view">
             <h2 class="section-title">Community Gallery</h2>
-            <div id="galleryGrid" class="gallery-grid">
-                <!-- Gallery items will be dynamically inserted here by JavaScript -->
-            </div>
+            <div id="galleryGrid" class="gallery-grid"></div>
         </section>
     </main>
+
+    <!-- ARTICLE MODAL (NEW) -->
+    <div id="article-modal">
+        <div class="modal-content">
+            <span class="close-modal">×</span>
+            <h2 id="modal-title"></h2>
+            <p id="modal-body"></p>
+        </div>
+    </div>
 
     <!-- FOOTER -->
     <footer>
@@ -350,56 +365,75 @@
     </footer>
 
     <script>
-        // --- VIEW SWITCHING LOGIC ---
-        const views = document.querySelectorAll('.view');
-        const navLinks = document.querySelectorAll('nav ul li a');
-
-        function showView(viewId, clickedLink) {
-            views.forEach(view => view.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            navLinks.forEach(link => link.classList.remove('active'));
-            clickedLink.classList.add('active');
-        }
-
-        // --- DYNAMIC CONTENT GENERATION ---
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- GALLERY POPULATION (NO PLACEHOLDERS) ---
+            // --- VIEW SWITCHING LOGIC ---
+            const views = document.querySelectorAll('.view');
+            const navLinks = document.querySelectorAll('nav ul li a');
+            window.showView = function(viewId, clickedLink) {
+                views.forEach(view => view.classList.remove('active'));
+                document.getElementById(viewId).classList.add('active');
+                navLinks.forEach(link => link.classList.remove('active'));
+                clickedLink.classList.add('active');
+            }
+
+            // --- ARTICLE MODAL LOGIC (NEW) ---
+            const modal = document.getElementById('article-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const readMoreLinks = document.querySelectorAll('.read-more-link');
+
+            function openModal(title, content) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = content; // Using innerHTML to preserve potential formatting like <strong>
+                modal.classList.add('visible');
+                document.body.classList.add('modal-open');
+            }
+
+            function closeModal() {
+                modal.classList.remove('visible');
+                document.body.classList.remove('modal-open');
+            }
+
+            readMoreLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const card = link.closest('.article-card');
+                    const title = card.querySelector('h3').textContent;
+                    const content = card.querySelector('.full-text').innerHTML;
+                    openModal(title, content);
+                });
+            });
+
+            closeModalBtn.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('visible')) {
+                    closeModal();
+                }
+            });
+            
+            // --- GALLERY POPULATION ---
             function generateSampleMandala(config) {
                 const canvas = document.createElement('canvas');
-                const size = 400;
-                canvas.width = size;
-                canvas.height = size;
-                const ctx = canvas.getContext('2d');
-                const center = size / 2;
-
-                // Background
-                ctx.fillStyle = config.bgColor || '#ffffff';
-                ctx.fillRect(0, 0, size, size);
-
-                const slices = config.slices || 12;
-                const angleIncrement = (Math.PI * 2) / slices;
-
+                const size = 400; canvas.width = size; canvas.height = size;
+                const ctx = canvas.getContext('2d'); const center = size / 2;
+                ctx.fillStyle = config.bgColor || '#ffffff'; ctx.fillRect(0, 0, size, size);
+                const slices = config.slices || 12; const angleIncrement = (Math.PI * 2) / slices;
                 for (let i = 0; i < slices; i++) {
-                    ctx.save();
-                    ctx.translate(center, center);
-                    ctx.rotate(i * angleIncrement);
-                    
-                    // Pre-canned drawing patterns
+                    ctx.save(); ctx.translate(center, center); ctx.rotate(i * angleIncrement);
                     for(let j = 1; j < 5; j++) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, 0);
+                        ctx.beginPath(); ctx.moveTo(0, 0);
                         ctx.arc(config.arcPos * j, 0, config.arcSize * j, 0, Math.PI * 0.1 * config.arcSweep);
-                        ctx.lineTo(0,0);
-                        ctx.fillStyle = config.colors[j % config.colors.length];
-                        ctx.fill();
-
-                        ctx.beginPath();
-                        ctx.moveTo(0,0);
-                        ctx.lineTo(size/3, size/8);
+                        ctx.lineTo(0,0); ctx.fillStyle = config.colors[j % config.colors.length]; ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size/3, size/8);
                         ctx.strokeStyle = config.colors[(j+1) % config.colors.length];
-                        ctx.lineWidth = config.lineWidth;
-                        ctx.stroke();
+                        ctx.lineWidth = config.lineWidth; ctx.stroke();
                     }
                     ctx.restore();
                 }
@@ -416,148 +450,49 @@
                     { author: 'Crimson Creator', config: { colors: ['#e53935', '#ef9a9a', '#ffebee'], arcPos: 35, arcSize: 18, arcSweep: 1.3, lineWidth: 2.5, slices: 10 } },
                     { author: 'Mindful Muse', config: { colors: ['#6d4c41', '#bcaaa4', '#efebe9'], arcPos: 15, arcSize: 20, arcSweep: 1.8, lineWidth: 0.5, slices: 24 } }
                 ];
-
                 let galleryHTML = '';
                 galleryItems.forEach(item => {
                     const imageDataUrl = generateSampleMandala(item.config);
-                    galleryHTML += `
-                        <div class="gallery-item">
-                            <img src="${imageDataUrl}" alt="A generated mandala by ${item.author}">
-                            <div class="overlay">By ${item.author}</div>
-                        </div>
-                    `;
+                    galleryHTML += `<div class="gallery-item"><img src="${imageDataUrl}" alt="A generated mandala by ${item.author}"><div class="overlay">By ${item.author}</div></div>`;
                 });
                 galleryGrid.innerHTML = galleryHTML;
             }
 
             // --- MANDALA CREATOR LOGIC ---
-            const canvas = document.getElementById('mandalaCanvas');
-            const ctx = canvas.getContext('2d');
-            
-            function resizeCanvas() {
-                const container = document.querySelector('.canvas-container');
-                const size = container.offsetWidth;
-                canvas.width = size;
-                canvas.height = size;
-            }
+            const canvas = document.getElementById('mandalaCanvas'); const ctx = canvas.getContext('2d');
+            function resizeCanvas() { const container = document.querySelector('.canvas-container'); const size = container.offsetWidth; canvas.width = size; canvas.height = size; }
             window.addEventListener('resize', resizeCanvas);
-
-            let isDrawing = false;
-            let currentLineWeight = 5;
-            let currentColor = '#4a148c';
-            let numSlices = 12;
-            let lastX = 0;
-            let lastY = 0;
-
-            const brushSizeSlider = document.getElementById('brushSize');
-            const brushSizeValue = document.getElementById('brushSizeValue');
-            const sliceCountSlider = document.getElementById('sliceCount');
-            const sliceCountValue = document.getElementById('sliceCountValue');
-            const clearBtn = document.getElementById('clearBtn');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const colorPaletteContainer = document.getElementById('colorPalette');
-
+            let isDrawing = false, currentLineWeight = 5, currentColor = '#4a148c', numSlices = 12, lastX = 0, lastY = 0;
+            const brushSizeSlider = document.getElementById('brushSize'), brushSizeValue = document.getElementById('brushSizeValue'), sliceCountSlider = document.getElementById('sliceCount'), sliceCountValue = document.getElementById('sliceCountValue'), clearBtn = document.getElementById('clearBtn'), downloadBtn = document.getElementById('downloadBtn'), colorPaletteContainer = document.getElementById('colorPalette');
             const colors = ['#4a148c', '#8e24aa', '#d1c4e9', '#ffab40', '#388e3c', '#1e88e5', '#e53935', '#616161', '#000000', '#ffffff'];
             colors.forEach(color => {
-                const colorBox = document.createElement('div');
-                colorBox.className = 'color-box';
-                colorBox.style.backgroundColor = color;
+                const colorBox = document.createElement('div'); colorBox.className = 'color-box'; colorBox.style.backgroundColor = color;
                 if (color === currentColor) colorBox.classList.add('active');
-                colorBox.addEventListener('click', () => {
-                    currentColor = color;
-                    document.querySelectorAll('.color-box').forEach(box => box.classList.remove('active'));
-                    colorBox.classList.add('active');
-                });
+                colorBox.addEventListener('click', () => { currentColor = color; document.querySelectorAll('.color-box').forEach(box => box.classList.remove('active')); colorBox.classList.add('active'); });
                 colorPaletteContainer.appendChild(colorBox);
             });
-
-            brushSizeSlider.oninput = (e) => {
-                currentLineWeight = e.target.value;
-                brushSizeValue.textContent = e.target.value;
-            };
-            sliceCountSlider.oninput = (e) => {
-                numSlices = e.target.value;
-                sliceCountValue.textContent = e.target.value;
-            };
-            clearBtn.onclick = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-            };
-            downloadBtn.onclick = () => {
-                const link = document.createElement('a');
-                link.download = 'my-mandala.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            };
-
-            function getMousePos(evt) {
-                const rect = canvas.getBoundingClientRect();
-                return {
-                    x: evt.clientX - rect.left,
-                    y: evt.clientY - rect.top
-                };
-            }
-            
-            function getTouchPos(evt) {
-                const rect = canvas.getBoundingClientRect();
-                return {
-                    x: evt.touches[0].clientX - rect.left,
-                    y: evt.touches[0].clientY - rect.top
-                };
-            }
-
+            brushSizeSlider.oninput = (e) => { currentLineWeight = e.target.value; brushSizeValue.textContent = e.target.value; };
+            sliceCountSlider.oninput = (e) => { numSlices = e.target.value; sliceCountValue.textContent = e.target.value; };
+            clearBtn.onclick = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); };
+            downloadBtn.onclick = () => { const link = document.createElement('a'); link.download = 'my-mandala.png'; link.href = canvas.toDataURL('image/png'); link.click(); };
+            function getPos(evt) { const rect = canvas.getBoundingClientRect(); return evt.type.includes('touch') ? { x: evt.touches[0].clientX - rect.left, y: evt.touches[0].clientY - rect.top } : { x: evt.clientX - rect.left, y: evt.clientY - rect.top }; }
             function draw(pos) {
-                if (!isDrawing) return;
-
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height / 2;
-                const angleIncrement = (Math.PI * 2) / numSlices;
-                
+                if (!isDrawing) return; const centerX = canvas.width / 2, centerY = canvas.height / 2, angle = (Math.PI * 2) / numSlices;
                 for (let i = 0; i < numSlices; i++) {
-                    ctx.save();
-                    ctx.translate(centerX, centerY);
-                    ctx.rotate(i * angleIncrement);
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(lastX - centerX, lastY - centerY);
-                    ctx.lineTo(pos.x - centerX, pos.y - centerY);
-                    
-                    ctx.moveTo(centerX - lastX, lastY - centerY);
-                    ctx.lineTo(centerX - pos.x, pos.y - centerY);
-                    
-                    ctx.strokeStyle = currentColor;
-                    ctx.lineWidth = currentLineWeight;
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
-                    ctx.restore();
+                    ctx.save(); ctx.translate(centerX, centerY); ctx.rotate(i * angle);
+                    ctx.beginPath(); ctx.moveTo(lastX - centerX, lastY - centerY); ctx.lineTo(pos.x - centerX, pos.y - centerY);
+                    ctx.moveTo(centerX - lastX, lastY - centerY); ctx.lineTo(centerX - pos.x, pos.y - centerY);
+                    ctx.strokeStyle = currentColor; ctx.lineWidth = currentLineWeight; ctx.lineCap = 'round'; ctx.stroke(); ctx.restore();
                 }
-
                 [lastX, lastY] = [pos.x, pos.y];
             }
-
-            function startDrawing(e) {
-                isDrawing = true;
-                const pos = e.type.includes('touch') ? getTouchPos(e) : getMousePos(e);
-                [lastX, lastY] = [pos.x, pos.y];
-                draw(pos);
-            }
-
+            function startDrawing(e) { isDrawing = true; const pos = getPos(e); [lastX, lastY] = [pos.x, pos.y]; draw(pos); }
             function stopDrawing() { isDrawing = false; }
-
-            // Mouse Events
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', (e) => draw(getMousePos(e)));
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-
-            // Touch Events
-            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false });
-            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getTouchPos(e)); }, { passive: false });
-            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', (e) => draw(getPos(e))); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false }); canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getPos(e)); }, { passive: false }); canvas.addEventListener('touchend', stopDrawing);
 
             // --- INITIALIZATION ---
-            populateGallery();
-            resizeCanvas();
-            showView('creator-view', navLinks[0]);
+            populateGallery(); resizeCanvas(); showView('creator-view', navLinks[0]);
         });
     </script>
 </body>
