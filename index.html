@@ -15,290 +15,77 @@
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@300;400;700&display=swap" rel="stylesheet">
     
     <style>
-        /* --- General Styling --- */
         :root {
-            --primary-color: #4a148c; /* Deep Purple */
-            --secondary-color: #8e24aa; /* Lighter Purple */
-            --accent-color: #ffab40; /* Amber/Gold */
-            --text-color: #333;
-            --bg-color: #f4f2f7; /* Very light lavender */
-            --light-gray: #e0e0e0;
+            --primary-color: #4a148c; --secondary-color: #8e24aa; --accent-color: #ffab40;
+            --text-color: #333; --bg-color: #f4f2f7; --light-gray: #e0e0e0;
         }
-
-        body {
-            font-family: 'Lora', serif;
-            line-height: 1.7;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        body.modal-open {
-            overflow: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 0 20px;
-        }
-
-        /* --- Header & Navigation --- */
-        header {
-            background: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-family: 'Montserrat', sans-serif;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        nav ul {
-            list-style: none;
-            display: flex;
-            margin: 0;
-            padding: 0;
-        }
-
+        body { font-family: 'Lora', serif; line-height: 1.7; margin: 0; background-color: var(--bg-color); color: var(--text-color); }
+        body.modal-open { overflow: hidden; }
+        .container { max-width: 1200px; margin: auto; padding: 0 20px; }
+        header { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 1rem 0; position: sticky; top: 0; z-index: 1000; }
+        nav { display: flex; justify-content: space-between; align-items: center; font-family: 'Montserrat', sans-serif; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); text-decoration: none; }
+        nav ul { list-style: none; display: flex; margin: 0; padding: 0; }
         nav ul li { margin-left: 25px; }
-        nav ul li a {
-            text-decoration: none;
-            color: var(--secondary-color);
-            font-weight: 600;
-            cursor: pointer;
-            transition: color 0.3s ease, border-bottom-color 0.3s ease;
-            padding: 10px 5px;
-            border-bottom: 2px solid transparent;
-        }
-        nav ul li a:hover, nav ul li a.active {
-            color: var(--accent-color);
-            border-bottom-color: var(--accent-color);
-        }
-
-        /* --- Main Content & View Switching --- */
-        .view {
-            display: none;
-            padding: 60px 0;
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        .view.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .section-title {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        /* --- Creator View Styling --- */
-        #creator-view .creator-layout {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 30px;
-            align-items: flex-start;
-        }
-        #mandalaCanvas {
-            background: #fff;
-            border: 1px solid var(--light-gray);
-            border-radius: 10px;
-            cursor: crosshair;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            width: 100%;
-            height: auto;
-        }
-        .controls {
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
+        nav ul li a { text-decoration: none; color: var(--secondary-color); font-weight: 600; cursor: pointer; transition: color 0.3s ease, border-bottom-color 0.3s ease; padding: 10px 5px; border-bottom: 2px solid transparent; }
+        nav ul li a:hover, nav ul li a.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+        .view { display: none; padding: 60px 0; animation: fadeIn 0.5s ease-in-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .section-title { font-family: 'Montserrat', sans-serif; font-size: 2.5rem; color: var(--primary-color); margin-bottom: 40px; text-align: center; }
+        #creator-view .creator-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: flex-start; }
+        #mandalaCanvas { background: #fff; border: 1px solid var(--light-gray); border-radius: 10px; cursor: crosshair; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; height: auto; }
+        .controls { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .control-group { margin-bottom: 25px; }
-        .control-group h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 1.1rem;
-            color: var(--secondary-color);
-            margin-top: 0; margin-bottom: 15px;
-            border-bottom: 1px solid var(--light-gray);
-            padding-bottom: 10px;
-        }
-        .color-palette {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
-            gap: 10px;
-        }
-        .color-box {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid transparent;
-            transition: border-color 0.2s;
-        }
-        .color-box.active {
-            border-color: var(--accent-color);
-        }
+        .control-group h3 { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; color: var(--secondary-color); margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid var(--light-gray); padding-bottom: 10px; }
+        .color-palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(30px, 1fr)); gap: 10px; }
+        .color-box { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s; }
+        .color-box.active { border-color: var(--accent-color); }
         .slider-group { display: flex; flex-direction: column; }
-        .slider-group label {
-            font-family: 'Montserrat';
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
+        .slider-group label { font-family: 'Montserrat'; margin-bottom: 5px; font-size: 0.9rem; }
         .slider-group input[type="range"] { width: 100%; }
         .button-group { display: flex; flex-direction: column; gap: 10px; }
-        .btn {
-            background: var(--primary-color);
-            color: #fff; border: none; padding: 12px 15px;
-            font-family: 'Montserrat'; font-weight: 600;
-            border-radius: 5px; cursor: pointer;
-            transition: background-color 0.3s;
-        }
+        .btn { background: var(--primary-color); color: #fff; border: none; padding: 12px 15px; font-family: 'Montserrat'; font-weight: 600; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; text-align: center; }
         .btn:hover { background: var(--secondary-color); }
         .btn.accent { background: var(--accent-color); }
         .btn.accent:hover { background: #ffc107; }
-
-        /* --- Library View Styling --- */
-        .article-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
-        }
-        .article-card {
-            background: #fff;
-            padding: 25px; border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            display: flex; flex-direction: column;
-        }
-        .article-card h3 {
-            font-family: 'Montserrat', sans-serif;
-            color: var(--secondary-color);
-            margin-top: 0;
-        }
+        .btn.secondary { background-color: #757575; }
+        .btn.secondary:hover { background-color: #9e9e9e; }
+        .article-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; }
+        .article-card { background: #fff; padding: 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .article-card h3 { font-family: 'Montserrat', sans-serif; color: var(--secondary-color); margin-top: 0; }
         .article-card .summary { flex-grow: 1; }
-        .article-card .read-more-link {
-            font-family: 'Montserrat';
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 600;
-            cursor: pointer;
-        }
+        .article-card .read-more-link { font-family: 'Montserrat'; color: var(--primary-color); text-decoration: none; font-weight: 600; cursor: pointer; }
         .article-card .read-more-link:hover { color: var(--accent-color); }
         .full-text { display: none; }
-
-        /* --- Gallery View Styling --- */
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        .gallery-item {
-            position: relative; overflow: hidden;
-            border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .gallery-item img {
-            width: 100%; height: 100%; object-fit: cover;
-            display: block; transition: transform 0.4s ease;
-        }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        .gallery-item { position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
         .gallery-item:hover img { transform: scale(1.1); }
-        .gallery-item .overlay {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
-            color: #fff; padding: 25px 15px 10px 15px;
-            font-family: 'Montserrat'; font-size: 0.9rem;
-            opacity: 0; transform: translateY(20px);
-            transition: opacity 0.3s, transform 0.3s;
-        }
-        .gallery-item:hover .overlay { opacity: 1; transform: translateY(0); }
-        
-        /* --- Modal Styling (NEW) --- */
-        #article-modal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease-in-out;
-        }
-        #article-modal.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .modal-content {
-            background: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            max-width: 700px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
-            transform: scale(0.95);
-            transition: transform 0.3s ease-in-out;
-        }
-        #article-modal.visible .modal-content {
-            transform: scale(1);
-        }
-        .modal-content h2 {
-            font-family: 'Montserrat', sans-serif;
-            color: var(--primary-color);
-            margin-top: 0;
-        }
-        .close-modal {
-            position: absolute;
-            top: 15px; right: 20px;
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--light-gray);
-            cursor: pointer;
-            line-height: 1;
-        }
-        .close-modal:hover {
-            color: var(--text-color);
-        }
-
-        /* --- Footer --- */
-        footer {
-            background-color: var(--primary-color);
-            color: #fff; text-align: center;
-            padding: 40px 20px; font-family: 'Montserrat', sans-serif;
-        }
+        .gallery-item .delete-btn { position: absolute; top: 10px; right: 10px; background-color: rgba(229, 57, 53, 0.8); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 16px; line-height: 30px; text-align: center; cursor: pointer; opacity: 0; transition: opacity 0.3s; }
+        .gallery-item:hover .delete-btn { opacity: 1; }
+        .gallery-info { text-align: center; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        #article-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
+        #article-modal.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { background: #fff; padding: 40px; border-radius: 10px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
+        #article-modal.visible .modal-content { transform: scale(1); }
+        .modal-content h2 { font-family: 'Montserrat', sans-serif; color: var(--primary-color); margin-top: 0; }
+        .modal-content p, .modal-content li { line-height: 1.8; }
+        .modal-content ul { padding-left: 20px; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 2rem; font-weight: bold; color: var(--light-gray); cursor: pointer; line-height: 1; }
+        .close-modal:hover { color: var(--text-color); }
+        footer { background-color: var(--primary-color); color: #fff; text-align: center; padding: 40px 20px; font-family: 'Montserrat', sans-serif; }
     </style>
 </head>
 <body>
 
-    <!-- HEADER & NAVIGATION -->
     <header>
         <nav class="container">
             <a href="#" class="logo">my-mandala.com</a>
             <ul>
                 <li><a onclick="showView('creator-view', this)" class="active">Create</a></li>
                 <li><a onclick="showView('library-view', this)">Learn</a></li>
-                <li><a onclick="showView('gallery-view', this)">Gallery</a></li>
+                <li><a onclick="showView('gallery-view', this)">My Gallery</a></li>
             </ul>
         </nav>
     </header>
@@ -312,7 +99,11 @@
                     <div class="control-group"><h3>Colors</h3><div class="color-palette" id="colorPalette"></div></div>
                     <div class="control-group"><h3>Brush Style</h3><div class="slider-group"><label for="brushSize">Size: <span id="brushSizeValue">5</span>px</label><input type="range" id="brushSize" min="1" max="50" value="5"></div></div>
                     <div class="control-group"><h3>Symmetry</h3><div class="slider-group"><label for="sliceCount">Slices: <span id="sliceCountValue">12</span></label><input type="range" id="sliceCount" min="2" max="36" value="12" step="2"></div></div>
-                    <div class="control-group button-group"><button id="clearBtn" class="btn">Clear Canvas</button><button id="downloadBtn" class="btn accent">Download Mandala</button></div>
+                    <div class="control-group button-group">
+                        <button id="saveBtn" class="btn accent">Save to My Gallery</button>
+                        <button id="downloadBtn" class="btn secondary">Download Image</button>
+                        <button id="clearBtn" class="btn">Clear Canvas</button>
+                    </div>
                 </aside>
                 <div class="canvas-container"><canvas id="mandalaCanvas"></canvas></div>
             </div>
@@ -322,40 +113,112 @@
         <section id="library-view" class="view">
             <h2 class="section-title">Library of Meanings</h2>
             <div class="article-grid">
+                <!-- Article 1 -->
                 <div class="article-card">
                     <h3>The Symbolism of Color</h3>
-                    <p class="summary">In the language of mandalas, colors are potent symbols. Red ignites passion, blue invokes calm, and yellow radiates optimism. Choosing your palette is the first step in setting your intention...</p>
+                    <p class="summary">Colors are the soul of a mandala. Learn what red, blue, green, and other hues represent to infuse your creations with intention and meaning...</p>
                     <a class="read-more-link">Read More »</a>
-                    <div class="full-text">In the rich visual language of mandalas, colors are never arbitrary; they are potent symbols that carry deep psychological and spiritual significance. Choosing your palette is the first step in setting the intention for your creation. <strong>Red</strong> is the color of the root chakra, symbolizing strength, energy, passion, and the life force itself. Use it when you need courage or vitality. <strong>Blue</strong>, the color of the throat and third-eye chakras, invokes tranquility, wisdom, and spiritual devotion. It is ideal for meditative pieces aimed at enhancing intuition and calm. <strong>Yellow</strong>, tied to the solar plexus chakra, radiates intellect, joyful optimism, and personal power. It's a wonderful color for mandalas intended to boost confidence and happiness. Meanwhile, <strong>Green</strong> resonates with the heart chakra, representing nature, healing, growth, and balance. Finally, <strong>Purple</strong>, connected to the crown chakra, elevates our consciousness, symbolizing royalty, magic, and the divine. By consciously selecting and combining these colors, your mandala becomes a powerful tool for personal transformation.</div>
+                    <div class="full-text">
+                        <p>In the rich visual language of mandalas, colors are potent symbols that carry deep psychological and spiritual significance. Choosing your palette is the first step in setting the intention for your creation.</p>
+                        <ul>
+                            <li><strong>Red:</strong> The color of the root chakra, symbolizing strength, energy, passion, and the life force itself. Use it when you need courage, motivation, or a connection to the physical world.</li>
+                            <li><strong>Orange:</strong> Linked to the sacral chakra, orange represents creativity, joy, sexuality, and emotional expression. It's a vibrant color for overcoming creative blocks and embracing pleasure.</li>
+                            <li><strong>Yellow:</strong> Tied to the solar plexus chakra, yellow radiates intellect, confidence, and personal power. It's a wonderful color for mandalas intended to boost self-esteem and clarity of thought.</li>
+                            <li><strong>Green:</strong> Resonating with the heart chakra, green is the color of nature, healing, growth, and balance. It brings a sense of peace and renewal, connecting us to the world around us.</li>
+                            <li><strong>Blue:</strong> The color of the throat and third-eye chakras, blue invokes tranquility, wisdom, and spiritual devotion. It is ideal for meditative pieces aimed at enhancing communication and intuition.</li>
+                            <li><strong>Purple/Violet:</strong> Connected to the crown chakra, purple elevates our consciousness, symbolizing royalty, magic, and our connection to the divine. It's the color of spiritual awakening and higher understanding.</li>
+                            <li><strong>White:</strong> Representing purity, focus, and enlightenment. White can be used to create space, cleanse the visual palate, and symbolize a connection to a higher, unified consciousness.</li>
+                            <li><strong>Black:</strong> A color of mystery, the unconscious, and deep potential. While sometimes seen as negative, in mandalas it often represents the void from which all creation emerges, offering a space for deep introspection.</li>
+                        </ul>
+                    </div>
                 </div>
+                <!-- Article 2 -->
                 <div class="article-card">
                     <h3>Understanding Sacred Geometry</h3>
-                    <p class="summary">The universe is built on patterns, and mandalas are a reflection of this sacred architecture. The central point, the circle, and radiating lines all hold profound meaning...</p>
+                    <p class="summary">The universe is built on patterns. Explore the meaning of the circle, triangle, lotus, and other forms that give mandalas their power...</p>
                     <a class="read-more-link">Read More »</a>
-                    <div class="full-text">The universe is built on elegant mathematical patterns, and mandalas are a beautiful, microcosm of this sacred architecture. Every line and shape holds a profound, archetypal meaning. The <strong>central point</strong>, or *bindu*, is the beginning—the seed of creation from which all else emerges. It represents unity and the source of existence. The <strong>circle</strong> that encloses the mandala is a universal symbol of wholeness, eternity, and the cyclical nature of life. It provides a container for the sacred space within. <strong>Triangles</strong> represent the trinity (mind, body, spirit) and dynamic energy; pointing up, they signify aspiration towards the divine, and pointing down, they represent the grounding of spiritual energy into the material world. The <strong>square</strong> often represents the physical world, stability, and the four cardinal directions. When you engage with these forms, you are aligning your own energy with the fundamental structures of existence, creating a deep sense of harmony within and without.</div>
+                    <div class="full-text">
+                        <p>The universe is built on elegant mathematical patterns, and mandalas are a beautiful microcosm of this sacred architecture. Every line and shape holds a profound, archetypal meaning.</p>
+                        <ul>
+                            <li><strong>The Point (Bindu):</strong> The center of the mandala is the beginning—the seed of creation from which all else emerges. It represents non-duality, unity, and the source of all existence.</li>
+                            <li><strong>The Circle:</strong> The most common mandala shape, the circle is a universal symbol of wholeness, eternity, the Self, and the cyclical nature of life. It provides a container for the sacred space within.</li>
+                            <li><strong>The Triangle:</strong> A symbol of action and energy. Pointing up, it signifies aspiration towards the divine and masculine energy. Pointing down, it represents the grounding of spiritual energy into the material world and feminine energy.</li>
+                            <li><strong>The Square:</strong> Often represents the physical world, stability, structure, and the four cardinal directions (North, South, East, West) or four elements (Earth, Air, Fire, Water).</li>
+                            <li><strong>The Spiral:</strong> Represents the journey of growth, evolution, and the expansion of consciousness. A spiral moving outward can symbolize expression, while one moving inward can represent introspection.</li>
+                            <li><strong>The Lotus Flower:</strong> A key symbol in Eastern traditions, the lotus represents enlightenment and spiritual awakening. Its roots are in the mud (the material world), but it blossoms into a beautiful flower above the water (spiritual realization).</li>
+                        </ul>
+                    </div>
                 </div>
+                <!-- Article 3 -->
                 <div class="article-card">
                     <h3>Mandalas for Mindfulness</h3>
-                    <p class="summary">Creating a mandala is a profound form of active meditation. The focused repetition and the pursuit of symmetry command your full attention, effortlessly quieting the mind...</p>
+                    <p class="summary">Discover how the simple act of creating a mandala can become a powerful form of active meditation, reducing stress and calming the mind...</p>
                     <a class="read-more-link">Read More »</a>
-                    <div class="full-text">In our fast-paced world, finding moments of true presence can be a challenge. Creating a mandala offers a powerful and accessible path to mindfulness through a process known as active meditation. Unlike passive meditation where one sits in silence, this practice engages the hands and eyes in a focused, repetitive task. The pursuit of symmetry and the rhythmic motion of drawing command your full attention, leaving little room for anxious thoughts or external distractions. This focused state, often called "flow," effortlessly quiets the incessant chatter of the mind. Scientific studies have shown that such activities can lower heart rate, reduce blood pressure, and decrease levels of the stress hormone cortisol. It's not about achieving artistic perfection; the true benefit lies in the peaceful journey of creation. Each line drawn is a step back to your center, a moment of calm in the chaos of daily life.</div>
+                    <div class="full-text">
+                        <p>In our fast-paced world, finding moments of true presence can be a challenge. Creating a mandala offers a powerful and accessible path to mindfulness through a process known as <strong>active meditation</strong>. Unlike passive meditation where one sits in silence, this practice engages the hands and eyes in a focused, repetitive task.</p>
+                        <p>The focused repetition and the pursuit of symmetry command your full attention, effortlessly quieting the incessant chatter of the "monkey mind." This focused state, often called a <strong>"flow state,"</strong> is where you are fully immersed and energized by an activity. It leaves little room for anxious thoughts or external distractions.</p>
+                        <p>Scientific studies have shown that such creative activities can lower heart rate, reduce blood pressure, and decrease levels of the stress hormone cortisol. It's not about achieving artistic perfection; the true benefit lies in the peaceful journey of creation. Each line drawn is a step back to your center, a moment of calm in the chaos of daily life. It allows you to process emotions non-verbally and find a sense of order and completion.</p>
+                    </div>
+                </div>
+                <!-- Article 4 (NEW) -->
+                <div class="article-card">
+                    <h3>A Brief History of the Mandala</h3>
+                    <p class="summary">From ancient Hindu texts and Tibetan sand paintings to modern therapeutic tools, explore the fascinating journey of the mandala through time...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">
+                        <p>The mandala, a Sanskrit word meaning "circle," is an ancient spiritual symbol with a rich history that spans cultures and millennia. Its origins can be traced back to the 4th century in India, where it was first mentioned in the Rigveda, one of the oldest sacred texts of Hinduism.</p>
+                        <p>The practice was profoundly developed within <strong>Buddhism</strong>, particularly in the Vajrayana tradition of Tibet. Here, monks create intricate sand mandalas, painstakingly placing millions of grains of colored sand to form a map of the cosmos or the palace of a deity. The creation process is a form of meditation, and its eventual destruction symbolizes the core Buddhist teaching of impermanence.</p>
+                        <p>Mandala-like patterns are not exclusive to the East. <strong>Native American</strong> cultures use the Medicine Wheel, a sacred circular hoop with intersecting lines, for healing and to represent the harmony of the universe. The intricate circular designs of <strong>Celtic knots</strong> and the rose windows of <strong>Gothic cathedrals</strong> also share the mandala's principles of a unified center and radiating symmetry.</p>
+                        <p>Today, the mandala has been embraced by the West as a symbol of wholeness and a tool for self-exploration, largely thanks to the work of psychologist Carl Jung.</p>
+                    </div>
+                </div>
+                <!-- Article 5 (NEW) -->
+                <div class="article-card">
+                    <h3>How to Meditate with a Mandala</h3>
+                    <p class="summary">Your mandala is more than just art; it's a focus point for meditation. Learn a simple, step-by-step guide to use your creation for inner peace...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">
+                        <p>You can use a mandala you've created or one you find visually appealing as a powerful tool for meditation. This practice, known as trataka (yogic gazing), helps to focus the mind and promote a state of deep relaxation. Here’s a simple guide to get started:</p>
+                        <ol>
+                            <li><strong>Find a Quiet Space:</strong> Sit comfortably in a location where you won't be disturbed for 5-10 minutes. Hold your mandala or place your screen at a comfortable viewing distance.</li>
+                            <li><strong>Set an Intention:</strong> Take a moment to consider what you hope to gain from this practice. It could be clarity on a problem, a sense of calm, or simply a moment of quiet.</li>
+                            <li><strong>Begin with Your Breath:</strong> Take three deep, slow breaths. Inhale through your nose, and exhale slowly through your mouth. Allow your body to relax.</li>
+                            <li><strong>Gaze Softly at the Center:</strong> Let your eyes rest gently on the central point (the bindu) of the mandala. Don't stare intensely; just maintain a soft, relaxed focus.</li>
+                            <li><strong>Allow Your Awareness to Expand:</strong> After a minute or so, let your vision and awareness expand to take in the shapes and colors of the entire mandala. Notice the patterns, the symmetry, the flow of the design without judgment.</li>
+                            <li><strong>Return to the Center:</strong> If your mind wanders (which it will!), gently guide your focus back to the center of the mandala. Use it as an anchor for your attention.</li>
+                            <li><strong>Close with Gratitude:</strong> When you're ready to finish, gently close your eyes for a minute. Notice how you feel. Offer a sense of gratitude for this moment of peace.</li>
+                        </ol>
+                    </div>
+                </div>
+                <!-- Article 6 (NEW) -->
+                <div class="article-card">
+                    <h3>Carl Jung and the Mandala</h3>
+                    <p class="summary">Famed psychologist Carl Jung saw the mandala as a "representation of the self." Understand the deep psychological meaning behind these circular designs...</p>
+                    <a class="read-more-link">Read More »</a>
+                    <div class="full-text">
+                        <p>The introduction of the mandala to Western psychology is largely credited to the Swiss psychiatrist <strong>Carl Jung</strong> (1875-1961). Jung encountered mandalas in his study of Eastern religions and was fascinated by their universal structure. He soon began to notice his patients spontaneously drawing circular images, especially during times of psychological stress or transformation.</p>
+                        <p>Jung came to believe that the mandala is a profound archetypal symbol, an innate pattern within the human psyche. He saw it as a symbolic representation of the <strong>Self</strong>—the unified totality of an individual's consciousness and unconsciousness. He theorized that the urge to create mandalas emerges during moments of intense personal growth or disorientation, as the psyche naturally attempts to find order and re-center itself.</p>
+                        <p>For Jung, the process of drawing a mandala was a "safe space" where the conflicting parts of the psyche could be contained and integrated. He encouraged his patients to create them as a way to map their inner landscape and facilitate the process of <strong>"individuation"</strong>—the lifelong journey of becoming a whole, integrated person. In this view, your mandala is not just a pretty picture; it is a snapshot of your inner world at a specific moment in time.</p>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 3: THE GALLERY -->
+        <!-- VIEW 3: MY GALLERY -->
         <section id="gallery-view" class="view">
-            <h2 class="section-title">Community Gallery</h2>
-            <div id="galleryGrid" class="gallery-grid"></div>
+            <h2 class="section-title">My Personal Gallery</h2>
+            <div id="galleryGrid" class="gallery-grid">
+                <!-- User's saved mandalas will be dynamically inserted here -->
+            </div>
         </section>
     </main>
 
-    <!-- ARTICLE MODAL (NEW) -->
+    <!-- ARTICLE MODAL -->
     <div id="article-modal">
         <div class="modal-content">
             <span class="close-modal">×</span>
             <h2 id="modal-title"></h2>
-            <p id="modal-body"></p>
+            <div id="modal-body"></div>
         </div>
     </div>
 
@@ -372,91 +235,82 @@
             const navLinks = document.querySelectorAll('nav ul li a');
             window.showView = function(viewId, clickedLink) {
                 views.forEach(view => view.classList.remove('active'));
-                document.getElementById(viewId).classList.add('active');
+                const targetView = document.getElementById(viewId);
+                targetView.classList.add('active');
+                if (viewId === 'gallery-view') {
+                    renderGallery();
+                }
                 navLinks.forEach(link => link.classList.remove('active'));
                 clickedLink.classList.add('active');
             }
 
-            // --- ARTICLE MODAL LOGIC (NEW) ---
+            // --- ARTICLE MODAL LOGIC ---
             const modal = document.getElementById('article-modal');
             const modalTitle = document.getElementById('modal-title');
             const modalBody = document.getElementById('modal-body');
             const closeModalBtn = document.querySelector('.close-modal');
             const readMoreLinks = document.querySelectorAll('.read-more-link');
-
-            function openModal(title, content) {
-                modalTitle.textContent = title;
-                modalBody.innerHTML = content; // Using innerHTML to preserve potential formatting like <strong>
-                modal.classList.add('visible');
-                document.body.classList.add('modal-open');
-            }
-
-            function closeModal() {
-                modal.classList.remove('visible');
-                document.body.classList.remove('modal-open');
-            }
-
-            readMoreLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const card = link.closest('.article-card');
-                    const title = card.querySelector('h3').textContent;
-                    const content = card.querySelector('.full-text').innerHTML;
-                    openModal(title, content);
-                });
-            });
-
+            function openModal(title, content) { modalTitle.textContent = title; modalBody.innerHTML = content; modal.classList.add('visible'); document.body.classList.add('modal-open'); }
+            function closeModal() { modal.classList.remove('visible'); document.body.classList.remove('modal-open'); }
+            readMoreLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); const card = link.closest('.article-card'); const title = card.querySelector('h3').textContent; const content = card.querySelector('.full-text').innerHTML; openModal(title, content); }); });
             closeModalBtn.addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeModal();
-                }
-            });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.classList.contains('visible')) {
-                    closeModal();
-                }
-            });
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('visible')) closeModal(); });
             
-            // --- GALLERY POPULATION ---
-            function generateSampleMandala(config) {
-                const canvas = document.createElement('canvas');
-                const size = 400; canvas.width = size; canvas.height = size;
-                const ctx = canvas.getContext('2d'); const center = size / 2;
-                ctx.fillStyle = config.bgColor || '#ffffff'; ctx.fillRect(0, 0, size, size);
-                const slices = config.slices || 12; const angleIncrement = (Math.PI * 2) / slices;
-                for (let i = 0; i < slices; i++) {
-                    ctx.save(); ctx.translate(center, center); ctx.rotate(i * angleIncrement);
-                    for(let j = 1; j < 5; j++) {
-                        ctx.beginPath(); ctx.moveTo(0, 0);
-                        ctx.arc(config.arcPos * j, 0, config.arcSize * j, 0, Math.PI * 0.1 * config.arcSweep);
-                        ctx.lineTo(0,0); ctx.fillStyle = config.colors[j % config.colors.length]; ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size/3, size/8);
-                        ctx.strokeStyle = config.colors[(j+1) % config.colors.length];
-                        ctx.lineWidth = config.lineWidth; ctx.stroke();
+            // --- PERSONAL GALLERY LOGIC (Using localStorage) ---
+            const galleryGrid = document.getElementById('galleryGrid');
+            const saveBtn = document.getElementById('saveBtn');
+
+            function getMyMandalas() { return JSON.parse(localStorage.getItem('myMandalas') || '[]'); }
+            function saveMyMandalas(mandalas) { localStorage.setItem('myMandalas', JSON.stringify(mandalas)); }
+            
+            function renderGallery() {
+                const myMandalas = getMyMandalas();
+                galleryGrid.innerHTML = ''; // Clear current grid
+                if (myMandalas.length === 0) {
+                    galleryGrid.innerHTML = `<div class="gallery-info"><p>Your personal gallery is empty.</p><p>Go to the 'Create' tab to design your first mandala and save it!</p></div>`;
+                } else {
+                    myMandalas.forEach((mandalaData, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'gallery-item';
+                        item.innerHTML = `<img src="${mandalaData.image}" alt="A user-saved mandala"><button class="delete-btn" data-index="${index}">×</button>`;
+                        galleryGrid.appendChild(item);
+                    });
+                     if (myMandalas.length > 0) {
+                        const clearButton = document.createElement('button');
+                        clearButton.textContent = 'Clear Entire Gallery';
+                        clearButton.className = 'btn secondary';
+                        clearButton.style.marginTop = '20px';
+                        clearButton.style.gridColumn = '1 / -1'; // Span full width
+                        clearButton.onclick = () => {
+                            if (confirm('Are you sure you want to delete all your saved mandalas? This cannot be undone.')) {
+                                saveMyMandalas([]);
+                                renderGallery();
+                            }
+                        };
+                        galleryGrid.appendChild(clearButton);
                     }
-                    ctx.restore();
                 }
-                return canvas.toDataURL();
             }
 
-            function populateGallery() {
-                const galleryGrid = document.getElementById('galleryGrid');
-                const galleryItems = [
-                    { author: 'Cosmic Weaver', config: { colors: ['#4a148c', '#8e24aa', '#d1c4e9'], arcPos: 30, arcSize: 10, arcSweep: 1.2, lineWidth: 1, slices: 16 } },
-                    { author: 'Serenity Seeker', config: { colors: ['#1e88e5', '#90caf9', '#e3f2fd'], arcPos: 20, arcSize: 15, arcSweep: 1.5, lineWidth: 2, slices: 8 } },
-                    { author: 'Pattern Poet', config: { colors: ['#388e3c', '#a5d6a7', '#e8f5e9'], arcPos: 40, arcSize: 8, arcSweep: 0.8, lineWidth: 3, slices: 12 } },
-                    { author: 'Golden Artist', config: { colors: ['#ffab40', '#ffecb3', '#fff8e1'], arcPos: 25, arcSize: 12, arcSweep: 1.0, lineWidth: 1.5, slices: 20, bgColor: '#424242' } },
-                    { author: 'Crimson Creator', config: { colors: ['#e53935', '#ef9a9a', '#ffebee'], arcPos: 35, arcSize: 18, arcSweep: 1.3, lineWidth: 2.5, slices: 10 } },
-                    { author: 'Mindful Muse', config: { colors: ['#6d4c41', '#bcaaa4', '#efebe9'], arcPos: 15, arcSize: 20, arcSweep: 1.8, lineWidth: 0.5, slices: 24 } }
-                ];
-                let galleryHTML = '';
-                galleryItems.forEach(item => {
-                    const imageDataUrl = generateSampleMandala(item.config);
-                    galleryHTML += `<div class="gallery-item"><img src="${imageDataUrl}" alt="A generated mandala by ${item.author}"><div class="overlay">By ${item.author}</div></div>`;
-                });
-                galleryGrid.innerHTML = galleryHTML;
-            }
+            galleryGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const indexToDelete = parseInt(e.target.dataset.index, 10);
+                    let myMandalas = getMyMandalas();
+                    myMandalas.splice(indexToDelete, 1);
+                    saveMyMandalas(myMandalas);
+                    renderGallery();
+                }
+            });
+
+            saveBtn.addEventListener('click', () => {
+                const imageData = canvas.toDataURL('image/png');
+                const myMandalas = getMyMandalas();
+                myMandalas.unshift({ image: imageData, date: new Date().toISOString() }); // Add to beginning
+                saveMyMandalas(myMandalas);
+                saveBtn.textContent = 'Saved!';
+                setTimeout(() => { saveBtn.textContent = 'Save to My Gallery'; }, 1500);
+            });
 
             // --- MANDALA CREATOR LOGIC ---
             const canvas = document.getElementById('mandalaCanvas'); const ctx = canvas.getContext('2d');
@@ -492,7 +346,7 @@
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false }); canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getPos(e)); }, { passive: false }); canvas.addEventListener('touchend', stopDrawing);
 
             // --- INITIALIZATION ---
-            populateGallery(); resizeCanvas(); showView('creator-view', navLinks[0]);
+            resizeCanvas(); showView('creator-view', navLinks[0]);
         });
     </script>
 </body>
