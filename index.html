@@ -24,7 +24,7 @@
         .container { max-width: 1200px; margin: auto; padding: 0 20px; }
         header { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 1rem 0; position: sticky; top: 0; z-index: 1000; }
         nav { display: flex; justify-content: space-between; align-items: center; font-family: 'Montserrat', sans-serif; }
-        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); text-decoration: none; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); text-decoration: none; cursor: pointer; }
         nav ul { list-style: none; display: flex; margin: 0; padding: 0; }
         nav ul li { margin-left: 25px; }
         nav ul li a { text-decoration: none; color: var(--secondary-color); font-weight: 600; cursor: pointer; transition: color 0.3s ease, border-bottom-color 0.3s ease; padding: 10px 5px; border-bottom: 2px solid transparent; }
@@ -65,34 +65,38 @@
         .gallery-item .delete-btn { position: absolute; top: 10px; right: 10px; background-color: rgba(229, 57, 53, 0.8); color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 16px; line-height: 30px; text-align: center; cursor: pointer; opacity: 0; transition: opacity 0.3s; }
         .gallery-item:hover .delete-btn { opacity: 1; }
         .gallery-info { text-align: center; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .page-content { max-width: 800px; margin: 0 auto; background: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .page-content h1, .page-content h2 { font-family: 'Montserrat'; color: var(--primary-color); }
+        .page-content a { color: var(--secondary-color); }
         #article-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-in-out; }
         #article-modal.visible { opacity: 1; pointer-events: auto; }
         .modal-content { background: #fff; padding: 40px; border-radius: 10px; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; position: relative; transform: scale(0.95); transition: transform 0.3s ease-in-out; }
         #article-modal.visible .modal-content { transform: scale(1); }
         .modal-content h2 { font-family: 'Montserrat', sans-serif; color: var(--primary-color); margin-top: 0; }
         .modal-content p, .modal-content li { line-height: 1.8; }
-        .modal-content ul { padding-left: 20px; }
+        .modal-content ul, .modal-content ol { padding-left: 20px; }
         .close-modal { position: absolute; top: 15px; right: 20px; font-size: 2rem; font-weight: bold; color: var(--light-gray); cursor: pointer; line-height: 1; }
         .close-modal:hover { color: var(--text-color); }
         footer { background-color: var(--primary-color); color: #fff; text-align: center; padding: 40px 20px; font-family: 'Montserrat', sans-serif; }
+        footer a { color: var(--accent-color); margin: 0 10px; text-decoration: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <nav class="container">
-            <a href="#" class="logo">my-mandala.com</a>
+            <a class="logo">my-mandala.com</a>
             <ul>
-                <li><a onclick="showView('creator-view', this)" class="active">Create</a></li>
-                <li><a onclick="showView('library-view', this)">Learn</a></li>
-                <li><a onclick="showView('gallery-view', this)">My Gallery</a></li>
+                <li><a data-view="creator-view">Create</a></li>
+                <li><a data-view="library-view">Learn</a></li>
+                <li><a data-view="gallery-view">My Gallery</a></li>
             </ul>
         </nav>
     </header>
 
     <main class="container">
-        <!-- VIEW 1: THE CREATOR -->
-        <section id="creator-view" class="view active">
+        <!-- APP VIEWS -->
+        <section id="creator-view" class="view">
             <h2 class="section-title">The Digital Mandala Creator</h2>
             <div class="creator-layout">
                 <aside class="controls">
@@ -109,7 +113,6 @@
             </div>
         </section>
 
-        <!-- VIEW 2: THE LIBRARY -->
         <section id="library-view" class="view">
             <h2 class="section-title">Library of Meanings</h2>
             <div class="article-grid">
@@ -160,7 +163,7 @@
                         <p>Scientific studies have shown that such creative activities can lower heart rate, reduce blood pressure, and decrease levels of the stress hormone cortisol. It's not about achieving artistic perfection; the true benefit lies in the peaceful journey of creation. Each line drawn is a step back to your center, a moment of calm in the chaos of daily life. It allows you to process emotions non-verbally and find a sense of order and completion.</p>
                     </div>
                 </div>
-                <!-- Article 4 (NEW) -->
+                <!-- Article 4 -->
                 <div class="article-card">
                     <h3>A Brief History of the Mandala</h3>
                     <p class="summary">From ancient Hindu texts and Tibetan sand paintings to modern therapeutic tools, explore the fascinating journey of the mandala through time...</p>
@@ -172,7 +175,7 @@
                         <p>Today, the mandala has been embraced by the West as a symbol of wholeness and a tool for self-exploration, largely thanks to the work of psychologist Carl Jung.</p>
                     </div>
                 </div>
-                <!-- Article 5 (NEW) -->
+                <!-- Article 5 -->
                 <div class="article-card">
                     <h3>How to Meditate with a Mandala</h3>
                     <p class="summary">Your mandala is more than just art; it's a focus point for meditation. Learn a simple, step-by-step guide to use your creation for inner peace...</p>
@@ -190,7 +193,7 @@
                         </ol>
                     </div>
                 </div>
-                <!-- Article 6 (NEW) -->
+                <!-- Article 6 -->
                 <div class="article-card">
                     <h3>Carl Jung and the Mandala</h3>
                     <p class="summary">Famed psychologist Carl Jung saw the mandala as a "representation of the self." Understand the deep psychological meaning behind these circular designs...</p>
@@ -204,11 +207,51 @@
             </div>
         </section>
 
-        <!-- VIEW 3: MY GALLERY -->
         <section id="gallery-view" class="view">
             <h2 class="section-title">My Personal Gallery</h2>
-            <div id="galleryGrid" class="gallery-grid">
-                <!-- User's saved mandalas will be dynamically inserted here -->
+            <div id="galleryGrid" class="gallery-grid"></div>
+        </section>
+
+        <!-- STATIC PAGE VIEWS (ABOUT, CONTACT, PRIVACY) -->
+        <section id="about-view" class="view">
+            <div class="page-content">
+                <h1>About My-Mandala.com</h1>
+                <p>Welcome to My Mandala, your personal digital sanctuary for creativity and mindfulness. Our mission is to provide a peaceful and engaging space where anyone can explore the beautiful art of mandalas.</p>
+                <p>We believe in the therapeutic power of creation. The simple, repetitive act of drawing symmetrical patterns can be a profound form of active meditation, helping to calm the mind, reduce stress, and unlock inner creativity. Whether you're an experienced artist or someone just looking for a few moments of peace, our tools are designed for you.</p>
+                <p>This site was created with a passion for art, technology, and mental well-being. We hope our interactive creator and library of knowledge inspire you on your own journey of self-discovery.</p>
+            </div>
+        </section>
+
+        <section id="contact-view" class="view">
+            <div class="page-content">
+                <h1>Contact Us</h1>
+                <p>We'd love to hear from you! Whether you have a question, a suggestion, or just want to share your experience, please feel free to reach out.</p>
+                <p>For all inquiries, please contact us via email:</p>
+                <p><strong><a href="mailto:your-email@example.com">your-email@example.com</a></strong></p>
+                <p>We do our best to respond to all messages within 48 hours.</p>
+            </div>
+        </section>
+
+        <section id="privacy-view" class="view">
+             <div class="page-content">
+                <h1>Privacy Policy for My-Mandala.com</h1>
+                <p>Effective Date: [Insert Today's Date]</p>
+                <h2>1. Introduction</h2>
+                <p>Welcome to My-Mandala.com. We respect your privacy and are committed to protecting it. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.</p>
+                <h2>2. Data We Collect</h2>
+                <p><strong>Personal Gallery Data:</strong> When you use the "Save to My Gallery" feature, the image data of your mandala is stored locally in your web browser's `localStorage`. This data is stored only on your computer and is not transmitted to our servers or any third party. We have no access to your personal gallery.</p>
+                <p><strong>Usage Data:</strong> Like most websites, we may collect non-personal information that your browser sends, such as your IP address, browser type, and pages visited, for analytical purposes.</p>
+                <h2>3. Third-Party Advertising (Google AdSense)</h2>
+                <p>We use Google AdSense to serve advertisements on our website. Google may use cookies or unique device identifiers to show you ads based on your prior visits to our website and other websites.</p>
+                <ul>
+                    <li>Third-party vendors, including Google, use cookies to serve ads based on a user's prior visits to your website or other websites.</li>
+                    <li>Google's use of advertising cookies enables it and its partners to serve ads to your users based on their visit to your sites and/or other sites on the Internet.</li>
+                    <li>Users may opt out of personalized advertising by visiting <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer">Ads Settings</a>.</li>
+                </ul>
+                <h2>4. Your Rights</h2>
+                <p>Because your personal mandala gallery is stored locally, you have full control over it. You can delete individual mandalas or clear the entire gallery at any time using the buttons provided on the "My Gallery" page.</p>
+                <h2>5. Changes to This Policy</h2>
+                <p>We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
             </div>
         </section>
     </main>
@@ -225,24 +268,62 @@
     <!-- FOOTER -->
     <footer>
         <p>© 2024 my-mandala.com. A sanctuary for creativity and mindfulness.</p>
+        <p style="margin-top:15px;">
+            <a data-view="about-view">About Us</a> |
+            <a data-view="contact-view">Contact</a> |
+            <a data-view="privacy-view">Privacy Policy</a>
+        </p>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- VIEW SWITCHING LOGIC ---
             const views = document.querySelectorAll('.view');
             const navLinks = document.querySelectorAll('nav ul li a');
-            window.showView = function(viewId, clickedLink) {
+            const footerLinks = document.querySelectorAll('footer a');
+            const logo = document.querySelector('.logo');
+
+            function showView(viewId, clickedLink = null) {
+                // Hide all views
                 views.forEach(view => view.classList.remove('active'));
+                
+                // Show the target view
                 const targetView = document.getElementById(viewId);
-                targetView.classList.add('active');
+                if (targetView) {
+                    targetView.classList.add('active');
+                }
+
+                // If the gallery is shown, re-render it
                 if (viewId === 'gallery-view') {
                     renderGallery();
                 }
+
+                // Update active state on main navigation
                 navLinks.forEach(link => link.classList.remove('active'));
-                clickedLink.classList.add('active');
+                if (clickedLink) {
+                    clickedLink.classList.add('active');
+                }
             }
+            
+            // Add click listeners to main navigation
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    showView(link.dataset.view, link);
+                });
+            });
+
+            // Add click listeners to footer links
+            footerLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    showView(link.dataset.view, null); // Pass null because it's not a main nav item
+                });
+            });
+            
+            // Make logo go home
+            logo.addEventListener('click', () => {
+                showView('creator-view', navLinks[0]);
+            });
+
 
             // --- ARTICLE MODAL LOGIC ---
             const modal = document.getElementById('article-modal');
@@ -250,9 +331,29 @@
             const modalBody = document.getElementById('modal-body');
             const closeModalBtn = document.querySelector('.close-modal');
             const readMoreLinks = document.querySelectorAll('.read-more-link');
-            function openModal(title, content) { modalTitle.textContent = title; modalBody.innerHTML = content; modal.classList.add('visible'); document.body.classList.add('modal-open'); }
-            function closeModal() { modal.classList.remove('visible'); document.body.classList.remove('modal-open'); }
-            readMoreLinks.forEach(link => { link.addEventListener('click', (e) => { e.preventDefault(); const card = link.closest('.article-card'); const title = card.querySelector('h3').textContent; const content = card.querySelector('.full-text').innerHTML; openModal(title, content); }); });
+            
+            function openModal(title, content) {
+                modalTitle.textContent = title;
+                modalBody.innerHTML = content;
+                modal.classList.add('visible');
+                document.body.classList.add('modal-open');
+            }
+
+            function closeModal() {
+                modal.classList.remove('visible');
+                document.body.classList.remove('modal-open');
+            }
+
+            readMoreLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const card = link.closest('.article-card');
+                    const title = card.querySelector('h3').textContent;
+                    const content = card.querySelector('.full-text').innerHTML;
+                    openModal(title, content);
+                });
+            });
+
             closeModalBtn.addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
             document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('visible')) closeModal(); });
@@ -266,7 +367,7 @@
             
             function renderGallery() {
                 const myMandalas = getMyMandalas();
-                galleryGrid.innerHTML = ''; // Clear current grid
+                galleryGrid.innerHTML = '';
                 if (myMandalas.length === 0) {
                     galleryGrid.innerHTML = `<div class="gallery-info"><p>Your personal gallery is empty.</p><p>Go to the 'Create' tab to design your first mandala and save it!</p></div>`;
                 } else {
@@ -281,7 +382,7 @@
                         clearButton.textContent = 'Clear Entire Gallery';
                         clearButton.className = 'btn secondary';
                         clearButton.style.marginTop = '20px';
-                        clearButton.style.gridColumn = '1 / -1'; // Span full width
+                        clearButton.style.gridColumn = '1 / -1';
                         clearButton.onclick = () => {
                             if (confirm('Are you sure you want to delete all your saved mandalas? This cannot be undone.')) {
                                 saveMyMandalas([]);
@@ -306,14 +407,15 @@
             saveBtn.addEventListener('click', () => {
                 const imageData = canvas.toDataURL('image/png');
                 const myMandalas = getMyMandalas();
-                myMandalas.unshift({ image: imageData, date: new Date().toISOString() }); // Add to beginning
+                myMandalas.unshift({ image: imageData, date: new Date().toISOString() });
                 saveMyMandalas(myMandalas);
                 saveBtn.textContent = 'Saved!';
                 setTimeout(() => { saveBtn.textContent = 'Save to My Gallery'; }, 1500);
             });
 
             // --- MANDALA CREATOR LOGIC ---
-            const canvas = document.getElementById('mandalaCanvas'); const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('mandalaCanvas');
+            const ctx = canvas.getContext('2d');
             function resizeCanvas() { const container = document.querySelector('.canvas-container'); const size = container.offsetWidth; canvas.width = size; canvas.height = size; }
             window.addEventListener('resize', resizeCanvas);
             let isDrawing = false, currentLineWeight = 5, currentColor = '#4a148c', numSlices = 12, lastX = 0, lastY = 0;
@@ -346,7 +448,8 @@
             canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, { passive: false }); canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(getPos(e)); }, { passive: false }); canvas.addEventListener('touchend', stopDrawing);
 
             // --- INITIALIZATION ---
-            resizeCanvas(); showView('creator-view', navLinks[0]);
+            resizeCanvas(); 
+            showView('creator-view', navLinks[0]);
         });
     </script>
 </body>
