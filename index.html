@@ -164,7 +164,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- DEBOUNCE UTILITY FUNCTION (THE FIX) ---
+            // --- DEBOUNCE UTILITY FUNCTION ---
             function debounce(func, wait) {
                 let timeout;
                 return function(...args) {
@@ -219,21 +219,26 @@
             const canvas = document.getElementById('mandalaCanvas'), ctx = canvas.getContext('2d');
             let isDrawing = false, currentLineWeight = 5, currentColor = '#4a148c', numSlices = 12, lastX = 0, lastY = 0;
             
-            // Non-destructive resize function
             function resizeCanvas() {
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); // Save current drawing
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); 
                 const container = document.querySelector('.canvas-container');
                 const size = container.offsetWidth;
                 canvas.width = size;
                 canvas.height = size;
-                ctx.putImageData(imageData, 0, 0); // Restore the drawing
+                ctx.putImageData(imageData, 0, 0); 
             }
 
-            // USE THE DEBOUNCED RESIZE LISTENER
             window.addEventListener('resize', debounce(resizeCanvas, 250));
             
             const brushSizeSlider = document.getElementById('brushSize'), brushSizeValue = document.getElementById('brushSizeValue'), sliceCountSlider = document.getElementById('sliceCount'), sliceCountValue = document.getElementById('sliceCountValue'), clearBtn = document.getElementById('clearBtn'), downloadBtn = document.getElementById('downloadBtn'), colorPaletteContainer = document.getElementById('colorPalette');
-            const colors = ['#4a148c', '#8e24aa', '#d1c4e9', '#ffab40', '#388e3c', '#1e88e5', '#e53935', '#616161', '#000000', '#ffffff'];
+            
+            // *** MODIFIED CODE: Added more colors to this array ***
+            const colors = [
+                '#4a148c', '#8e24aa', '#d1c4e9', '#ffab40', '#ffee58', '#388e3c', 
+                '#1e88e5', '#26a69a', '#f06292', '#c62828', '#e53935', '#795548', 
+                '#616161', '#bdbdbd', '#000000', '#ffffff'
+            ];
+
             colors.forEach(color => { const colorBox = document.createElement('div'); colorBox.className = 'color-box'; colorBox.style.backgroundColor = color; if (color === currentColor) colorBox.classList.add('active'); colorBox.addEventListener('click', () => { currentColor = color; document.querySelectorAll('.color-box').forEach(box => box.classList.remove('active')); colorBox.classList.add('active'); }); colorPaletteContainer.appendChild(colorBox); });
             brushSizeSlider.oninput = (e) => { currentLineWeight = e.target.value; brushSizeValue.textContent = e.target.value; };
             sliceCountSlider.oninput = (e) => { numSlices = e.target.value; sliceCountValue.textContent = e.target.value; };
