@@ -34,6 +34,8 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .section-title { font-family: 'Montserrat', sans-serif; font-size: 2.5rem; color: var(--primary-color); margin-bottom: 40px; text-align: center; }
         #creator-view .creator-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; align-items: flex-start; }
+        /* MODIFICATION: Make canvas span two rows to align with controls + export buttons on desktop */
+        #creator-view .creator-layout .canvas-container { grid-row: 1 / 3; }
         #mandalaCanvas { background: #fff; border: 1px solid var(--light-gray); border-radius: 10px; cursor: crosshair; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; height: auto; touch-action: none; }
         .controls { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .control-group { margin-bottom: 25px; }
@@ -83,6 +85,8 @@
         /* --- MOBILE RESPONSIVENESS --- */
         @media (max-width: 800px) {
             #creator-view .creator-layout { grid-template-columns: 1fr; gap: 25px; }
+            /* MODIFICATION: Reset the canvas row-span for mobile's single-column layout */
+            #creator-view .creator-layout .canvas-container { grid-row: auto; }
             nav { flex-direction: column; gap: 15px; }
             nav ul { justify-content: center; flex-wrap: wrap; }
             nav ul li { margin: 0 10px; }
@@ -114,13 +118,17 @@
                     <div class="control-group"><h3>Colors</h3><div class="color-palette" id="colorPalette"></div></div>
                     <div class="control-group"><h3>Brush Style</h3><div class="slider-group"><label for="brushSize">Size: <span id="brushSizeValue">5</span>px</label><input type="range" id="brushSize" min="1" max="50" value="5"></div></div>
                     <div class="control-group"><h3>Symmetry</h3><div class="slider-group"><label for="sliceCount">Slices: <span id="sliceCountValue">12</span></label><input type="range" id="sliceCount" min="2" max="36" value="12" step="2"></div></div>
+                    <!-- MODIFICATION: Export buttons moved out of this group -->
                     <div class="control-group button-group">
-                        <button id="saveBtn" class="btn accent">Save to My Gallery</button>
-                        <button id="downloadBtn" class="btn secondary">Download Image</button>
                         <button id="clearBtn" class="btn">Clear Canvas</button>
                     </div>
                 </aside>
                 <div class="canvas-container"><canvas id="mandalaCanvas"></canvas></div>
+                <!-- MODIFICATION: New container for export buttons, placed after the canvas -->
+                <div class="export-buttons button-group">
+                    <button id="saveBtn" class="btn accent">Save to My Gallery</button>
+                    <button id="downloadBtn" class="btn secondary">Download Image</button>
+                </div>
             </div>
         </section>
 
