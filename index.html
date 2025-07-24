@@ -34,7 +34,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .section-title { font-family: 'Montserrat', sans-serif; font-size: 2.5rem; color: var(--primary-color); margin-bottom: 40px; text-align: center; }
         #creator-view .creator-layout { display: grid; grid-template-columns: 300px 1fr; gap: 30px; align-items: flex-start; }
-        #mandalaCanvas { background: #fff; border: 1px solid var(--light-gray); border-radius: 10px; cursor: crosshair; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; height: auto; touch-action: none; }
+        #mandalaCanvas { background-color: var(--light-gray); border: 1px solid var(--light-gray); border-radius: 10px; cursor: crosshair; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 100%; height: auto; touch-action: none; }
         .controls { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .control-group { margin-bottom: 25px; }
         .control-group h3 { font-family: 'Montserrat', sans-serif; font-size: 1.1rem; color: var(--secondary-color); margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid var(--light-gray); padding-bottom: 10px; }
@@ -253,9 +253,24 @@
             const canvas = document.getElementById('mandalaCanvas'), ctx = canvas.getContext('2d');
             let isDrawing = false, currentLineWeight = 5, currentColor = '#4a148c', currentBgColor = '#ffffff', numSlices = 12, currentLineCap = 'round', glowEnabled = false, lastX = 0, lastY = 0;
             
-            function redrawBackground() { ctx.fillStyle = currentBgColor; ctx.fillRect(0, 0, canvas.width, canvas.height); }
-            function resizeCanvas() { const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height); const container = document.querySelector('.canvas-container'); const size = container.offsetWidth; canvas.width = size; canvas.height = size; redrawBackground(); ctx.putImageData(imageData, 0, 0); }
+            function resizeCanvas() {
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                tempCtx.drawImage(canvas, 0, 0);
+
+                const container = document.querySelector('.canvas-container');
+                const size = container.offsetWidth;
+                canvas.width = size;
+                canvas.height = size;
+
+                redrawBackground();
+                ctx.drawImage(tempCanvas, 0, 0);
+            }
             window.addEventListener('resize', debounce(resizeCanvas, 250));
+            
+            function redrawBackground() { ctx.fillStyle = currentBgColor; ctx.fillRect(0, 0, canvas.width, canvas.height); }
             
             const brushSizeSlider = document.getElementById('brushSize'), brushSizeValue = document.getElementById('brushSizeValue'), sliceCountSlider = document.getElementById('sliceCount'), sliceCountValue = document.getElementById('sliceCountValue'), clearBtn = document.getElementById('clearBtn'), downloadBtn = document.getElementById('downloadBtn'), mobileDownloadBtn = document.getElementById('mobileDownloadBtn'), colorPaletteContainer = document.getElementById('colorPalette'), bgPaletteContainer = document.getElementById('bgPalette'), lineCapBtns = document.querySelectorAll('.style-btn'), glowCheck = document.getElementById('glowCheck');
             
@@ -263,10 +278,16 @@
             const bgColors = ['#ffffff', '#f4f2f7', '#e0e0e0', '#9e9e9e', '#212121'];
             
             function createPalette(container, paletteColors, onColorSelect, activeColor) {
+                container.innerHTML = '';
                 paletteColors.forEach(color => { const box = document.createElement('div'); box.className = 'color-box'; box.style.backgroundColor = color; if (color === activeColor) box.classList.add('active'); box.addEventListener('click', () => { container.querySelector('.active')?.classList.remove('active'); box.classList.add('active'); onColorSelect(color); }); container.appendChild(box); });
             }
             createPalette(colorPaletteContainer, colors, color => currentColor = color, currentColor);
-            createPalette(bgPaletteContainer, bgColors, color => { currentBgColor = color; redrawBackground(); }, currentBgColor);
+            createPalette(bgPaletteContainer, bgColors, color => {
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                currentBgColor = color;
+                redrawBackground();
+                ctx.putImageData(imageData, 0, 0);
+            }, currentBgColor);
             
             brushSizeSlider.oninput = e => { currentLineWeight = e.target.value; brushSizeValue.textContent = e.target.value; };
             sliceCountSlider.oninput = e => { numSlices = e.target.value; sliceCountValue.textContent = e.target.value; };
@@ -283,6 +304,7 @@
             canvas.addEventListener('mousedown', startDrawing); canvas.addEventListener('mousemove', e => draw(getPos(e))); canvas.addEventListener('mouseup', stopDrawing); canvas.addEventListener('mouseout', stopDrawing);
             canvas.addEventListener('touchstart', e => { e.preventDefault(); startDrawing(e); }, { passive: false }); canvas.addEventListener('touchmove', e => { e.preventDefault(); draw(getPos(e)); }, { passive: false }); canvas.addEventListener('touchend', stopDrawing);
             
+            redrawBackground();
             resizeCanvas();
         });
     </script>
